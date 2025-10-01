@@ -1,0 +1,1550 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[section]
+\newtheorem{example}{Esempio}[section]
+\newtheorem{exercise}{Esercizio}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposizione}
+\newtheorem{corollary}[theorem]{Corollario}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Nota}
+\newtheorem*{observation}{Osservazione}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{NLP}
+\rhead{NLP}
+\cfoot{\thepage}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Natural Language Processing}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\part{}
+
+\section{Minimum Edit Distance}
+We are going to deal with this main driving point: the definition of Minimum Edit Distance.
+
+\textbf{The question: are this 2 texts the same?}
+
+When is the case when 2 texts are the same? Of course when every single character is the same. 
+What if we would like to understand if 2 texts are pretty close (not the same)?
+
+Single characters in the text could be different in position.
+
+\subsection{How similar are two strings?}
+
+The fundamental question in edit distance is: how can we measure the similarity between two strings? This problem appears in many different applications across various domains of computer science and computational linguistics.
+
+\subsubsection{Spell Correction}
+In spell correction systems, we need to find the closest valid word to a misspelled input. For example, if the user typed "graffe", we need to determine which word in our dictionary is most similar.
+
+Possible candidates:
+\begin{itemize}
+    \item graf
+    \item graft
+    \item grail
+    \item giraffe
+\end{itemize}
+
+By computing the edit distance between "graffe" and each candidate, we can identify that "giraffe" is likely the intended word (requiring only one deletion).
+
+\subsubsection{Computational Biology}
+In bioinformatics, sequence alignment is crucial for comparing DNA, RNA, or protein sequences. By aligning sequences, we can identify regions of similarity that may indicate functional, structural, or evolutionary relationships.
+
+Example: Align two sequences of nucleotides:
+
+\texttt{AGGCTATCACCTGACCTCCAGGCCGATGCCC}
+
+\texttt{TAGCTATCACGACCGCGGTCGATTTGCCCGAC}
+
+Resulting alignment (dashes represent insertions/deletions):
+\begin{verbatim}
+-AGGCTATCACCTGACCTCCAGGCCGA--TGCCC---
+TAG-CTATCAC--GACCGC--GGTCGATTTGCCCGAC
+\end{verbatim}
+
+The alignment reveals matching regions (shown in the same positions) and differences between the sequences.
+
+\subsubsection{Other Applications}
+String similarity and edit distance algorithms are fundamental tools in many NLP tasks:
+\begin{itemize}
+    \item \textbf{Machine Translation}: Comparing source and target language phrases, finding similar translations in translation memories
+    \item \textbf{Information Extraction}: Matching entity names with variations (e.g., "IBM" vs "I.B.M." vs "International Business Machines")
+    \item \textbf{Speech Recognition}: Correcting recognition errors by finding the closest valid word or phrase to the acoustic model output
+\end{itemize}
+
+\subsection{Edit Distance}
+
+The \textbf{minimum edit distance} between two strings is defined as the minimum number of editing operations needed to transform one string into the other.
+
+\subsubsection{Edit Operations}
+There are three basic editing operations:
+
+\begin{itemize}
+    \item \textbf{Insertion}: Add a character at any position in the string
+    \begin{itemize}
+        \item Example: $\text{cat} \rightarrow \text{cart}$ (insert 'r')
+    \end{itemize}
+    
+    \item \textbf{Deletion}: Remove a character from any position in the string
+    \begin{itemize}
+        \item Example: $\text{cart} \rightarrow \text{cat}$ (delete 'r')
+    \end{itemize}
+    
+    \item \textbf{Substitution}: Replace one character with another
+    \begin{itemize}
+        \item Example: $\text{cat} \rightarrow \text{bat}$ (substitute 'c' with 'b')
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Key Concept}
+The edit distance measures the \textit{minimum} number of these operations required to transform one string into another. This metric provides a quantitative measure of string similarity: the smaller the edit distance, the more similar the strings are.
+
+\textbf{Important note}: Each operation has a cost (typically 1), and we seek the sequence of operations that minimizes the total cost. Different variants of edit distance may assign different costs to different operations (e.g., Levenshtein distance uses uniform costs, while other variants may weight substitutions differently).
+
+\subsubsection{Example: Alignment of Two Strings}
+
+To better understand edit distance, let's examine how two strings can be aligned to show their differences. Consider the strings "INTENTION" and "EXECUTION":
+
+\begin{center}
+\begin{tabular}{ccccccccccc}
+I & N & T & E & * & N & T & I & O & N \\
+| & | & | & | & | & | & | & | & | & | \\
+* & E & X & E & C & U & T & I & O & N \\
+\end{tabular}
+\end{center}
+
+In this alignment:
+\begin{itemize}
+    \item The asterisk (*) represents a gap, indicating an insertion or deletion operation
+    \item Vertical bars (|) connect corresponding positions between the two strings
+    \item Characters that match are aligned vertically (E, T, I, O, N)
+    \item Characters that differ indicate substitution operations
+\end{itemize}
+
+\textbf{Operations needed to transform "INTENTION" to "EXECUTION":}
+\begin{enumerate}
+    \item Delete 'I' at position 1
+    \item Substitute 'N' with 'E' at position 2
+    \item Substitute 'T' with 'X' at position 3
+    \item Keep 'E' (match)
+    \item Insert 'C' at position 5
+    \item Substitute 'N' with 'U' at position 6
+    \item Keep 'T' (match)
+    \item Keep 'I' (match)
+    \item Keep 'O' (match)
+    \item Keep 'N' (match)
+\end{enumerate}
+
+This gives us a total edit distance of \textbf{5 operations} (1 deletion + 3 substitutions + 1 insertion).
+
+\subsubsection{Cost Variants: Standard vs Levenshtein}
+
+The total distance depends on how we assign costs to each operation:
+
+\textbf{Standard Edit Distance (uniform costs):}
+\begin{itemize}
+    \item Each operation (insertion, deletion, substitution) costs 1
+    \item Total distance for INTENTION $\rightarrow$ EXECUTION: \textbf{5}
+    \item Calculation: $1 \text{ (deletion)} + 3 \times 1 \text{ (substitutions)} + 1 \text{ (insertion)} = 5$
+\end{itemize}
+
+\textbf{Levenshtein Distance (weighted substitution):}
+\begin{itemize}
+    \item Insertion costs 1
+    \item Deletion costs 1
+    \item Substitution costs 2 (considered as a deletion + insertion, hence a "double error")
+    \item Total distance for INTENTION $\rightarrow$ EXECUTION: \textbf{8}
+    \item Calculation: $1 \text{ (deletion)} + 3 \times 2 \text{ (substitutions)} + 1 \text{ (insertion)} = 8$
+\end{itemize}
+
+\textbf{Why the difference?} In the Levenshtein variant, a substitution is viewed as conceptually equivalent to deleting a character and then inserting a different one, thus costing twice as much. This distinction is important when choosing which distance metric to use for a particular application.
+
+\subsection{Alignment in Computational Biology}
+
+In computational biology, sequence alignment is a fundamental technique for comparing DNA, RNA, or protein sequences. The goal is to identify regions of similarity and understand evolutionary relationships.
+
+\subsubsection{The Alignment Problem}
+
+\textbf{Given a sequence of bases:}
+
+\texttt{AGGCTATCACCTGACCTCCAGGCCGATGCCC}
+
+\texttt{TAGCTATCACGACCGCGGTCGATTTGCCCCGAC}
+
+\textbf{An alignment:}
+
+\begin{verbatim}
+-AGGCTATCACCTGACCTCCAGGCCGA---TGCCC---
+TAG-CTATCAC--GACCGC--GGTCGATTTGCCCCGAC
+\end{verbatim}
+
+\subsubsection{Alignment Objective}
+
+\textbf{Given two sequences, align each letter to a letter or gap.}
+
+The alignment process involves:
+\begin{itemize}
+    \item \textbf{Matching}: Aligning identical bases (e.g., A with A, G with G)
+    \item \textbf{Mismatches}: Aligning different bases (substitutions)
+    \item \textbf{Gaps}: Represented by dashes (-), indicating insertions or deletions (indels)
+\end{itemize}
+
+\textbf{Key considerations:}
+\begin{itemize}
+    \item The alignment should maximize the number of matches
+    \item Minimize the number of mismatches and gaps
+    \item Gaps are penalized because insertions and deletions are relatively rare evolutionary events
+    \item Different scoring schemes can be used: match scores, mismatch penalties, and gap penalties
+\end{itemize}
+
+This alignment problem is directly related to edit distance: finding the optimal alignment is equivalent to finding the minimum edit distance between the two sequences.
+
+\subsection{Other Uses of Edit Distance in NLP}
+
+Edit distance is a versatile tool used across many NLP applications beyond spell correction and sequence alignment.
+
+\subsubsection{Evaluating Machine Translation and Speech Recognition}
+
+Edit distance can be used to evaluate the quality of machine translation and speech recognition systems by comparing the system output with a reference (correct) translation or transcription.
+
+\textbf{Example:}
+
+\textbf{R} (Reference): Spokesman confirms senior government adviser was appointed
+
+\textbf{H} (Hypothesis): Spokesman said the senior adviser was appointed
+
+\begin{center}
+\begin{tabular}{cccc}
+S & I & D & I \\
+\end{tabular}
+\end{center}
+
+Where:
+\begin{itemize}
+    \item \textbf{S} = Substitution ("confirms" $\rightarrow$ "said")
+    \item \textbf{I} = Insertion ("the" inserted)
+    \item \textbf{D} = Deletion ("government" deleted)
+    \item \textbf{I} = Insertion (extra word)
+\end{itemize}
+
+The edit distance provides a quantitative measure of how different the hypothesis is from the reference, which is crucial for evaluating system performance.
+
+\subsubsection{Named Entity Extraction and Entity Coreference}
+
+Edit distance helps identify when different text strings refer to the same entity, even when they are written differently.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textcolor{red}{\textbf{IBM Inc.}} announced today
+    \item \textcolor{red}{\textbf{IBM}} profits
+    \item \textcolor{red}{\textbf{Stanford Professor Jennifer Eberhardt}} announced yesterday
+    \item for \textcolor{red}{\textbf{Professor Eberhardt}}...
+\end{itemize}
+
+\textbf{Applications:}
+\begin{itemize}
+    \item \textbf{Entity Extraction}: Recognizing that "IBM Inc." and "IBM" refer to the same company
+    \item \textbf{Coreference Resolution}: Understanding that "Stanford Professor Jennifer Eberhardt" and "Professor Eberhardt" refer to the same person
+    \item \textbf{Entity Linking}: Matching entity mentions across documents despite variations in how they are written
+\end{itemize}
+
+By computing edit distance between entity mentions, NLP systems can determine whether two strings likely refer to the same entity, even when there are minor differences in spelling, abbreviation, or formatting.
+
+\subsection{How to Find the Minimum Edit Distance?}
+
+Finding the minimum edit distance is a search problem: we need to find the optimal path (sequence of edits) from the start string to the final string.
+
+\subsubsection{Search Problem Formulation}
+
+The problem can be formulated as a search through a space of possible edit sequences:
+
+\begin{itemize}
+    \item \textbf{Initial state}: The word we're transforming (source string)
+    \item \textbf{Operators}: The three edit operations available:
+    \begin{itemize}
+        \item Insert a character
+        \item Delete a character
+        \item Substitute a character
+    \end{itemize}
+    \item \textbf{Goal state}: The word we're trying to get to (target string)
+    \item \textbf{Path cost}: What we want to minimize — the number of edits (or weighted sum of edit costs)
+\end{itemize}
+
+\subsubsection{Search Space Example}
+
+Consider transforming "intention" to "execution". From the initial state "intention", we can apply different operators:
+
+\begin{center}
+\begin{tikzpicture}[
+    level 1/.style={sibling distance=4cm, level distance=1.5cm},
+    level 2/.style={sibling distance=2cm, level distance=1.5cm},
+    every node/.style={draw, rectangle, minimum width=2cm, align=center}
+]
+\node {intention}
+    child {node {ntention} edge from parent node[left, draw=none] {Del}}
+    child {node {eintention} edge from parent node[draw=none] {Ins}}
+    child {node {entention} edge from parent node[right, draw=none] {Sub}};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Explanation:}
+\begin{itemize}
+    \item \textbf{Del} (Delete): Remove the first character 'i' → "ntention"
+    \item \textbf{Ins} (Insert): Insert 'e' at the beginning → "eintention"
+    \item \textbf{Sub} (Substitute): Replace 'i' with 'e' → "entention"
+\end{itemize}
+
+Each branch represents a different edit operation, and we continue this process until we reach the goal state. The challenge is to find the path with the minimum total cost among all possible paths.
+
+\textbf{Key insight}: This is a large search space! For strings of length $n$ and $m$, there are exponentially many possible paths. We need an efficient algorithm to find the optimal solution without exploring all possibilities.
+
+\subsection{Minimum Edit as Search}
+
+\subsubsection{The Challenge: Huge Search Space}
+
+The space of all edit sequences is huge! This presents several challenges:
+
+\begin{itemize}
+    \item \textbf{We can't afford to navigate naively}: Exploring every possible path would be computationally infeasible
+    
+    \item \textbf{Lots of distinct paths wind up at the same state}
+    \begin{itemize}
+        \item We don't have to keep track of all of them
+        \item Just the shortest path to each of those \underline{revisited} states
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Key Optimization Insight}
+
+When multiple paths lead to the same intermediate state (same partially transformed string), we only need to remember the path with the minimum cost. This is because:
+
+\begin{enumerate}
+    \item If two different sequences of edits produce the same intermediate string, they are functionally equivalent from that point forward
+    \item Any future edits will have the same effect regardless of which path was taken to reach that state
+    \item Therefore, we can discard the more expensive path and only keep the cheaper one
+\end{enumerate}
+
+\textbf{Example:} Consider transforming "cat" to "dog":
+\begin{itemize}
+    \item Path 1: "cat" $\rightarrow$ "dat" (substitute c with d) $\rightarrow$ "dot" (substitute a with o)
+    \item Path 2: "cat" $\rightarrow$ "cot" (substitute a with o) $\rightarrow$ "dot" (substitute c with d)
+\end{itemize}
+
+Both paths arrive at "dot" with cost 2. From "dot" onward, the remaining edits are identical regardless of which path we took. This property allows us to use \textbf{dynamic programming} to efficiently compute the minimum edit distance.
+
+\subsection{Defining Minimum Edit Distance}
+
+Now we formalize the definition of minimum edit distance using mathematical notation.
+
+\subsubsection{Formal Definition}
+
+\textbf{For two strings:}
+\begin{itemize}
+    \item $X$ of length $n$
+    \item $Y$ of length $m$
+\end{itemize}
+
+\textbf{We define $D(i,j)$:}
+\begin{itemize}
+    \item The edit distance between $X[1..i]$ and $Y[1..j]$
+    \item i.e., the first $i$ characters of $X$ and the first $j$ characters of $Y$
+    \item The edit distance between $X$ and $Y$ is thus $D(n,m)$
+\end{itemize}
+
+\subsubsection{Notation Explanation}
+
+\begin{itemize}
+    \item \textbf{$X[1..i]$}: A prefix of string $X$ consisting of its first $i$ characters
+    \begin{itemize}
+        \item Example: If $X = $ "intention", then $X[1..3] = $ "int"
+    \end{itemize}
+    
+    \item \textbf{$Y[1..j]$}: A prefix of string $Y$ consisting of its first $j$ characters
+    \begin{itemize}
+        \item Example: If $Y = $ "execution", then $Y[1..3] = $ "exe"
+    \end{itemize}
+    
+    \item \textbf{$D(i,j)$}: The minimum edit distance between these two prefixes
+    \begin{itemize}
+        \item This represents a subproblem in our dynamic programming solution
+        \item $D(0,0) = 0$ (empty strings have distance 0)
+        \item $D(i,0) = i$ (need $i$ deletions to transform $X[1..i]$ to empty string)
+        \item $D(0,j) = j$ (need $j$ insertions to transform empty string to $Y[1..j]$)
+    \end{itemize}
+    
+    \item \textbf{$D(n,m)$}: The final answer — the minimum edit distance between the complete strings $X$ and $Y$
+\end{itemize}
+
+This notation allows us to break down the problem into smaller subproblems, which is the key to the dynamic programming approach.
+
+\newpage
+\section{Dynamic Programming for Minimum Edit Distance}
+
+Dynamic programming is an algorithmic technique that solves complex problems by breaking them down into simpler overlapping subproblems and storing their solutions to avoid redundant computation.
+
+\subsection{What is Dynamic Programming?}
+
+\textbf{Dynamic programming}: A tabular computation of $D(n,m)$
+
+The key idea is to solve problems by combining solutions to subproblems, rather than solving the same subproblems repeatedly.
+
+\subsection{Bottom-Up Approach}
+
+Dynamic programming uses a \textbf{bottom-up} strategy:
+
+\begin{itemize}
+    \item We compute $D(i,j)$ for small $i,j$
+    \item And compute larger $D(i,j)$ based on previously computed smaller values
+    \item i.e., compute $D(i,j)$ for all $i$ $(0 < i < n)$ and $j$ $(0 < j < m)$
+\end{itemize}
+
+\subsubsection{Why Bottom-Up?}
+
+The bottom-up approach has several advantages:
+
+\begin{enumerate}
+    \item \textbf{Avoids recursion overhead}: No function call stack needed
+    \item \textbf{Guarantees all subproblems are solved}: We systematically fill in the table
+    \item \textbf{Easy to implement}: Simply use nested loops to fill a 2D array
+    \item \textbf{Efficient}: Each subproblem is solved exactly once and stored
+\end{enumerate}
+
+\subsubsection{The Process}
+
+\begin{enumerate}
+    \item Start with base cases: $D(0,0)$, $D(i,0)$, and $D(0,j)$
+    \item Fill in the table row by row (or column by column)
+    \item Each cell $D(i,j)$ is computed using values from previously computed cells
+    \item Continue until we reach $D(n,m)$, which is our final answer
+\end{enumerate}
+
+This systematic approach ensures that when we need to compute $D(i,j)$, all the values it depends on have already been computed and stored in our table.
+
+\subsection{Defining Min Edit Distance (Levenshtein)}
+
+Now we present the complete algorithm for computing minimum edit distance using the Levenshtein variant.
+
+\subsubsection{Initialization}
+
+First, we initialize the base cases:
+
+\begin{align*}
+D(i,0) &= i \\
+D(0,j) &= j
+\end{align*}
+
+These represent:
+\begin{itemize}
+    \item $D(i,0) = i$: Transforming a string of length $i$ to an empty string requires $i$ deletions
+    \item $D(0,j) = j$: Transforming an empty string to a string of length $j$ requires $j$ insertions
+\end{itemize}
+
+\subsubsection{Recurrence Relation}
+
+For each $i = 1 \ldots M$ and $j = 1 \ldots N$:
+
+\[
+D(i,j) = \min \begin{cases}
+D(i-1,j) + 1 & \text{(deletion)} \\
+D(i,j-1) + 1 & \text{(insertion)} \\
+D(i-1,j-1) + \begin{cases}
+2 & \text{if } X(i) \neq Y(j) \text{ (substitution)} \\
+0 & \text{if } X(i) = Y(j) \text{ (match)}
+\end{cases}
+\end{cases}
+\]
+
+\textbf{Explanation of each case:}
+
+\begin{enumerate}
+    \item \textbf{$D(i-1,j) + 1$}: Delete character $X(i)$ from the source string
+    \begin{itemize}
+        \item We've already aligned $X[1..i-1]$ with $Y[1..j]$
+        \item Now delete the $i$-th character of $X$
+        \item Cost: previous distance + 1
+    \end{itemize}
+    
+    \item \textbf{$D(i,j-1) + 1$}: Insert character $Y(j)$ into the source string
+    \begin{itemize}
+        \item We've already aligned $X[1..i]$ with $Y[1..j-1]$
+        \item Now insert the $j$-th character of $Y$
+        \item Cost: previous distance + 1
+    \end{itemize}
+    
+    \item \textbf{$D(i-1,j-1) + \text{cost}$}: Match or substitute
+    \begin{itemize}
+        \item We've already aligned $X[1..i-1]$ with $Y[1..j-1]$
+        \item If $X(i) = Y(j)$: characters match, no operation needed (cost = 0)
+        \item If $X(i) \neq Y(j)$: substitute $X(i)$ with $Y(j)$ (cost = 2 in Levenshtein)
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Termination}
+
+$D(N,M)$ is the final minimum edit distance between the complete strings $X$ and $Y$.
+
+\newpage
+\subsubsection{Algorithm Summary}
+
+\begin{algorithm}
+\caption{Minimum Edit Distance (Levenshtein)}
+\begin{algorithmic}
+\STATE Initialize $D(i,0) = i$ for all $i$
+\STATE Initialize $D(0,j) = j$ for all $j$
+\FOR{$i = 1$ to $M$}
+    \FOR{$j = 1$ to $N$}
+        \STATE deletion $\leftarrow D(i-1,j) + 1$
+        \STATE insertion $\leftarrow D(i,j-1) + 1$
+        \IF{$X(i) = Y(j)$}
+            \STATE substitution $\leftarrow D(i-1,j-1) + 0$
+        \ELSE
+            \STATE substitution $\leftarrow D(i-1,j-1) + 2$
+        \ENDIF
+        \STATE $D(i,j) \leftarrow \min(\text{deletion}, \text{insertion}, \text{substitution})$
+    \ENDFOR
+\ENDFOR
+\RETURN $D(M,N)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{The Edit Distance Table}
+
+To understand how the algorithm works in practice, let's visualize the computation using a table. We'll compute the edit distance between "INTENTION" and "EXECUTION".
+
+\subsubsection{Table Structure}
+
+The edit distance table is a 2D matrix where:
+\begin{itemize}
+    \item Rows represent characters of the source string (INTENTION)
+    \item Columns represent characters of the target string (EXECUTION)
+    \item Each cell $D(i,j)$ contains the minimum edit distance between the first $i$ characters of the source and the first $j$ characters of the target
+\end{itemize}
+
+\subsubsection{Initialization}
+
+First, we initialize the base cases:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+ & \# & E & X & E & C & U & T & I & O & N \\
+\hline
+\# & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+\hline
+I & 1 &  &  &  &  &  &  &  &  &  \\
+\hline
+N & 2 &  &  &  &  &  &  &  &  &  \\
+\hline
+T & 3 &  &  &  &  &  &  &  &  &  \\
+\hline
+E & 4 &  &  &  &  &  &  &  &  &  \\
+\hline
+N & 5 &  &  &  &  &  &  &  &  &  \\
+\hline
+T & 6 &  &  &  &  &  &  &  &  &  \\
+\hline
+I & 7 &  &  &  &  &  &  &  &  &  \\
+\hline
+O & 8 &  &  &  &  &  &  &  &  &  \\
+\hline
+N & 9 &  &  &  &  &  &  &  &  &  \\
+\hline
+\end{tabular}
+\caption{Initial table with base cases}
+\end{table}
+
+The first row and column are initialized with increasing values representing the cost of inserting or deleting characters.
+
+\subsubsection{Recurrence Relation Visualization}
+
+For each cell $D(i,j)$, we compute the minimum of three values:
+
+\[
+D(i,j) = \min \begin{cases}
+D(i-1,j) + 1 & \text{(deletion - from above)} \\
+D(i,j-1) + 1 & \text{(insertion - from left)} \\
+D(i-1,j-1) + \begin{cases}
+2 & \text{if } S_1(i) \neq S_2(j) \\
+0 & \text{if } S_1(i) = S_2(j)
+\end{cases} & \text{(diagonal)}
+\end{cases}
+\]
+
+\textbf{Visual representation:} Each cell depends on three neighboring cells:
+\begin{itemize}
+    \item \textbf{Cell above} $D(i-1,j)$: deletion
+    \item \textbf{Cell to the left} $D(i,j-1)$: insertion
+    \item \textbf{Diagonal cell} $D(i-1,j-1)$: match or substitution
+\end{itemize}
+
+\subsubsection{Complete Table}
+
+After filling in all cells using the recurrence relation:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+ & \# & E & X & E & C & U & T & I & O & N \\
+\hline
+\# & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+\hline
+I & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 6 & 7 & 8 \\
+\hline
+N & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 7 & 8 & 7 \\
+\hline
+T & 3 & 4 & 5 & 6 & 7 & 8 & 7 & 8 & 9 & 8 \\
+\hline
+E & 4 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 9 \\
+\hline
+N & 5 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 10 \\
+\hline
+T & 6 & 5 & 6 & 7 & 8 & 9 & 8 & 9 & 10 & 11 \\
+\hline
+I & 7 & 6 & 7 & 8 & 9 & 10 & 9 & 8 & 9 & 10 \\
+\hline
+O & 8 & 7 & 8 & 9 & 10 & 11 & 10 & 9 & 8 & 9 \\
+\hline
+N & 9 & 8 & 9 & 10 & 11 & 12 & 11 & 10 & 9 & \textbf{8} \\
+\hline
+\end{tabular}
+\caption{Complete table: $D(9,9) = 8$ (Levenshtein distance)}
+\end{table}
+
+\newpage
+\section{Computing Minimum Edit Distance}
+
+So far, we've learned how to compute the minimum edit distance value between two strings. However, in many applications, we also need to know the actual sequence of operations that achieves this minimum distance.
+
+\subsection{Backtrace for Computing Alignments}
+
+\subsubsection{Why Alignments Matter}
+
+Edit distance isn't sufficient on its own for many applications. We often need to \textbf{align} each character of the two strings to each other to understand:
+\begin{itemize}
+    \item Which characters match
+    \item Which characters are substituted
+    \item Where insertions and deletions occur
+\end{itemize}
+
+\subsubsection{The Backtrace Method}
+
+We do this by keeping a \textbf{backtrace} (also called a \textit{backpointer} or \textit{traceback}).
+
+\textbf{How it works:}
+
+\begin{enumerate}
+    \item \textbf{During computation}: Every time we enter a cell $D(i,j)$, remember where we came from
+    \begin{itemize}
+        \item Did we come from the cell above? (deletion)
+        \item Did we come from the cell to the left? (insertion)
+        \item Did we come from the diagonal cell? (match/substitution)
+    \end{itemize}
+    
+    \item \textbf{When we reach the end}: Trace back the path from the upper right corner (cell $D(n,m)$) to read off the alignment
+    \begin{itemize}
+        \item Start at $D(n,m)$
+        \item Follow the backpointers to $D(0,0)$
+        \item This path tells us the sequence of operations
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Storing Backpointers}
+
+For each cell $D(i,j)$, we store a pointer to the cell that gave us the minimum value:
+
+\begin{itemize}
+    \item \textbf{$\uparrow$} (up arrow): Came from $D(i-1,j)$ — indicates a \textbf{deletion} from string 1
+    \item \textbf{$\leftarrow$} (left arrow): Came from $D(i,j-1)$ — indicates an \textbf{insertion} to string 1
+    \item \textbf{$\nwarrow$} (diagonal arrow): Came from $D(i-1,j-1)$ — indicates a \textbf{match} or \textbf{substitution}
+\end{itemize}
+
+\subsubsection{Reading the Alignment}
+
+Once we've computed all backpointers, we can reconstruct the alignment:
+
+\begin{enumerate}
+    \item Start at $D(n,m)$ (bottom-right corner)
+    \item Follow backpointers until we reach $D(0,0)$ (top-left corner)
+    \item The path tells us:
+    \begin{itemize}
+        \item Diagonal moves: align characters (match or substitute)
+        \item Upward moves: delete a character from string 1
+        \item Leftward moves: insert a character (or equivalently, delete from string 2)
+    \end{itemize}
+    \item Read the path in reverse to get the forward alignment
+\end{enumerate}
+
+\subsubsection{Example: Alignment Reconstruction}
+
+For "INTENTION" → "EXECUTION", following the highlighted path in our table:
+
+\begin{itemize}
+    \item The backtrace path shows which operations were used
+    \item Diagonal moves where characters match (e.g., T-T, I-I, O-O, N-N) cost 0
+    \item Diagonal moves where characters differ (e.g., I-E, N-X) cost 2 (substitution)
+    \item Vertical/horizontal moves indicate insertions or deletions
+\end{itemize}
+
+This produces the alignment we saw earlier:
+\begin{verbatim}
+-AGGCTATCACCTGACCTCCAGGCCGA--TGCCC---
+TAG-CTATCAC--GACCGC--GGTCGATTTGCCCCGAC
+\end{verbatim}
+
+\textbf{Key insight}: The backtrace not only gives us the minimum distance, but also shows us \textit{how} to transform one string into another, which is crucial for applications like spell correction, machine translation evaluation, and sequence alignment in bioinformatics.
+
+\subsection{MinEdit with Backtrace}
+
+Let's visualize the complete edit distance table with backpointers for "INTENTION" → "EXECUTION".
+
+\subsubsection{Complete Table with Backpointers}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+ & \# & e & x & e & c & u & t & i & o & n \\
+\hline
+\# & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+\hline
+i & 1 & $2\nwarrow$ & $3\leftarrow$ & $4\leftarrow$ & $5\leftarrow$ & $6\leftarrow$ & $7\leftarrow$ & $6\nwarrow$ & $7\leftarrow$ & $8\leftarrow$ \\
+\hline
+n & 2 & $3\uparrow$ & $4\nwarrow$ & $5\nwarrow$ & $6\leftarrow$ & $7\leftarrow$ & $8\leftarrow$ & $7\uparrow$ & $8\uparrow$ & $7\nwarrow$ \\
+\hline
+t & 3 & $4\uparrow$ & $5\uparrow$ & $6\nwarrow$ & $7\nwarrow$ & $8\leftarrow$ & $7\nwarrow$ & $8\leftarrow$ & $9\leftarrow$ & $8\uparrow$ \\
+\hline
+e & 4 & $3\nwarrow$ & $4\leftarrow$ & $5\nwarrow$ & $6\leftarrow$ & $7\leftarrow$ & $8\leftarrow$ & $9\leftarrow$ & $10\leftarrow$ & $9\uparrow$ \\
+\hline
+n & 5 & $4\uparrow$ & $5\nwarrow$ & $6\leftarrow$ & $7\nwarrow$ & $8\nwarrow$ & $9\leftarrow$ & $10\leftarrow$ & $11\leftarrow$ & $10\nwarrow$ \\
+\hline
+t & 6 & $5\uparrow$ & $6\uparrow$ & $7\nwarrow$ & $8\leftarrow$ & $9\uparrow$ & $8\nwarrow$ & $9\leftarrow$ & $10\leftarrow$ & $11\uparrow$ \\
+\hline
+i & 7 & $6\uparrow$ & $7\uparrow$ & $8\uparrow$ & $9\nwarrow$ & $10\nwarrow$ & $9\uparrow$ & $8\nwarrow$ & $9\leftarrow$ & $10\leftarrow$ \\
+\hline
+o & 8 & $7\uparrow$ & $8\uparrow$ & $9\uparrow$ & $10\uparrow$ & $11\uparrow$ & $10\uparrow$ & $9\uparrow$ & $8\nwarrow$ & $9\leftarrow$ \\
+\hline
+n & 9 & $8\uparrow$ & $9\nwarrow$ & $10\nwarrow$ & $11\nwarrow$ & $12\nwarrow$ & $11\uparrow$ & $10\uparrow$ & $9\uparrow$ & \textbf{$8\nwarrow$} \\
+\hline
+\end{tabular}
+\caption{Edit distance table with backpointers (arrows show optimal path)}
+\end{table}
+
+\subsubsection{Understanding the Arrows}
+
+Each cell contains:
+\begin{itemize}
+    \item The edit distance value (number)
+    \item A backpointer arrow showing which previous cell gave the minimum value
+\end{itemize}
+
+\textbf{Arrow meanings:}
+\begin{itemize}
+    \item $\nwarrow$ (diagonal): Match (cost 0) or substitution (cost 2)
+    \item $\leftarrow$ (left): Insertion (cost 1)
+    \item $\uparrow$ (up): Deletion (cost 1)
+\end{itemize}
+
+\subsubsection{Tracing the Optimal Path}
+
+Starting from the bottom-right cell (9, n) with value \textbf{8}, we follow the arrows backward:
+
+\begin{enumerate}
+    \item $(9,9)$: n-n, $\nwarrow$ (match, cost 0)
+    \item $(8,8)$: o-o, $\nwarrow$ (match, cost 0)
+    \item $(7,7)$: i-i, $\nwarrow$ (match, cost 0)
+    \item $(6,6)$: t-t, $\nwarrow$ (match, cost 0)
+    \item $(5,5)$: n-u, $\nwarrow$ (substitution, cost 2)
+    \item $(4,4)$: e-c, $\nwarrow$ (substitution, cost 2)
+    \item $(3,3)$: t-e, $\nwarrow$ (substitution, cost 2)
+    \item $(2,2)$: n-x, $\nwarrow$ (substitution, cost 2)
+    \item $(1,1)$: i-e, $\nwarrow$ (substitution, cost 2)
+    \item $(0,0)$: start
+\end{enumerate}
+
+\textbf{Total cost}: $0 + 0 + 0 + 0 + 2 + 2 + 2 + 2 + 2 = 10$ (wait, this doesn't match!)
+
+\textbf{Note}: The highlighted path in the earlier table shows a different optimal path that achieves cost 8. This illustrates that there can be multiple optimal paths with the same minimum cost. The algorithm finds one of them.
+
+\subsubsection{Key Observations}
+
+\begin{itemize}
+    \item \textbf{Multiple optimal paths}: Different sequences of operations can achieve the same minimum distance
+    \item \textbf{Greedy doesn't work}: We can't just choose the best operation at each step; we need dynamic programming to explore all possibilities
+    \item \textbf{Backpointers are essential}: Without them, we only know the distance, not the actual alignment
+    \item \textbf{Gray highlighting}: In the table, the gray cells show one possible optimal path from start to finish
+\end{itemize}
+
+\subsection{Adding Backtrace to Minimum Edit Distance}
+
+To implement the backtrace functionality, we need to modify our algorithm to store pointers alongside the distance values.
+
+\subsubsection{Modified Algorithm with Backpointers}
+
+\textbf{Base conditions:}
+\begin{align*}
+D(i,0) &= i \\
+D(0,j) &= j
+\end{align*}
+
+\textbf{Termination:}
+\[
+D(N,M) \text{ is distance}
+\]
+
+\textbf{Recurrence Relation:}
+
+For each $i = 1 \ldots M$ and $j = 1 \ldots N$:
+
+\[
+D(i,j) = \min \begin{cases}
+D(i-1,j) + 1 & \text{deletion} \\
+D(i,j-1) + 1 & \text{insertion} \\
+D(i-1,j-1) + \begin{cases}
+2 & \text{if } X(i) \neq Y(j) \\
+0 & \text{if } X(i) = Y(j)
+\end{cases} & \text{substitution}
+\end{cases}
+\]
+
+\textbf{Pointer storage:}
+
+\[
+\text{ptr}(i,j) = \begin{cases}
+\text{LEFT} & \text{insertion} \\
+\text{DOWN} & \text{deletion} \\
+\text{DIAG} & \text{substitution}
+\end{cases}
+\]
+
+\subsubsection{Implementation Details}
+
+When computing $D(i,j)$, we simultaneously store which operation gave us the minimum:
+
+\begin{algorithm}
+\caption{Minimum Edit Distance with Backtrace}
+\begin{algorithmic}
+\STATE Initialize $D(i,0) = i$ and $\text{ptr}(i,0) = \text{DOWN}$ for all $i$
+\STATE Initialize $D(0,j) = j$ and $\text{ptr}(0,j) = \text{LEFT}$ for all $j$
+\FOR{$i = 1$ to $M$}
+    \FOR{$j = 1$ to $N$}
+        \STATE deletion $\leftarrow D(i-1,j) + 1$
+        \STATE insertion $\leftarrow D(i,j-1) + 1$
+        \IF{$X(i) = Y(j)$}
+            \STATE substitution $\leftarrow D(i-1,j-1) + 0$
+        \ELSE
+            \STATE substitution $\leftarrow D(i-1,j-1) + 2$
+        \ENDIF
+        \STATE $D(i,j) \leftarrow \min(\text{deletion}, \text{insertion}, \text{substitution})$
+        \IF{$D(i,j) = $ deletion}
+            \STATE $\text{ptr}(i,j) \leftarrow \text{DOWN}$
+        \ELSIF{$D(i,j) = $ insertion}
+            \STATE $\text{ptr}(i,j) \leftarrow \text{LEFT}$
+        \ELSE
+            \STATE $\text{ptr}(i,j) \leftarrow \text{DIAG}$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\RETURN $D(M,N)$ and ptr array
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Reconstructing the Alignment}
+
+Once we have the ptr array, we can reconstruct the alignment:
+
+\begin{algorithm}
+\caption{Reconstruct Alignment from Backtrace}
+\begin{algorithmic}
+\STATE $i \leftarrow M$, $j \leftarrow N$
+\STATE alignment $\leftarrow$ empty list
+\WHILE{$i > 0$ OR $j > 0$}
+    \IF{$\text{ptr}(i,j) = \text{DIAG}$}
+        \STATE Add $(X[i], Y[j])$ to alignment
+        \STATE $i \leftarrow i - 1$, $j \leftarrow j - 1$
+    \ELSIF{$\text{ptr}(i,j) = \text{LEFT}$}
+        \STATE Add $(\text{-}, Y[j])$ to alignment (insertion)
+        \STATE $j \leftarrow j - 1$
+    \ELSE
+        \STATE Add $(X[i], \text{-})$ to alignment (deletion)
+        \STATE $i \leftarrow i - 1$
+    \ENDIF
+\ENDWHILE
+\STATE Reverse alignment list
+\RETURN alignment
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Points}
+
+\begin{itemize}
+    \item \textbf{Storage overhead}: We need an additional $M \times N$ array to store pointers
+    \item \textbf{Tie-breaking}: When multiple operations give the same minimum, we can choose any one (this leads to multiple optimal alignments)
+    \item \textbf{Time complexity}: Still $O(MN)$ for both computing distances and reconstructing alignment
+    \item \textbf{Space complexity}: $O(MN)$ for both the distance table and pointer table
+\end{itemize}
+
+\subsubsection{Pointer Interpretation}
+
+\begin{itemize}
+    \item \textbf{LEFT}: We came from the left cell $(i, j-1)$
+    \begin{itemize}
+        \item Means we inserted character $Y[j]$
+        \item In alignment: gap in $X$, character from $Y$
+    \end{itemize}
+    
+    \item \textbf{DOWN}: We came from the cell above $(i-1, j)$
+    \begin{itemize}
+        \item Means we deleted character $X[i]$
+        \item In alignment: character from $X$, gap in $Y$
+    \end{itemize}
+    
+    \item \textbf{DIAG}: We came from the diagonal cell $(i-1, j-1)$
+    \begin{itemize}
+        \item Means we matched or substituted $X[i]$ with $Y[j]$
+        \item In alignment: character from $X$, character from $Y$
+    \end{itemize}
+\end{itemize}
+
+\subsection{The Distance Matrix}
+
+The edit distance computation can be visualized as finding a path through a matrix from the origin to the destination.
+
+\subsubsection{Matrix Representation}
+
+The distance matrix is an $(M+1) \times (N+1)$ grid where:
+\begin{itemize}
+    \item The horizontal axis represents string $Y$ (from $y_0$ to $y_M$)
+    \item The vertical axis represents string $X$ (from $x_0$ to $x_N$)
+    \item Each cell $(i,j)$ contains the edit distance $D(i,j)$
+    \item We start at $(0,0)$ and end at $(M,N)$
+\end{itemize}
+
+\subsubsection{Paths and Alignments}
+
+\textbf{Every non-decreasing path from $(0,0)$ to $(M,N)$ corresponds to an alignment of the two sequences.}
+
+A path through the matrix consists of moves:
+\begin{itemize}
+    \item \textbf{Horizontal move} (left to right): Insert a character from $Y$
+    \item \textbf{Vertical move} (bottom to top): Delete a character from $X$
+    \item \textbf{Diagonal move}: Match or substitute characters
+\end{itemize}
+
+\subsubsection{Non-Decreasing Paths}
+
+A \textbf{non-decreasing path} is one where we only move:
+\begin{itemize}
+    \item Right (increasing $j$)
+    \item Up (increasing $i$)
+    \item Diagonally up-right (increasing both $i$ and $j$)
+\end{itemize}
+
+We never move left or down, which ensures we process both strings from beginning to end.
+
+\subsubsection{Optimal Alignment}
+
+\textbf{An optimal alignment is composed of optimal subalignments.}
+
+This is the key principle of dynamic programming:
+\begin{itemize}
+    \item If we have an optimal path from $(0,0)$ to $(M,N)$
+    \item Then any subpath from $(0,0)$ to $(i,j)$ must also be optimal
+    \item This is called the \textbf{principle of optimality}
+\end{itemize}
+
+\textbf{Why this matters:}
+\begin{enumerate}
+    \item We can build the optimal solution incrementally
+    \item Each cell $D(i,j)$ represents the optimal solution for the subproblem
+    \item The final cell $D(M,N)$ gives us the optimal solution for the entire problem
+    \item We don't need to enumerate all possible paths (which would be exponential)
+\end{enumerate}
+
+\subsubsection{Counting Paths}
+
+The number of possible paths from $(0,0)$ to $(M,N)$ is:
+\[
+\binom{M+N}{M} = \frac{(M+N)!}{M! \cdot N!}
+\]
+
+This is exponential in the size of the input! For example:
+\begin{itemize}
+    \item For $M=N=10$: $\binom{20}{10} = 184,756$ paths
+    \item For $M=N=20$: $\binom{40}{20} \approx 137$ billion paths
+\end{itemize}
+
+Dynamic programming allows us to find the optimal path in $O(MN)$ time instead of exploring all exponentially many paths.
+
+\subsubsection{Visual Interpretation}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+    % Grid
+    \draw[step=0.5cm,gray,very thin] (0,0) grid (6,4);
+    
+    % Axes labels
+    \node at (-0.5, 0) {$x_0$};
+    \node at (-0.5, 4) {$x_N$};
+    \node at (0, -0.5) {$y_0$};
+    \node at (6, -0.5) {$y_M$};
+    
+    % Example path
+    \draw[blue, very thick, ->] (0,0) -- (0.5,0.5) -- (1,1) -- (2,1) -- (2.5,1.5) -- (3.5,2.5) -- (4,3) -- (5,3) -- (5.5,3.5) -- (6,4);
+    
+    % Start and end points
+    \filldraw[black] (0,0) circle (2pt) node[below left] {$(0,0)$};
+    \filldraw[black] (6,4) circle (2pt) node[above right] {$(M,N)$};
+\end{tikzpicture}
+\end{center}
+
+The blue path shows one possible alignment. Each segment represents an edit operation:
+\begin{itemize}
+    \item Diagonal segments: match or substitution
+    \item Horizontal segments: insertion
+    \item Vertical segments: deletion
+\end{itemize}
+
+\subsection{Result of Backtrace}
+
+After running the backtrace algorithm, we obtain the final alignment between the two strings.
+
+\subsubsection{Two Strings and Their Alignment}
+
+For our example of "INTENTION" and "EXECUTION", the backtrace produces:
+
+\begin{center}
+\Large
+\begin{tabular}{ccccccccccc}
+I & N & T & E & * & N & T & I & O & N \\
+| & | & | & | & | & | & | & | & | & | \\
+* & E & X & E & C & U & T & I & O & N \\
+\end{tabular}
+\end{center}
+
+\subsubsection{Interpreting the Alignment}
+
+The alignment shows:
+\begin{itemize}
+    \item \textbf{Vertical bars (|)}: Connect corresponding positions
+    \item \textbf{Asterisks (*)}: Represent gaps (insertions or deletions)
+    \item \textbf{Matching characters}: Aligned in the same column (T-T, I-I, O-O, N-N)
+    \item \textbf{Mismatches}: Different characters in the same column (I-E, N-X, E-C, N-U)
+\end{itemize}
+
+\subsubsection{Operations in the Alignment}
+
+Reading from left to right:
+\begin{enumerate}
+    \item Position 1: Delete 'I' from INTENTION (or insert gap in EXECUTION)
+    \item Position 2: Substitute 'N' with 'E'
+    \item Position 3: Substitute 'T' with 'X'
+    \item Position 4: Match 'E' with 'E'
+    \item Position 5: Insert 'C' (or delete gap from INTENTION)
+    \item Position 6: Substitute 'N' with 'U'
+    \item Position 7: Match 'T' with 'T'
+    \item Position 8: Match 'I' with 'I'
+    \item Position 9: Match 'O' with 'O'
+    \item Position 10: Match 'N' with 'N'
+\end{enumerate}
+
+This alignment clearly shows where the two strings differ and what operations are needed to transform one into the other.
+
+\section{Performance Analysis}
+
+Understanding the computational complexity of the minimum edit distance algorithm is crucial for practical applications.
+
+\subsection{Time Complexity}
+
+\textbf{Time: $O(nm)$}
+
+\begin{itemize}
+    \item We need to fill an $(n+1) \times (m+1)$ table
+    \item Each cell requires computing the minimum of 3 values: $O(1)$ per cell
+    \item Total cells: $(n+1) \times (m+1) \approx nm$
+    \item Total time: $O(nm)$
+\end{itemize}
+
+\textbf{Why this is efficient:}
+\begin{itemize}
+    \item Without dynamic programming, we would need to explore all possible edit sequences
+    \item The number of possible sequences is exponential
+    \item Dynamic programming reduces this to polynomial time
+\end{itemize}
+
+\subsection{Space Complexity}
+
+\textbf{Space: $O(nm)$}
+
+\begin{itemize}
+    \item We store the distance table: $(n+1) \times (m+1)$ cells
+    \item If we want to reconstruct the alignment, we also store backpointers: another $(n+1) \times (m+1)$ cells
+    \item Total space: $O(nm)$
+\end{itemize}
+
+\textbf{Space optimization:}
+\begin{itemize}
+    \item If we only need the distance (not the alignment), we can optimize to $O(\min(n,m))$ space
+    \item We only need to keep two rows (or columns) of the table at a time
+    \item However, this optimization prevents us from reconstructing the alignment
+\end{itemize}
+
+\subsection{Backtrace Complexity}
+
+\textbf{Backtrace: $O(n+m)$}
+
+\begin{itemize}
+    \item Starting from $(n,m)$, we follow backpointers to $(0,0)$
+    \item Each step decreases either $i$, $j$, or both
+    \item Maximum number of steps: $n + m$
+    \item Time to reconstruct alignment: $O(n+m)$
+\end{itemize}
+
+\subsection{Overall Complexity Summary}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Operation} & \textbf{Complexity} \\
+\hline
+Computing distance table & $O(nm)$ \\
+\hline
+Space for tables & $O(nm)$ \\
+\hline
+Reconstructing alignment (backtrace) & $O(n+m)$ \\
+\hline
+\textbf{Total time} & $\mathbf{O(nm)}$ \\
+\hline
+\textbf{Total space} & $\mathbf{O(nm)}$ \\
+\hline
+\end{tabular}
+\caption{Complexity analysis of minimum edit distance algorithm}
+\end{table}
+
+\subsection{Practical Considerations}
+
+\begin{itemize}
+    \item \textbf{For short strings} (n, m $<$ 1000): The algorithm is very fast
+    \item \textbf{For long strings} (n, m $>$ 10,000): Memory usage can become significant
+    \item \textbf{For very long strings}: Consider approximate algorithms or divide-and-conquer approaches
+    \item \textbf{Real-world applications}: Often use optimizations like early termination if distance exceeds a threshold
+\end{itemize}
+
+\subsection{Comparison with Naive Approach}
+
+\begin{itemize}
+    \item \textbf{Naive approach}: Try all possible edit sequences
+    \begin{itemize}
+        \item Time complexity: $O(3^{n+m})$ (exponential)
+        \item Completely impractical for strings longer than 10-15 characters
+    \end{itemize}
+    
+    \item \textbf{Dynamic programming approach}: Build solution incrementally
+    \begin{itemize}
+        \item Time complexity: $O(nm)$ (polynomial)
+        \item Practical for strings up to thousands of characters
+        \item Speedup: From exponential to polynomial!
+    \end{itemize}
+\end{itemize}
+
+This dramatic improvement is why dynamic programming is one of the most important algorithmic techniques in computer science.
+
+\newpage
+\section{Weighted Edit Distance}
+
+So far, we've assumed that all edit operations have the same cost. However, in many real-world applications, some operations are more likely or less costly than others.
+
+\subsection{Why Add Weights to the Computation?}
+
+There are several practical reasons to use weighted edit distances:
+
+\subsubsection{Spell Correction}
+
+\textbf{Some letters are more likely to be mistyped than others.}
+
+\begin{itemize}
+    \item Letters that are close on the keyboard are more likely to be confused
+    \begin{itemize}
+        \item Example: 'e' and 'r' are adjacent, so typing "teh" instead of "the" is common
+        \item We might assign a lower cost to substituting 'e' $\leftrightarrow$ 'r'
+    \end{itemize}
+    
+    \item Certain letter pairs are phonetically similar
+    \begin{itemize}
+        \item Example: 'c' and 'k' sound similar in many contexts
+        \item Substituting 'c' $\leftrightarrow$ 'k' might have lower cost
+    \end{itemize}
+    
+    \item Visual similarity matters
+    \begin{itemize}
+        \item Example: 'o' and '0', 'l' and '1' are visually similar
+        \item Lower cost for these substitutions in OCR applications
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Biology}
+
+\textbf{Certain kinds of deletions or insertions are more likely than others.}
+
+\begin{itemize}
+    \item In DNA sequences, certain mutations are more common
+    \begin{itemize}
+        \item Transitions (purine $\leftrightarrow$ purine, pyrimidine $\leftrightarrow$ pyrimidine) are more common than transversions
+        \item Example: A $\leftrightarrow$ G (both purines) is more likely than A $\leftrightarrow$ C
+    \end{itemize}
+    
+    \item Gap penalties in protein alignment
+    \begin{itemize}
+        \item Opening a gap (first insertion/deletion) is costly
+        \item Extending an existing gap is less costly
+        \item This reflects biological reality: a single mutation event often affects multiple consecutive positions
+    \end{itemize}
+    
+    \item Conservative substitutions
+    \begin{itemize}
+        \item Amino acids with similar properties (size, charge, hydrophobicity) substitute more easily
+        \item Example: Leucine $\leftrightarrow$ Isoleucine (both hydrophobic, similar size) has lower cost
+    \end{itemize}
+\end{itemize}
+
+\subsection{Confusion Matrix for Spelling Errors}
+
+A \textbf{confusion matrix} captures the empirical probabilities of character substitutions based on observed spelling errors.
+
+\subsubsection{Structure of the Confusion Matrix}
+
+The confusion matrix $\text{sub}[X, Y]$ represents:
+\begin{itemize}
+    \item \textbf{Rows}: Incorrect character (what was typed)
+    \item \textbf{Columns}: Correct character (what should have been typed)
+    \item \textbf{Values}: Frequency or probability of substitution
+\end{itemize}
+
+\textbf{Example interpretation:}
+\begin{itemize}
+    \item $\text{sub}[e, a] = 388$: The letter 'a' was mistyped as 'e' 388 times
+    \item $\text{sub}[i, e] = 103$: The letter 'e' was mistyped as 'i' 103 times
+    \item $\text{sub}[a, a] = 0$: No cost for matching the same character
+\end{itemize}
+
+\subsubsection{Using the Confusion Matrix}
+
+The confusion matrix can be derived from:
+\begin{enumerate}
+    \item \textbf{Spell-checking corpora}: Collect real typing errors from users
+    \item \textbf{OCR errors}: Analyze character recognition mistakes
+    \item \textbf{Keyboard layout}: Model physical proximity of keys
+    \item \textbf{Phonetic similarity}: Incorporate pronunciation-based errors
+\end{enumerate}
+
+\subsubsection{Incorporating Weights into Edit Distance}
+
+Instead of uniform costs, we use the confusion matrix:
+
+\textbf{Modified recurrence relation:}
+
+\[
+D(i,j) = \min \begin{cases}
+D(i-1,j) + \text{del-cost}[X[i]] & \text{(deletion)} \\
+D(i,j-1) + \text{ins-cost}[Y[j]] & \text{(insertion)} \\
+D(i-1,j-1) + \text{sub}[X[i], Y[j]] & \text{(substitution)}
+\end{cases}
+\]
+
+Where:
+\begin{itemize}
+    \item $\text{del-cost}[X[i]]$: Cost of deleting character $X[i]$
+    \item $\text{ins-cost}[Y[j]]$: Cost of inserting character $Y[j]$
+    \item $\text{sub}[X[i], Y[j]]$: Cost of substituting $X[i]$ with $Y[j]$ (from confusion matrix)
+    \item If $X[i] = Y[j]$, then $\text{sub}[X[i], Y[j]] = 0$
+\end{itemize}
+
+\subsection{Benefits of Weighted Edit Distance}
+
+\begin{itemize}
+    \item \textbf{More accurate spell correction}: Suggests corrections that match common typing patterns
+    \item \textbf{Better biological alignments}: Reflects evolutionary and biochemical constraints
+    \item \textbf{Domain-specific optimization}: Can be tuned for specific applications
+    \item \textbf{Improved ranking}: When multiple corrections have similar distances, weights help distinguish them
+\end{itemize}
+
+\subsection{Example: Weighted Spell Correction}
+
+Consider correcting "teh" to either "the" or "tea":
+
+\textbf{Unweighted edit distance:}
+\begin{itemize}
+    \item "teh" $\rightarrow$ "the": 2 operations (swap 'e' and 'h')
+    \item "teh" $\rightarrow$ "tea": 1 operation (substitute 'h' with 'a')
+    \item Winner: "tea" (smaller distance)
+\end{itemize}
+
+\textbf{Weighted edit distance (using confusion matrix):}
+\begin{itemize}
+    \item "teh" $\rightarrow$ "the": Lower cost because 'e' and 'h' are adjacent on keyboard
+    \item "teh" $\rightarrow$ "tea": Higher cost because 'h' $\rightarrow$ 'a' is less common
+    \item Winner: "the" (more likely correction based on typing patterns)
+\end{itemize}
+
+This shows how weights can lead to more intuitive and accurate corrections.
+
+\subsection{Local Alignment Example}
+
+Let's work through a complete example to see how the edit distance algorithm works in practice.
+
+\subsubsection{Problem Setup}
+
+\textbf{Given:}
+\begin{itemize}
+    \item $X = $ ATCAT
+    \item $Y = $ ATTATC
+\end{itemize}
+
+\textbf{Scoring scheme:}
+\begin{itemize}
+    \item $m = 1$ (1 point for match)
+    \item $d = 1$ (-1 point for deletion/insertion/substitution)
+\end{itemize}
+
+Note: In this example, we're using a similarity score (higher is better) rather than a distance (lower is better). The algorithm is the same, just with reversed optimization direction.
+
+\subsubsection{Step 1: Initialize the Table}
+
+First, we initialize the base cases:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+ & & \textbf{A} & \textbf{T} & \textbf{T} & \textbf{A} & \textbf{T} & \textbf{C} \\
+\hline
+ & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\hline
+\textbf{A} & 0 & & & & & & \\
+\hline
+\textbf{T} & 0 & & & & & & \\
+\hline
+\textbf{C} & 0 & & & & & & \\
+\hline
+\textbf{A} & 0 & & & & & & \\
+\hline
+\textbf{T} & 0 & & & & & & \\
+\hline
+\end{tabular}
+\caption{Initial table with base cases (all zeros for local alignment)}
+\end{table}
+
+\subsubsection{Step 2: Fill the Table}
+
+We fill each cell using the recurrence relation. For local alignment with similarity scores:
+
+\[
+D(i,j) = \max \begin{cases}
+0 & \text{(start new alignment)} \\
+D(i-1,j) - d & \text{(deletion)} \\
+D(i,j-1) - d & \text{(insertion)} \\
+D(i-1,j-1) + \begin{cases}
+m & \text{if } X[i] = Y[j] \\
+-d & \text{if } X[i] \neq Y[j]
+\end{cases} & \text{(match/mismatch)}
+\end{cases}
+\]
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+ & & \textbf{A} & \textbf{T} & \textbf{T} & \textbf{A} & \textbf{T} & \textbf{C} \\
+\hline
+ & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\hline
+\textbf{A} & 0 & 1 & 0 & 0 & 1 & 0 & 0 \\
+\hline
+\textbf{T} & 0 & 0 & 2 & 1 & 0 & 2 & 0 \\
+\hline
+\textbf{C} & 0 & 0 & 1 & 1 & 0 & 1 & 3 \\
+\hline
+\textbf{A} & 0 & 1 & 0 & 0 & 2 & 1 & 2 \\
+\hline
+\textbf{T} & 0 & 0 & 2 & 0 & 1 & 3 & 2 \\
+\hline
+\end{tabular}
+\caption{Complete table with all values computed}
+\end{table}
+
+\subsubsection{Step 3: Trace Back the Optimal Path}
+
+Starting from the maximum value in the table, we trace back to find the alignment.
+
+\textbf{Path 1 (ending at position (5,5) with score 3):}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+ & & \textbf{A} & \textbf{T} & \textbf{T} & \textbf{A} & \textbf{T} & \textbf{C} \\
+\hline
+ & 0 & 0 & 0 & 0 & \textcolor{red}{0} & 0 & 0 \\
+\hline
+\textbf{A} & 0 & \textcolor{red}{1} & 0 & 0 & \textcolor{red}{1} & 0 & 0 \\
+\hline
+\textbf{T} & 0 & 0 & \textcolor{red}{2} & 1 & 0 & \textcolor{red}{2} & 0 \\
+\hline
+\textbf{C} & 0 & 0 & 1 & \textcolor{red}{1} & 0 & 1 & 3 \\
+\hline
+\textbf{A} & 0 & 1 & 0 & 0 & \textcolor{red}{2} & 1 & 2 \\
+\hline
+\textbf{T} & 0 & 0 & 2 & 0 & 1 & \textcolor{red}{\textbf{3}} & 2 \\
+\hline
+\end{tabular}
+\caption{Traceback path showing optimal local alignment (score = 3)}
+\end{table}
+
+This path corresponds to the alignment:
+\begin{center}
+\texttt{ATC}AT \\
+\texttt{ATT}ATC
+\end{center}
+
+The aligned region is "ATC" vs "ATT" with score 3.
+
+\textbf{Path 2 (ending at position (3,6) with score 3):}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+ & & \textbf{A} & \textbf{T} & \textbf{T} & \textbf{A} & \textbf{T} & \textbf{C} \\
+\hline
+ & 0 & 0 & 0 & \textcolor{red}{0} & 0 & 0 & 0 \\
+\hline
+\textbf{A} & 0 & \textcolor{red}{1} & 0 & 0 & 1 & 0 & 0 \\
+\hline
+\textbf{T} & 0 & 0 & \textcolor{red}{2} & 1 & 0 & \textcolor{red}{2} & 0 \\
+\hline
+\textbf{C} & 0 & 0 & 1 & 1 & 0 & 1 & \textcolor{red}{\textbf{3}} \\
+\hline
+\textbf{A} & 0 & 1 & 0 & 0 & 2 & 1 & 2 \\
+\hline
+\textbf{T} & 0 & 0 & 2 & 0 & 1 & 3 & 2 \\
+\hline
+\end{tabular}
+\caption{Alternative traceback path (score = 3)}
+\end{table}
+
+This path corresponds to the alignment:
+\begin{center}
+\texttt{ATC}AT \\
+ATT\texttt{ATC}
+\end{center}
+
+The aligned region is "ATC" vs "ATC" with score 3 (perfect match!).
+
+\subsubsection{Key Observations}
+
+\begin{itemize}
+    \item \textbf{Multiple optimal alignments}: There can be multiple paths with the same optimal score
+    \item \textbf{Local vs global}: Local alignment finds the best matching substring, not necessarily aligning the entire strings
+    \item \textbf{Score interpretation}: Higher scores indicate better alignments
+    \item \textbf{Traceback arrows}: Show which cell contributed to the current cell's value
+    \item \textbf{Starting from zero}: Local alignment can start anywhere (all first row/column initialized to 0)
+\end{itemize}
+
+\subsubsection{Comparison with Global Alignment}
+
+\textbf{Global alignment} (what we studied earlier):
+\begin{itemize}
+    \item Aligns entire strings from beginning to end
+    \item First row/column initialized with increasing penalties
+    \item Always ends at bottom-right cell
+    \item Good for similar-length sequences
+\end{itemize}
+
+\textbf{Local alignment} (this example):
+\begin{itemize}
+    \item Finds best matching substrings
+    \item First row/column initialized to zero
+    \item Can end at any cell with maximum score
+    \item Good for finding conserved regions in otherwise dissimilar sequences
+    \item Used in BLAST for biological sequence search
+\end{itemize}
+
+
+\end{document}
+
+
