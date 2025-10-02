@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1759407286.63123 "/Users/japo./Desktop/AI---PRIMO-SEMESTRE/NLP/AR/AR Appunti.tex" "AR Appunti.pdf" "AR Appunti" 1759407287.17408 0
-  "/Users/japo./Desktop/AI---PRIMO-SEMESTRE/NLP/AR/AR Appunti.tex" 1759407285.75837 2138 903dd7bf7a8e381a4aede27c72f473f9 ""
+["pdflatex"] 1759407345.00829 "/Users/japo./Desktop/AI---PRIMO-SEMESTRE/NLP/AR/AR Appunti.tex" "AR Appunti.pdf" "AR Appunti" 1759407345.61143 0
+  "/Users/japo./Desktop/AI---PRIMO-SEMESTRE/NLP/AR/AR Appunti.tex" 1759407344.79895 2145 65129711d02a4c6f985856f6ac6af9c4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/jknappen/ec/ecbx1200.tfm" 1136768653 3584 402da0b29eafbad07963b1224b222f18 ""
@@ -176,10 +176,10 @@
   "/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1759300550 5467155 19efa205003f9ecad95fbbaa6ff24da1 ""
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1759300482 3345728 4b52011af111744edbe55b14f828dd38 ""
   "/usr/local/texlive/2025/texmf.cnf" 1741450484 577 418a7058ec8e006d8704f60ecd22c938 ""
-  "AR Appunti.aux" 1759407287.12186 393 eb657341f2a42efb38795f9964575b69 "pdflatex"
-  "AR Appunti.out" 1759407287.12242 53 133737d5b14c0629ac1107a42fc72f74 "pdflatex"
-  "AR Appunti.tex" 1759407285.75837 2138 903dd7bf7a8e381a4aede27c72f473f9 ""
-  "AR Appunti.toc" 1759407287.12258 109 851263510e123e1ba9e68e7ad95e7dde "pdflatex"
+  "AR Appunti.aux" 1759407345.55787 393 eb657341f2a42efb38795f9964575b69 "pdflatex"
+  "AR Appunti.out" 1759407345.55872 53 133737d5b14c0629ac1107a42fc72f74 "pdflatex"
+  "AR Appunti.tex" 1759407344.79895 2145 65129711d02a4c6f985856f6ac6af9c4 ""
+  "AR Appunti.toc" 1759407345.55894 109 851263510e123e1ba9e68e7ad95e7dde "pdflatex"
   (generated)
   "AR Appunti.aux"
   "AR Appunti.log"
