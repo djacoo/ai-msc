@@ -15,7 +15,7 @@ Each course has its own dedicated folder containing:
 
 ### First Semester (Primo Semestre)
 
-- **[AR/](./AR/)** - Augmented Reality
+- **[AR/](./AR/)** - Automated Reasoning
   - Course notes and materials
   - Lecture slides
   - Exercises and assignments
