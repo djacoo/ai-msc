@@ -1,8 +1,8 @@
-PWD /Users/japo./Desktop/AI - PRIMO SEMESTRE/NLP
+PWD /Users/japo./Desktop/AI---PRIMO-SEMESTRE/NLP
 INPUT /usr/local/texlive/2025/texmf.cnf
 INPUT /usr/local/texlive/2025/texmf-dist/web2c/texmf.cnf
 INPUT /usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT /Users/japo./Desktop/AI - PRIMO SEMESTRE/NLP/NLP Appunti.tex
+INPUT /Users/japo./Desktop/AI---PRIMO-SEMESTRE/NLP/NLP Appunti.tex
 OUTPUT NLP Appunti.log
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/base/article.cls
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/base/article.cls

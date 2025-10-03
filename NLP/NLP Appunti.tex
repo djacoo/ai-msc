@@ -1545,6 +1545,902 @@ The aligned region is "ATC" vs "ATC" with score 3 (perfect match!).
 \end{itemize}
 
 
+\newpage
+\part{}
+
+\section{Regular Expressions}
+
+\subsection{Definition}
+
+\textbf{Regular expressions} are a formal language for specifying text strings. They allow us to define patterns that can match multiple variations of text without having to list each one explicitly.
+
+\subsection{The Problem}
+
+How can we search for any of these variations?
+\begin{itemize}
+    \item woodchuck
+    \item woodchucks
+    \item Woodchuck
+    \item Woodchucks
+\end{itemize}
+
+Without regular expressions, we would need to check for each variation separately, which is inefficient and doesn't scale well.
+
+\subsection{The Solution}
+
+Using a regular expression, we can match all four variations with a single pattern:
+
+\begin{verbatim}
+[Ww]oodchucks?
+\end{verbatim}
+
+\textbf{How it works:}
+\begin{itemize}
+    \item \texttt{[Ww]}: Character class - matches either uppercase 'W' or lowercase 'w'
+    \item \texttt{oodchuck}: Literal characters - matches exactly "oodchuck"
+    \item \texttt{s?}: Quantifier - the '?' makes the 's' optional (matches 0 or 1 occurrence)
+\end{itemize}
+
+This single pattern handles both capitalization (uppercase/lowercase first letter) and number (singular/plural) variations simultaneously.
+
+\subsection{Disjunctions}
+
+\subsubsection{Letters Inside Square Brackets []}
+
+Square brackets define a \textbf{character class} that matches any single character from the set.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Pattern} & \textbf{Matches} \\
+\hline
+\texttt{[wW]oodchuck} & Woodchuck, woodchuck \\
+\hline
+\texttt{[1234567890]} & Any digit \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Ranges [A-Z]}
+
+Ranges allow specifying consecutive characters using a hyphen.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Pattern} & \textbf{Matches} & \textbf{Example} \\
+\hline
+\texttt{[A-Z]} & An upper case letter & \underline{D}renched Blossoms \\
+\hline
+\texttt{[a-z]} & A lower case letter & \underline{m}y beans were impatient \\
+\hline
+\texttt{[0-9]} & A single digit & Chapter \underline{1}: Down the Rabbit Hole \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+\subsubsection{Negation in Disjunction [\^{}Ss]}
+
+The caret \texttt{\^{}} inside brackets means negation, only when it's the first character in [].
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Pattern} & \textbf{Matches} & \textbf{Example} \\
+\hline
+\texttt{[\^{}A-Z]} & Not an upper case letter & O\underline{y}fn pripetchik \\
+\hline
+\texttt{[\^{}Ss]} & Neither 'S' nor 's' & \underline{I} have no exquisite reason \\
+\hline
+\texttt{[\^{}e\^{}]} & Neither e nor \^{} & Look h\underline{e}re \\
+\hline
+\texttt{a\^{}b} & The pattern a carat b & Look up \underline{a\^{}b} now \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Note:} When \texttt{\^{}} is not the first character in brackets, it matches literally.
+
+\subsection{More Disjunctions: The Pipe |}
+
+The pipe \texttt{|} is used for disjunction (OR operation) between longer patterns.
+
+\textbf{Example:} Woodchuck is another name for groundhog!
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Pattern} & \textbf{Matches} \\
+\hline
+\texttt{groundhog|woodchuck} & woodchuck \\
+\hline
+\texttt{yours|mine} & yours \\
+\hline
+\texttt{a|b|c} & = [abc] \\
+\hline
+\texttt{[gG]roundhog|[Ww]oodchuck} & Woodchuck \\
+\hline
+\end{tabular}
+\end{table}
+
+The pipe allows matching entire words or phrases, not just single characters.
+
+\subsection{Quantifiers: ? * + .}
+
+Quantifiers specify how many times a character or pattern should appear.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Pattern} & \textbf{Matches} & \textbf{Examples} \\
+\hline
+\texttt{colou?r} & Optional previous char & color, colour \\
+\hline
+\texttt{oo*h!} & 0 or more of previous char & oh! ooh! oooh! ooooh! \\
+\hline
+\texttt{o+h!} & 1 or more of previous char & oh! ooh! oooh! ooooh! \\
+\hline
+\texttt{baa+} & & baa, baaa, baaaa, baaaaa \\
+\hline
+\texttt{beg.n} & & begin, begun, begun, beg3n \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Quantifier meanings:}
+\begin{itemize}
+    \item \texttt{?}: Zero or one occurrence (optional)
+    \item \texttt{*}: Zero or more occurrences (Kleene star)
+    \item \texttt{+}: One or more occurrences (Kleene plus)
+    \item \texttt{.}: Any single character (wildcard)
+\end{itemize}
+
+\textbf{Note:} These are named after Stephen C. Kleene, who invented the Kleene star (*) and Kleene plus (+) operators.
+
+\newpage
+\subsection{Anchors: \^{} and \$}
+
+Anchors match positions in the text, not actual characters.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Pattern} & \textbf{Matches} & \textbf{Example} \\
+\hline
+\texttt{\^{}[A-Z]} & & \underline{P}alo Alto \\
+\hline
+\texttt{\^{}[\^{}A-Za-z]} & & \underline{1} "Hello" \\
+\hline
+\verb|\.\$| & The end. & The end\underline{.} \\
+\hline
+\verb|.\$| & The end? The end! & The end\underline{?} The end\underline{!} \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Anchor meanings:}
+\begin{itemize}
+    \item \texttt{\^{}}: Matches the start of a line
+    \item \texttt{\$}: Matches the end of a line
+    \item \verb|\.\$|: Matches a literal period at the end of a line
+    \item \verb|.\$|: Matches any character at the end of a line
+\end{itemize}
+
+\subsection{Example: Finding "the"}
+
+\textbf{Task:} Find all instances of the word "the" in a text.
+
+\textbf{Attempt 1:} \texttt{the}
+\begin{itemize}
+    \item Problem: Misses capitalized examples (The)
+\end{itemize}
+
+\textbf{Attempt 2:} \texttt{[tT]he}
+\begin{itemize}
+    \item Problem: Incorrectly returns \textit{other} or \textit{theology}
+\end{itemize}
+
+\textbf{Correct solution:} \texttt{[\^{}a-zA-Z][tT]he[\^{}a-zA-Z]}
+\begin{itemize}
+    \item Ensures "the" is surrounded by non-letter characters (word boundaries)
+\end{itemize}
+
+\subsection{Errors in Regular Expressions}
+
+When using regular expressions, we deal with two kinds of errors:
+
+\subsubsection{Type I Errors: False Positives}
+
+\textbf{Matching strings that we should not have matched}
+
+Examples: matching \textit{there}, \textit{then}, \textit{other} when searching for "the"
+
+\subsubsection{Type II Errors: False Negatives}
+
+\textbf{Not matching things that we should have matched}
+
+Example: not matching "The" (capitalized) when searching for "the"
+
+\subsubsection{Error Reduction in NLP}
+
+In NLP we are always dealing with these kinds of errors.
+
+Reducing the error rate for an application often involves two antagonistic efforts:
+\begin{itemize}
+    \item \textbf{Increasing accuracy or precision}: Minimizing false positives
+    \item \textbf{Increasing coverage or recall}: Minimizing false negatives
+\end{itemize}
+
+These two goals often conflict - improving one can worsen the other.
+
+\subsection{Summary}
+
+\textbf{Regular expressions play a surprisingly large role in NLP:}
+\begin{itemize}
+    \item Sophisticated sequences of regular expressions are often the first model for any text processing task
+\end{itemize}
+
+\textbf{For hard tasks, we use machine learning classifiers:}
+\begin{itemize}
+    \item But regular expressions are still used for pre-processing, or as features in the classifiers
+    \item Can be very useful in capturing generalizations
+\end{itemize}
+
+\section{Substitutions and Capture Groups}
+
+\subsection{Substitutions}
+
+Substitution is an operation that finds text matching a pattern and replaces it with different text. This is useful for text normalization, cleaning, and transformation tasks.
+
+\textbf{Syntax in Python and UNIX commands:}
+
+\texttt{s/regexp1/pattern/}
+
+where:
+\begin{itemize}
+    \item \texttt{s} indicates substitution
+    \item \texttt{regexp1} is the pattern to search for
+    \item \texttt{pattern} is the replacement text
+\end{itemize}
+
+\textbf{Example:}
+
+\texttt{s/colour/color/}
+
+This finds every occurrence of "colour" and replaces it with "color". This is commonly used for text normalization (e.g., converting British to American spelling).
+
+\subsection{Capture Groups}
+
+\textbf{Capture groups} are a powerful feature that allows you to "remember" parts of the matched text and reuse them in the replacement. This enables transformations that depend on the actual content matched, not just fixed replacements.
+
+\subsubsection{Basic Concept}
+
+\textbf{Task:} Put angles around all numbers
+
+\textit{the 35 boxes} $\rightarrow$ \textit{the <35> boxes}
+
+The challenge here is that we don't know in advance which number will appear. We need to:
+\begin{enumerate}
+    \item Find any number
+    \item Remember what that number was
+    \item Use it in the replacement
+\end{enumerate}
+
+\textbf{How it works:}
+\begin{itemize}
+    \item Use parentheses \texttt{()} to "capture" a pattern into a numbered register (1, 2, 3...)
+    \item The captured text is stored temporarily
+    \item Use \verb|\1| to refer to the contents of the first register in the replacement
+\end{itemize}
+
+\textbf{Pattern:}
+
+\texttt{s/([0-9]+)/<\textbackslash 1>/}
+
+\textbf{Explanation:}
+\begin{itemize}
+    \item \texttt{([0-9]+)}: Captures one or more digits into register 1
+    \begin{itemize}
+        \item The parentheses mark what to save
+        \item \texttt{[0-9]+} matches the actual digits
+    \end{itemize}
+    \item \texttt{<\textbackslash 1>}: Replaces with the captured digits surrounded by angle brackets
+    \begin{itemize}
+        \item \verb|\1| is replaced with whatever was captured (e.g., "35")
+        \item The angle brackets are literal characters added around it
+    \end{itemize}
+\end{itemize}
+
+So if the input is "the 35 boxes", the pattern captures "35" and replaces it with "<35>".
+
+\subsubsection{Multiple Registers}
+
+You can use multiple capture groups in a single pattern to remember different parts of the match. Each set of parentheses creates a new numbered register.
+
+\textbf{Pattern:}
+
+\texttt{/the (.*) er they (.*), the \textbackslash 1er we \textbackslash 2/}
+
+\textbf{Matches:}
+
+\textit{the faster they ran, the faster we ran}
+
+\textbf{But not:}
+
+\textit{the faster they ran, the faster we ate}
+
+\textbf{Why this works:}
+\begin{itemize}
+    \item \texttt{(.*)}: First capture group (register 1) - matches "fast"
+    \begin{itemize}
+        \item \texttt{.*} matches any characters (greedy)
+        \item In this case, it captures everything before "er"
+    \end{itemize}
+    \item \texttt{(.*)}: Second capture group (register 2) - matches "ran"
+    \begin{itemize}
+        \item Captures the word after "they"
+    \end{itemize}
+    \item \verb|\1|: References first capture - must match "fast" again
+    \item \verb|\2|: References second capture - must match "ran" again
+\end{itemize}
+
+The pattern ensures that the same words appear in both parts of the sentence. This is why "the faster they ran, the faster we ran" matches (both parts have "fast" and "ran"), but "the faster they ran, the faster we ate" doesn't match (second part has "ate" instead of "ran").
+
+\textbf{Key insight:} Backreferences (\verb|\1|, \verb|\2|, etc.) don't just match any text - they must match exactly the same text that was captured earlier. This allows you to find repeated patterns or enforce consistency within a match.
+
+\subsection{Non-Capturing Groups}
+
+Sometimes we want to use parentheses for grouping terms without creating a capture register. This is useful when we need grouping for operators (like \texttt{|} or quantifiers) but don't need to reference the matched text later.
+
+\textbf{Problem:} Parentheses have a double function - grouping terms AND capturing.
+
+\textbf{Solution:} Non-capturing groups use \texttt{?:} after the opening parenthesis.
+
+\textbf{Syntax:} \texttt{(?:pattern)}
+
+\subsubsection{Example}
+
+\textbf{Pattern:}
+
+\texttt{/(?:some|a few) (people|cats) like some \textbackslash 1/}
+
+\textbf{Matches:}
+
+\textit{some cats like some cats}
+
+\textbf{But not:}
+
+\textit{some cats like some some}
+
+\textbf{Explanation:}
+\begin{itemize}
+    \item \texttt{(?:some|a few)}: Non-capturing group - matches either "some" or "a few"
+    \begin{itemize}
+        \item The \texttt{?:} tells the regex engine not to save this match
+        \item This is just for grouping the alternatives
+    \end{itemize}
+    \item \texttt{(people|cats)}: First (and only) capturing group - register 1
+    \begin{itemize}
+        \item This IS captured because it doesn't have \texttt{?:}
+        \item Saves either "people" or "cats"
+    \end{itemize}
+    \item \verb|\1|: References register 1, which contains "people" or "cats"
+    \begin{itemize}
+        \item Note: NOT "some" or "a few" because those weren't captured
+    \end{itemize}
+\end{itemize}
+
+\textbf{Why use non-capturing groups?}
+\begin{itemize}
+    \item \textbf{Efficiency}: Capturing has a small performance cost
+    \item \textbf{Clarity}: Makes it clear which parts you actually need to reference
+    \item \textbf{Register numbering}: Keeps register numbers simple when you have many groups
+\end{itemize}
+
+\subsection{Lookahead Assertions}
+
+Lookahead assertions are special patterns that check if something appears ahead in the text without actually consuming (matching) those characters. They're called "zero-width" because they don't advance the character pointer.
+
+\subsubsection{Positive Lookahead (?=pattern)}
+
+\textbf{Syntax:} \texttt{(?=pattern)}
+
+\textbf{Meaning:} True if pattern matches at this position, but doesn't consume the characters.
+
+\textbf{Use case:} Check that something appears ahead without including it in the match.
+
+\subsubsection{Negative Lookahead (?!pattern)}
+
+\textbf{Syntax:} \texttt{(?!pattern)}
+
+\textbf{Meaning:} True if pattern does NOT match at this position.
+
+\textbf{Use case:} Ensure something doesn't appear ahead.
+
+\subsubsection{Example: Words Not Starting with "Volcano"}
+
+\textbf{Task:} Match, at the beginning of a line, any single word that doesn't start with "Volcano"
+
+\textbf{Pattern:}
+
+\texttt{\^{}(?!Volcano)[A-Za-z]+/}
+
+\textbf{How it works:}
+\begin{itemize}
+    \item \texttt{\^{}}: Anchor to start of line
+    \item \texttt{(?!Volcano)}: Negative lookahead - ensures "Volcano" doesn't appear here
+    \begin{itemize}
+        \item This checks but doesn't consume characters
+        \item If "Volcano" is found, the match fails immediately
+    \end{itemize}
+    \item \texttt{[A-Za-z]+}: Matches one or more letters (the actual word)
+    \begin{itemize}
+        \item This is what actually gets matched and consumed
+    \end{itemize}
+\end{itemize}
+
+\textbf{Example matches:}
+\begin{itemize}
+    \item "Mountain erupted" - matches "Mountain"
+    \item "Earthquake struck" - matches "Earthquake"
+\end{itemize}
+
+\textbf{Does not match:}
+\begin{itemize}
+    \item "Volcano erupted" - fails because of negative lookahead
+    \item "Volcanoes are hot" - fails because it starts with "Volcano"
+\end{itemize}
+
+\textbf{Key concept:} The lookahead \texttt{(?!Volcano)} doesn't consume "Volcano" if it were there - it just checks. This is why we still need \texttt{[A-Za-z]+} to actually match the word. Without the lookahead, we'd match any word including those starting with "Volcano".
+
+\section{Simple Application: ELIZA}
+
+\subsection{What is ELIZA?}
+
+ELIZA is an early NLP system created by Joseph Weizenbaum in 1966 that imitated a Rogerian psychotherapist. It was one of the first chatbots and demonstrated how simple pattern matching could create the illusion of understanding.
+
+\textbf{Rogerian psychotherapy} is a non-directive approach where the therapist reflects the patient's statements back to them, encouraging them to explore their own thoughts and feelings.
+
+\subsection{How ELIZA Works}
+
+ELIZA uses pattern matching with regular expressions to recognize patterns in user input and transform them into responses.
+
+\textbf{Basic approach:}
+\begin{enumerate}
+    \item Match user input against a set of patterns
+    \item Extract key parts using capture groups
+    \item Transform the input into a response using substitution
+\end{enumerate}
+
+\textbf{Example interaction:}
+
+\textbf{User:} "I need X"
+
+\textbf{ELIZA translates to:} "What would it mean to you if you got X?"
+
+\subsection{Example Conversation}
+
+\textbf{User:} Men are all alike.
+
+\textbf{ELIZA:} IN WHAT WAY
+
+\textbf{User:} They're always bugging us about something or other.
+
+\textbf{ELIZA:} CAN YOU THINK OF A SPECIFIC EXAMPLE
+
+\textbf{User:} Well, my boyfriend made me come here.
+
+\textbf{ELIZA:} YOUR BOYFRIEND MADE YOU COME HERE
+
+\textbf{User:} He says I'm depressed much of the time.
+
+\textbf{ELIZA:} I AM SORRY TO HEAR YOU ARE DEPRESSED
+
+\textbf{Explanation:}
+\begin{itemize}
+    \item ELIZA recognizes keywords like "all", "always", "my boyfriend", "I'm depressed"
+    \item It uses pre-programmed responses for each pattern
+    \item Some responses reflect back what the user said (using capture groups)
+    \item Others ask generic questions to keep the conversation going
+\end{itemize}
+
+\subsection{ELIZA's Pattern Rules}
+
+Here are some of the actual regex patterns ELIZA uses:
+
+\begin{enumerate}
+    \item \textbf{Detecting depression/sadness:}
+    
+    \texttt{s/.* I'M (depressed|sad) .*/I AM SORRY TO HEAR YOU ARE \textbackslash 1/}
+    
+    \begin{itemize}
+        \item Matches: "I'm depressed" or "I'm sad" anywhere in the sentence
+        \item Captures: the emotion word (depressed or sad)
+        \item Response: "I AM SORRY TO HEAR YOU ARE [emotion]"
+    \end{itemize}
+    
+    \item \textbf{Reflecting "I am" statements:}
+    
+    \texttt{s/.* I AM (depressed|sad) .*/WHY DO YOU THINK YOU ARE \textbackslash 1/}
+    
+    \begin{itemize}
+        \item Matches: "I am depressed" or "I am sad"
+        \item Response: "WHY DO YOU THINK YOU ARE [emotion]"
+    \end{itemize}
+    
+    \item \textbf{Responding to "all" statements:}
+    
+    \texttt{s/.* all .*/IN WHAT WAY?/}
+    
+    \begin{itemize}
+        \item Matches: any sentence containing "all"
+        \item Response: "IN WHAT WAY?" (prompts for specifics)
+    \end{itemize}
+    
+    \item \textbf{Responding to "always" statements:}
+    
+    \texttt{s/.* always .*/CAN YOU THINK OF A SPECIFIC EXAMPLE?/}
+    
+    \begin{itemize}
+        \item Matches: any sentence containing "always"
+        \item Response: asks for concrete examples
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Key Techniques in ELIZA}
+
+\subsubsection{Pattern Matching}
+
+ELIZA uses \texttt{.*} extensively to match any text before and after keywords. This allows it to find patterns regardless of what else appears in the sentence.
+
+\subsubsection{Capture and Transform}
+
+By capturing parts of the user's input (like emotions or subjects), ELIZA can incorporate them into responses, making the conversation feel more personalized.
+
+\textbf{Example:}
+\begin{itemize}
+    \item Input: "my boyfriend made me come here"
+    \item Pattern captures: "boyfriend"
+    \item Response includes: "YOUR BOYFRIEND MADE YOU COME HERE"
+\end{itemize}
+
+\subsubsection{Pronoun Switching}
+
+ELIZA switches pronouns when reflecting statements:
+\begin{itemize}
+    \item "I" $\rightarrow$ "you"
+    \item "my" $\rightarrow$ "your"
+    \item "me" $\rightarrow$ "you"
+\end{itemize}
+
+This is done through additional substitution rules after the main pattern matching.
+
+\subsection{Limitations of ELIZA}
+
+Despite its impressive appearance, ELIZA has significant limitations:
+
+\begin{itemize}
+    \item \textbf{No understanding}: ELIZA doesn't understand meaning - it only matches patterns
+    \item \textbf{No memory}: It doesn't remember previous parts of the conversation
+    \item \textbf{No reasoning}: It can't make logical inferences or connections
+    \item \textbf{Brittle patterns}: Slight variations in phrasing can cause it to fail
+    \item \textbf{Generic responses}: When no pattern matches, it gives generic responses like "Tell me more"
+\end{itemize}
+
+\subsection{Historical Significance}
+
+ELIZA was groundbreaking because:
+\begin{itemize}
+    \item It demonstrated that simple pattern matching could create engaging interactions
+    \item It showed both the power and limitations of rule-based NLP
+    \item Many users attributed human-like understanding to it, even though it had none
+    \item It inspired decades of chatbot research
+    \item It remains a classic example of how regular expressions can be used in NLP applications
+\end{itemize}
+
+\textbf{The ELIZA effect:} The tendency of people to attribute human-like understanding to computer programs, even when they know the program is simple. This phenomenon is still relevant today in discussions about AI and chatbots.
+
+\section{Words and Corpora}
+
+\subsection{How Many Words in a Sentence?}
+
+Counting words in a sentence is not as straightforward as it might seem. Different definitions and considerations lead to different counts.
+
+\subsubsection{Example 1: Disfluencies}
+
+\textbf{Sentence:} "I do uh main- mainly business data processing"
+
+\textbf{Issues:}
+\begin{itemize}
+    \item Contains fragments ("main-")
+    \item Contains filled pauses ("uh")
+\end{itemize}
+
+\textbf{Question:} Should we count these as words? This depends on the application - for speech recognition we might keep them, for text analysis we might remove them.
+
+\subsubsection{Example 2: Lemmas vs Wordforms}
+
+\textbf{Sentence:} "Seuss's cat in the hat is different from other cats!"
+
+\textbf{Key concepts:}
+
+\begin{itemize}
+    \item \textbf{Lemma}: Same stem, part of speech, and rough word sense
+    \begin{itemize}
+        \item "cat" and "cats" = same lemma
+        \item A lemma is the dictionary form or citation form of a word
+    \end{itemize}
+    
+    \item \textbf{Wordform}: The full inflected surface form
+    \begin{itemize}
+        \item "cat" and "cats" = different wordforms
+        \item Wordforms are the actual forms that appear in text
+    \end{itemize}
+\end{itemize}
+
+\textbf{Why this matters:} Depending on whether we count lemmas or wordforms, we get different word counts. For many NLP tasks, we need to decide which level of granularity is appropriate.
+
+\subsubsection{Example 3: Types vs Tokens}
+
+\textbf{Sentence:} "they lay back on the San Francisco grass and looked at the stars and their"
+
+\textbf{Key concepts:}
+
+\begin{itemize}
+    \item \textbf{Type}: An element of the vocabulary (unique word)
+    \item \textbf{Token}: An instance of that type in running text (occurrence)
+\end{itemize}
+
+\textbf{Counting:}
+\begin{itemize}
+    \item \textbf{15 tokens} (or 14, depending on how you count)
+    \begin{itemize}
+        \item Every word occurrence is a token
+        \item "the" appears twice, "and" appears twice - each occurrence is a separate token
+    \end{itemize}
+    
+    \item \textbf{13 types} (or 12, or 11?)
+    \begin{itemize}
+        \item Each unique word is one type
+        \item "the" is counted once as a type, even though it appears twice
+        \item "and" is counted once as a type, even though it appears twice
+    \end{itemize}
+\end{itemize}
+
+\textbf{Why the uncertainty?} Different decisions about what counts as a word (e.g., is "San Francisco" one word or two?) lead to different counts.
+
+\subsection{How Many Words in a Corpus?}
+
+A \textbf{corpus} (plural: corpora) is a large collection of text used for linguistic analysis and NLP tasks.
+
+\subsubsection{Notation}
+
+\begin{itemize}
+    \item \textbf{$N$} = number of tokens (total word occurrences)
+    \item \textbf{$V$} = vocabulary = set of types
+    \item \textbf{$|V|$} = size of vocabulary (number of unique words)
+\end{itemize}
+
+\subsubsection{Herdan's Law (Heap's Law)}
+
+The relationship between vocabulary size and corpus size follows a power law:
+
+\[
+|V| = kN^\beta
+\]
+
+where:
+\begin{itemize}
+    \item $k$ is a constant
+    \item $\beta$ is typically between 0.67 and 0.75
+\end{itemize}
+
+\textbf{Key insight:} Vocabulary size grows with more than the square root of the number of tokens, but less than linearly. This means:
+\begin{itemize}
+    \item As you add more text, you keep encountering new words
+    \item But the rate of new words decreases as the corpus grows
+    \item You never stop finding new words entirely
+\end{itemize}
+
+\subsubsection{Examples from Real Corpora}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Corpus} & \textbf{Tokens (N)} & \textbf{Types (|V|)} \\
+\hline
+Switchboard phone conversations & 2.4 million & 20 thousand \\
+\hline
+Shakespeare & 884,000 & 31 thousand \\
+\hline
+COCA & 440 million & 2 million \\
+\hline
+Google N-grams & 1 trillion & 13+ million \\
+\hline
+\end{tabular}
+\caption{Token and type counts in various corpora}
+\end{table}
+
+\textbf{Observations:}
+\begin{itemize}
+    \item \textbf{Switchboard}: Spoken language has relatively small vocabulary for its size (lots of repetition)
+    \item \textbf{Shakespeare}: Rich vocabulary despite relatively small corpus
+    \item \textbf{COCA} (Corpus of Contemporary American English): Large modern corpus with extensive vocabulary
+    \item \textbf{Google N-grams}: Massive web-scale corpus with millions of unique words
+\end{itemize}
+
+\textbf{Practical implications:}
+\begin{itemize}
+    \item Larger corpora are needed to capture rare words and phenomena
+    \item The type/token ratio varies significantly across domains and genres
+    \item Spoken language tends to have lower type/token ratios than written language
+    \item Web-scale corpora contain many rare words, misspellings, and proper nouns
+\end{itemize}
+
+\subsection{Understanding Corpora}
+
+\subsubsection{Words Don't Appear Out of Nowhere}
+
+A fundamental principle in corpus linguistics: \textbf{words don't appear out of nowhere}. Every text is produced in a specific context.
+
+A text is produced by:
+\begin{itemize}
+    \item A specific writer(s)
+    \item At a specific time
+    \item In a specific variety (of language)
+    \item Of a specific language
+    \item For a specific function
+\end{itemize}
+
+\textbf{Why this matters:} Understanding the context of text production is crucial for interpreting corpus data and building NLP systems. The same word can have different meanings, frequencies, and usage patterns depending on these factors.
+
+\subsection{Corpora Vary Along Multiple Dimensions}
+
+Corpora are not uniform - they vary along several important dimensions that affect the language they contain.
+
+\subsubsection{Language}
+
+There are approximately \textbf{7,097 languages in the world}. Each has its own:
+\begin{itemize}
+    \item Vocabulary and grammar
+    \item Writing system (or lack thereof)
+    \item Cultural context
+    \item Computational resources available
+\end{itemize}
+
+\textbf{Implication:} NLP systems trained on one language don't automatically work for others. Multilingual NLP is a major research area.
+
+\subsubsection{Variety}
+
+Even within a single language, there are many varieties. For example:
+\begin{itemize}
+    \item \textbf{African American English (AAE)} varieties
+    \begin{itemize}
+        \item AAE Twitter posts might include forms like "\textit{iont}" (I don't)
+        \item Different phonological, grammatical, and lexical features
+    \end{itemize}
+\end{itemize}
+
+\textbf{Implication:} Systems trained on standard varieties may perform poorly on other varieties, potentially causing bias and fairness issues.
+
+\subsubsection{Code Switching}
+
+\textbf{Code switching} occurs when speakers alternate between two or more languages within a conversation or even within a sentence.
+
+\textbf{Examples:}
+
+\textit{Spanish/English:}
+\begin{itemize}
+    \item "Por primera vez veo a @username actually being hateful! It was beautiful:)"
+    \item Translation: "For the first time I get to see @username actually being hateful! it was beautiful:)"
+\end{itemize}
+
+\textit{Hindi/English:}
+\begin{itemize}
+    \item "dost tha or ra- hega ... dont wory ... but dherya rakhe"
+    \item Translation: "he was and will remain a friend ... don't worry ... but have faith"
+\end{itemize}
+
+\textbf{Challenges:}
+\begin{itemize}
+    \item Difficult for monolingual NLP systems
+    \item Requires understanding of multiple languages simultaneously
+    \item Common in multilingual communities but often ignored in NLP datasets
+\end{itemize}
+
+\subsubsection{Genre}
+
+Different genres have distinct linguistic characteristics:
+\begin{itemize}
+    \item \textbf{Newswire}: Formal, objective, structured
+    \item \textbf{Fiction}: Narrative, dialogue, descriptive
+    \item \textbf{Scientific articles}: Technical vocabulary, formal structure
+    \item \textbf{Wikipedia}: Encyclopedic, informative, hyperlinked
+\end{itemize}
+
+\textbf{Implication:} A model trained on news articles may not work well on social media or scientific papers.
+
+\subsubsection{Author Demographics}
+
+The characteristics of the author affect the text:
+\begin{itemize}
+    \item \textbf{Age}: Younger writers may use different slang and references
+    \item \textbf{Gender}: Can influence topic choice and writing style
+    \item \textbf{Ethnicity}: Affects cultural references and language variety
+    \item \textbf{Socioeconomic status (SES)}: Influences vocabulary and topics
+\end{itemize}
+
+\textbf{Implication:} Demographic bias in training data can lead to biased NLP systems that work better for some groups than others.
+
+\subsection{Corpus Datasheets}
+
+To address the complexity of corpora, researchers have proposed \textbf{corpus datasheets} - standardized documentation for datasets.
+
+\textbf{Key references:} Gebru et al (2020), Bender and Friedman (2018)
+
+\subsubsection{Motivation}
+
+Questions about why and how the corpus was created:
+\begin{itemize}
+    \item \textbf{Why was the corpus collected?} What research question or application?
+    \item \textbf{By whom?} Which researchers or organizations?
+    \item \textbf{Who funded it?} Funding sources can influence corpus design
+\end{itemize}
+
+\subsubsection{Situation}
+
+\textbf{In what situation was the text written?}
+
+Understanding the context of text production:
+\begin{itemize}
+    \item Social media posts vs. published articles
+    \item Spontaneous speech vs. prepared presentations
+    \item Private communications vs. public documents
+\end{itemize}
+
+\subsubsection{Collection Process}
+
+\textbf{If it is a subsample, how was it sampled? Was there consent? Pre-processing?}
+
+Important methodological details:
+\begin{itemize}
+    \item \textbf{Sampling method}: Random, stratified, convenience?
+    \item \textbf{Consent}: Did authors/speakers consent to their text being used?
+    \item \textbf{Pre-processing}: What cleaning or normalization was applied?
+    \item \textbf{Ethical considerations}: Privacy, representation, potential harms
+\end{itemize}
+
+\subsubsection{Additional Information}
+
+Datasheets should also document:
+\begin{itemize}
+    \item \textbf{Annotation process}: How was the data labeled? By whom?
+    \item \textbf{Language variety}: Which dialect or variety is represented?
+    \item \textbf{Demographics}: Who are the authors/speakers?
+    \item \textbf{Limitations}: Known biases or gaps in the corpus
+\end{itemize}
+
+\subsection{Why Corpus Datasheets Matter}
+
+\textbf{Transparency:} Researchers and practitioners need to understand what data they're working with.
+
+\textbf{Reproducibility:} Proper documentation enables others to replicate and build on research.
+
+\textbf{Fairness:} Understanding corpus composition helps identify and mitigate biases.
+
+\textbf{Appropriate use:} Knowing the context and limitations prevents misuse of corpora and models trained on them.
+
+\textbf{Example concern:} A sentiment analysis system trained on formal news text may fail on informal social media text, or work well for one demographic group but poorly for others. Datasheets help identify these issues before deployment.
+
+
+
 \end{document}
 
 
