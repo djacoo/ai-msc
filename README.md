@@ -20,6 +20,7 @@
 - [Courses](#-courses)
   - [Automated Reasoning (AR)](#automated-reasoning-ar)
   - [Natural Language Processing (NLP)](#natural-language-processing-nlp)
+  - [Planning & Reinforcement Learning (PLANNING & RL)](#planning--reinforcement-learning-planning--rl)
 - [Getting Started](#-getting-started)
 - [Technologies & Tools](#-technologies--tools)
 - [Contributing](#-contributing)
@@ -54,15 +55,21 @@ AI---PRIMO-SEMESTRE/
 ├── AR/                                 # Automated Reasoning
 │   ├── AR Appunti.tex                 # LaTeX source for notes
 │   ├── AR Appunti.pdf                 # Compiled course notes
+│   ├── lectures/                      # Lecture slides
+│   │   └── AutomatedReasoning-1.pdf to -5.pdf
 │   └── [LaTeX auxiliary files]
 │
-└── NLP/                                # Natural Language Processing
-    ├── NLP Appunti.tex                # LaTeX source for notes
-    ├── NLP Appunti.pdf                # Compiled course notes (400+ pages)
-    └── Slide/                         # Lecture slides
-        ├── L0 Introduction.pptx
-        ├── L1.pptx - L15.pptx        # 16 lecture presentations
-        └── [Additional materials]
+├── NLP/                                # Natural Language Processing
+│   ├── NLP Appunti.tex                # LaTeX source for notes
+│   ├── NLP Appunti.pdf                # Compiled course notes (400+ pages)
+│   └── Slide/                         # Lecture slides
+│       ├── L0 Introduction.pptx
+│       ├── L1.pptx - L15.pptx        # 16 lecture presentations
+│       └── [Additional materials]
+│
+└── PLANNING & RL/                      # Planning & Reinforcement Learning
+    └── lectures/                      # Lecture slides
+        └── Planning-1.pdf to -6.pdf  # 6 lecture presentations
 ```
 
 ---
@@ -75,6 +82,7 @@ AI---PRIMO-SEMESTRE/
 
 **Materials Available**:
 - 📄 **Comprehensive Notes**: `AR Appunti.pdf` (240+ KB, LaTeX-formatted)
+- 📊 **Lecture Slides**: 5 lectures (AutomatedReasoning-1 to -5) in PDF format
 - 📝 **Source Files**: Complete LaTeX source code for customization
 - 🔧 **Topics Covered**: Logic, theorem proving, SAT solving, and more
 
@@ -82,6 +90,9 @@ AI---PRIMO-SEMESTRE/
 ```bash
 # View the notes
 open AR/AR\ Appunti.pdf
+
+# Access lecture slides
+cd AR/lectures
 
 # Compile from source
 cd AR && pdflatex AR\ Appunti.tex
@@ -123,6 +134,40 @@ cd NLP && pdflatex NLP\ Appunti.tex
 | L1-L9 | Core Concepts | PPTX |
 | L10, L12 | Advanced Topics | PDF |
 | L11, L13-L15 | Applications | PPTX |
+
+---
+
+### Planning & Reinforcement Learning (PLANNING & RL)
+
+**Course Overview**: Study of automated planning techniques and reinforcement learning algorithms for intelligent decision-making systems.
+
+**Materials Available**:
+- 📊 **Complete Lecture Series**: 6 lectures (Planning-1 to -6) in PDF format
+- 🎯 **Topics Covered**: 
+  - Classical planning approaches
+  - Search algorithms for planning
+  - Reinforcement learning fundamentals
+  - Advanced RL techniques
+  - Applications and case studies
+
+**Quick Access**:
+```bash
+# Access lecture slides
+cd PLANNING\ \&\ RL/lectures
+
+# View a specific lecture
+open PLANNING\ \&\ RL/lectures/Planning-1.pdf
+```
+
+**Lecture Breakdown**:
+| Lecture | File | Size |
+|---------|------|------|
+| Planning-1 | PDF | ~7.5 MB |
+| Planning-2 | PDF | ~250 KB |
+| Planning-3 | PDF | ~420 KB |
+| Planning-4 | PDF | ~560 KB |
+| Planning-5 | PDF | ~1.5 MB |
+| Planning-6 | PDF | ~1.1 MB |
 
 ---
 
@@ -219,6 +264,7 @@ The Master's Degree in Artificial Intelligence at the University of Verona provi
 - Natural Language Processing
 - Computer Vision
 - Automated Reasoning
+- Planning and Reinforcement Learning
 - Knowledge Representation
 - AI Ethics and Applications
 
@@ -260,6 +306,6 @@ If you find any errors in the notes or have suggestions for improvement:
 
 **Made with ❤️ for the AI community at University of Verona**
 
-*Last updated: October 2025*
+*Last updated: October 2025 - Added Planning & RL course materials*
 
 </div>
