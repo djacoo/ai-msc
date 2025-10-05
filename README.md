@@ -1,70 +1,265 @@
-# Master's Degree in Artificial Intelligence - University of Verona
+<div align="center">
 
-This repository contains all course materials, notes, slides, exercises, and resources for my Master's degree in Artificial Intelligence at the **University of Verona**.
+# 🎓 Master's Degree in Artificial Intelligence
+## University of Verona - First Semester
 
-## 📚 Repository Structure
+[![University](https://img.shields.io/badge/University-Verona-gold?style=flat-square)](https://www.univr.it/)
+[![Academic Year](https://img.shields.io/badge/Academic%20Year-2025%2F2026-blue?style=flat-square)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
+[![License](https://img.shields.io/badge/License-Educational%20Use-green?style=flat-square)](#-license)
 
-Each course has its own dedicated folder containing:
-- **Lectures**: Lecture notes and materials
-- **Slides**: Professor-provided presentation slides
-- **Exercises**: Practice problems and solutions
-- **Notes**: Personal study notes and summaries
-- **Additional Materials**: Any supplementary resources, papers, or references
+*A comprehensive collection of course materials, lecture notes, and resources for the Master's program in Artificial Intelligence*
 
-## 🎓 Courses
-
-### First Semester (Primo Semestre)
-
-- **[AR/](./AR/)** - Automated Reasoning
-  - Course notes and materials
-  - Lecture slides
-  - Exercises and assignments
-
-- **[NLP/](./NLP/)** - Natural Language Processing
-  - Course notes and materials
-  - Lecture slides
-  - Exercises and assignments
-
-*Additional courses will be added as the semester progresses.*
-
-## 📖 About This Repository
-
-This repository serves as a centralized collection of all academic materials throughout my master's program. It is organized by semester and course, making it easy to navigate and reference materials as needed.
-
-### Organization Guidelines
-
-```
-AI---PRIMO-SEMESTRE/
-├── README.md
-├── COURSE_NAME_1/
-│   ├── lectures/
-│   ├── slides/
-│   ├── exercises/
-│   ├── notes/
-│   └── additional_materials/
-├── COURSE_NAME_2/
-│   └── ...
-└── ...
-```
-
-## 🏛️ University Information
-
-- **Institution**: University of Verona (Università degli Studi di Verona)
-- **Program**: Master's Degree in Artificial Intelligence
-- **Academic Year**: 2025/2026
-- **Semester**: First Semester (Primo Semestre)
-- **Author**: Jacopo Parretti
-
-## 📝 Notes
-
-- Materials are organized as they are provided during the courses
-- Personal notes may be in various formats (PDF, LaTeX, Markdown, etc.)
-- Some materials may be in Italian or English depending on the course language
-
-## 📄 License
-
-This repository contains academic materials for personal educational use. Please respect copyright and intellectual property rights of professors and the University of Verona.
+</div>
 
 ---
 
+## 📋 Table of Contents
+
+- [About](#-about)
+- [Repository Structure](#-repository-structure)
+- [Courses](#-courses)
+  - [Automated Reasoning (AR)](#automated-reasoning-ar)
+  - [Natural Language Processing (NLP)](#natural-language-processing-nlp)
+- [Getting Started](#-getting-started)
+- [Technologies & Tools](#-technologies--tools)
+- [Contributing](#-contributing)
+- [University Information](#-university-information)
+- [License](#-license)
+- [Contact](#-contact)
+
+---
+
+## 🎯 About
+
+This repository serves as a centralized, organized collection of all academic materials for the **Master's Degree in Artificial Intelligence** at the **University of Verona**. The repository is structured by semester and course, providing easy navigation and reference to all materials throughout the program.
+
+### Key Features
+
+- 📚 **Comprehensive Notes**: Detailed LaTeX-formatted course notes
+- 📊 **Lecture Slides**: Complete slide decks from all lectures
+- 💻 **Exercises & Solutions**: Practice problems and implementations
+- 🔍 **Well-Organized**: Systematic folder structure for easy navigation
+- 📖 **Multi-Language**: Materials in both Italian and English
+
+---
+
+## 📁 Repository Structure
+
+```
+AI---PRIMO-SEMESTRE/
+│
+├── README.md                           # This file
+├── CORSI 1 ANNO AI provvisorio.pdf    # Course overview document
+│
+├── AR/                                 # Automated Reasoning
+│   ├── AR Appunti.tex                 # LaTeX source for notes
+│   ├── AR Appunti.pdf                 # Compiled course notes
+│   └── [LaTeX auxiliary files]
+│
+└── NLP/                                # Natural Language Processing
+    ├── NLP Appunti.tex                # LaTeX source for notes
+    ├── NLP Appunti.pdf                # Compiled course notes (400+ pages)
+    └── Slide/                         # Lecture slides
+        ├── L0 Introduction.pptx
+        ├── L1.pptx - L15.pptx        # 16 lecture presentations
+        └── [Additional materials]
+```
+
+---
+
+## 🎓 Courses
+
+### Automated Reasoning (AR)
+
+**Course Overview**: Study of automated reasoning techniques, logic programming, and constraint solving.
+
+**Materials Available**:
+- 📄 **Comprehensive Notes**: `AR Appunti.pdf` (240+ KB, LaTeX-formatted)
+- 📝 **Source Files**: Complete LaTeX source code for customization
+- 🔧 **Topics Covered**: Logic, theorem proving, SAT solving, and more
+
+**Quick Access**:
+```bash
+# View the notes
+open AR/AR\ Appunti.pdf
+
+# Compile from source
+cd AR && pdflatex AR\ Appunti.tex
+```
+
+---
+
+### Natural Language Processing (NLP)
+
+**Course Overview**: In-depth exploration of modern NLP techniques, from traditional methods to state-of-the-art deep learning approaches.
+
+**Materials Available**:
+- 📄 **Extensive Notes**: `NLP Appunti.pdf` (400+ KB, 87K+ LaTeX source)
+- 📊 **Complete Slide Deck**: 16 lectures (L0-L15) covering the entire course
+- 🎯 **Topics Covered**: 
+  - Introduction to NLP
+  - Text preprocessing and tokenization
+  - Language models and embeddings
+  - Neural networks for NLP
+  - Transformers and attention mechanisms
+  - Advanced applications
+
+**Quick Access**:
+```bash
+# View the notes
+open NLP/NLP\ Appunti.pdf
+
+# Access lecture slides
+cd NLP/Slide
+
+# Compile from source
+cd NLP && pdflatex NLP\ Appunti.tex
+```
+
+**Lecture Breakdown**:
+| Lecture | File | Format |
+|---------|------|--------|
+| L0 | Introduction | PPTX |
+| L1-L9 | Core Concepts | PPTX |
+| L10, L12 | Advanced Topics | PDF |
+| L11, L13-L15 | Applications | PPTX |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+To work with the LaTeX source files, you'll need:
+
+- **LaTeX Distribution**: 
+  - macOS: [MacTeX](https://www.tug.org/mactex/)
+  - Windows: [MiKTeX](https://miktex.org/)
+  - Linux: `texlive-full`
+
+- **PDF Viewer**: Any modern PDF reader
+- **Office Suite**: Microsoft Office or LibreOffice for slide presentations
+
+### Cloning the Repository
+
+```bash
+# Clone this repository
+git clone https://github.com/djacoo/AI---PRIMO-SEMESTRE.git
+
+# Navigate to the directory
+cd AI---PRIMO-SEMESTRE
+```
+
+### Compiling LaTeX Notes
+
+```bash
+# For AR notes
+cd AR
+pdflatex AR\ Appunti.tex
+pdflatex AR\ Appunti.tex  # Run twice for TOC
+
+# For NLP notes
+cd ../NLP
+pdflatex NLP\ Appunti.tex
+pdflatex NLP\ Appunti.tex  # Run twice for TOC
+```
+
+---
+
+## 🛠️ Technologies & Tools
+
+### Documentation
+- ![LaTeX](https://img.shields.io/badge/LaTeX-008080?style=flat-square&logo=latex&logoColor=white) - Professional typesetting for notes
+- ![Markdown](https://img.shields.io/badge/Markdown-000000?style=flat-square&logo=markdown&logoColor=white) - Documentation
+
+### Formats
+- **PDF** - Compiled notes and some lecture slides
+- **PPTX** - Lecture presentations
+- **TEX** - LaTeX source files
+
+---
+
+## 🤝 Contributing
+
+This is a personal academic repository, but suggestions and corrections are welcome!
+
+### How to Contribute
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/improvement`)
+3. **Commit** your changes (`git commit -m 'Add some improvement'`)
+4. **Push** to the branch (`git push origin feature/improvement`)
+5. **Open** a Pull Request
+
+### Contribution Guidelines
+
+- Maintain the existing folder structure
+- Follow LaTeX best practices for note formatting
+- Ensure all materials respect copyright and academic integrity
+- Add clear commit messages
+
+---
+
+## 🏛️ University Information
+
+| | |
+|---|---|
+| **Institution** | Università degli Studi di Verona |
+| **Faculty** | Department of Computer Science |
+| **Program** | Master's Degree in Artificial Intelligence |
+| **Academic Year** | 2025/2026 |
+| **Semester** | First Semester (Primo Semestre) |
+| **Location** | Verona, Italy 🇮🇹 |
+| **Author** | Jacopo Parretti |
+
+### Program Details
+
+The Master's Degree in Artificial Intelligence at the University of Verona provides advanced training in:
+- Machine Learning and Deep Learning
+- Natural Language Processing
+- Computer Vision
+- Automated Reasoning
+- Knowledge Representation
+- AI Ethics and Applications
+
+---
+
+## 📄 License
+
+**Educational Use Only**
+
+This repository contains academic materials for personal educational purposes. All materials are subject to the following terms:
+
+- ✅ **Permitted**: Personal study, reference, and learning
+- ❌ **Not Permitted**: Commercial use, redistribution without attribution
+- ⚠️ **Copyright**: Please respect the intellectual property rights of professors and the University of Verona
+
+**Disclaimer**: Course slides and some materials are property of their respective professors and the University of Verona. This repository is maintained for educational purposes only.
+
+---
+
+## 📧 Contact
+
+**Jacopo Parretti**
+
+- 🐙 GitHub: [@djacoo](https://github.com/djacoo)
+- 📧 Email: [Contact via GitHub](https://github.com/djacoo)
+
+### Questions or Issues?
+
+If you find any errors in the notes or have suggestions for improvement:
+1. Open an [Issue](https://github.com/djacoo/AI---PRIMO-SEMESTRE/issues)
+2. Submit a [Pull Request](https://github.com/djacoo/AI---PRIMO-SEMESTRE/pulls)
+3. Contact me directly via GitHub
+
+---
+
+<div align="center">
+
+### ⭐ If you find this repository useful, please consider giving it a star!
+
+**Made with ❤️ for the AI community at University of Verona**
+
 *Last updated: October 2025*
+
+</div>
