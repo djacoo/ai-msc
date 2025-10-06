@@ -346,7 +346,428 @@ Formulas may contain both free and bound occurrences of variables. For proper se
 
 
 
-\part{}
+\newpage
+
+\part{Semantic Foundations}
+
+\section{Interpretations and Models}
+
+\subsection{The Concept of Interpretation}
+
+To assign meaning to syntactic formulas in first-order logic, we require a formal notion of \textbf{interpretation}. An interpretation $\mathcal{I}$ provides a semantic mapping from the syntactic elements of a signature to concrete mathematical objects.
+
+In the unsorted case, an interpretation consists of:
+\begin{itemize}
+    \item A non-empty set $D$ called the \textbf{domain} (or universe of discourse)
+    \item An interpretation function $\Phi$ that maps:
+    \begin{itemize}
+        \item Each predicate symbol $P \in \mathcal{P}$ of arity $n$ to a subset $\Phi(P) \subseteq D^n$ (representing an $n$-ary relation over the domain)
+        \item Each function symbol $f \in \mathcal{F}$ of arity $n$ to a function $\Phi(f) : D^n \rightarrow D$
+        \item Each constant symbol $c \in C$ to a specific element $\Phi(c) \in D$
+    \end{itemize}
+\end{itemize}
+
+The interpretation function $\Phi$ bridges the gap between syntax and semantics, transforming abstract symbols into concrete mathematical entities.
+
+\subsection{Example: Interpreting a Formula over Natural Numbers}
+
+Consider the first-order formula:
+\[
+\forall x \, (\neg P(x) \rightarrow P(f(x)))
+\]
+
+This formula contains:
+\begin{itemize}
+    \item A unary predicate symbol $P$
+    \item A unary function symbol $f$
+    \item A universally quantified variable $x$
+\end{itemize}
+
+Since the formula is closed (contains no free variables), its truth value depends entirely on the chosen interpretation.
+
+\textbf{Constructing an interpretation}: Let us define an interpretation $\mathcal{I} = \langle D, \Phi \rangle$ where:
+\begin{itemize}
+    \item \textbf{Domain}: $D = \N$ (the set of natural numbers)
+    \item \textbf{Function interpretation}: $\Phi(f) : \N \rightarrow \N$ is the successor function, defined by $\Phi(f)(n) = n + 1$ for all $n \in \N$
+    \item \textbf{Predicate interpretation}: $\Phi(P) = \{0, 2, 4, 6, \dots\} = \{2k \mid k \in \N\}$ (the set of even natural numbers)
+\end{itemize}
+
+\subsection{Semantic Evaluation}
+
+Under this interpretation $\mathcal{I}$, the formula $\forall x \, (\neg P(x) \rightarrow P(f(x)))$ receives the following semantic reading:
+
+\textit{For all natural numbers $x$, if $x$ is not even, then the successor of $x$ is even.}
+
+To determine whether this formula is true in interpretation $\mathcal{I}$, we must verify whether the implication holds for every element of the domain:
+\begin{itemize}
+    \item If $x$ is odd (i.e., $x \notin \Phi(P)$), then $x + 1$ must be even (i.e., $x + 1 \in \Phi(P)$)
+\end{itemize}
+
+This statement is indeed true in the natural numbers: the successor of any odd number is even. Therefore, the formula is \textbf{satisfied} by interpretation $\mathcal{I}$, and we write $\mathcal{I} \models \forall x \, (\neg P(x) \rightarrow P(f(x)))$.
+
+\subsection{Formal Verification of Satisfaction}
+
+To formally verify that $\mathcal{I} \models \forall x \, (\neg P(x) \rightarrow P(f(x)))$, we must check that for all $n \in \N$, the interpretation satisfies the implication with the substitution $\{x \leftarrow n\}$.
+
+By the semantics of implication, $\mathcal{I}$ satisfies $(\neg P(x) \rightarrow P(f(x)))$ with assignment $\{x \leftarrow n\}$ if and only if:
+\begin{itemize}
+    \item Either $\mathcal{I}$ does not satisfy $\neg P(x)$ with $\{x \leftarrow n\}$ (i.e., $\mathcal{I}$ satisfies $P(x)$ with $\{x \leftarrow n\}$), or
+    \item $\mathcal{I}$ satisfies $P(f(x))$ with $\{x \leftarrow n\}$
+\end{itemize}
+
+Equivalently, for all $n \in \N$, either $n \in \Phi(P)$ or $\Phi(f)(n) \in \Phi(P)$.
+
+\textbf{Truth condition for atomic formulas}: An atomic formula $P(t)$ is true under interpretation $\mathcal{I}$ if and only if the interpretation of the term $t$ belongs to the interpretation of the predicate $\Phi(P)$.
+
+In our example, for all $n \in \N$:
+\begin{itemize}
+    \item Either $n \in \Phi(P)$ (meaning $n$ is even), or
+    \item $\Phi(f)(n) = n + 1 \in \Phi(P)$ (meaning the successor of $n$ is even)
+\end{itemize}
+
+This condition holds for all natural numbers, confirming that the formula is satisfied by the interpretation.
+
+\subsection{Formal Definition of Interpretation}
+
+Having illustrated the concept through examples, we now provide the complete formal definition of an interpretation in first-order logic.
+
+An \textbf{interpretation} $\mathcal{I}$ consists of a triple $\mathcal{I} = \langle D, \Phi, \beta \rangle$ where:
+
+\begin{itemize}
+    \item \textbf{Domain}: $D$ is a non-empty set representing the universe of discourse
+    
+    \item \textbf{Interpretation function} $\Phi$ maps signature symbols to semantic objects:
+    \begin{itemize}
+        \item For each constant symbol $c \in C$: $\Phi(c) = d \in D$
+        \item For each function symbol $f \in \mathcal{F}$ of arity $n \geq 1$: $\Phi(f) : D^n \rightarrow D$, where $D^n$ denotes the $n$-fold Cartesian product $D \times D \times \cdots \times D$
+        \item For each predicate symbol $P \in \mathcal{P}$ of arity $n \geq 0$: $\Phi(P) \subseteq D^n$ (an $n$-ary relation over $D$)
+    \end{itemize}
+    
+    \item \textbf{Variable assignment} $\beta$ maps each variable to a domain element:
+    \begin{itemize}
+        \item $\beta : X \rightarrow D$ such that $\beta(x) = d \in D$ for all variables $x \in X$
+    \end{itemize}
+\end{itemize}
+
+\textbf{Assignment update notation}: Given an assignment $\beta$ and a substitution $x \leftarrow d$, we define the updated assignment $\beta[x \leftarrow d]$ as:
+\[
+\beta[x \leftarrow d](y) = 
+\begin{cases}
+d & \text{if } y = x \\
+\beta(y) & \text{otherwise}
+\end{cases}
+\]
+
+This notation allows us to formally express the evaluation of formulas with different variable bindings, which is essential for defining the semantics of quantified formulas.
+
+
+
+
+
+
+\section{Satisfaction Relation}
+
+\subsection{The Satisfaction Relation}
+
+Having defined interpretations and variable assignments, we now formalize the central semantic concept: when does an interpretation \textbf{satisfy} a formula? The satisfaction relation, denoted $\mathcal{I} \models_\beta \phi$, specifies the conditions under which a formula $\phi$ is true in interpretation $\mathcal{I}$ with variable assignment $\beta$.
+
+Let $F$ and $G$ denote arbitrary formulas. The satisfaction relation is defined inductively on the structure of formulas.
+
+\subsection{Interpretation of Terms}
+
+Before defining satisfaction for formulas, we must specify how terms are interpreted. Given an interpretation $\mathcal{I} = \langle D, \Phi, \beta \rangle$, the interpretation of a term $t$, denoted $\Phi_\beta(t)$, is defined recursively:
+
+\begin{itemize}
+    \item \textbf{Constants}: $\Phi_\beta(c) = \Phi(c) \in D$
+    \item \textbf{Variables}: $\Phi_\beta(x) = \beta(x) \in D$
+    \item \textbf{Function application}: $\Phi_\beta(f(t_1, \dots, t_n)) = \Phi(f)(\Phi_\beta(t_1), \dots, \Phi_\beta(t_n)) \in D$
+\end{itemize}
+
+Each term evaluates to a specific element of the domain under a given interpretation.
+
+\subsection{Satisfaction for Atomic Formulas}
+
+\textbf{Base case} (atomic formulas): An interpretation $\mathcal{I}$ satisfies an atomic formula $P(t_1, \dots, t_n)$ under assignment $\beta$ if and only if the tuple of interpreted terms belongs to the interpretation of the predicate:
+
+\[
+\mathcal{I} \models_\beta P(t_1, \dots, t_n) \quad \text{iff} \quad (\Phi_\beta(t_1), \dots, \Phi_\beta(t_n)) \in \Phi(P)
+\]
+
+\subsection{Satisfaction for Logical Connectives}
+
+The satisfaction relation extends to compound formulas through the following inductive clauses. Note that all satisfaction relations are parameterized by the variable assignment $\beta$, written as $\models_\beta$.
+
+\begin{itemize}
+    \item \textbf{Negation}: 
+    \[
+    \mathcal{I} \models_\beta \neg F \quad \text{iff} \quad \mathcal{I} \not\models_\beta F
+    \]
+    
+    \item \textbf{Conjunction}: 
+    \[
+    \mathcal{I} \models_\beta (F \wedge G) \quad \text{iff} \quad \mathcal{I} \models_\beta F \text{ and } \mathcal{I} \models_\beta G
+    \]
+    
+    \item \textbf{Disjunction}: 
+    \[
+    \mathcal{I} \models_\beta (F \vee G) \quad \text{iff} \quad \mathcal{I} \models_\beta F \text{ or } \mathcal{I} \models_\beta G
+    \]
+    
+    \item \textbf{Implication}: 
+    \[
+    \mathcal{I} \models_\beta (F \rightarrow G) \quad \text{iff} \quad \mathcal{I} \not\models_\beta F \text{ or } \mathcal{I} \models_\beta G
+    \]
+    Equivalently: if $\mathcal{I} \models_\beta F$ then $\mathcal{I} \models_\beta G$
+    
+    \item \textbf{Biconditional}: 
+    \[
+    \mathcal{I} \models_\beta (F \leftrightarrow G) \quad \text{iff} \quad \mathcal{I} \models_\beta F \text{ if and only if } \mathcal{I} \models_\beta G
+    \]
+\end{itemize}
+
+\subsection{Satisfaction for Quantified Formulas}
+
+Quantifiers introduce variable bindings that range over the entire domain:
+
+\begin{itemize}
+    \item \textbf{Universal quantification}: 
+    \[
+    \mathcal{I} \models_\beta \forall x \, G \quad \text{iff} \quad \text{for all } d \in D, \, \mathcal{I} \models_{\beta[x \leftarrow d]} G
+    \]
+    The formula $\forall x \, G$ is satisfied if $G$ is satisfied under every possible assignment to $x$.
+    
+    \item \textbf{Existential quantification}: 
+    \[
+    \mathcal{I} \models_\beta \exists x \, G \quad \text{iff} \quad \text{there exists } d \in D \text{ such that } \mathcal{I} \models_{\beta[x \leftarrow d]} G
+    \]
+    The formula $\exists x \, G$ is satisfied if $G$ is satisfied under at least one assignment to $x$.
+\end{itemize}
+
+This completes the inductive definition of the satisfaction relation, providing a complete semantics for first-order logic.
+
+\subsection{Example: Quantifier Evaluation}
+
+Consider the formula $\forall x \, \exists y \, R(x, y)$, which can be read as "for all $x$, there exists $y$ such that $x < y$".
+
+Let $\mathcal{I} = \langle \N, \Phi \rangle$ where $\Phi(R) = \{(n, m) \in \N \times \N \mid n < m\}$ (the standard ordering on natural numbers).
+
+To verify $\mathcal{I} \models \forall x \, \exists y \, R(x, y)$, we apply the semantic definitions:
+\begin{align*}
+\mathcal{I} \models \forall x \, \exists y \, R(x, y) 
+&\quad \text{iff} \quad \text{for all } n \in \N, \, \mathcal{I} \models_{\beta[x \leftarrow n]} \exists y \, R(x, y) \\
+&\quad \text{iff} \quad \text{for all } n \in \N, \text{ there exists } m \in \N \text{ such that } \mathcal{I} \models_{\beta[x \leftarrow n, y \leftarrow m]} R(x, y) \\
+&\quad \text{iff} \quad \text{for all } n \in \N, \text{ there exists } m \in \N \text{ such that } (n, m) \in \Phi(R) \\
+&\quad \text{iff} \quad \text{for all } n \in \N, \text{ there exists } m \in \N \text{ such that } n < m
+\end{align*}
+
+This statement is \textbf{false} in $\N$ because there is no natural number greater than all natural numbers. However, it would be true in $\mathbb{Z}$ or $\mathbb{Q}$, demonstrating how truth depends on the chosen interpretation.
+
+\section{Semantic Properties of Formulas}
+
+Having established the satisfaction relation, we now define fundamental semantic properties that classify formulas according to their truth behavior across different interpretations.
+
+\subsection{Satisfiability}
+
+A formula $F$ is \textbf{satisfiable} if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$. In this case, we say that $\mathcal{I}$ is a \textbf{model} of $F$.
+
+\[
+F \text{ is satisfiable} \quad \Leftrightarrow \quad \exists \mathcal{I} : \mathcal{I} \models F
+\]
+
+\subsection{Validity}
+
+A formula $F$ is \textbf{valid} (or a \textbf{tautology}) if for all interpretations $\mathcal{I}$, we have $\mathcal{I} \models F$. Valid formulas are true in every possible interpretation.
+
+\[
+F \text{ is valid} \quad \Leftrightarrow \quad \forall \mathcal{I} : \mathcal{I} \models F
+\]
+
+We denote validity by $\models F$.
+
+\subsection{Unsatisfiability}
+
+A formula $F$ is \textbf{unsatisfiable} (or \textbf{contradictory}) if there exists no interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$. Unsatisfiable formulas are false in every interpretation.
+
+\[
+F \text{ is unsatisfiable} \quad \Leftrightarrow \quad \nexists \mathcal{I} : \mathcal{I} \models F \quad \Leftrightarrow \quad \forall \mathcal{I} : \mathcal{I} \not\models F
+\]
+
+\subsection{Invalidity}
+
+A formula $F$ is \textbf{invalid} (or \textbf{falsifiable}) if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \not\models F$. In this case, we say that $\mathcal{I}$ is a \textbf{countermodel} (or \textbf{counterexample}) for $F$.
+
+\[
+F \text{ is invalid} \quad \Leftrightarrow \quad \exists \mathcal{I} : \mathcal{I} \not\models F
+\]
+
+\subsection{Relationships Between Semantic Properties}
+
+These semantic properties are intimately related through negation:
+
+\begin{theorem}[Validity and Unsatisfiability]
+A formula $F$ is valid if and only if $\neg F$ is unsatisfiable.
+\end{theorem}
+
+\begin{proof}
+Suppose $F$ is valid. Then for all interpretations $\mathcal{I}$, we have $\mathcal{I} \models F$, which implies $\mathcal{I} \not\models \neg F$. Therefore, $\neg F$ is unsatisfiable.
+
+Conversely, if $\neg F$ is unsatisfiable, then for all interpretations $\mathcal{I}$, we have $\mathcal{I} \not\models \neg F$, which implies $\mathcal{I} \models F$. Therefore, $F$ is valid.
+\end{proof}
+
+\begin{theorem}[Satisfiability and Invalidity]
+A formula $F$ is satisfiable if and only if $\neg F$ is invalid.
+\end{theorem}
+
+\begin{proof}
+$F$ is satisfiable if and only if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$, which is equivalent to $\mathcal{I} \not\models \neg F$. This is precisely the condition for $\neg F$ to be invalid.
+\end{proof}
+
+These relationships demonstrate the duality between validity and unsatisfiability, and between satisfiability and invalidity, providing a complete characterization of the semantic landscape of first-order logic.
+
+\section{Logical Consequence}
+
+\subsection{The Three Fundamental Query Types}
+
+Automated reasoning systems must be capable of resolving three fundamental types of semantic queries:
+\begin{enumerate}
+    \item \textbf{Satisfiability queries}: Is formula $F$ satisfiable?
+    \item \textbf{Validity queries}: Is formula $F$ valid?
+    \item \textbf{Logical consequence queries}: Does $F$ follow logically from a set of hypotheses $H$?
+\end{enumerate}
+
+\subsection{Definition of Logical Consequence}
+
+Let $H = \{\phi_1, \phi_2, \dots, \phi_n\}$ be a set of formulas (the \textbf{hypotheses} or \textbf{premises}) and let $F$ be a formula (the \textbf{conclusion}). We say that $F$ is a \textbf{logical consequence} of $H$, written $H \models F$, and read as "$H$ entails $F$" or "$F$ follows logically from $H$", if:
+
+\[
+H \models F \quad \Leftrightarrow \quad \text{for all interpretations } \mathcal{I}, \text{ if } \mathcal{I} \models H \text{ then } \mathcal{I} \models F
+\]
+
+In other words, $F$ is a logical consequence of $H$ if every model of $H$ is also a model of $F$. Here, $\mathcal{I} \models H$ means that $\mathcal{I}$ satisfies all formulas in $H$.
+
+\subsection{The Deduction Theorem}
+
+The deduction theorem establishes a fundamental connection between logical consequence and validity, reducing the problem of checking entailment to the problem of checking validity.
+
+\begin{theorem}[Deduction Theorem]
+Let $H$ be a set of formulas and $F$ be a formula. Then:
+\[
+H \models F \quad \text{iff} \quad \models (H \rightarrow F)
+\]
+where $H \rightarrow F$ denotes the implication from the conjunction of all formulas in $H$ to $F$.
+\end{theorem}
+
+\begin{proof}
+We prove both directions:
+
+\textbf{($\Rightarrow$)} Assume $H \models F$. We must show that $H \rightarrow F$ is valid, i.e., for all interpretations $\mathcal{I}$, we have $\mathcal{I} \models H \rightarrow F$.
+
+Let $\mathcal{I}$ be an arbitrary interpretation. By the semantics of implication, $\mathcal{I} \models H \rightarrow F$ holds if either:
+\begin{itemize}
+    \item $\mathcal{I} \not\models H$ (the antecedent is false), or
+    \item $\mathcal{I} \models F$ (the consequent is true)
+\end{itemize}
+
+If $\mathcal{I} \not\models H$, then $\mathcal{I} \models H \rightarrow F$ trivially. If $\mathcal{I} \models H$, then by the hypothesis $H \models F$, we have $\mathcal{I} \models F$, so $\mathcal{I} \models H \rightarrow F$. In both cases, $\mathcal{I} \models H \rightarrow F$.
+
+\textbf{($\Leftarrow$)} Conversely, suppose $H \rightarrow F$ is valid. Then for all interpretations $\mathcal{I}$, we have $\mathcal{I} \models H \rightarrow F$. By the semantics of implication, for all $\mathcal{I}$, either $\mathcal{I} \not\models H$ or $\mathcal{I} \models F$. Therefore, for all $\mathcal{I}$ such that $\mathcal{I} \models H$, we must have $\mathcal{I} \models F$, which is precisely the definition of $H \models F$.
+\end{proof}
+
+\subsection{Notational Ambiguity of $\models$}
+
+The symbol $\models$ is used in three distinct but related contexts:
+
+\begin{itemize}
+    \item \textbf{Satisfaction}: $\mathcal{I} \models F$ means interpretation $\mathcal{I}$ satisfies formula $F$
+    \item \textbf{Validity}: $\models F$ means formula $F$ is valid (satisfied by all interpretations)
+    \item \textbf{Entailment}: $H \models F$ means formula $F$ is a logical consequence of the set of formulas $H$
+\end{itemize}
+
+While this overloading may initially seem confusing, these three uses are semantically coherent and represent different aspects of the same fundamental semantic relation.
+
+\subsection{Reduction to Unsatisfiability}
+
+A fundamental result connects logical consequence to unsatisfiability, providing another characterization of entailment.
+
+\begin{theorem}[Logical Consequence via Unsatisfiability]
+Let $H$ be a set of formulas and $F$ be a formula. Then:
+\[
+H \models F \quad \text{iff} \quad H \cup \{\neg F\} \text{ is unsatisfiable}
+\]
+\end{theorem}
+
+\begin{proof}
+We prove both directions:
+
+\textbf{($\Rightarrow$)} Assume $H \models F$. We must show that $H \cup \{\neg F\}$ is unsatisfiable.
+
+Suppose for contradiction that there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models H \cup \{\neg F\}$. Then $\mathcal{I} \models H$ and $\mathcal{I} \models \neg F$, which implies $\mathcal{I} \not\models F$. However, since $H \models F$ and $\mathcal{I} \models H$, we must have $\mathcal{I} \models F$, which is a contradiction. Therefore, $H \cup \{\neg F\}$ is unsatisfiable.
+
+\textbf{($\Leftarrow$)} Assume $H \cup \{\neg F\}$ is unsatisfiable. We must show that $H \models F$.
+
+Let $\mathcal{I}$ be any interpretation such that $\mathcal{I} \models H$. Since $H \cup \{\neg F\}$ is unsatisfiable, there is no interpretation that satisfies both $H$ and $\neg F$. Therefore, $\mathcal{I} \not\models \neg F$, which implies $\mathcal{I} \models F$. Since this holds for all interpretations satisfying $H$, we conclude that $H \models F$.
+\end{proof}
+
+\section{Refutational Reasoning}
+
+\subsection{Proof by Contradiction}
+
+\textbf{Refutational reasoning} (or \textbf{proof by refutation}) is a fundamental technique in automated reasoning based on the principle of \textit{reductio ad absurdum}. To prove that a conclusion $F$ follows from hypotheses $H$, we assume the negation of the conclusion and derive a contradiction.
+
+The method proceeds as follows:
+\begin{enumerate}
+    \item \textbf{Goal}: Prove $H \models F$ (where $H$ represents assumptions and $F$ represents the conjecture)
+    \item \textbf{Method}: Show that $H \cup \{\neg F\}$ is unsatisfiable
+    \item \textbf{Conclusion}: If $H \cup \{\neg F\}$ is unsatisfiable, then $H \models F$ by the previous theorem
+\end{enumerate}
+
+\subsection{The Refutational Framework}
+
+The automated reasoning process can be formalized as follows:
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm, auto]
+    \node (input) {$H \cup \{\neg F\}$};
+    \node (procedure) [rectangle, draw, right of=input, node distance=4cm] {Decision Procedure};
+    \node (unsat) [below right of=procedure, node distance=3cm] {\textbf{Unsatisfiable}};
+    \node (sat) [above right of=procedure, node distance=3cm] {\textbf{Satisfiable}};
+    
+    \draw[->] (input) -- (procedure);
+    \draw[->] (procedure) -- node[near start, above] {Yes} (unsat);
+    \draw[->] (procedure) -- node[near start, above] {No} (sat);
+    
+    \node[right of=unsat, node distance=3.5cm, text width=3.5cm] {Proof found (refutation): $H \models F$};
+    \node[right of=sat, node distance=3.5cm, text width=3.5cm] {Model found: counterexample to $H \models F$};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Two possible outcomes}:
+\begin{itemize}
+    \item \textbf{Unsatisfiable}: The procedure derives a contradiction, producing a \textbf{refutation} (proof) that $H \models F$
+    \item \textbf{Satisfiable}: The procedure finds a model $\mathcal{I}$ of $H \cup \{\neg F\}$, which serves as a \textbf{counterexample} showing that $H \not\models F$
+\end{itemize}
+
+This refutational approach forms the foundation of modern automated theorem provers and SAT solvers, reducing the problem of proving logical consequence to the problem of detecting unsatisfiability.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
