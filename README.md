@@ -257,16 +257,6 @@ This is a personal academic repository, but suggestions and corrections are welc
 | **Location** | Verona, Italy 🇮🇹 |
 | **Author** | Jacopo Parretti |
 
-### Program Details
-
-The Master's Degree in Artificial Intelligence at the University of Verona provides advanced training in:
-- Machine Learning and Deep Learning
-- Natural Language Processing
-- Computer Vision
-- Automated Reasoning
-- Planning and Reinforcement Learning
-- Knowledge Representation
-- AI Ethics and Applications
 
 ---
 
