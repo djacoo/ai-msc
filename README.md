@@ -1,14 +1,14 @@
 <div align="center">
 
-# AI Master's Degree — First Semester
+# 🎓 AI Master's Degree — First Semester
 
-### University of Verona
+### 🏛️ University of Verona
 
 [![University](https://img.shields.io/badge/University-Verona-FFD700?style=for-the-badge)](https://www.univr.it/)
 [![Academic Year](https://img.shields.io/badge/Year-2025%2F2026-4169E1?style=for-the-badge)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
 [![LaTeX](https://img.shields.io/badge/LaTeX-Notes-008080?style=for-the-badge&logo=latex)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
 
-Course materials, lecture notes, and slides for the Master's program in Artificial Intelligence
+*Course materials, lecture notes, and slides for the Master's program in Artificial Intelligence*
 
 </div>
 
@@ -48,9 +48,9 @@ AI---PRIMO-SEMESTRE/
         └── [LaTeX auxiliary files]
 ```
 
----
+<br>
 
-## Courses
+## 📚 Courses
 
 <table>
 <tr>
@@ -95,9 +95,9 @@ AI---PRIMO-SEMESTRE/
 </tr>
 </table>
 
----
+<br>
 
-## Usage
+## 🚀 Usage
 
 ```bash
 # Clone the repository
@@ -108,22 +108,23 @@ cd AI---PRIMO-SEMESTRE
 cd AR && pdflatex AR\ Appunti.tex
 ```
 
----
+<br>
 
-## License
+## 📜 License
 
 **Educational Use Only** — Materials are for personal study and reference. Course slides are property of their respective professors and the University of Verona.
 
----
+<br>
+<br>
 
 <div align="center">
 
 **Jacopo Parretti** • [@djacoo](https://github.com/djacoo)
 
-Master's in Artificial Intelligence — University of Verona, 2025/2026
+*Master's in Artificial Intelligence — University of Verona, 2025/2026*
 
 <br>
 
-*Last updated: October 2025*
+<sub>Last updated: October 2025</sub>
 
 </div>
