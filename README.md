@@ -1,88 +1,117 @@
 <div align="center">
 
-<!-- Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=AI%20Master's%20Degree&fontSize=50&fontColor=fff&animation=fadeIn&fontAlignY=35&desc=First%20Semester%202025/2026&descAlignY=51&descAlign=50" width="100%"/>
+<!-- Animated Header -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=250&section=header&text=AI%20Master's%20Degree&fontSize=60&fontColor=fff&animation=twinkling&fontAlignY=32&desc=First%20Semester%202025/2026%20%E2%80%A2%20University%20of%20Verona&descAlignY=51&descAlign=50&descSize=20" width="100%"/>
 
 <br/>
 
-<!-- Badges -->
+<!-- Animated Badges -->
 <p align="center">
-  <img src="https://img.shields.io/badge/University-Verona-red?style=for-the-badge&logo=google-scholar&logoColor=white" alt="University"/>
-  <img src="https://img.shields.io/badge/Year-2025/2026-blue?style=for-the-badge" alt="Year"/>
-  <img src="https://img.shields.io/badge/Courses-4-green?style=for-the-badge&logo=bookstack&logoColor=white" alt="Courses"/>
-  <img src="https://img.shields.io/badge/Pages-400+-purple?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Pages"/>
+  <a href="#"><img src="https://img.shields.io/badge/🏛%EF%B8%8F_University-Verona-DC143C?style=for-the-badge&labelColor=8B0000" alt="University"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/📅_Academic_Year-2025/2026-4169E1?style=for-the-badge&labelColor=191970" alt="Year"/></a>
+  <a href="#courses"><img src="https://img.shields.io/badge/📚_Courses-4-00CED1?style=for-the-badge&labelColor=008B8B" alt="Courses"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/📝_Pages-400+-9370DB?style=for-the-badge&labelColor=4B0082" alt="Pages"/></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/LaTeX-008080?style=for-the-badge&logo=latex&logoColor=white" alt="LaTeX"/>
-  <img src="https://img.shields.io/badge/PDF-Ready-success?style=for-the-badge&logo=adobe-acrobat-reader&logoColor=white" alt="PDF"/>
-  <img src="https://img.shields.io/badge/License-Educational-yellow?style=for-the-badge&logo=open-source-initiative&logoColor=white" alt="License"/>
+  <img src="https://img.shields.io/badge/LaTeX-008080?style=for-the-badge&logo=latex&logoColor=white&labelColor=005555" alt="LaTeX"/>
+  <img src="https://img.shields.io/badge/PDF-Ready_to_Study-32CD32?style=for-the-badge&logo=adobe-acrobat-reader&logoColor=white&labelColor=228B22" alt="PDF"/>
+  <img src="https://img.shields.io/badge/License-Educational_Use-FFD700?style=for-the-badge&logo=open-source-initiative&logoColor=black&labelColor=DAA520" alt="License"/>
 </p>
 
 <br/>
 
-### 🎯 *Comprehensive course materials, lecture notes, and slides*
-### 📚 *Everything you need to excel in your AI Master's journey*
+<!-- Typing SVG Effect -->
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=1000&color=667EEA&center=true&vCenter=true&multiline=true&width=800&height=80&lines=🎯+Comprehensive+course+materials%2C+lecture+notes+%26+slides;🚀+Everything+you+need+to+excel+in+your+AI+Master's+journey" alt="Typing SVG" />
+</p>
 
 <br/>
 
 </div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
+
+<br/>
+
+<div align="center">
 
 ## 📂 Repository Structure
 
-```
-AI---PRIMO-SEMESTRE/
-│
-├── 📄 README.md                    # Main repository guide ⭐
-├── 📄 LICENSE                      # Educational use license
-├── 📄 .gitignore                   # Git ignore rules
-│
-├── 📁 courses/                     # All course materials 📚
-│   │
-│   ├── 📁 automated-reasoning/
-│   │   ├── notes/                 # LaTeX notes + PDF
-│   │   └── slides/                # 5 lecture slides
-│   │
-│   ├── 📁 natural-language-processing/
-│   │   ├── notes/                 # 400+ pages of notes
-│   │   └── slides/                # 16 lecture slides
-│   │
-│   ├── 📁 planning-and-reinforcement-learning/
-│   │   ├── notes/                 # 23 pages of notes
-│   │   └── slides/                # 6 lecture slides
-│   │
-│   └── 📁 human-computer-interaction/
-│       ├── notes/                 # Theory 2 notes
-│       └── slides/
-│
-└── 📁 docs/                        # Additional resources
-    └── CORSI 1 ANNO AI provvisorio.pdf  # Official course info
-```
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
----
-
-<h2 align="center">📚 Course Overview</h2>
+</div>
 
 <div align="center">
-  
-```mermaid
-%%{init: {'theme':'dark'}}%%
-graph LR
-    A[🎓 AI Master's] --> B[🤖 Automated<br/>Reasoning]
-    A --> C[💬 Natural Language<br/>Processing]
-    A --> D[🎯 Planning &<br/>Reinforcement Learning]
-    A --> E[👁️ Human-Computer<br/>Interaction]
-    
-    style A fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
-    style B fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
-    style C fill:#4facfe,stroke:#00f2fe,stroke-width:2px,color:#fff
-    style D fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
-    style E fill:#fa709a,stroke:#fee140,stroke-width:2px,color:#fff
+
+```text
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃           🚀 AI---PRIMO-SEMESTRE  ━  Study Repository           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📄 README.md                         Main repository guide ⭐
+📄 LICENSE                           Educational use license
+📄 .gitignore                        Git ignore rules
+
+📁 courses/  ━━━━━━━━━━━━━━━  All Course Materials 📚
+  │
+  ├── 🤖 automated-reasoning/
+  │     ├── 📓 notes/               LaTeX + PDF notes
+  │     └── 🎯 slides/              5 lectures
+  │
+  ├── 🗣️ natural-language-processing/
+  │     ├── 📕 notes/               400+ pages!
+  │     └── 🎯 slides/              16 lectures
+  │
+  ├── 🎯 planning-and-reinforcement-learning/
+  │     ├── 📗 notes/               23 pages
+  │     └── 🎯 slides/              6 lectures
+  │
+  └── 👁️ human-computer-interaction/
+        ├── 📙 notes/               Theory 2
+        └── 🎯 slides/              Multimodal systems
+
+📁 docs/  ━━━━━━━━━━━━━━━━━  Additional Resources
+  └── 📊 CORSI 1 ANNO AI provvisorio.pdf
 ```
 
 </div>
 
 <br/>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<br/>
+
+<div align="center">
+
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="35" height="35" />
+  Course Overview
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="35" height="35" />
+</h2>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+  
+```mermaid
+%%{init: {'theme':'dark', 'themeVariables': {'fontSize': '16px'}}}%%
+graph TD
+    A["🎯 AI Master's<br/><b>First Semester</b>"] --> B["🤖 Automated Reasoning<br/>───────────────<br/>📊 5 slides"]
+    A --> C["💬 Natural Language Processing<br/>────────────────────<br/>📊 16 slides • 400+ pages"]
+    A --> D["🎯 Planning & RL<br/>──────────────<br/>📊 6 slides"]
+    A --> E["👁️ Human-Computer Interaction<br/>─────────────────────<br/>📊 Multimodal Systems"]
+    
+    style A fill:#667eea,stroke:#764ba2,stroke-width:4px,color:#fff,rx:15,ry:15
+    style B fill:#f093fb,stroke:#f5576c,stroke-width:3px,color:#fff,rx:10,ry:10
+    style C fill:#4facfe,stroke:#00f2fe,stroke-width:3px,color:#fff,rx:10,ry:10
+    style D fill:#43e97b,stroke:#38f9d7,stroke-width:3px,color:#fff,rx:10,ry:10
+    style E fill:#fa709a,stroke:#fee140,stroke-width:3px,color:#fff,rx:10,ry:10
+```
+
+</div>
+
+<br/>
+<a name="courses"></a>
 
 <table>
 <tr>
@@ -175,9 +204,23 @@ graph LR
 </tr>
 </table>
 
----
+<br/>
 
-<h2 align="center">🚀 Getting Started</h2>
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<br/>
+
+<div align="center">
+
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="35" height="35" />
+  Getting Started
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="35" height="35" />
+</h2>
+
+</div>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 <div align="center">
 
@@ -261,11 +304,19 @@ open docs/"CORSI 1 ANNO AI provvisorio.pdf"
 
 </details>
 
----
+<br/>
 
-## 📜 License & Usage
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<br/>
 
 <div align="center">
+
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="License" width="35" height="35" />
+  License & Usage
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="License" width="35" height="35" />
+</h2>
 
 **📚 Educational Use Only**
 
@@ -276,11 +327,19 @@ Course slides and materials are property of their respective professors and the 
 
 </div>
 
----
+<br/>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<br/>
 
 <div align="center">
 
-## 📊 **Repository Stats**
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Stats" width="35" height="35" />
+  Repository Stats
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Stats" width="35" height="35" />
+</h2>
 
 <table>
   <tr>
@@ -301,11 +360,19 @@ Course slides and materials are property of their respective professors and the 
 
 </div>
 
----
+<br/>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
+<br/>
 
 <div align="center">
 
-## 👨‍💻 **Author**
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Man%20Technologist.png" alt="Author" width="35" height="35" />
+  Author
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Man%20Technologist.png" alt="Author" width="35" height="35" />
+</h2>
 
 <img src="https://img.shields.io/badge/Jacopo_Parretti-AI_Student-blueviolet?style=for-the-badge&logo=github" alt="Author"/>
 
@@ -313,21 +380,37 @@ Course slides and materials are property of their respective professors and the 
 🏛️ University of Verona • 2025/2026
 
 [![GitHub](https://img.shields.io/badge/GitHub-djacoo-181717?style=for-the-badge&logo=github)](https://github.com/djacoo)
+[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:jacopo.parretti@studenti.univr.it)
 
 </div>
 
----
+<br/>
 
-<div align="center">
-
-### 💡 **Contributions & Feedback**
-
-Found this helpful? ⭐ **Star this repository** to support the project!
-
-<sub>📅 Last updated: October 2025 | Made with ❤️ for AI students</sub>
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 <br/>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer" width="100%"/>
+<div align="center">
+
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Bulb" width="35" height="35" />
+  Contributions & Feedback
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Bulb" width="35" height="35" />
+</h2>
+
+<p>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png" alt="Clapping" width="25" height="25" />
+  Found this helpful? ⭐ <b>Star this repository</b> to support the project!
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png" alt="Clapping" width="25" height="25" />
+</p>
+
+<br/>
+
+<sub>📅 Last updated: October 2025 | Made with ❤️ for AI students at University of Verona</sub>
+
+<br/><br/>
+
+<!-- Animated Footer -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=120&section=footer&animation=twinkling" width="100%"/>
 
 </div>
