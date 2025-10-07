@@ -1,13 +1,30 @@
 <div align="center">
 
-# 🎓 Artificial Intelligence — Master's Degree
-## First Semester 2025/2026
+<!-- Header Banner -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=AI%20Master's%20Degree&fontSize=50&fontColor=fff&animation=fadeIn&fontAlignY=35&desc=First%20Semester%202025/2026&descAlignY=51&descAlign=50" width="100%"/>
 
-### 🏛️ University of Verona
+<br/>
 
-*Comprehensive course materials, lecture notes, and slides for the Master's program in Artificial Intelligence*
+<!-- Badges -->
+<p align="center">
+  <img src="https://img.shields.io/badge/University-Verona-red?style=for-the-badge&logo=google-scholar&logoColor=white" alt="University"/>
+  <img src="https://img.shields.io/badge/Year-2025/2026-blue?style=for-the-badge" alt="Year"/>
+  <img src="https://img.shields.io/badge/Courses-4-green?style=for-the-badge&logo=bookstack&logoColor=white" alt="Courses"/>
+  <img src="https://img.shields.io/badge/Pages-400+-purple?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Pages"/>
+</p>
 
----
+<p align="center">
+  <img src="https://img.shields.io/badge/LaTeX-008080?style=for-the-badge&logo=latex&logoColor=white" alt="LaTeX"/>
+  <img src="https://img.shields.io/badge/PDF-Ready-success?style=for-the-badge&logo=adobe-acrobat-reader&logoColor=white" alt="PDF"/>
+  <img src="https://img.shields.io/badge/License-Educational-yellow?style=for-the-badge&logo=open-source-initiative&logoColor=white" alt="License"/>
+</p>
+
+<br/>
+
+### 🎯 *Comprehensive course materials, lecture notes, and slides*
+### 📚 *Everything you need to excel in your AI Master's journey*
+
+<br/>
 
 </div>
 
@@ -16,10 +33,11 @@
 ```
 AI---PRIMO-SEMESTRE/
 │
-├── 📄 README.md                    # This file
+├── 📄 README.md                    # Main repository guide ⭐
 ├── 📄 LICENSE                      # Educational use license
+├── 📄 .gitignore                   # Git ignore rules
 │
-├── 📁 courses/                     # All course materials
+├── 📁 courses/                     # All course materials 📚
 │   │
 │   ├── 📁 automated-reasoning/
 │   │   ├── notes/                 # LaTeX notes + PDF
@@ -38,71 +56,120 @@ AI---PRIMO-SEMESTRE/
 │       └── slides/
 │
 └── 📁 docs/                        # Additional resources
-    └── CORSI 1 ANNO AI provvisorio.pdf  # Course overview
+    └── CORSI 1 ANNO AI provvisorio.pdf  # Official course info
 ```
 
 ---
 
-## 📚 Course Overview
+<h2 align="center">📚 Course Overview</h2>
+
+<div align="center">
+  
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph LR
+    A[🎓 AI Master's] --> B[🤖 Automated<br/>Reasoning]
+    A --> C[💬 Natural Language<br/>Processing]
+    A --> D[🎯 Planning &<br/>Reinforcement Learning]
+    A --> E[👁️ Human-Computer<br/>Interaction]
+    
+    style A fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
+    style B fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
+    style C fill:#4facfe,stroke:#00f2fe,stroke-width:2px,color:#fff
+    style D fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
+    style E fill:#fa709a,stroke:#fee140,stroke-width:2px,color:#fff
+```
+
+</div>
+
+<br/>
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 🤖 Automated Reasoning
-> **AR Appunti.pdf** • 📄 LaTeX source available
+<div align="center">
 
-📊 **Content**: 5 lecture slides  
-📖 **Topics**: 
-- Logic & Formal Methods
-- Theorem Proving
-- SAT Solving
-- Constraint Programming
+### 🤖 **Automated Reasoning**
+[![Course](https://img.shields.io/badge/Slides-5-blue?style=flat-square)](courses/automated-reasoning/slides)
+[![Notes](https://img.shields.io/badge/Notes-PDF-red?style=flat-square&logo=adobe-acrobat-reader)](courses/automated-reasoning/notes)
+
+</div>
+
+> 📄 **AR Appunti.pdf** • LaTeX source available
+
+**🔬 Key Topics:**
+```
+✓ Logic & Formal Methods
+✓ Theorem Proving  
+✓ SAT Solving
+✓ Constraint Programming
+```
 
 </td>
 <td width="50%" valign="top">
 
-### 💬 Natural Language Processing
-> **NLP Appunti.pdf** • 📄 LaTeX source available  
-> 📏 **400+ pages** of comprehensive notes
+<div align="center">
 
-📊 **Content**: 16 lecture slides (L0-L15)  
-📖 **Topics**: 
-- Text Processing & Tokenization
-- Language Models & Embeddings
-- Transformers & Attention
-- Neural NLP Architectures
+### 💬 **Natural Language Processing**
+[![Course](https://img.shields.io/badge/Slides-16-blue?style=flat-square)](courses/natural-language-processing/slides)
+[![Notes](https://img.shields.io/badge/Notes-400+_pages-red?style=flat-square&logo=adobe-acrobat-reader)](courses/natural-language-processing/notes)
+
+</div>
+
+> 📄 **NLP Appunti.pdf** • 400+ comprehensive pages
+
+**🔬 Key Topics:**
+```
+✓ Text Processing & Tokenization
+✓ Language Models & Embeddings
+✓ Transformers & Attention
+✓ Neural NLP Architectures
+```
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 🎯 Planning & Reinforcement Learning
-> **Planning appunti.pdf** • 📄 LaTeX source available  
-> 📏 **23 pages** of detailed notes
+<div align="center">
 
-📊 **Content**: 6 lecture slides (Planning-1 to -6)  
-📖 **Topics**: 
-- Classical Planning Foundations
-- State Transition Systems
-- Action Schemas & STRIPS
-- SAT Encoding & DWR Domain
-- Iterative Deepening Search
+### 🎯 **Planning & Reinforcement Learning**
+[![Course](https://img.shields.io/badge/Slides-6-blue?style=flat-square)](courses/planning-and-reinforcement-learning/slides)
+[![Notes](https://img.shields.io/badge/Notes-23_pages-red?style=flat-square&logo=adobe-acrobat-reader)](courses/planning-and-reinforcement-learning/notes)
+
+</div>
+
+> 📄 **Planning appunti.pdf** • Detailed foundations
+
+**🔬 Key Topics:**
+```
+✓ Classical Planning Foundations
+✓ State Transition Systems
+✓ Action Schemas & STRIPS
+✓ SAT Encoding & DWR Domain
+```
 
 </td>
 <td width="50%" valign="top">
 
-### 👁️ Human-Computer Interaction
-> **HCI Theory 2 Appunti.pdf** • 📄 LaTeX source available
+<div align="center">
 
-📊 **Focus**: Multimodal Systems - Theory 2  
-📖 **Topics**: 
-- Multimodal Interaction Design
-- Visual & Camera-based Systems
-- Affective Computing
-- AR/VR Technologies
-- Unity Development
+### 👁️ **Human-Computer Interaction**
+[![Course](https://img.shields.io/badge/Slides-Available-blue?style=flat-square)](courses/human-computer-interaction/slides)
+[![Notes](https://img.shields.io/badge/Notes-Theory_2-red?style=flat-square&logo=adobe-acrobat-reader)](courses/human-computer-interaction/notes)
+
+</div>
+
+> 📄 **HCI Theory 2 Appunti.pdf** • Multimodal Systems
+
+**🔬 Key Topics:**
+```
+✓ Multimodal Interaction Design
+✓ Visual & Camera-based Systems
+✓ Affective Computing
+✓ AR/VR Technologies
+```
 
 </td>
 </tr>
@@ -110,30 +177,89 @@ AI---PRIMO-SEMESTRE/
 
 ---
 
-## 🚀 Getting Started
+<h2 align="center">🚀 Getting Started</h2>
 
-### 📥 Clone the Repository
+<div align="center">
+
+### 📥 **Clone the Repository**
+
 ```bash
 git clone https://github.com/djacoo/AI---PRIMO-SEMESTRE.git
 cd AI---PRIMO-SEMESTRE
 ```
 
-### 📖 Access Study Materials
+</div>
 
-All materials are **ready to use** — just browse the folders!
+---
 
-- **📚 Notes**: Navigate to `courses/<course-name>/notes/` for comprehensive PDF notes
-- **🎯 Slides**: Find lecture slides in `courses/<course-name>/slides/`
-- **📝 LaTeX Source**: All notes include `.tex` source files for customization
+### 📖 **Access Study Materials**
 
-#### Quick Navigation
+<table>
+<tr>
+<td width="33%" align="center">
+
+#### 📚 **Notes**
+Comprehensive PDFs ready to read
+
 ```bash
-# Example: View NLP notes
-open courses/natural-language-processing/notes/"NLP Appunti.pdf"
+open courses/<course>/notes/
+```
 
-# Example: Browse Planning slides
+</td>
+<td width="33%" align="center">
+
+#### 🎯 **Slides**
+Lecture presentations
+
+```bash
+open courses/<course>/slides/
+```
+
+</td>
+<td width="33%" align="center">
+
+#### 📝 **LaTeX Source**
+Customizable `.tex` files
+
+```bash
+cd courses/<course>/notes/
+```
+
+</td>
+</tr>
+</table>
+
+---
+
+### ⚡ **Quick Navigation Examples**
+
+<details>
+<summary><b>🔍 Click to expand examples</b></summary>
+
+<br/>
+
+**View NLP Notes:**
+```bash
+open courses/natural-language-processing/notes/"NLP Appunti.pdf"
+```
+
+**Browse Planning Slides:**
+```bash
 ls courses/planning-and-reinforcement-learning/slides/
 ```
+
+**Compile LaTeX from Source:**
+```bash
+cd courses/automated-reasoning/notes/
+pdflatex "AR Appunti.tex"
+```
+
+**Quick Course Overview:**
+```bash
+open docs/"CORSI 1 ANNO AI provvisorio.pdf"
+```
+
+</details>
 
 ---
 
@@ -152,18 +278,56 @@ Course slides and materials are property of their respective professors and the 
 
 ---
 
-## 👨‍💻 Author
+<div align="center">
 
-**Jacopo Parretti**  
-Master's in Artificial Intelligence  
-University of Verona • 2025/2026
+## 📊 **Repository Stats**
 
-GitHub: [@djacoo](https://github.com/djacoo)
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://img.shields.io/badge/Total_Courses-4-blue?style=for-the-badge&logo=bookstack" alt="Courses"/>
+    </td>
+    <td align="center">
+      <img src="https://img.shields.io/badge/Lecture_Slides-28+-green?style=for-the-badge&logo=slideshare" alt="Slides"/>
+    </td>
+    <td align="center">
+      <img src="https://img.shields.io/badge/Notes_Pages-400+-purple?style=for-the-badge&logo=read-the-docs" alt="Pages"/>
+    </td>
+    <td align="center">
+      <img src="https://img.shields.io/badge/PDF_Files-Ready-red?style=for-the-badge&logo=adobe" alt="PDFs"/>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ---
 
 <div align="center">
 
-<sub>📅 Last updated: October 2025</sub>
+## 👨‍💻 **Author**
+
+<img src="https://img.shields.io/badge/Jacopo_Parretti-AI_Student-blueviolet?style=for-the-badge&logo=github" alt="Author"/>
+
+**Master's in Artificial Intelligence**  
+🏛️ University of Verona • 2025/2026
+
+[![GitHub](https://img.shields.io/badge/GitHub-djacoo-181717?style=for-the-badge&logo=github)](https://github.com/djacoo)
+
+</div>
+
+---
+
+<div align="center">
+
+### 💡 **Contributions & Feedback**
+
+Found this helpful? ⭐ **Star this repository** to support the project!
+
+<sub>📅 Last updated: October 2025 | Made with ❤️ for AI students</sub>
+
+<br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer" width="100%"/>
 
 </div>
