@@ -12,7 +12,7 @@
 
 <br>
 
-<img src="https://raw.githubusercontent.com/djacoo/AI---PRIMO-SEMESTRE/main/.github/assets/ai-banner.png" alt="AI Master's Program" width="800" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<img src="https://img.shields.io/badge/🤖_Artificial_Intelligence-Master's_Program-blueviolet?style=for-the-badge" alt="AI Program">
 
 <br>
 
