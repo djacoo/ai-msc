@@ -12,7 +12,7 @@
 
 <br>
 
-<img src="https://img.shields.io/badge/🤖_Artificial_Intelligence-Master's_Program-blueviolet?style=for-the-badge" alt="AI Program">
+<img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=200&fit=crop" alt="AI Neural Network" width="600">
 
 <br>
 
