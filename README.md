@@ -10,6 +10,12 @@
 [![LaTeX](https://img.shields.io/badge/LaTeX-Notes-008080?style=for-the-badge&logo=latex&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
 [![License](https://img.shields.io/badge/License-Educational-green?style=for-the-badge&logo=open-source-initiative&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
 
+<br>
+
+<img src="https://raw.githubusercontent.com/djacoo/AI---PRIMO-SEMESTRE/main/.github/assets/ai-banner.png" alt="AI Master's Program" width="800" style="border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+<br>
+
 *Comprehensive course materials, lecture notes, and slides for the Master's program in Artificial Intelligence*
 
 ---
@@ -145,17 +151,6 @@ cd NLP && pdflatex "NLP Appunti.tex"
 # Human-Computer Interaction
 cd HCI/Theory\ 2 && pdflatex "HCI Theory 2 Appunti.tex"
 ```
-
----
-
-## 📊 Statistics
-
-| Course | Notes Pages | Lecture Slides | Status |
-|--------|-------------|----------------|--------|
-| 🤖 Automated Reasoning | TBD | 5 | ✅ Active |
-| 💬 Natural Language Processing | 400+ | 16 | ✅ Active |
-| 🎯 Planning & RL | 23 | 6 | ✅ Active |
-| 👁️ Human-Computer Interaction | TBD | TBD | ✅ Active |
 
 ---
 
