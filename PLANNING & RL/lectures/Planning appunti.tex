@@ -448,5 +448,688 @@ G = \{\texttt{On}(A, B), \texttt{On}(B, C), \texttt{OnTable}(C)\}
 This plan has length 4 and achieves the goal from the initial state.
 
 
+\newpage
+
+\part{Advanced Planning Representations}
+
+\section{Reduction to Propositional Satisfiability}
+
+\subsection{Motivation}
+
+We continue our discussion of the formalization and representation of planning problems. A fundamental technique in automated planning is to \textbf{reduce the planning problem to the satisfiability problem of propositional logic}. This reduction allows us to leverage powerful SAT solvers to find plans efficiently.
+
+The key idea is to encode:
+\begin{itemize}
+    \item The initial state as a propositional formula
+    \item The goal conditions as a propositional formula
+    \item The action effects and preconditions as propositional formulas
+    \item The constraint that actions must form a valid sequence
+\end{itemize}
+
+If the resulting formula is satisfiable, the satisfying assignment corresponds to a valid plan.
+
+\subsection{Example Domain: Dock Worker Robots (DWR)}
+
+To illustrate these concepts, we introduce the \textbf{Dock Worker Robots (DWR)} domain, a classic planning benchmark that models container logistics at a port.
+
+\subsubsection{Domain Description}
+
+The DWR world consists of:
+
+\begin{itemize}
+    \item \textbf{Docks}: Three docks $d_1$, $d_2$, $d_3$ arranged in a triangular configuration
+    \item \textbf{Connectivity}: Docks are connected as follows: $d_1 \leftrightarrow d_3$, $d_1 \leftrightarrow d_2$, $d_2 \leftrightarrow d_3$
+    \item \textbf{Piles}: Storage locations at docks where containers can be stacked
+    \item \textbf{Containers}: Objects that need to be moved between locations
+    \item \textbf{Robots}: Mobile agents that can move containers between piles
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm]
+    \node[circle, draw, minimum size=1cm] (d1) {$d_1$};
+    \node[circle, draw, minimum size=1cm, right of=d1] (d2) {$d_2$};
+    \node[circle, draw, minimum size=1cm, below of=d1, yshift=1cm] (d3) {$d_3$};
+    
+    \draw[<->] (d1) -- (d2);
+    \draw[<->] (d1) -- (d3);
+    \draw[<->] (d2) -- (d3);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Initial State Configuration}
+
+The initial state of our example problem is:
+
+\begin{itemize}
+    \item \textbf{At dock $d_1$}: Pile $p_1$ contains two containers: $c_1$ (on top) and $c_2$ (below)
+    \item \textbf{At dock $d_2$}: 
+    \begin{itemize}
+        \item Pile $p_2$ contains one container: $c_3$
+        \item Pile $p_3$ is empty
+    \end{itemize}
+    \item \textbf{At dock $d_3$}: Pile $p_4$ is empty
+\end{itemize}
+
+\subsection{Formal Representation}
+
+\subsubsection{Objects and Types}
+
+The domain contains objects of different \textbf{sorts} (types). Each object is represented by a constant symbol with an associated type:
+
+\textbf{Docks}: 
+\[
+\text{Docks} = \{d_1, d_2, d_3\}
+\]
+where each $d_i$ is a constant symbol of sort $\texttt{Dock}$.
+
+\textbf{Containers}:
+\[
+\text{Containers} = \{c_1, c_2, c_3\}
+\]
+where each $c_i$ is a constant symbol of sort $\texttt{Container}$.
+
+\textbf{Robots}:
+\[
+\text{Robots} = \{r_1, r_2\}
+\]
+where each $r_i$ is a constant symbol of sort $\texttt{Robot}$.
+
+\textbf{Piles}:
+\[
+\text{Piles} = \{p_1, p_2, p_3, p_4\}
+\]
+where each $p_i$ is a constant symbol of sort $\texttt{Pile}$.
+
+The complete set of objects is:
+\[
+\text{Objects} = \text{Docks} \cup \text{Piles} \cup \text{Containers} \cup \text{Robots}
+\]
+
+\subsubsection{Static Relations}
+
+Some relations in the domain are \textbf{static}—they do not change during plan execution. These can be specified once and remain constant throughout.
+
+\textbf{Adjacency relation}: Specifies which docks are directly connected, allowing robots to travel between them.
+
+\[
+\texttt{adjacent} = \{(d_1, d_3), (d_3, d_1), (d_2, d_3), (d_3, d_2), (d_1, d_2), (d_2, d_1)\}
+\]
+
+This relation is symmetric: if dock $d_i$ is adjacent to dock $d_j$, then $d_j$ is adjacent to $d_i$.
+
+\textbf{Pile-Dock association}: Each pile is permanently located at a specific dock.
+
+\[
+\begin{array}{l}
+\texttt{at}(p_1, d_1) \\
+\texttt{at}(p_2, d_2) \\
+\texttt{at}(p_3, d_2) \\
+\texttt{at}(p_4, d_3)
+\end{array}
+\]
+
+\subsubsection{Rigid Relations}
+
+The adjacency relation is defined over $\texttt{Docks} \times \texttt{Docks}$. This is called a \textbf{rigid relation} (also known as a \textbf{static relation})—it does not change during plan execution. Actions cannot modify the physical layout of the docks or their connectivity.
+
+Rigid relations are important because:
+\begin{itemize}
+    \item They reduce the state space by factoring out unchanging aspects
+    \item They can be checked once at planning time rather than during execution
+    \item They simplify action preconditions by providing fixed background knowledge
+\end{itemize}
+
+\subsection{State Representation in DWR}
+
+\subsubsection{What is a State?}
+
+A \textbf{state} is an assignment of values to propositional variables. More precisely, a state can be represented in two equivalent ways:
+
+\begin{enumerate}
+    \item \textbf{First-order ground atoms}: Predicates where all arguments are constants (no variables)
+    \item \textbf{First-order ground terms}: Terms where all arguments are constants
+\end{enumerate}
+
+\textbf{Important restriction}: We only allow \textbf{flat expressions}, meaning expressions with depth 1 (no nesting).
+
+\begin{example}[Forbidden Nesting]
+Consider the predicate $\texttt{loc}(x, y)$ meaning "the location of $x$ is $y$". We do \textbf{not} allow nested expressions such as:
+\[
+\texttt{loc}(r_1, \texttt{loc}(r_2))
+\]
+This would represent "the location of $r_1$ is the location of $r_2$", which violates the flatness constraint.
+\end{example}
+
+All atoms and terms must be flat—arguments of predicates and functions must be constants, not complex expressions.
+
+\subsubsection{State as Truth Assignment}
+
+A state assigns truth values to ground atoms. Consider describing the initial state $s_0$ of our DWR example:
+
+\[
+\begin{array}{l}
+\texttt{loc}(r_1, d_1) \\
+\texttt{pos}(p_1, d_1) \\
+\texttt{pos}(c_2, p_1)
+\end{array}
+\]
+
+These atoms being listed in the state means they are \textbf{implicitly assigned true}:
+
+\[
+\begin{array}{lcl}
+\texttt{loc}(r_1, d_1) & \leftarrow & \text{true} \\
+\texttt{pos}(p_1, d_1) & \leftarrow & \text{true} \\
+\texttt{pos}(c_2, p_1) & \leftarrow & \text{true}
+\end{array}
+\]
+
+Atoms not mentioned in the state are assumed false (closed-world assumption).
+
+\subsection{Two Representation Formalisms}
+
+There are two common approaches to representing planning problems, differing in how they encode state information.
+
+\subsubsection{Classical (Propositional) Representation}
+
+In the \textbf{classical representation}, states are represented using only \textbf{Boolean assignments} to propositional atoms. Each possible fact about the world is represented as a Boolean variable.
+
+\textbf{Example atoms}:
+\begin{itemize}
+    \item $\texttt{loc}(r_1, d_1)$: Robot $r_1$ is at dock $d_1$ (true/false)
+    \item $\texttt{pos}(c_2, p_1)$: Container $c_2$ is at pile $p_1$ (true/false)
+    \item $\texttt{empty}(r_1)$: Robot $r_1$ is not carrying anything (true/false)
+\end{itemize}
+
+\textbf{Characteristics}:
+\begin{itemize}
+    \item Simple and uniform representation
+    \item Direct correspondence to propositional logic
+    \item Easy to encode as SAT problems
+    \item May require many atoms for complex domains
+\end{itemize}
+
+\subsubsection{State Variable Representation}
+
+The \textbf{state variable representation} uses a slightly different syntax based on \textbf{function symbols}. Instead of Boolean atoms, we use variables that can take on different values from a finite domain.
+
+\textbf{Example}:
+\[
+\texttt{loc}(r_1) = d_1
+\]
+
+This means "the location of robot $r_1$ is $d_1$". Here, $\texttt{loc}(r_1)$ is a \textbf{state variable} (a function that returns a value), and $d_1$ is its current value.
+
+\textbf{Comparison with classical representation}:
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Classical} & \textbf{State Variable} \\
+\hline
+$\texttt{loc}(r_1, d_1) = \text{true}$ & $\texttt{loc}(r_1) = d_1$ \\
+$\texttt{loc}(r_1, d_2) = \text{false}$ & \\
+$\texttt{loc}(r_1, d_3) = \text{false}$ & \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Advantages of state variables}:
+\begin{itemize}
+    \item More compact: one variable instead of multiple Boolean atoms
+    \item Explicitly represents mutual exclusion (robot can only be at one location)
+    \item Natural for domains with multi-valued attributes
+    \item Reduces the number of variables in SAT encodings
+\end{itemize}
+
+\textbf{Relationship}:
+The two representations are \textbf{equivalent in expressive power}. Any problem representable in one formalism can be translated to the other. The choice depends on:
+\begin{itemize}
+    \item The planning algorithm being used
+    \item The structure of the domain
+    \item Efficiency considerations for the specific problem
+\end{itemize}
+
+\subsubsection{Example: Complete State Representation}
+
+Let us represent the complete initial state $s_0$ of our DWR example in both formalisms.
+
+\textbf{Classical representation} (partial):
+\[
+\begin{array}{l}
+\texttt{loc}(r_1, d_1) = \text{true} \\
+\texttt{loc}(r_2, d_2) = \text{true} \\
+\texttt{pos}(c_1, p_1) = \text{true} \\
+\texttt{pos}(c_2, p_1) = \text{true} \\
+\texttt{pos}(c_3, p_2) = \text{true} \\
+\texttt{on}(c_1, c_2) = \text{true} \\
+\texttt{empty}(r_1) = \text{true} \\
+\texttt{empty}(r_2) = \text{true} \\
+\texttt{top}(c_1, p_1) = \text{true} \\
+\texttt{top}(c_3, p_2) = \text{true}
+\end{array}
+\]
+
+\textbf{State variable representation}:
+\[
+\begin{array}{l}
+\texttt{loc}(r_1) = d_1 \\
+\texttt{loc}(r_2) = d_2 \\
+\texttt{pos}(c_1) = p_1 \\
+\texttt{pos}(c_2) = p_1 \\
+\texttt{pos}(c_3) = p_2 \\
+\texttt{on}(c_1) = c_2 \\
+\texttt{loaded}(r_1) = \text{nil} \\
+\texttt{loaded}(r_2) = \text{nil} \\
+\texttt{top}(p_1) = c_1 \\
+\texttt{top}(p_2) = c_3
+\end{array}
+\]
+
+Both representations capture the same information but organize it differently. The state variable representation is more compact and explicitly enforces constraints (e.g., a robot can only be at one location).
+
+\subsection{Key Insight: States as Boolean Assignments}
+
+The fundamental insight is that regardless of the representation formalism chosen:
+
+\begin{center}
+\fbox{\textbf{A state is fundamentally a Boolean assignment}}
+\end{center}
+
+Whether we use propositional atoms or state variables, we are ultimately assigning truth values (or equivalently, values from finite domains) to a set of variables.
+
+\section{Action Schemas in DWR}
+
+\subsection{Structure of Action Schemas}
+
+An \textbf{action schema} $\alpha$ is a template for generating ground actions. It consists of:
+
+\begin{definition}[Action Schema]
+An action schema $\alpha$ has the following components:
+\begin{itemize}
+    \item \textbf{Name and parameters}: $\alpha: \texttt{name}(z_1, z_2, \dots, z_k)$ where $z_i$ are typed parameters
+    \item \textbf{Preconditions}: $\text{Pre}(\alpha) = \{p_1, p_2, \dots, p_n\}$ where each $p_i$ is a literal
+    \item \textbf{Effects}: $\text{Eff}(\alpha) = \{q_1, q_2, \dots, q_m\}$ where each $q_i$ is a literal
+    \item \textbf{Cost}: $c(\alpha) \in \mathbb{N}_0$ (typically a non-negative integer)
+\end{itemize}
+\end{definition}
+
+\textbf{Important constraint}: The parameters $z_i$ of $\alpha$ can appear in the precondition literals $p_j$ and effect literals $q_j$. The arguments in these literals can be either:
+\begin{itemize}
+    \item \textbf{Constants}: Specific objects from the domain
+    \item \textbf{Parameters}: Variables that will be instantiated
+\end{itemize}
+
+No arbitrary free variables are allowed—all variables must be parameters of the action schema.
+
+\begin{definition}[Ground Action]
+A \textbf{ground action} $a$ is obtained by substituting all parameters $z_i$ in action schema $\alpha$ with specific constants from the domain. The action $a$ is an \textbf{instance} of $\alpha$.
+\end{definition}
+
+\subsection{Example: Take/Load Action}
+
+Consider the action of a robot taking a container from a pile. We define the action schema:
+
+\[
+\alpha: \texttt{take}(r, c, c', p, d)
+\]
+
+\textbf{Parameters}:
+\begin{itemize}
+    \item $r$: robot (type $\texttt{Robot}$)
+    \item $c$: container to take (type $\texttt{Container}$)
+    \item $c'$: container below $c$ (type $\texttt{Container} \cup \{\texttt{nil}\}$)
+    \item $p$: pile (type $\texttt{Pile}$)
+    \item $d$: dock (type $\texttt{Dock}$)
+\end{itemize}
+
+\subsubsection{Correcting Static Relations}
+
+Before defining the preconditions, we note that there are \textbf{two rigid (static) relations} in the DWR domain:
+
+\begin{enumerate}
+    \item $\texttt{adjacent}: \texttt{Docks} \times \texttt{Docks}$ — specifies which docks are connected
+    \item $\texttt{at}: \texttt{Piles} \times \texttt{Docks}$ — specifies which pile is located at which dock
+\end{enumerate}
+
+Both relations are rigid because the physical layout of the port does not change during plan execution.
+
+\subsubsection{Preconditions}
+
+For the \texttt{take} action to be executable, the following conditions must hold:
+
+\[
+\text{Pre}(\texttt{take}(r, c, c', p, d)) = \left\{
+\begin{array}{l}
+\texttt{loc}(r) = d \\
+\texttt{at}(p, d) \\
+\texttt{pos}(c) = p \\
+\texttt{on}(c) = c' \\
+\texttt{top}(p) = c \\
+\texttt{cargo}(r) = \texttt{nil}
+\end{array}
+\right\}
+\]
+
+\textbf{Interpretation}:
+\begin{itemize}
+    \item The robot $r$ is at dock $d$
+    \item The pile $p$ is located at dock $d$ (static relation)
+    \item Container $c$ is positioned at pile $p$
+    \item Container $c$ is on top of container $c'$ (or $c'$ is $\texttt{nil}$ if $c$ is at the bottom)
+    \item Container $c$ is the top container of pile $p$
+    \item The robot $r$ is not carrying anything
+\end{itemize}
+
+\subsubsection{Effects}
+
+When the \texttt{take} action is executed, the following changes occur:
+
+\[
+\text{Eff}(\texttt{take}(r, c, c', p, d)) = \left\{
+\begin{array}{l}
+\texttt{cargo}(r) = c \\
+\texttt{top}(p) = c' \\
+\texttt{pos}(c) = r
+\end{array}
+\right\}
+\]
+
+\textbf{Interpretation}:
+\begin{itemize}
+    \item The robot $r$ is now carrying container $c$
+    \item The top of pile $p$ is now $c'$ (the container that was below $c$)
+    \item The position of container $c$ is now the robot $r$
+\end{itemize}
+
+\subsection{Action Applicability}
+
+\begin{definition}[Action Applicability]
+A ground action $a$ is \textbf{applicable} (or \textbf{executable}) in state $s$ if all preconditions of $a$ are satisfied in $s$:
+\[
+a \text{ applicable in } s \quad \Leftrightarrow \quad s \models \text{Pre}(a)
+\]
+\end{definition}
+
+\subsubsection{Examples}
+
+Consider two ground actions:
+
+\textbf{Example 1}: $a_1 = \texttt{take}(r_1, c_1, c_2, p_1, d_1)$
+
+In the initial state $s_0$ where:
+\begin{itemize}
+    \item $\texttt{loc}(r_1) = d_1$
+    \item $\texttt{at}(p_1, d_1)$
+    \item $\texttt{pos}(c_1) = p_1$
+    \item $\texttt{on}(c_1) = c_2$
+    \item $\texttt{top}(p_1) = c_1$
+    \item $\texttt{cargo}(r_1) = \texttt{nil}$
+\end{itemize}
+
+All preconditions are satisfied, so $a_1$ is \textbf{executable/applicable} in $s_0$.
+
+\textbf{Example 2}: $a_2 = \texttt{take}(r_2, c_3, \texttt{nil}, p_4, d_3)$
+
+This action requires:
+\begin{itemize}
+    \item $\texttt{loc}(r_2) = d_3$
+    \item $\texttt{at}(p_4, d_3)$
+    \item $\texttt{pos}(c_3) = p_4$
+    \item $\texttt{top}(p_4) = c_3$
+\end{itemize}
+
+However, in $s_0$, we have $\texttt{pos}(c_3) = p_2$ (not $p_4$) and $\texttt{loc}(r_2) = d_2$ (not $d_3$). Therefore, $a_2$ is \textbf{not executable/not applicable} in $s_0$.
+
+\section{State Transition Function}
+
+\subsection{Formal Definition}
+
+The \textbf{state transition function} $\gamma$ defines how actions transform states:
+
+\[
+\gamma: \text{State} \times \text{Action} \rightarrow \text{State}
+\]
+
+where $\gamma(s, a)$ computes the successor state obtained by executing ground action $a$ in state $s$.
+
+\subsection{Computing the Successor State}
+
+Given a state $s$ and a ground action $a$ (which is a ground instance of an action schema $\alpha$), the successor state $\gamma(s, a) = s'$ is defined if and only if:
+
+\begin{enumerate}
+    \item $s \models p$ for all $p \in \text{Pre}(a)$ (all preconditions are satisfied)
+    \item $s'$ is consistent (the resulting state contains no contradictions)
+\end{enumerate}
+
+The successor state $s'$ is computed as:
+
+\[
+s' = \{q \mid q \in \text{Eff}(a)\} \cup \{q \mid s \models q, \, \neg q \notin \text{Eff}(a), \, q \notin \text{Eff}(a)\}
+\]
+
+\textbf{Interpretation}: The new state consists of:
+\begin{itemize}
+    \item All literals in the effects of $a$
+    \item All literals from $s$ that are not affected by $a$ (neither the literal nor its negation appears in the effects)
+\end{itemize}
+
+\subsection{Goal States}
+
+While the initial state is a specific assignment, goals are typically specified more flexibly.
+
+\begin{definition}[Goal Formula]
+A \textbf{goal formula} $G$ is a conjunction of literals specifying desired properties of goal states.
+\end{definition}
+
+\begin{definition}[Goal States]
+The set of \textbf{goal states} is:
+\[
+S_g = \{ s \mid s \models G \}
+\]
+That is, all state assignments that satisfy the goal formula $G$.
+\end{definition}
+
+
+
+\subsection{Comparing Representations: Simplified DWR Example}
+
+Let us compare the classical and state variable representations using a simplified version of the DWR domain with three action schemas.
+
+\subsubsection{Classical Representation}
+
+In the classical representation, we use propositional atoms to represent facts:
+
+\textbf{Action 1}: $\texttt{take}(r, c, l)$ — robot $r$ takes container $c$ at location $l$
+
+\[
+\begin{array}{ll}
+\text{Pre:} & \texttt{loc}(r, l) \land \texttt{pos}(c, l) \land \neg \texttt{loaded}(r) \\
+\text{Eff:} & \texttt{pos}(c, r) \land \neg \texttt{pos}(c, l) \land \texttt{loaded}(r)
+\end{array}
+\]
+
+\textbf{Action 2}: $\texttt{move}(r, l, m)$ — robot $r$ moves from location $l$ to location $m$
+
+\[
+\begin{array}{ll}
+\text{Pre:} & \texttt{loc}(r, l) \\
+\text{Eff:} & \texttt{loc}(r, m) \land \neg \texttt{loc}(r, l)
+\end{array}
+\]
+
+\textbf{Action 3}: $\texttt{put}(r, c, l)$ — robot $r$ puts down container $c$ at location $l$
+
+\[
+\begin{array}{ll}
+\text{Pre:} & \texttt{loc}(r, l) \land \texttt{pos}(c, r) \\
+\text{Eff:} & \texttt{pos}(c, l) \land \neg \texttt{pos}(c, r) \land \neg \texttt{loaded}(r)
+\end{array}
+\]
+
+\subsubsection{State Variable Representation}
+
+In the state variable representation, we use functional notation with assignments:
+
+\textbf{Action 1}: $\texttt{take}(r, c, l)$
+
+\[
+\begin{array}{ll}
+\text{Pre:} & \texttt{loc}(r) = l \land \texttt{pos}(c) = l \land \neg \texttt{loaded}(r) \\
+\text{Eff:} & \texttt{pos}(c) \leftarrow r \land \texttt{loaded}(r)
+\end{array}
+\]
+
+\textbf{Action 2}: $\texttt{move}(r, l, m)$
+
+\[
+\begin{array}{ll}
+\text{Pre:} & \texttt{loc}(r) = l \\
+\text{Eff:} & \texttt{loc}(r) \leftarrow m
+\end{array}
+\]
+
+\textbf{Action 3}: $\texttt{put}(r, c, l)$
+
+\[
+\begin{array}{ll}
+\text{Pre:} & \texttt{loc}(r) = l \land \texttt{pos}(c) = r \\
+\text{Eff:} & \texttt{pos}(c) \leftarrow l \land \neg \texttt{loaded}(r)
+\end{array}
+\]
+
+\subsubsection{Key Differences}
+
+\begin{itemize}
+    \item \textbf{Classical}: Requires explicit deletion of old values (e.g., $\neg \texttt{loc}(r, l)$ when moving)
+    \item \textbf{State Variable}: Implicit deletion through reassignment (e.g., $\texttt{loc}(r) \leftarrow m$ automatically removes the old location)
+    \item \textbf{Compactness}: State variables are more concise for multi-valued attributes
+\end{itemize}
+
+\section{Planning as Satisfiability (SAT)}
+
+\subsection{Recap: Core Concepts}
+
+Before introducing the SAT encoding, let us recap the fundamental concepts:
+
+\begin{itemize}
+    \item \textbf{State}: A Boolean assignment to propositional (ground) literals
+    \item \textbf{Action}: Characterized by:
+    \begin{itemize}
+        \item \textbf{Preconditions}: A set (or conjunction) of literals
+        \item \textbf{Effects}: A set (or conjunction) of literals
+    \end{itemize}
+\end{itemize}
+
+\subsection{Temporal Instantiation of Variables}
+
+To encode planning problems as SAT, we introduce a temporal dimension to our propositional variables.
+
+\begin{definition}[Temporal Instantiation]
+Let $X$ be the set of propositional variables describing the domain. The \textbf{temporal instantiation} of $X$ at time $t$ is:
+\[
+X@t = \{x@t \mid x \in X\} \quad \text{for } t \geq 0
+\]
+where $x@t$ is a propositional variable representing the truth value of $x$ at time step $t$.
+\end{definition}
+
+\textbf{Intuition}: Since a plan is a sequence of actions $(a_0, a_1, a_2, \dots, a_{n-1})$ of length $n$, we need to track the truth value of each proposition at each time step from $0$ to $n$.
+
+\subsection{The Bounded Planning Problem}
+
+\begin{definition}[Bounded Planning Problem]
+Given a planning problem $P = \langle \Sigma, I, G \rangle$, the \textbf{bounded planning problem} asks:
+
+\textit{Does there exist a plan solving $P$ with length exactly $n$?}
+\end{definition}
+
+This is a decision problem parameterized by the plan length $n$.
+
+\subsection{SAT Encoding}
+
+The bounded planning problem can be encoded as a propositional satisfiability problem.
+
+\begin{theorem}[Planning as SAT]
+For a planning problem $P$ and bound $n$, there exists a propositional formula $\Phi_n$ such that:
+\[
+\Phi_n \text{ is satisfiable} \quad \Leftrightarrow \quad \text{there exists a plan of length } n \text{ for } P
+\]
+\end{theorem}
+
+The formula $\Phi_n$ encodes:
+\begin{enumerate}
+    \item \textbf{Initial state}: $I@0$ (the initial state holds at time 0)
+    \item \textbf{Goal state}: $G@n$ (the goal holds at time $n$)
+    \item \textbf{Action preconditions and effects}: For each time step $t \in \{0, 1, \dots, n-1\}$, exactly one action is executed and its effects are correctly applied
+    \item \textbf{Frame axioms}: Variables not affected by actions remain unchanged
+\end{enumerate}
+
+\subsection{Solving Planning via Iterative Deepening}
+
+Since we don't know the optimal plan length in advance, we use \textbf{iterative deepening}:
+
+\begin{algorithm}[H]
+\caption{Planning via SAT with Iterative Deepening}
+\begin{algorithmic}[1]
+\STATE $n \leftarrow 1$
+\WHILE{true}
+    \STATE Construct formula $\Phi_n$
+    \IF{$\Phi_n$ is satisfiable}
+        \STATE Extract plan from satisfying assignment
+        \RETURN plan
+    \ENDIF
+    \STATE $n \leftarrow n + 1$
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Process}:
+\begin{enumerate}
+    \item Try $n = 1$: Check if $\Phi_1$ is satisfiable
+    \item If not, try $n = 2$: Check if $\Phi_2$ is satisfiable
+    \item If not, try $n = 3$: Check if $\Phi_3$ is satisfiable
+    \item Continue until a satisfiable formula is found
+\end{enumerate}
+
+\textbf{Advantages}:
+\begin{itemize}
+    \item Finds shortest plans (optimal in number of steps)
+    \item Leverages highly optimized SAT solvers
+    \item Scales well for many planning domains
+\end{itemize}
+
+\textbf{Challenges}:
+\begin{itemize}
+    \item Formula size grows with $n$
+    \item May need to try many values of $n$ before finding a solution
+    \item Encoding frame axioms can be expensive
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}
