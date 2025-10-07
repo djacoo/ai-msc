@@ -28,58 +28,33 @@
 
 </div>
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
-
-<br/>
-
-<div align="center">
+---
 
 ## 📂 Repository Structure
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-</div>
-
-<div align="center">
-
-```text
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃           🚀 AI---PRIMO-SEMESTRE  ━  Study Repository           ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-📄 README.md                         Main repository guide ⭐
-📄 LICENSE                           Educational use license
-📄 .gitignore                        Git ignore rules
-
-📁 courses/  ━━━━━━━━━━━━━━━  All Course Materials 📚
-  │
-  ├── 🤖 automated-reasoning/
-  │     ├── 📓 notes/               LaTeX + PDF notes
-  │     └── 🎯 slides/              5 lectures
-  │
-  ├── 🗣️ natural-language-processing/
-  │     ├── 📕 notes/               400+ pages!
-  │     └── 🎯 slides/              16 lectures
-  │
-  ├── 🎯 planning-and-reinforcement-learning/
-  │     ├── 📗 notes/               23 pages
-  │     └── 🎯 slides/              6 lectures
-  │
-  └── 👁️ human-computer-interaction/
-        ├── 📙 notes/               Theory 2
-        └── 🎯 slides/              Multimodal systems
-
-📁 docs/  ━━━━━━━━━━━━━━━━━  Additional Resources
-  └── 📊 CORSI 1 ANNO AI provvisorio.pdf
+```
+AI---PRIMO-SEMESTRE/
+├── 📄 README.md
+├── 📄 LICENSE
+├── 📄 .gitignore
+├── 📁 courses/
+│   ├── automated-reasoning/
+│   │   ├── notes/
+│   │   └── slides/
+│   ├── natural-language-processing/
+│   │   ├── notes/
+│   │   └── slides/
+│   ├── planning-and-reinforcement-learning/
+│   │   ├── notes/
+│   │   └── slides/
+│   └── human-computer-interaction/
+│       ├── notes/
+│       └── slides/
+└── 📁 docs/
+    └── CORSI 1 ANNO AI provvisorio.pdf
 ```
 
-</div>
-
-<br/>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-<br/>
+---
 
 <div align="center">
 
@@ -196,11 +171,7 @@ graph TD
 </tr>
 </table>
 
-<br/>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-<br/>
+---
 
 <div align="center">
 
@@ -290,11 +261,7 @@ open docs/"CORSI 1 ANNO AI provvisorio.pdf"
 
 </details>
 
-<br/>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-<br/>
+---
 
 <div align="center">
 
@@ -309,11 +276,7 @@ Course slides and materials are property of their respective professors and the 
 
 </div>
 
-<br/>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-<br/>
+---
 
 <div align="center">
 
@@ -338,11 +301,7 @@ Course slides and materials are property of their respective professors and the 
 
 </div>
 
-<br/>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-<br/>
+---
 
 <div align="center">
 
@@ -358,11 +317,7 @@ Course slides and materials are property of their respective professors and the 
 
 </div>
 
-<br/>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-<br/>
+---
 
 <div align="center">
 
