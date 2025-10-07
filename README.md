@@ -7,22 +7,19 @@
 
 <!-- Badges -->
 <p align="center">
-  <img src="https://img.shields.io/badge/🏛%EF%B8%8F_University-Verona-DC143C?style=for-the-badge&labelColor=8B0000" alt="University"/>
-  <img src="https://img.shields.io/badge/📅_Year-2025/2026-4169E1?style=for-the-badge&labelColor=191970" alt="Year"/>
-  <img src="https://img.shields.io/badge/📚_Courses-4-00CED1?style=for-the-badge&labelColor=008B8B" alt="Courses"/>
-  <img src="https://img.shields.io/badge/📝_Pages-400+-9370DB?style=for-the-badge&labelColor=4B0082" alt="Pages"/>
+  <img src="https://img.shields.io/badge/University-Verona-DC143C?style=for-the-badge" alt="University"/>
+  <img src="https://img.shields.io/badge/Year-2025/2026-4169E1?style=for-the-badge" alt="Year"/>
+  <img src="https://img.shields.io/badge/Courses-4-00CED1?style=for-the-badge" alt="Courses"/>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/LaTeX-008080?style=for-the-badge&logo=latex&logoColor=white&labelColor=005555" alt="LaTeX"/>
-  <img src="https://img.shields.io/badge/PDF-Ready_to_Study-32CD32?style=for-the-badge&logo=adobe-acrobat-reader&logoColor=white&labelColor=228B22" alt="PDF"/>
-  <img src="https://img.shields.io/badge/License-Educational_Use-FFD700?style=for-the-badge&logo=open-source-initiative&logoColor=black&labelColor=DAA520" alt="License"/>
+  <img src="https://img.shields.io/badge/LaTeX-008080?style=for-the-badge&logo=latex&logoColor=white" alt="LaTeX"/>
+  <img src="https://img.shields.io/badge/PDF-Ready-32CD32?style=for-the-badge&logo=adobe-acrobat-reader&logoColor=white" alt="PDF"/>
 </p>
 
 <br/>
 
-### 🎯 *Comprehensive course materials, lecture notes, and slides*
-### 🚀 *Everything you need to excel in your AI Master's journey*
+### 📚 *Comprehensive course materials, lecture notes, and slides*
 
 <br/>
 
