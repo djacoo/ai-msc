@@ -12,7 +12,7 @@
 
 <br>
 
-<img src="https://images.unsplash.com/photo-1655393001768-d946c97d6fd1?w=700&h=250&fit=crop&q=80" alt="AI and Nature - Robot Hand with Butterfly" width="700" style="border-radius: 15px;">
+<img src="https://images.unsplash.com/photo-1677756119517-756a188d2d94?w=700&h=250&fit=crop&q=80" alt="AI and Nature - Robot Hand with Butterfly" width="700" style="border-radius: 15px;">
 
 <br>
 
