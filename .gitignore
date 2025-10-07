@@ -10,6 +10,7 @@
 *.log
 *.out
 *.synctex.gz
+*.synctex(busy)
 *.toc
 *.bbl
 *.blg
@@ -23,6 +24,43 @@
 *.nav
 *.snm
 *.vrb
+
+# Additional LaTeX files
+*.xdv
+*.pdf_tex
+*.brf
+*.cb
+*.cb2
+*.glo
+*.glg
+*.gls
+*.glsdefs
+*.ist
+*.acn
+*.acr
+*.alg
+*.dvi
+*.ps
+*.thm
+*.pyg
+*.nlo
+*.nls
+*.nlg
+*.sagetex.sage
+*.sagetex.py
+*.sagetex.scmd
+*.sout
+*.sympy
+*.upa
+*.upb
+*.pytxcode
+pythontex-files-*/
+*.auxlock
+
+# LaTeX build directories
+_minted-*/
+auto/
+*.synctex(busy)
 
 # Editor files
 *.swp
