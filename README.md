@@ -5,6 +5,11 @@
 
 <br/>
 
+<!-- AI Animation -->
+<img src="https://user-images.githubusercontent.com/74038190/212749447-bfb7e725-6987-49d9-ae85-2015e3e7cc41.gif" alt="AI Animation" width="400"/>
+
+<br/>
+
 <!-- Badges -->
 <p align="center">
   <img src="https://img.shields.io/badge/University-Verona-DC143C?style=for-the-badge" alt="University"/>
