@@ -12,7 +12,7 @@
 
 <br>
 
-<img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=700&h=250&fit=crop&q=80" alt="Robotic Hand Reaching Sky" width="700" style="border-radius: 15px;">
+<img src=".github/assets/banner.png" alt="AI Master's Program Banner" width="700" style="border-radius: 15px;">
 
 <br>
 
