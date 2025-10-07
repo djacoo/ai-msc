@@ -12,7 +12,7 @@
 
 <br>
 
-<img src=".github/assets/banner.png" alt="AI Master's Program Banner" width="700" style="border-radius: 15px;">
+<img src=".github/assets/banner.png" alt="AI Master's Program Banner" width="700" style="border-radius: 20px; border: 2px solid #e0e0e0; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 
 <br>
 
