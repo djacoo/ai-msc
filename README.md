@@ -22,30 +22,24 @@ AI---PRIMO-SEMESTRE/
 ├── 📄 CITATION.cff                 # Citation information
 │
 ├── 📁 courses/                     # All course materials
-│   ├── README.md                   # Course index
 │   │
-│   ├── 📁 automated-reasoning/     
-│   │   ├── README.md              
+│   ├── 📁 automated-reasoning/
 │   │   ├── notes/                 # LaTeX notes + PDF
 │   │   └── slides/                # 5 lecture slides
 │   │
-│   ├── 📁 natural-language-processing/  
-│   │   ├── README.md              
+│   ├── 📁 natural-language-processing/
 │   │   ├── notes/                 # 400+ pages of notes
 │   │   └── slides/                # 16 lecture slides
 │   │
-│   ├── 📁 planning-and-reinforcement-learning/  
-│   │   ├── README.md              
+│   ├── 📁 planning-and-reinforcement-learning/
 │   │   ├── notes/                 # 23 pages of notes
 │   │   └── slides/                # 6 lecture slides
 │   │
-│   └── 📁 human-computer-interaction/  
-│       ├── README.md              
+│   └── 📁 human-computer-interaction/
 │       ├── notes/                 # Theory 2 notes
-│       └── slides/                
+│       └── slides/
 │
 └── 📁 docs/                        # Documentation
-    ├── README.md                   # Documentation index
     ├── SETUP.md                    # Environment setup
     ├── COMPILATION.md              # LaTeX compilation help
     └── CORSI 1 ANNO AI provvisorio.pdf  # Course overview
@@ -148,8 +142,9 @@ pdflatex "<filename>.tex"
 > 📖 **Compilation guide**: [docs/COMPILATION.md](docs/COMPILATION.md)
 
 ### Browse Materials
-- **[Course Index](courses/README.md)** - Overview of all courses
-- **Course-specific READMEs** - Each course has detailed documentation
+- **Course folders** - Navigate to `courses/<course-name>/` for notes and slides
+- **PDF notes** - Pre-compiled PDFs available in each course's `notes/` directory
+- **Lecture slides** - Available in each course's `slides/` directory
 
 ---
 
