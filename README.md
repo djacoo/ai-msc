@@ -5,21 +5,6 @@
 
 ### 🏛️ University of Verona
 
-[![University](https://img.shields.io/badge/University-Verona-FFD700?style=for-the-badge&logo=google-scholar&logoColor=white)](https://www.univr.it/)
-[![Academic Year](https://img.shields.io/badge/Year-2025%2F2026-4169E1?style=for-the-badge&logo=calendar&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
-[![LaTeX](https://img.shields.io/badge/LaTeX-Notes-008080?style=for-the-badge&logo=latex&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
-[![License](https://img.shields.io/badge/License-Educational-green?style=for-the-badge&logo=open-source-initiative&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
-
-<br>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner.png">
-  <source media="(prefers-color-scheme: light)" srcset=".github/assets/banner.png">
-  <img alt="AI Master's Program Banner" src=".github/assets/banner.png" width="700">
-</picture>
-
-<br>
-
 *Comprehensive course materials, lecture notes, and slides for the Master's program in Artificial Intelligence*
 
 ---
@@ -31,35 +16,39 @@
 ```
 AI---PRIMO-SEMESTRE/
 │
-├── README.md                           # This file
-├── CORSI 1 ANNO AI provvisorio.pdf    # Course overview document
+├── 📄 README.md                    # This file
+├── 📄 LICENSE                      # Educational use license
+├── 📄 CHANGELOG.md                 # Version history
+├── 📄 CITATION.cff                 # Citation information
 │
-├── AR/                                 # Automated Reasoning
-│   ├── AR Appunti.tex                 # LaTeX source for notes
-│   ├── AR Appunti.pdf                 # Compiled course notes
-│   ├── lectures/                      # Lecture slides
-│   │   └── AutomatedReasoning-1.pdf to -5.pdf
-│   └── [LaTeX auxiliary files]
+├── 📁 courses/                     # All course materials
+│   ├── README.md                   # Course index
+│   │
+│   ├── 📁 automated-reasoning/     
+│   │   ├── README.md              
+│   │   ├── notes/                 # LaTeX notes + PDF
+│   │   └── slides/                # 5 lecture slides
+│   │
+│   ├── 📁 natural-language-processing/  
+│   │   ├── README.md              
+│   │   ├── notes/                 # 400+ pages of notes
+│   │   └── slides/                # 16 lecture slides
+│   │
+│   ├── 📁 planning-and-reinforcement-learning/  
+│   │   ├── README.md              
+│   │   ├── notes/                 # 23 pages of notes
+│   │   └── slides/                # 6 lecture slides
+│   │
+│   └── 📁 human-computer-interaction/  
+│       ├── README.md              
+│       ├── notes/                 # Theory 2 notes
+│       └── slides/                
 │
-├── NLP/                                # Natural Language Processing
-│   ├── NLP Appunti.tex                # LaTeX source for notes
-│   ├── NLP Appunti.pdf                # Compiled course notes (400+ pages)
-│   └── Slide/                         # Lecture slides
-│       ├── L0 Introduction.pptx
-│       ├── L1.pptx - L15.pptx        # 16 lecture presentations
-│       └── [Additional materials]
-│
-├── PLANNING & RL/                      # Planning & Reinforcement Learning
-│   └── lectures/                      # Lecture slides and notes
-│       ├── Planning appunti.tex       # LaTeX source for notes
-│       ├── Planning appunti.pdf       # Compiled course notes (23 pages)
-│       └── Planning-1.pdf to -6.pdf  # 6 lecture presentations
-│
-└── HCI/                                # Human-Computer Interaction
-    └── Theory 2/                      # MultiModal Systems - Theory 2
-        ├── HCI Theory 2 Appunti.tex   # LaTeX source for notes
-        ├── HCI Theory 2 Appunti.pdf   # Compiled course notes
-        └── [LaTeX auxiliary files]
+└── 📁 docs/                        # Documentation
+    ├── README.md                   # Documentation index
+    ├── SETUP.md                    # Environment setup
+    ├── COMPILATION.md              # LaTeX compilation help
+    └── CORSI 1 ANNO AI provvisorio.pdf  # Course overview
 ```
 
 ---
@@ -139,22 +128,28 @@ git clone https://github.com/djacoo/AI---PRIMO-SEMESTRE.git
 cd AI---PRIMO-SEMESTRE
 ```
 
-### 📝 Compile LaTeX Notes
-> **Requirements**: LaTeX distribution (TeX Live, MiKTeX, or MacTeX)
+### Setup Environment
+**Install LaTeX** (required to compile notes):
+- **macOS**: [MacTeX](https://www.tug.org/mactex/)
+- **Windows**: [MiKTeX](https://miktex.org/)
+- **Linux**: TeX Live (`sudo apt-get install texlive-full`)
+
+> 📖 **Detailed setup instructions**: [docs/SETUP.md](docs/SETUP.md)
+
+### Compile Notes (Optional)
+All PDFs are pre-compiled, but if you want to compile from source:
 
 ```bash
-# Automated Reasoning
-cd AR && pdflatex "AR Appunti.tex"
-
-# Planning & Reinforcement Learning
-cd PLANNING\ \&\ RL/lectures && pdflatex "Planning appunti.tex"
-
-# Natural Language Processing
-cd NLP && pdflatex "NLP Appunti.tex"
-
-# Human-Computer Interaction
-cd HCI/Theory\ 2 && pdflatex "HCI Theory 2 Appunti.tex"
+# Navigate to any course notes directory
+cd courses/<course-name>/notes
+pdflatex "<filename>.tex"
 ```
+
+> 📖 **Compilation guide**: [docs/COMPILATION.md](docs/COMPILATION.md)
+
+### Browse Materials
+- **[Course Index](courses/README.md)** - Overview of all courses
+- **Course-specific READMEs** - Each course has detailed documentation
 
 ---
 
@@ -173,28 +168,36 @@ Course slides and materials are property of their respective professors and the 
 
 ---
 
+## 📚 Citation
+
+If you use these materials, please cite:
+
+```bibtex
+@misc{parretti2025ai,
+  author = {Parretti, Jacopo},
+  title = {AI Master's First Semester - Course Materials},
+  year = {2025},
+  publisher = {GitHub},
+  url = {https://github.com/djacoo/AI---PRIMO-SEMESTRE}
+}
+```
+
+See [CITATION.cff](CITATION.cff) for more formats.
+
+---
+
 ## 👨‍💻 Author
 
-<div align="center">
+**Jacopo Parretti**  
+Master's in Artificial Intelligence  
+University of Verona • 2025/2026
 
-### Jacopo Parretti
-
-[![GitHub](https://img.shields.io/badge/GitHub-djacoo-181717?style=for-the-badge&logo=github)](https://github.com/djacoo)
-[![University](https://img.shields.io/badge/University-Verona-FFD700?style=for-the-badge)](https://www.univr.it/)
-
-**Master's in Artificial Intelligence**  
-*University of Verona • 2025/2026*
-
----
-
-<sub>📅 Last updated: October 2025 • ⭐ Star this repo if you find it helpful!</sub>
-
-</div>
+GitHub: [@djacoo](https://github.com/djacoo)
 
 ---
 
 <div align="center">
 
-<sub>Made with ❤️ by **Jacopo Parretti** • University of Verona • Master's in Artificial Intelligence</sub>
+<sub>📅 Last updated: October 2025</sub>
 
 </div>
