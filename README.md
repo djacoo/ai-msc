@@ -21,6 +21,7 @@
   - [Automated Reasoning (AR)](#automated-reasoning-ar)
   - [Natural Language Processing (NLP)](#natural-language-processing-nlp)
   - [Planning & Reinforcement Learning (PLANNING & RL)](#planning--reinforcement-learning-planning--rl)
+  - [Human-Computer Interaction (HCI)](#human-computer-interaction-hci)
 - [Getting Started](#-getting-started)
 - [Technologies & Tools](#-technologies--tools)
 - [Contributing](#-contributing)
@@ -67,9 +68,15 @@ AI---PRIMO-SEMESTRE/
 │       ├── L1.pptx - L15.pptx        # 16 lecture presentations
 │       └── [Additional materials]
 │
-└── PLANNING & RL/                      # Planning & Reinforcement Learning
-    └── lectures/                      # Lecture slides
-        └── Planning-1.pdf to -6.pdf  # 6 lecture presentations
+├── PLANNING & RL/                      # Planning & Reinforcement Learning
+│   └── lectures/                      # Lecture slides
+│       └── Planning-1.pdf to -6.pdf  # 6 lecture presentations
+│
+└── HCI/                                # Human-Computer Interaction
+    └── Theory 2/                      # MultiModal Systems - Theory 2
+        ├── HCI Theory 2 Appunti.tex   # LaTeX source for notes
+        ├── HCI Theory 2 Appunti.pdf   # Compiled course notes
+        └── [LaTeX auxiliary files]
 ```
 
 ---
@@ -171,6 +178,50 @@ open PLANNING\ \&\ RL/lectures/Planning-1.pdf
 
 ---
 
+### Human-Computer Interaction (HCI)
+
+**Course Overview**: Study of multimodal interaction systems, combining theoretical foundations of HCI with practical implementation of intelligent interfaces.
+
+**Materials Available**:
+- 📄 **Comprehensive Notes**: `HCI Theory 2 Appunti.pdf` (150+ KB, LaTeX-formatted)
+- 📝 **Source Files**: Complete LaTeX source code for customization
+- 🎯 **Topics Covered**: 
+  - Foundations of multimodal interaction
+  - Evolution of interaction paradigms (CLI → GUI → Pervasive)
+  - Human factors in interface design
+  - Visual interaction and 3D reconstruction
+  - Nonverbal behavior in communication
+  - Automated analysis of body language
+  - Social artificial intelligence
+  - Affective computing
+  - Multimodal fusion techniques
+
+**Laboratory Topics**:
+- Deep image matching and feature detection
+- 3D model reconstruction (Structure from Motion)
+- Camera pose estimation
+- Unity 3D graphics and game engine
+- Model-based augmented reality
+- Deep learning for computer vision
+
+**Quick Access**:
+```bash
+# View the notes
+open HCI/Theory\ 2/HCI\ Theory\ 2\ Appunti.pdf
+
+# Compile from source
+cd HCI/Theory\ 2 && pdflatex HCI\ Theory\ 2\ Appunti.tex
+```
+
+**Course Structure**:
+| Component | Content | Format |
+|-----------|---------|--------|
+| Theory 2 | MultiModal Systems | LaTeX Notes |
+| Focus | Intelligent Multimodal Interfaces | PDF (150KB) |
+| Language | Italian | TEX Source |
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -207,6 +258,11 @@ pdflatex AR\ Appunti.tex  # Run twice for TOC
 cd ../NLP
 pdflatex NLP\ Appunti.tex
 pdflatex NLP\ Appunti.tex  # Run twice for TOC
+
+# For HCI notes
+cd ../HCI/Theory\ 2
+pdflatex HCI\ Theory\ 2\ Appunti.tex
+pdflatex HCI\ Theory\ 2\ Appunti.tex  # Run twice for TOC
 ```
 
 ---
@@ -296,6 +352,6 @@ If you find any errors in the notes or have suggestions for improvement:
 
 **Made with ❤️ for the AI community at University of Verona**
 
-*Last updated: October 2025 - Added Planning & RL course materials*
+*Last updated: October 2025 - Added HCI MultiModal Systems course materials*
 
 </div>
