@@ -1,20 +1,22 @@
 <div align="center">
 
-# 🎓 AI Master's Degree — First Semester
+# 🎓 Artificial Intelligence — Master's Degree
+## First Semester 2025/2026
 
 ### 🏛️ University of Verona
 
-[![University](https://img.shields.io/badge/University-Verona-FFD700?style=for-the-badge)](https://www.univr.it/)
-[![Academic Year](https://img.shields.io/badge/Year-2025%2F2026-4169E1?style=for-the-badge)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
-[![LaTeX](https://img.shields.io/badge/LaTeX-Notes-008080?style=for-the-badge&logo=latex)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
+[![University](https://img.shields.io/badge/University-Verona-FFD700?style=for-the-badge&logo=google-scholar&logoColor=white)](https://www.univr.it/)
+[![Academic Year](https://img.shields.io/badge/Year-2025%2F2026-4169E1?style=for-the-badge&logo=calendar&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
+[![LaTeX](https://img.shields.io/badge/LaTeX-Notes-008080?style=for-the-badge&logo=latex&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
+[![License](https://img.shields.io/badge/License-Educational-green?style=for-the-badge&logo=open-source-initiative&logoColor=white)](https://github.com/djacoo/AI---PRIMO-SEMESTRE)
 
-*Course materials, lecture notes, and slides for the Master's program in Artificial Intelligence*
+*Comprehensive course materials, lecture notes, and slides for the Master's program in Artificial Intelligence*
+
+---
 
 </div>
 
-<br>
-
-## Repository Structure
+## 📂 Repository Structure
 
 ```
 AI---PRIMO-SEMESTRE/
@@ -38,7 +40,9 @@ AI---PRIMO-SEMESTRE/
 │       └── [Additional materials]
 │
 ├── PLANNING & RL/                      # Planning & Reinforcement Learning
-│   └── lectures/                      # Lecture slides
+│   └── lectures/                      # Lecture slides and notes
+│       ├── Planning appunti.tex       # LaTeX source for notes
+│       ├── Planning appunti.pdf       # Compiled course notes (23 pages)
 │       └── Planning-1.pdf to -6.pdf  # 6 lecture presentations
 │
 └── HCI/                                # Human-Computer Interaction
@@ -48,83 +52,150 @@ AI---PRIMO-SEMESTRE/
         └── [LaTeX auxiliary files]
 ```
 
-<br>
+---
 
-## 📚 Courses
+## 📚 Course Overview
 
 <table>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-### Automated Reasoning
-**AR Appunti.pdf** • LaTeX source
+### 🤖 Automated Reasoning
+> **AR Appunti.pdf** • 📄 LaTeX source available
 
-5 lecture slides
-
-`Logic` `Theorem Proving` `SAT Solving` `Constraint Programming`
+📊 **Content**: 5 lecture slides  
+📖 **Topics**: 
+- Logic & Formal Methods
+- Theorem Proving
+- SAT Solving
+- Constraint Programming
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-### Natural Language Processing
-**NLP Appunti.pdf** • LaTeX source
+### 💬 Natural Language Processing
+> **NLP Appunti.pdf** • 📄 LaTeX source available  
+> 📏 **400+ pages** of comprehensive notes
 
-16 lecture slides (L0-L15)
-
-`Text Processing` `Language Models` `Embeddings` `Transformers` `Neural NLP`
+📊 **Content**: 16 lecture slides (L0-L15)  
+📖 **Topics**: 
+- Text Processing & Tokenization
+- Language Models & Embeddings
+- Transformers & Attention
+- Neural NLP Architectures
 
 </td>
 </tr>
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-### Planning & Reinforcement Learning
-6 lecture slides (Planning-1 to -6)
+### 🎯 Planning & Reinforcement Learning
+> **Planning appunti.pdf** • 📄 LaTeX source available  
+> 📏 **23 pages** of detailed notes
 
-`Classical Planning` `Search Algorithms` `RL Fundamentals` `Advanced Techniques`
+📊 **Content**: 6 lecture slides (Planning-1 to -6)  
+📖 **Topics**: 
+- Classical Planning Foundations
+- State Transition Systems
+- Action Schemas & STRIPS
+- SAT Encoding & DWR Domain
+- Iterative Deepening Search
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-### Human-Computer Interaction
-**HCI Theory 2 Appunti.pdf** • LaTeX source
+### 👁️ Human-Computer Interaction
+> **HCI Theory 2 Appunti.pdf** • 📄 LaTeX source available
 
-`Multimodal Interaction` `Visual Systems` `Affective Computing` `AR/VR` `Unity`
+📊 **Focus**: Multimodal Systems - Theory 2  
+📖 **Topics**: 
+- Multimodal Interaction Design
+- Visual & Camera-based Systems
+- Affective Computing
+- AR/VR Technologies
+- Unity Development
 
 </td>
 </tr>
 </table>
 
-<br>
+---
 
-## 🚀 Usage
+## 🚀 Getting Started
 
+### Clone the Repository
 ```bash
-# Clone the repository
 git clone https://github.com/djacoo/AI---PRIMO-SEMESTRE.git
 cd AI---PRIMO-SEMESTRE
-
-# Compile LaTeX notes (requires LaTeX distribution)
-cd AR && pdflatex AR\ Appunti.tex
 ```
 
-<br>
+### 📝 Compile LaTeX Notes
+> **Requirements**: LaTeX distribution (TeX Live, MiKTeX, or MacTeX)
 
-## 📜 License
+```bash
+# Automated Reasoning
+cd AR && pdflatex "AR Appunti.tex"
 
-**Educational Use Only** — Materials are for personal study and reference. Course slides are property of their respective professors and the University of Verona.
+# Planning & Reinforcement Learning
+cd PLANNING\ \&\ RL/lectures && pdflatex "Planning appunti.tex"
 
-<br>
-<br>
+# Natural Language Processing
+cd NLP && pdflatex "NLP Appunti.tex"
+
+# Human-Computer Interaction
+cd HCI/Theory\ 2 && pdflatex "HCI Theory 2 Appunti.tex"
+```
+
+---
+
+## 📊 Statistics
+
+| Course | Notes Pages | Lecture Slides | Status |
+|--------|-------------|----------------|--------|
+| 🤖 Automated Reasoning | TBD | 5 | ✅ Active |
+| 💬 Natural Language Processing | 400+ | 16 | ✅ Active |
+| 🎯 Planning & RL | 23 | 6 | ✅ Active |
+| 👁️ Human-Computer Interaction | TBD | TBD | ✅ Active |
+
+---
+
+## 📜 License & Usage
 
 <div align="center">
 
-**Jacopo Parretti** • [@djacoo](https://github.com/djacoo)
+**📚 Educational Use Only**
 
-*Master's in Artificial Intelligence — University of Verona, 2025/2026*
+These materials are intended for **personal study and academic reference**.  
+Course slides and materials are property of their respective professors and the **University of Verona**.
 
-<br>
+**Please respect intellectual property rights and academic integrity.**
 
-<sub>Last updated: October 2025</sub>
+</div>
+
+---
+
+## 👨‍💻 Author
+
+<div align="center">
+
+### Jacopo Parretti
+
+[![GitHub](https://img.shields.io/badge/GitHub-djacoo-181717?style=for-the-badge&logo=github)](https://github.com/djacoo)
+[![University](https://img.shields.io/badge/University-Verona-FFD700?style=for-the-badge)](https://www.univr.it/)
+
+**Master's in Artificial Intelligence**  
+*University of Verona • 2025/2026*
+
+---
+
+<sub>📅 Last updated: October 2025 • ⭐ Star this repo if you find it helpful!</sub>
+
+</div>
+
+---
+
+<div align="center">
+
+<sub>Made with ❤️ by **Jacopo Parretti** • University of Verona • Master's in Artificial Intelligence</sub>
 
 </div>
