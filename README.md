@@ -1,16 +1,16 @@
 <div align="center">
 
-<!-- Animated Header -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=250&section=header&text=AI%20Master's%20Degree&fontSize=60&fontColor=fff&animation=twinkling&fontAlignY=32&desc=First%20Semester%202025/2026%20%E2%80%A2%20University%20of%20Verona&descAlignY=51&descAlign=50&descSize=20" width="100%"/>
+<!-- Header Banner -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=AI%20Master's%20Degree&fontSize=50&fontColor=fff&fontAlignY=35&desc=First%20Semester%202025/2026&descAlignY=51&descAlign=50" width="100%"/>
 
 <br/>
 
-<!-- Animated Badges -->
+<!-- Badges -->
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/🏛%EF%B8%8F_University-Verona-DC143C?style=for-the-badge&labelColor=8B0000" alt="University"/></a>
-  <a href="#"><img src="https://img.shields.io/badge/📅_Academic_Year-2025/2026-4169E1?style=for-the-badge&labelColor=191970" alt="Year"/></a>
-  <a href="#courses"><img src="https://img.shields.io/badge/📚_Courses-4-00CED1?style=for-the-badge&labelColor=008B8B" alt="Courses"/></a>
-  <a href="#"><img src="https://img.shields.io/badge/📝_Pages-400+-9370DB?style=for-the-badge&labelColor=4B0082" alt="Pages"/></a>
+  <img src="https://img.shields.io/badge/🏛%EF%B8%8F_University-Verona-DC143C?style=for-the-badge&labelColor=8B0000" alt="University"/>
+  <img src="https://img.shields.io/badge/📅_Year-2025/2026-4169E1?style=for-the-badge&labelColor=191970" alt="Year"/>
+  <img src="https://img.shields.io/badge/📚_Courses-4-00CED1?style=for-the-badge&labelColor=008B8B" alt="Courses"/>
+  <img src="https://img.shields.io/badge/📝_Pages-400+-9370DB?style=for-the-badge&labelColor=4B0082" alt="Pages"/>
 </p>
 
 <p align="center">
@@ -21,10 +21,8 @@
 
 <br/>
 
-<!-- Typing SVG Effect -->
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=1000&color=667EEA&center=true&vCenter=true&multiline=true&width=800&height=80&lines=🎯+Comprehensive+course+materials%2C+lecture+notes+%26+slides;🚀+Everything+you+need+to+excel+in+your+AI+Master's+journey" alt="Typing SVG" />
-</p>
+### 🎯 *Comprehensive course materials, lecture notes, and slides*
+### 🚀 *Everything you need to excel in your AI Master's journey*
 
 <br/>
 
@@ -85,13 +83,7 @@
 
 <div align="center">
 
-<h2>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="35" height="35" />
-  Course Overview
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="35" height="35" />
-</h2>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+## 📚 Course Overview
   
 ```mermaid
 %%{init: {'theme':'dark', 'themeVariables': {'fontSize': '16px'}}}%%
@@ -212,15 +204,9 @@ graph TD
 
 <div align="center">
 
-<h2>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="35" height="35" />
-  Getting Started
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="35" height="35" />
-</h2>
+## 🚀 Getting Started
 
 </div>
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 <div align="center">
 
@@ -312,11 +298,7 @@ open docs/"CORSI 1 ANNO AI provvisorio.pdf"
 
 <div align="center">
 
-<h2>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="License" width="35" height="35" />
-  License & Usage
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="License" width="35" height="35" />
-</h2>
+## 📏 License & Usage
 
 **📚 Educational Use Only**
 
@@ -335,11 +317,7 @@ Course slides and materials are property of their respective professors and the 
 
 <div align="center">
 
-<h2>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Stats" width="35" height="35" />
-  Repository Stats
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Chart%20Increasing.png" alt="Stats" width="35" height="35" />
-</h2>
+## 📊 Repository Stats
 
 <table>
   <tr>
@@ -368,11 +346,7 @@ Course slides and materials are property of their respective professors and the 
 
 <div align="center">
 
-<h2>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Man%20Technologist.png" alt="Author" width="35" height="35" />
-  Author
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Man%20Technologist.png" alt="Author" width="35" height="35" />
-</h2>
+## 👨‍💻 Author
 
 <img src="https://img.shields.io/badge/Jacopo_Parretti-AI_Student-blueviolet?style=for-the-badge&logo=github" alt="Author"/>
 
@@ -392,17 +366,9 @@ Course slides and materials are property of their respective professors and the 
 
 <div align="center">
 
-<h2>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Bulb" width="35" height="35" />
-  Contributions & Feedback
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Bulb" width="35" height="35" />
-</h2>
+## 💡 Contributions & Feedback
 
-<p>
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png" alt="Clapping" width="25" height="25" />
-  Found this helpful? ⭐ <b>Star this repository</b> to support the project!
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png" alt="Clapping" width="25" height="25" />
-</p>
+Found this helpful? ⭐ **Star this repository** to support the project!
 
 <br/>
 
@@ -410,7 +376,7 @@ Course slides and materials are property of their respective professors and the 
 
 <br/><br/>
 
-<!-- Animated Footer -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=120&section=footer&animation=twinkling" width="100%"/>
+<!-- Footer -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer" width="100%"/>
 
 </div>
