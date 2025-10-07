@@ -1,0 +1,199 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel} 
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[section]
+\newtheorem{example}{Esempio}[section]
+\newtheorem{exercise}{Esercizio}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposizione}
+\newtheorem{corollary}[theorem]{Corollario}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Nota}
+\newtheorem*{observation}{Osservazione}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\pagestyle{fancy}
+\setlength{\headheight}{14pt}
+\fancyhf{}
+\lhead{HCI}
+\rhead{HCI}
+\cfoot{\thepage}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{HCI - MultiModal Systems - Theory 2}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\part{Foundations of Multimodal Interaction}
+
+\section{Introduction to Intelligent Multimodal Interfaces}
+
+\subsection{Course Objectives}
+
+This course explores the fundamental theories and concepts of \textbf{Human-Computer Interaction (HCI)}, an interdisciplinary field that synthesizes knowledge from cognitive psychology, computer science, and design. The primary objectives are:
+
+\begin{itemize}
+    \item Understanding the theoretical foundations of human-computer interaction
+    \item Developing practical skills in designing and implementing multimodal interfaces
+    \item Exploring the integration of artificial intelligence techniques in interactive systems
+    \item Analyzing nonverbal communication and its role in human-computer interaction
+\end{itemize}
+
+\subsection{Focus Areas}
+
+The course places special emphasis on three interconnected dimensions:
+
+\subsubsection{Technological Solutions}
+
+Students will develop computer interfaces with a focus on both methodological and implementation aspects. The course emphasizes hands-on experience in building functional interactive systems, bridging the gap between theory and practice.
+
+\subsubsection{Multimodal Interaction}
+
+Special attention is devoted to \textbf{multimodal solutions} that integrate multiple input and output modalities:
+\begin{itemize}
+    \item \textbf{Touch}: Tactile and haptic interaction
+    \item \textbf{Vision}: Camera-based interaction and visual recognition
+    \item \textbf{Natural Language}: Speech and text-based communication
+    \item \textbf{Audio}: Sound-based interaction and auditory feedback
+\end{itemize}
+
+\subsubsection{Intelligent Systems}
+
+The course explores how \textbf{artificial intelligence techniques} can enhance interaction by:
+\begin{itemize}
+    \item Inferring user intentions from multimodal input
+    \item Predicting expected interactions based on context and user behavior
+    \item Adapting interface behavior to individual users
+    \item Recognizing and responding to affective and social cues
+\end{itemize}
+
+\subsection{Course Program}
+
+\subsubsection{Theoretical Component}
+
+The theoretical component covers the following topics:
+
+\begin{enumerate}
+    \item \textbf{Introduction}: Course motivation, professional perspectives, open research issues, program overview, and examination methodology
+    
+    \item \textbf{Foundations of HCI}: Human factors in interface design, interaction design principles, usability evaluation, gaming, and gamification
+    
+    \item \textbf{Visual Interaction}: Camera calibration techniques, structure from motion, 3D reconstruction
+    
+    \item \textbf{Nonverbal Behavior in Communication}: 
+    \begin{itemize}
+        \item Types of nonverbal behavior: facial expressions, gestures, posture, eye gaze
+        \item Data collection methods and protocols
+        \item Tools and software for nonverbal behavior analysis
+        \item Annotation tools (e.g., ELAN)
+    \end{itemize}
+    
+    \item \textbf{Automated Analysis of Body Language}: Movement tracking, gesture recognition, facial expression analysis, and speech processing. Techniques for data capture, feature extraction, and automatic analysis
+    
+    \item \textbf{Social Artificial Intelligence}: Applications in social psychology, organizational psychology, and social robotics
+    
+    \item \textbf{Affective Computing}: Theories of emotion, emotion recognition systems, and applications in HCI
+    
+    \item \textbf{Multimodal Fusion}: Integration of multimodal nonverbal cues using fusion techniques (late fusion, early fusion)
+\end{enumerate}
+
+\subsubsection{Laboratory Component}
+
+The laboratory sessions provide hands-on experience with state-of-the-art tools and techniques:
+
+\begin{enumerate}
+    \item \textbf{Deep Image Matching}: Python implementation of feature detection and matching algorithms
+    
+    \item \textbf{3D Model Reconstruction}: Structure from motion using Zephyr software
+    
+    \item \textbf{Camera Pose Estimation}: C\# implementation of Fiore's method for camera localization
+    
+    \item \textbf{3D Graphics}: Modeling and rendering in Unity game engine
+    
+    \item \textbf{Model-Based Augmented Reality}: Implementation of the complete AR pipeline integrating Python code and Unity
+    
+    \item \textbf{Advanced Topics}: Deep learning approaches to camera pose estimation and model recognition
+\end{enumerate}
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
