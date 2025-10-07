@@ -12,7 +12,7 @@
 
 <br>
 
-<img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=200&fit=crop" alt="AI Neural Network" width="600">
+<img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=700&h=250&fit=crop&q=80" alt="AI Technology" width="700" style="border-radius: 15px;">
 
 <br>
 
