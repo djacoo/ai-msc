@@ -18,8 +18,6 @@ AI---PRIMO-SEMESTRE/
 │
 ├── 📄 README.md                    # This file
 ├── 📄 LICENSE                      # Educational use license
-├── 📄 CHANGELOG.md                 # Version history
-├── 📄 CITATION.cff                 # Citation information
 │
 ├── 📁 courses/                     # All course materials
 │   │
@@ -39,9 +37,7 @@ AI---PRIMO-SEMESTRE/
 │       ├── notes/                 # Theory 2 notes
 │       └── slides/
 │
-└── 📁 docs/                        # Documentation
-    ├── SETUP.md                    # Environment setup
-    ├── COMPILATION.md              # LaTeX compilation help
+└── 📁 docs/                        # Additional resources
     └── CORSI 1 ANNO AI provvisorio.pdf  # Course overview
 ```
 
@@ -116,35 +112,28 @@ AI---PRIMO-SEMESTRE/
 
 ## 🚀 Getting Started
 
-### Clone the Repository
+### 📥 Clone the Repository
 ```bash
 git clone https://github.com/djacoo/AI---PRIMO-SEMESTRE.git
 cd AI---PRIMO-SEMESTRE
 ```
 
-### Setup Environment
-**Install LaTeX** (required to compile notes):
-- **macOS**: [MacTeX](https://www.tug.org/mactex/)
-- **Windows**: [MiKTeX](https://miktex.org/)
-- **Linux**: TeX Live (`sudo apt-get install texlive-full`)
+### 📖 Access Study Materials
 
-> 📖 **Detailed setup instructions**: [docs/SETUP.md](docs/SETUP.md)
+All materials are **ready to use** — just browse the folders!
 
-### Compile Notes (Optional)
-All PDFs are pre-compiled, but if you want to compile from source:
+- **📚 Notes**: Navigate to `courses/<course-name>/notes/` for comprehensive PDF notes
+- **🎯 Slides**: Find lecture slides in `courses/<course-name>/slides/`
+- **📝 LaTeX Source**: All notes include `.tex` source files for customization
 
+#### Quick Navigation
 ```bash
-# Navigate to any course notes directory
-cd courses/<course-name>/notes
-pdflatex "<filename>.tex"
+# Example: View NLP notes
+open courses/natural-language-processing/notes/"NLP Appunti.pdf"
+
+# Example: Browse Planning slides
+ls courses/planning-and-reinforcement-learning/slides/
 ```
-
-> 📖 **Compilation guide**: [docs/COMPILATION.md](docs/COMPILATION.md)
-
-### Browse Materials
-- **Course folders** - Navigate to `courses/<course-name>/` for notes and slides
-- **PDF notes** - Pre-compiled PDFs available in each course's `notes/` directory
-- **Lecture slides** - Available in each course's `slides/` directory
 
 ---
 
@@ -160,24 +149,6 @@ Course slides and materials are property of their respective professors and the 
 **Please respect intellectual property rights and academic integrity.**
 
 </div>
-
----
-
-## 📚 Citation
-
-If you use these materials, please cite:
-
-```bibtex
-@misc{parretti2025ai,
-  author = {Parretti, Jacopo},
-  title = {AI Master's First Semester - Course Materials},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/djacoo/AI---PRIMO-SEMESTRE}
-}
-```
-
-See [CITATION.cff](CITATION.cff) for more formats.
 
 ---
 
