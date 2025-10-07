@@ -1,0 +1,452 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[section]
+\newtheorem{example}{Esempio}[section]
+\newtheorem{exercise}{Esercizio}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposizione}
+\newtheorem{corollary}[theorem]{Corollario}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Nota}
+\newtheorem*{observation}{Osservazione}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\pagestyle{fancy}
+\setlength{\headheight}{14pt}
+\fancyhf{}
+\lhead{PL \& RL}
+\rhead{PL \& RL}
+\cfoot{\thepage}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Planning \& Reinforcement Learning}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\part{Classical Planning}
+
+\section{Introduction to Planning}
+
+\subsection{Historical Context and Motivation}
+
+Planning has been a central topic in artificial intelligence since the inception of the field at the \textbf{Dartmouth Conference in 1956}, where the founding fathers of AI first gathered to define the scope and ambitions of this new discipline. Planning represents one of the fundamental capabilities required for intelligent behavior: the ability to reason about sequences of actions that achieve desired goals.
+
+The motivations for studying automated planning are manifold:
+
+\begin{itemize}
+    \item \textbf{Autonomous agents}: Enabling robots, software agents, and autonomous systems to make decisions and act independently in complex environments
+    \item \textbf{Resource optimization}: Finding optimal or near-optimal strategies for resource allocation, scheduling, and logistics
+    \item \textbf{Scientific applications}: Modeling and solving problems in domains such as space exploration, manufacturing, and healthcare
+    \item \textbf{Theoretical foundations}: Understanding the computational complexity and formal properties of reasoning about action and change
+\end{itemize}
+
+\subsection{The Planning Cycle}
+
+The complete planning process involves several interconnected phases that form a continuous cycle:
+
+\begin{enumerate}
+    \item \textbf{Plan Generation}: Given a description of the current state, available actions, and desired goals, synthesize a sequence of actions (a plan) that transforms the initial state into a goal state. This phase involves:
+    \begin{itemize}
+        \item Analyzing the initial state to understand what is currently true
+        \item Identifying the gap between the current state and the goal state
+        \item Searching through the space of possible action sequences
+        \item Evaluating candidate plans for correctness and optimality
+        \item Selecting the best plan according to specified criteria (e.g., shortest length, minimum cost, fastest execution)
+    \end{itemize}
+    
+    \item \textbf{Plan Deployment}: Execute the generated plan in the actual environment, monitoring the execution to detect deviations from expected behavior. This phase includes:
+    \begin{itemize}
+        \item Translating abstract plan actions into concrete executable commands
+        \item Monitoring sensors and feedback to verify that actions have the expected effects
+        \item Detecting discrepancies between predicted and actual states
+        \item Maintaining a record of executed actions for debugging and learning
+    \end{itemize}
+    
+    \item \textbf{Replanning}: When execution monitoring detects that the current plan is no longer valid (due to unexpected events, action failures, or environmental changes), generate a new plan or repair the existing one. Replanning strategies include:
+    \begin{itemize}
+        \item \textbf{Plan repair}: Modify the existing plan minimally to accommodate the new situation
+        \item \textbf{Replan from scratch}: Generate an entirely new plan from the current state
+        \item \textbf{Contingency planning}: Use pre-computed alternative plans for anticipated failures
+    \end{itemize}
+\end{enumerate}
+
+This cycle reflects the reality that planning systems must operate in dynamic, partially unpredictable environments where initial plans may need adaptation. The cycle continues iteratively until the goal is achieved or deemed unreachable.
+
+\subsubsection{Challenges in Real-World Planning}
+
+Real-world deployment of planning systems faces several challenges:
+
+\begin{itemize}
+    \item \textbf{Execution uncertainty}: Actions may fail or have unexpected outcomes
+    \item \textbf{Incomplete information}: The planner may not have complete knowledge of the environment
+    \item \textbf{Dynamic environments}: The world may change while the plan is being executed
+    \item \textbf{Computational constraints}: Planning must often occur in real-time with limited computational resources
+    \item \textbf{Plan quality vs. planning time}: Trade-off between finding optimal plans and responding quickly
+\end{itemize}
+
+These challenges motivate the development of robust planning algorithms that can handle uncertainty, adapt to changes, and operate efficiently under resource constraints.
+
+\newpage
+
+\section{Formalization of the Planning Problem}
+
+\subsection{State Transition Systems}
+
+The mathematical foundation of planning rests on the concept of a \textbf{state transition system}, which provides a formal model of how actions transform states.
+
+\begin{definition}[State Transition System]
+A state transition system is a tuple $\Sigma = \langle S, A, \gamma \rangle$ where:
+\begin{itemize}
+    \item $S$ is a finite or countably infinite set of \textbf{states}
+    \item $A$ is a finite or countably infinite set of \textbf{actions}
+    \item $\gamma : S \times A \rightarrow S$ is a \textbf{state transition function} that maps a state and an action to a resulting state
+\end{itemize}
+\end{definition}
+
+The transition function $\gamma(s, a) = s'$ specifies that executing action $a$ in state $s$ results in state $s'$. This function encodes the \textbf{dynamics} of the domain—how the world changes in response to actions.
+
+\subsubsection{Properties of State Transition Systems}
+
+State transition systems can be characterized by several important properties:
+
+\begin{itemize}
+    \item \textbf{Determinism}: In a deterministic system, $\gamma$ is a function—each state-action pair leads to exactly one successor state. In non-deterministic systems, multiple outcomes are possible.
+    
+    \item \textbf{Reachability}: A state $s'$ is reachable from state $s$ if there exists a sequence of actions that transforms $s$ into $s'$. The reachable state space from an initial state is often much smaller than the total state space.
+    
+    \item \textbf{Reversibility}: An action is reversible if there exists another action that undoes its effects. Many real-world actions are irreversible (e.g., breaking an object).
+    
+    \item \textbf{State space structure}: The connectivity and topology of the state space significantly affect planning complexity. Highly connected spaces may have many solution paths, while sparse spaces may have few or no solutions.
+\end{itemize}
+
+\subsection{Classical Planning: Fundamental Assumptions}
+
+Classical planning makes several simplifying assumptions that restrict the class of problems considered but enable efficient algorithmic solutions. These assumptions define the \textbf{classical planning framework}:
+
+\begin{enumerate}
+    \item \textbf{Finitely many states}: The state space $S$ is finite, allowing exhaustive search techniques. This assumption ensures that the planning problem is decidable and that search algorithms will terminate.
+    
+    \textit{Justification}: While real-world domains may have infinite state spaces (e.g., continuous variables), finite approximations are often sufficient for practical purposes.
+    
+    \item \textbf{Finitely many actions}: The action space $A$ is finite, ensuring decidability. Each state has a finite branching factor in the state space graph.
+    
+    \textit{Justification}: Even in complex domains, the number of distinct action types is typically manageable, though the number of ground actions (instantiated with specific objects) may be large.
+    
+    \item \textbf{Deterministic transition function}: For every state $s$ and action $a$, there is exactly one resulting state $\gamma(s, a)$. Actions have predictable, certain outcomes.
+    
+    \textit{Justification}: Determinism simplifies reasoning about action effects. Non-deterministic planning requires more complex formalisms (e.g., Markov Decision Processes).
+    
+    \item \textbf{Full observability}: The planner has complete knowledge of the current state at all times. There is no uncertainty about which state the system occupies.
+    
+    \textit{Justification}: Full observability eliminates the need for belief state reasoning and sensing actions. Partial observability requires more sophisticated planning approaches.
+    
+    \item \textbf{Instantaneous actions}: Actions have no duration; they occur instantaneously. Temporal reasoning is not required.
+    
+    \textit{Justification}: Ignoring action durations simplifies the planning model. Temporal planning extends classical planning to handle durations and concurrent actions.
+    
+    \item \textbf{No exogenous events}: Only the planning agent can change the world through deliberate actions. The environment remains static unless acted upon.
+    
+    \textit{Justification}: Exogenous events (e.g., other agents, natural processes) introduce additional complexity. Classical planning assumes a static world between actions.
+\end{enumerate}
+
+These assumptions, while restrictive, capture a significant and important class of planning problems and provide a foundation for understanding more complex, realistic planning scenarios.
+
+\subsubsection{Relaxing Classical Assumptions}
+
+Modern planning research has developed extensions that relax these assumptions:
+
+\begin{itemize}
+    \item \textbf{Probabilistic planning}: Handles non-deterministic actions with probability distributions over outcomes
+    \item \textbf{Conformant planning}: Plans under partial observability without sensing
+    \item \textbf{Contingent planning}: Generates conditional plans that include sensing actions
+    \item \textbf{Temporal planning}: Reasons about action durations and temporal constraints
+    \item \textbf{Multi-agent planning}: Coordinates plans among multiple agents
+\end{itemize}
+
+\newpage
+
+\subsection{The Planning Problem}
+
+Given a state transition system $\Sigma = \langle S, A, \gamma \rangle$, we can now formally define the planning problem.
+
+\begin{definition}[Planning Problem]
+A planning problem is a tuple $P = \langle \Sigma, s_0, G \rangle$ where:
+\begin{itemize}
+    \item $\Sigma = \langle S, A, \gamma \rangle$ is a state transition system
+    \item $s_0 \in S$ is the \textbf{initial state}
+    \item $G \subseteq S$ is a set of \textbf{goal states}
+\end{itemize}
+\end{definition}
+
+Alternatively, goals can be specified as a \textbf{goal formula} $g$, a logical expression that is satisfied by exactly those states in $G$. This allows more compact and expressive goal specifications.
+
+\subsubsection{Goal Specification}
+
+Goals can be specified in several ways:
+
+\begin{itemize}
+    \item \textbf{Explicit goal states}: Enumerate the set $G$ of acceptable final states. This is impractical for large state spaces.
+    
+    \item \textbf{Goal formula}: A logical formula $g$ such that $G = \{s \in S \mid s \models g\}$. For example, in propositional logic: $g = \texttt{At}(\text{Robot}, \text{RoomB}) \land \texttt{Clean}(\text{RoomB})$
+    
+    \item \textbf{Goal conditions}: A set of propositions that must be true in the goal state. This is the most common approach in classical planning.
+    
+    \item \textbf{Utility functions}: In optimization settings, goals may be specified as utility functions to maximize or cost functions to minimize.
+\end{itemize}
+
+\begin{definition}[Solution Plan]
+A \textbf{solution} to a planning problem $P = \langle \Sigma, s_0, G \rangle$ is a sequence of actions $\pi = \langle a_1, a_2, \dots, a_n \rangle$ such that:
+\[
+s_n = \gamma(\gamma(\cdots \gamma(\gamma(s_0, a_1), a_2) \cdots, a_{n-1}), a_n) \in G
+\]
+That is, executing the sequence of actions starting from the initial state $s_0$ results in a goal state.
+\end{definition}
+
+We can also write this more compactly using the notation $\gamma^*(s, \pi)$ to denote the state reached by executing plan $\pi$ from state $s$:
+\[
+\gamma^*(s_0, \pi) \in G
+\]
+
+\subsubsection{Plan Quality}
+
+Not all solution plans are equally desirable. Common quality metrics include:
+
+\begin{itemize}
+    \item \textbf{Plan length}: Number of actions in the plan. Shorter plans are often preferred.
+    \item \textbf{Plan cost}: Sum of action costs. Each action $a$ may have an associated cost $c(a)$.
+    \item \textbf{Makespan}: Total execution time (relevant in temporal planning).
+    \item \textbf{Resource consumption}: Amount of resources used during execution.
+\end{itemize}
+
+An \textbf{optimal plan} minimizes the chosen quality metric among all solution plans.
+
+\newpage
+
+\section{Representation of Planning Problems}
+
+\subsection{The Challenge of Explicit Representation}
+
+While the state transition system formalism is mathematically elegant, it faces a critical practical challenge: \textbf{the curse of dimensionality}. Real-world planning domains can have exponentially large state spaces. For example:
+
+\begin{itemize}
+    \item A domain with $n$ boolean variables has $2^n$ possible states
+    \item A domain with $k$ objects and $m$ binary relations has up to $2^{mk^2}$ states
+    \item Enumerating all states and transitions explicitly is infeasible for even moderately-sized problems
+\end{itemize}
+
+\begin{example}[Blocks World Complexity]
+Consider a Blocks World domain with $n$ blocks. The number of possible configurations grows super-exponentially with $n$. For $n=10$ blocks, there are more than $10^{13}$ possible configurations. Explicitly representing the transition function would require storing information about trillions of state-action pairs.
+\end{example}
+
+This motivates the need for \textbf{compact, structured representations} that exploit regularities in the domain to represent large state spaces and transition functions implicitly.
+
+\subsection{Action Schemas: Structured Representation}
+
+The classical approach to compact representation uses \textbf{action schemas} (also called action templates or operators). An action schema is a parameterized description of a family of related actions.
+
+\begin{definition}[Action Schema]
+An action schema consists of:
+\begin{itemize}
+    \item \textbf{Name and parameters}: A symbolic name and typed parameters, e.g., $\texttt{Move}(x, y)$
+    \item \textbf{Preconditions}: A logical formula $\text{Pre}$ specifying when the action can be executed
+    \item \textbf{Effects}: A logical formula $\text{Eff}$ specifying how the state changes when the action is executed
+\end{itemize}
+\end{definition}
+
+\textbf{Actions} are \textbf{ground instances} of action schemas, obtained by binding the parameters to specific objects in the domain. For example, the schema $\texttt{Move}(x, y)$ might generate ground actions $\texttt{Move}(\text{RoomA}, \text{RoomB})$, $\texttt{Move}(\text{RoomB}, \text{RoomC})$, etc.
+
+\subsubsection{Advantages of Action Schemas}
+
+Action schemas provide several benefits:
+
+\begin{itemize}
+    \item \textbf{Compactness}: A single schema can represent exponentially many ground actions
+    \item \textbf{Generality}: Schemas capture the general structure of actions independent of specific objects
+    \item \textbf{Scalability}: Adding new objects to the domain automatically generates new applicable actions
+    \item \textbf{Knowledge reuse}: Schemas learned in one domain can be transferred to similar domains
+\end{itemize}
+
+\subsection{State Representation: Propositional Logic}
+
+In classical planning, states are typically represented using \textbf{propositional logic}:
+
+\begin{itemize}
+    \item A state is a set of \textbf{atoms} (propositional variables) that are true in that state
+    \item Atoms not in the set are assumed false (\textbf{closed-world assumption})
+    \item Action preconditions and effects are logical formulas over these atoms
+\end{itemize}
+
+This representation allows:
+\begin{itemize}
+    \item Compact encoding of structured states
+    \item Efficient reasoning about action applicability and effects
+    \item Use of logical inference techniques for plan generation
+\end{itemize}
+
+\subsubsection{State Update Semantics}
+
+When an action is executed, the state is updated according to the action's effects:
+
+\begin{itemize}
+    \item \textbf{Add list}: Atoms that become true after the action
+    \item \textbf{Delete list}: Atoms that become false after the action
+    \item \textbf{Frame axioms}: Atoms not mentioned in the effects remain unchanged
+\end{itemize}
+
+The \textbf{STRIPS assumption} (named after the Stanford Research Institute Problem Solver) states that only atoms explicitly mentioned in the effects change; all other atoms persist unchanged. This simplifies reasoning about action effects.
+
+\newpage
+
+\subsection{Example: Blocks World}
+
+Consider the classic \textbf{Blocks World} domain, one of the most studied domains in planning research.
+
+\subsubsection{Domain Description}
+
+The Blocks World consists of:
+\begin{itemize}
+    \item A set of blocks that can be stacked on top of each other
+    \item A table with unlimited space
+    \item A robot arm that can pick up and put down blocks
+\end{itemize}
+
+\textbf{State representation}:
+\begin{itemize}
+    \item $\texttt{On}(x, y)$: Block $x$ is directly on top of block $y$
+    \item $\texttt{OnTable}(x)$: Block $x$ is on the table
+    \item $\texttt{Clear}(x)$: Block $x$ has no blocks on top of it
+    \item $\texttt{Holding}(x)$: The robot arm is holding block $x$
+    \item $\texttt{ArmEmpty}$: The robot arm is not holding anything
+\end{itemize}
+
+\subsubsection{Action Schemas}
+
+\textbf{PickUp}(x): Pick up block $x$ from the table
+\[
+\begin{array}{l}
+\text{Parameters: } x \text{ (block)} \\
+\text{Precondition: } \texttt{Clear}(x) \land \texttt{OnTable}(x) \land \texttt{ArmEmpty} \\
+\text{Effect: } \texttt{Holding}(x) \land \neg \texttt{OnTable}(x) \land \neg \texttt{Clear}(x) \land \neg \texttt{ArmEmpty}
+\end{array}
+\]
+
+\textbf{PutDown}(x): Put down block $x$ on the table
+\[
+\begin{array}{l}
+\text{Parameters: } x \text{ (block)} \\
+\text{Precondition: } \texttt{Holding}(x) \\
+\text{Effect: } \texttt{OnTable}(x) \land \texttt{Clear}(x) \land \texttt{ArmEmpty} \land \neg \texttt{Holding}(x)
+\end{array}
+\]
+
+\textbf{Stack}(x, y): Stack block $x$ on top of block $y$
+\[
+\begin{array}{l}
+\text{Parameters: } x, y \text{ (blocks)} \\
+\text{Precondition: } \texttt{Holding}(x) \land \texttt{Clear}(y) \\
+\text{Effect: } \texttt{On}(x, y) \land \texttt{Clear}(x) \land \texttt{ArmEmpty} \land \neg \texttt{Holding}(x) \land \neg \texttt{Clear}(y)
+\end{array}
+\]
+
+\textbf{Unstack}(x, y): Remove block $x$ from on top of block $y$
+\[
+\begin{array}{l}
+\text{Parameters: } x, y \text{ (blocks)} \\
+\text{Precondition: } \texttt{On}(x, y) \land \texttt{Clear}(x) \land \texttt{ArmEmpty} \\
+\text{Effect: } \texttt{Holding}(x) \land \texttt{Clear}(y) \land \neg \texttt{On}(x, y) \land \neg \texttt{Clear}(x) \land \neg \texttt{ArmEmpty}
+\end{array}
+\]
+
+\subsubsection{Example Problem Instance}
+
+\textbf{Initial state}: Blocks A, B, C are all on the table
+\[
+s_0 = \{\texttt{OnTable}(A), \texttt{OnTable}(B), \texttt{OnTable}(C), \texttt{Clear}(A), \texttt{Clear}(B), \texttt{Clear}(C), \texttt{ArmEmpty}\}
+\]
+
+\textbf{Goal}: Stack the blocks in the order A on B on C
+\[
+G = \{\texttt{On}(A, B), \texttt{On}(B, C), \texttt{OnTable}(C)\}
+\]
+
+\textbf{Solution plan}:
+\begin{enumerate}
+    \item $\texttt{PickUp}(B)$
+    \item $\texttt{Stack}(B, C)$
+    \item $\texttt{PickUp}(A)$
+    \item $\texttt{Stack}(A, B)$
+\end{enumerate}
+
+This plan has length 4 and achieves the goal from the initial state.
+
+
+
+\end{document}
