@@ -61,21 +61,35 @@ AI---PRIMO-SEMESTRE/
 <div align="center">
 
 ## 📚 Course Overview
-  
-```mermaid
-%%{init: {'theme':'dark', 'themeVariables': {'fontSize': '16px'}}}%%
-graph TD
-    A["🎯 AI Master's<br/><b>First Semester</b>"] --> B["🤖 Automated Reasoning<br/>───────────────<br/>📊 5 slides"]
-    A --> C["💬 Natural Language Processing<br/>────────────────────<br/>📊 16 slides • 500+ pages • 3 Parts"]
-    A --> D["🎯 Planning & RL<br/>──────────────<br/>📊 6 slides"]
-    A --> E["👁️ Human-Computer Interaction<br/>─────────────────────<br/>📊 Multimodal Systems"]
-    
-    style A fill:#667eea,stroke:#764ba2,stroke-width:4px,color:#fff,rx:15,ry:15
-    style B fill:#f093fb,stroke:#f5576c,stroke-width:3px,color:#fff,rx:10,ry:10
-    style C fill:#4facfe,stroke:#00f2fe,stroke-width:3px,color:#fff,rx:10,ry:10
-    style D fill:#43e97b,stroke:#38f9d7,stroke-width:3px,color:#fff,rx:10,ry:10
-    style E fill:#fa709a,stroke:#fee140,stroke-width:3px,color:#fff,rx:10,ry:10
-```
+
+<table>
+<tr>
+<td align="center" width="25%">
+<img src="https://img.shields.io/badge/🤖-Automated_Reasoning-f093fb?style=for-the-badge&labelColor=764ba2" alt="AR"/>
+<br/><br/>
+<b>5 Slides</b><br/>
+<sub>Logic & Theorem Proving</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.shields.io/badge/💬-Natural_Language_Processing-4facfe?style=for-the-badge&labelColor=00f2fe" alt="NLP"/>
+<br/><br/>
+<b>16 Slides • 500+ Pages</b><br/>
+<sub>3 Parts • 17 Sections</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.shields.io/badge/🎯-Planning_&_RL-43e97b?style=for-the-badge&labelColor=38f9d7" alt="Planning"/>
+<br/><br/>
+<b>6 Slides • 23 Pages</b><br/>
+<sub>Classical Planning</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.shields.io/badge/👁️-Human_Computer_Interaction-fa709a?style=for-the-badge&labelColor=fee140" alt="HCI"/>
+<br/><br/>
+<b>Multiple Slides</b><br/>
+<sub>Multimodal Systems</sub>
+</td>
+</tr>
+</table>
 
 </div>
 
@@ -333,7 +347,7 @@ Found this helpful? ⭐ **Star this repository** to support the project!
 
 <br/>
 
-<sub>📅 Last updated: January 2025 | Made with ❤️ for AI students at University of Verona</sub>
+<sub>📅 Last updated: January 2025 (8th) | Made with ❤️ for AI students at University of Verona</sub>
 
 <br/><br/>
 
