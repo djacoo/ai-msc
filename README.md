@@ -347,7 +347,7 @@ Found this helpful? ⭐ **Star this repository** to support the project!
 
 <br/>
 
-<sub>📅 Last updated: January 2025 (8th) | Made with ❤️ for AI students at University of Verona</sub>
+<sub>📅 Last updated: October 2025 (8th) | Made with ❤️ for AI students at University of Verona</sub>
 
 <br/><br/>
 
