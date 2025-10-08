@@ -66,7 +66,7 @@ AI---PRIMO-SEMESTRE/
 %%{init: {'theme':'dark', 'themeVariables': {'fontSize': '16px'}}}%%
 graph TD
     A["🎯 AI Master's<br/><b>First Semester</b>"] --> B["🤖 Automated Reasoning<br/>───────────────<br/>📊 5 slides"]
-    A --> C["💬 Natural Language Processing<br/>────────────────────<br/>📊 16 slides • 400+ pages"]
+    A --> C["💬 Natural Language Processing<br/>────────────────────<br/>📊 16 slides • 500+ pages • 3 Parts"]
     A --> D["🎯 Planning & RL<br/>──────────────<br/>📊 6 slides"]
     A --> E["👁️ Human-Computer Interaction<br/>─────────────────────<br/>📊 Multimodal Systems"]
     
@@ -111,18 +111,22 @@ graph TD
 
 ### 💬 **Natural Language Processing**
 [![Course](https://img.shields.io/badge/Slides-16-blue?style=flat-square)](courses/natural-language-processing/slides)
-[![Notes](https://img.shields.io/badge/Notes-400+_pages-red?style=flat-square&logo=adobe-acrobat-reader)](courses/natural-language-processing/notes)
+[![Notes](https://img.shields.io/badge/Notes-500+_pages-red?style=flat-square&logo=adobe-acrobat-reader)](courses/natural-language-processing/notes)
 
 </div>
 
-> 📄 **NLP Appunti.pdf** • 400+ comprehensive pages
+> 📄 **NLP Appunti.pdf** • 500+ comprehensive pages • 3 Parts • 17 Sections
 
 **🔬 Key Topics:**
 ```
-✓ Text Processing & Tokenization
-✓ Language Models & Embeddings
-✓ Transformers & Attention
-✓ Neural NLP Architectures
+✓ Minimum Edit Distance & Dynamic Programming
+✓ Regular Expressions & Pattern Matching
+✓ Text Normalization & Tokenization
+✓ Subword Tokenization (BPE, WordPiece)
+✓ Multilingual Processing (Chinese, Japanese)
+✓ Word Normalization & Lemmatization
+✓ Morphological Parsing & Stemming
+✓ Sentence Segmentation
 ```
 
 </td>
@@ -293,7 +297,7 @@ Course slides and materials are property of their respective professors and the 
       <img src="https://img.shields.io/badge/Lecture_Slides-28+-green?style=for-the-badge&logo=slideshare" alt="Slides"/>
     </td>
     <td align="center">
-      <img src="https://img.shields.io/badge/Notes_Pages-400+-purple?style=for-the-badge&logo=read-the-docs" alt="Pages"/>
+      <img src="https://img.shields.io/badge/Notes_Pages-500+-purple?style=for-the-badge&logo=read-the-docs" alt="Pages"/>
     </td>
     <td align="center">
       <img src="https://img.shields.io/badge/PDF_Files-Ready-red?style=for-the-badge&logo=adobe" alt="PDFs"/>
@@ -329,7 +333,7 @@ Found this helpful? ⭐ **Star this repository** to support the project!
 
 <br/>
 
-<sub>📅 Last updated: October 2025 | Made with ❤️ for AI students at University of Verona</sub>
+<sub>📅 Last updated: January 2025 | Made with ❤️ for AI students at University of Verona</sub>
 
 <br/><br/>
 
