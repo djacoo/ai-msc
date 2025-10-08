@@ -27,6 +27,9 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 
+% CJK support for Chinese, Japanese, Korean characters
+\usepackage{CJKutf8}
+
 % Hyperlinks
 \usepackage{hyperref}
 \hypersetup{
@@ -66,11 +69,18 @@
 % ========================================
 % HEADER AND FOOTER
 % ========================================
+\setlength{\headheight}{14pt}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{NLP}
+\lhead{\leftmark}
 \rhead{NLP}
 \cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
 
 % ========================================
 % DOCUMENT INFORMATION
@@ -90,7 +100,7 @@
 \tableofcontents
 \newpage
 
-\part{}
+\part{String Similarity and Edit Distance}
 
 \section{Minimum Edit Distance}
 We are going to deal with this main driving point: the definition of Minimum Edit Distance.
@@ -449,8 +459,7 @@ Now we formalize the definition of minimum edit distance using mathematical nota
 
 This notation allows us to break down the problem into smaller subproblems, which is the key to the dynamic programming approach.
 
-\newpage
-\section{Dynamic Programming for Minimum Edit Distance}
+\section{Computing Edit Distance with Dynamic Programming}
 
 Dynamic programming is an algorithmic technique that solves complex problems by breaking them down into simpler overlapping subproblems and storing their solutions to avoid redundant computation.
 
@@ -555,7 +564,6 @@ D(i-1,j-1) + \begin{cases}
 
 $D(N,M)$ is the final minimum edit distance between the complete strings $X$ and $Y$.
 
-\newpage
 \subsubsection{Algorithm Summary}
 
 \begin{algorithm}
@@ -684,8 +692,7 @@ N & 9 & 8 & 9 & 10 & 11 & 12 & 11 & 10 & 9 & \textbf{8} \\
 \caption{Complete table: $D(9,9) = 8$ (Levenshtein distance)}
 \end{table}
 
-\newpage
-\section{Computing Minimum Edit Distance}
+\section{Alignment and Backtrace}
 
 So far, we've learned how to compute the minimum edit distance value between two strings. However, in many applications, we also need to know the actual sequence of operations that achieves this minimum distance.
 
@@ -1224,7 +1231,6 @@ Reconstructing alignment (backtrace) & $O(n+m)$ \\
 
 This dramatic improvement is why dynamic programming is one of the most important algorithmic techniques in computer science.
 
-\newpage
 \section{Weighted Edit Distance}
 
 So far, we've assumed that all edit operations have the same cost. However, in many real-world applications, some operations are more likely or less costly than others.
@@ -1546,7 +1552,7 @@ The aligned region is "ATC" vs "ATC" with score 3 (perfect match!).
 
 
 \newpage
-\part{}
+\part{Text Processing Fundamentals}
 
 \section{Regular Expressions}
 
@@ -1621,7 +1627,6 @@ Ranges allow specifying consecutive characters using a hyphen.
 \end{tabular}
 \end{table}
 
-\newpage
 \subsubsection{Negation in Disjunction [\^{}Ss]}
 
 The caret \texttt{\^{}} inside brackets means negation, only when it's the first character in [].
@@ -1702,7 +1707,6 @@ Quantifiers specify how many times a character or pattern should appear.
 
 \textbf{Note:} These are named after Stephen C. Kleene, who invented the Kleene star (*) and Kleene plus (+) operators.
 
-\newpage
 \subsection{Anchors: \^{} and \$}
 
 Anchors match positions in the text, not actual characters.
@@ -2438,6 +2442,1226 @@ Datasheets should also document:
 \textbf{Appropriate use:} Knowing the context and limitations prevents misuse of corpora and models trained on them.
 
 \textbf{Example concern:} A sentiment analysis system trained on formal news text may fail on informal social media text, or work well for one demographic group but poorly for others. Datasheets help identify these issues before deployment.
+
+
+\newpage
+\part{Text Normalization and Tokenization}
+
+\section{Text Normalization}
+
+Text normalization is a fundamental preprocessing step required by every NLP task. It involves transforming raw text into a standardized format that can be processed by computational methods.
+
+\subsection{The Need for Text Normalization}
+
+\textbf{Every NLP task requires text normalization.}
+
+When working with corpora, we need to consider several factors:
+\begin{itemize}
+    \item \textbf{Corpus homogeneity}: A corpus is considered homogeneous when certain parameters are consistent (e.g., same language, same author, same genre)
+    \item \textbf{Morphological complexity}: Due to morphology, it's often more reasonable to work with types rather than tokens
+    \item \textbf{Language-specific properties}: Different languages require different normalization approaches
+\end{itemize}
+
+\subsection{The Three Main Steps of Text Normalization}
+
+According to the slides, every NLP task requires three fundamental normalization steps:
+
+\begin{enumerate}
+    \item \textbf{Tokenizing (segmenting) words}
+    \begin{itemize}
+        \item Breaking text into individual word units
+        \item Particularly important for agglutinating languages
+        \item Determines the basic units of analysis
+    \end{itemize}
+    
+    \item \textbf{Normalizing word formats}
+    \begin{itemize}
+        \item Standardizing variations of the same word
+        \item Handling case differences, punctuation, etc.
+        \item Converting to canonical forms
+    \end{itemize}
+    
+    \item \textbf{Segmenting sentences}
+    \begin{itemize}
+        \item Dividing text into sentence units
+        \item Identifying sentence boundaries
+        \item Important for syntactic and semantic analysis
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Linguistic Properties and Tokenization}
+
+\subsubsection{Isolating vs. Agglutinating Languages}
+
+Different languages have different morphological properties that affect tokenization:
+
+\begin{itemize}
+    \item \textbf{Isolating languages}: Languages where typically 1 token corresponds to 1 type
+    \begin{itemize}
+        \item Minimal morphology (no conjugation, plurals, genders, pronouns)
+        \item Example: Japanese (highly isolated)
+        \item Each word tends to be a single, unchanging unit
+    \end{itemize}
+    
+    \item \textbf{Agglutinating languages}: Languages that combine multiple morphemes into single words
+    \begin{itemize}
+        \item Complex morphology with many affixes
+        \item Single words can express what requires multiple words in other languages
+        \item Example: Japanese (also has agglutinating properties)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key insight:} The property of being isolating is important to recognize because it affects how we approach tokenization and normalization.
+
+\subsubsection{Tokens and Multi-tokens}
+
+In practice, we encounter:
+\begin{itemize}
+    \item \textbf{Simple tokens}: Single word units
+    \item \textbf{Multi-tokens}: Compound expressions that function as single units
+    \begin{itemize}
+        \item Example: "New York", "machine learning"
+        \item Should these be treated as one token or multiple?
+        \item Decision depends on the application
+    \end{itemize}
+\end{itemize}
+
+\subsection{Space-Based Tokenization}
+
+\subsubsection{The Simple Approach}
+
+The most straightforward tokenization method:
+
+\textbf{Segment off a token between instances of spaces}
+
+This approach works for languages that use space characters to separate words:
+\begin{itemize}
+    \item Arabic, Cyrillic, Greek, Latin, etc., based writing systems
+    \item These languages explicitly mark word boundaries with spaces
+\end{itemize}
+
+\subsubsection{Language Bias}
+
+\textbf{Important limitation:} Space-based tokenization has a significant language bias.
+
+\begin{itemize}
+    \item \textbf{Works well for}: European languages and others using space-separated writing systems
+    \item \textbf{Fails for}: Languages without spaces between words
+    \begin{itemize}
+        \item Chinese, Japanese, Thai: No spaces between words
+        \item Requires different tokenization approaches
+    \end{itemize}
+    \item \textbf{Directional bias}: Assumes left-to-right reading
+    \begin{itemize}
+        \item Doesn't account for right-to-left languages (Arabic, Hebrew)
+        \item May need adjustment for bidirectional text
+    \end{itemize}
+\end{itemize}
+
+\subsection{Unix Tools for Space-Based Tokenization}
+
+Unix provides powerful command-line tools for text processing, particularly suited for space-based tokenization.
+
+\subsubsection{The \texttt{tr} Command}
+
+The \texttt{tr} (translate) command is fundamental for tokenization:
+
+\textbf{Purpose:} Transform characters in text, commonly used to separate words
+
+\textbf{Basic operation:}
+\begin{itemize}
+    \item Takes a file with words separated by spaces
+    \item Generates a list of tokens (one per line)
+    \item Pure tokenization without additional processing
+\end{itemize}
+
+\subsubsection{Simple Tokenization in UNIX}
+
+Following Ken Church's "UNIX for Poets" approach, here's a complete tokenization pipeline:
+
+\begin{verbatim}
+tr -sc 'A-Za-z' '\n' < shakes.txt
+    | sort
+    | uniq -c
+\end{verbatim}
+
+\textbf{Step-by-step explanation:}
+
+\begin{enumerate}
+    \item \textbf{\texttt{tr -sc 'A-Za-z' '\textbackslash n' < shakes.txt}}
+    \begin{itemize}
+        \item \texttt{-s}: Squeeze repeated characters
+        \item \texttt{-c}: Complement the set (everything NOT in A-Za-z)
+        \item \texttt{'A-Za-z'}: Keep only alphabetic characters
+        \item \texttt{'\textbackslash n'}: Replace all non-alphabetic characters with newlines
+        \item \textbf{Effect}: Changes all non-alpha characters to newlines, creating one word per line
+    \end{itemize}
+    
+    \item \textbf{\texttt{| sort}}
+    \begin{itemize}
+        \item Sorts all words in alphabetical order
+        \item Groups identical words together
+        \item Necessary for the next step
+    \end{itemize}
+    
+    \item \textbf{\texttt{| uniq -c}}
+    \begin{itemize}
+        \item \texttt{uniq}: Removes duplicate adjacent lines
+        \item \texttt{-c}: Counts occurrences of each unique line
+        \item \textbf{Effect}: Merges identical words and counts each type
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Output format:}
+\begin{verbatim}
+1945 A
+  72 AARON
+  19 ABBESS
+   5 ABBOT
+  ...
+\end{verbatim}
+
+Each line shows the frequency count followed by the word type.
+
+\subsubsection{Example: The First Step (Tokenizing)}
+
+From the slides, the first step of the pipeline:
+
+\begin{verbatim}
+tr -sc 'A-Za-z' '\n' < shakes.txt | head
+\end{verbatim}
+
+\textbf{Output:}
+\begin{verbatim}
+THE
+SONNETS
+by
+William
+Shakespeare
+From
+fairest
+creatures
+We
+...
+\end{verbatim}
+
+Each word appears on its own line, ready for further processing.
+
+\subsubsection{Example: The Second Step (Sorting)}
+
+After sorting the tokenized words:
+
+\begin{verbatim}
+tr -sc 'A-Za-z' '\n' < shakes.txt | sort | head
+\end{verbatim}
+
+\textbf{Output:}
+\begin{verbatim}
+A
+A
+A
+A
+A
+A
+A
+A
+A
+...
+\end{verbatim}
+
+All identical words are now grouped together, preparing for counting.
+
+\subsection{The Bag of Words Model}
+
+\subsubsection{Definition}
+
+The \textbf{bag of words} model is a simplified representation of text that:
+\begin{itemize}
+    \item Treats text as an unordered collection of words
+    \item Counts word frequencies
+    \item Ignores word order, grammar, and structure
+\end{itemize}
+
+\textbf{Mathematical representation:} Similar to multisets in set theory
+\begin{itemize}
+    \item Example: "aabbba" becomes $\{a: 3, b: 3\}$
+    \item Each unique word (type) is associated with its count
+\end{itemize}
+
+\subsubsection{Limitations of Bag of Words}
+
+Despite its widespread use, the bag of words model has significant limitations:
+
+\begin{itemize}
+    \item \textbf{Loss of word order}
+    \begin{itemize}
+        \item "The dog bit the man" vs "The man bit the dog" are identical
+        \item Cannot capture syntactic relationships
+    \end{itemize}
+    
+    \item \textbf{Ignores morphology}
+    \begin{itemize}
+        \item "run", "runs", "running" are treated as completely different words
+        \item No understanding of word relationships
+    \end{itemize}
+    
+    \item \textbf{Problems with agglutinating languages}
+    \begin{itemize}
+        \item Complex morphology creates explosion of unique forms
+        \item Loses semantic relationships between related forms
+    \end{itemize}
+    
+    \item \textbf{Directional bias}
+    \begin{itemize}
+        \item Assumes left-to-right processing
+        \item Doesn't work well for right-to-left languages (Arabic, Hebrew)
+    \end{itemize}
+    
+    \item \textbf{No semantic understanding}
+    \begin{itemize}
+        \item Cannot distinguish between different senses of the same word
+        \item No understanding of context or meaning
+    \end{itemize}
+\end{itemize}
+
+\textbf{Despite these limitations}, bag of words remains useful for:
+\begin{itemize}
+    \item Document classification
+    \item Information retrieval
+    \item Simple text analysis tasks
+    \item Baseline models for comparison
+\end{itemize}
+
+\subsection{Practical Considerations}
+
+\subsubsection{When to Use Space-Based Tokenization}
+
+Space-based tokenization is appropriate when:
+\begin{itemize}
+    \item Working with languages that use spaces (English, Spanish, etc.)
+    \item Need quick, simple preprocessing
+    \item Computational resources are limited
+    \item Task doesn't require sophisticated linguistic analysis
+\end{itemize}
+
+\subsubsection{When More Sophisticated Methods Are Needed}
+
+More advanced tokenization is required for:
+\begin{itemize}
+    \item Languages without space separation (Chinese, Japanese, Thai)
+    \item Handling contractions and compound words
+    \item Preserving multi-word expressions
+    \item Dealing with social media text (hashtags, mentions, emojis)
+    \item Subword tokenization for neural models (BPE, WordPiece)
+\end{itemize}
+
+\section{Advanced Tokenization Techniques}
+
+\subsection{More Counting: Merging Upper and Lower Case}
+
+When performing frequency analysis, we often want to treat uppercase and lowercase versions of the same word as identical.
+
+\textbf{Command:}
+\begin{verbatim}
+tr 'A-Z' 'a-z' < shakes.txt | tr -sc 'A-Za-z' '\n' | sort | uniq -c
+\end{verbatim}
+
+\textbf{Explanation:}
+\begin{itemize}
+    \item \textbf{First \texttt{tr 'A-Z' 'a-z'}}: Converts all uppercase letters to lowercase
+    \begin{itemize}
+        \item This merges "The" and "the" into the same token
+        \item Reduces vocabulary size by eliminating case variations
+    \end{itemize}
+    \item \textbf{Then tokenize, sort, and count} as before
+\end{itemize}
+
+\textbf{Result:} Words that differ only in capitalization are counted together.
+
+\subsection{Sorting the Counts}
+
+To find the most frequent words, we can sort by frequency instead of alphabetically.
+
+\textbf{Command:}
+\begin{verbatim}
+tr 'A-Z' 'a-z' < shakes.txt | tr -sc 'A-Za-z' '\n' | sort | uniq -c | sort -n -r
+\end{verbatim}
+
+\textbf{New component:}
+\begin{itemize}
+    \item \textbf{\texttt{sort -n -r}}: Sort numerically in reverse order
+    \begin{itemize}
+        \item \texttt{-n}: Numerical sort (treats numbers as numbers, not strings)
+        \item \texttt{-r}: Reverse order (highest to lowest)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Output example:}
+\begin{verbatim}
+23243 the
+22225 i
+18618 and
+16339 to
+15687 of
+12780 a
+12163 you
+10839 my
+10005 in
+ 8954 d
+\end{verbatim}
+
+\textbf{Question from the slide:} "What happened here?"
+
+The output shows the most frequent words in Shakespeare's works, with "the" appearing 23,243 times. Notice that:
+\begin{itemize}
+    \item Function words (the, i, and, to, of, a) dominate the frequency list
+    \item The letter "d" appears as a separate token (likely from contractions like "I'd")
+    \item This demonstrates Zipf's law: a small number of words account for most occurrences
+\end{itemize}
+
+\section{Issues in Tokenization}
+
+Tokenization is more complex than simply splitting on spaces. Several challenging cases require careful consideration.
+
+\subsection{Punctuation Cannot Be Blindly Removed}
+
+Many tokens contain punctuation that carries meaning and should not be automatically stripped:
+
+\begin{itemize}
+    \item \textbf{Abbreviations}: m.p.h., Ph.D., AT\&T, cap'n
+    \begin{itemize}
+        \item Periods are integral to the abbreviation
+        \item Removing them would destroy the meaning
+    \end{itemize}
+    
+    \item \textbf{Prices}: \$45.55
+    \begin{itemize}
+        \item The period separates dollars from cents
+        \item The dollar sign indicates currency
+    \end{itemize}
+    
+    \item \textbf{Dates}: 01/02/06
+    \begin{itemize}
+        \item Slashes separate day, month, and year
+        \item Different formats exist (US vs European)
+    \end{itemize}
+    
+    \item \textbf{URLs}: http://www.stanford.edu
+    \begin{itemize}
+        \item Periods, slashes, and colons are structural
+        \item Should be kept as a single token
+    \end{itemize}
+    
+    \item \textbf{Hashtags}: \#nlproc
+    \begin{itemize}
+        \item The hash symbol is part of the token
+        \item Common in social media text
+    \end{itemize}
+    
+    \item \textbf{Email addresses}: someone@cs.colorado.edu
+    \begin{itemize}
+        \item Contains periods and @ symbol
+        \item Should remain as a single token
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key insight:} Punctuation removal must be context-aware. Blindly stripping all punctuation destroys important information.
+
+\subsection{Clitics}
+
+\textbf{Clitics} are words that don't stand on their own grammatically and attach to other words.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{English}: "are" in \textit{we're}, "je" in French \textit{j'ai}, "le" in \textit{l'honneur}
+    \begin{itemize}
+        \item These are grammatically separate words but phonologically attached
+        \item Question: Should "we're" be one token or two ("we" + "are")?
+    \end{itemize}
+\end{itemize}
+
+\textbf{Tokenization decisions:}
+\begin{itemize}
+    \item \textbf{Keep as one token}: Preserves the surface form as written
+    \item \textbf{Split into two}: Normalizes to grammatical units
+    \item \textbf{Choice depends on}:
+    \begin{itemize}
+        \item The NLP task (parsing might prefer splitting)
+        \item The language (different languages have different conventions)
+        \item Consistency with training data
+    \end{itemize}
+\end{itemize}
+
+\subsection{Multiword Expressions (MWEs)}
+
+\textbf{When should multiword expressions be treated as single words?}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{Proper nouns}: New York
+    \begin{itemize}
+        \item Refers to a single entity (the city)
+        \item "New" and "York" separately have different meanings
+    \end{itemize}
+    
+    \item \textbf{Idiomatic expressions}: rock 'n' roll
+    \begin{itemize}
+        \item The meaning is not compositional
+        \item Cannot be understood from individual words
+    \end{itemize}
+\end{itemize}
+
+\textbf{Challenges:}
+\begin{itemize}
+    \item \textbf{Identification}: How do we automatically detect MWEs?
+    \item \textbf{Ambiguity}: "New York" could also be "new" + "York" in other contexts
+    \item \textbf{Variability}: Some MWEs allow internal modification ("brand new car" vs "brand car")
+    \item \textbf{Language-specific}: Different languages have different MWE patterns
+\end{itemize}
+
+\textbf{Approaches:}
+\begin{itemize}
+    \item Use a dictionary of known MWEs
+    \item Statistical methods to identify frequent collocations
+    \item Named entity recognition for proper nouns
+    \item Task-specific decisions based on application needs
+\end{itemize}
+
+\section{Tokenization in NLTK}
+
+The Natural Language Toolkit (NLTK) provides sophisticated tokenization tools that handle many of the issues discussed above.
+
+\subsection{Regular Expression Tokenization}
+
+NLTK's \texttt{regexp\_tokenize} function allows flexible tokenization using regular expressions.
+
+\textbf{Example from Bird, Loper and Klein (2009), \textit{Natural Language Processing with Python}:}
+
+\begin{verbatim}
+>>> text = 'That U.S.A. poster-print costs $12.40...'
+>>> pattern = r'''(?x)    # set flag to allow verbose regexps
+...     ([A-Z]\.)+        # abbreviations, e.g. U.S.A.
+...     | \w+(-\w+)*      # words with optional internal hyphens
+...     | \$?\d+(\.\d+)?%?  # currency and percentages, e.g. $12.40, 82%
+...     | \.\.\.          # ellipsis
+...     | [][.,;"'?():-_`]  # these are separate tokens; includes ], [
+... '''
+>>> nltk.regexp_tokenize(text, pattern)
+['That', 'U.S.A.', 'poster-print', 'costs', '$12.40', '...']
+\end{verbatim}
+
+\textbf{Pattern breakdown:}
+\begin{enumerate}
+    \item \textbf{\texttt{([A-Z]\.)+}}: Abbreviations
+    \begin{itemize}
+        \item Matches sequences like "U.S.A."
+        \item Keeps periods as part of the token
+    \end{itemize}
+    
+    \item \textbf{Words with optional internal hyphens} (\texttt{\textbackslash w+(-\textbackslash w+)*}):
+    \begin{itemize}
+        \item Matches "poster-print" as a single token
+        \item Handles compound words
+    \end{itemize}
+    
+    \item \textbf{Currency and percentages} (\texttt{\textbackslash\$?\textbackslash d+(\textbackslash.\textbackslash d+)?\%?}):
+    \begin{itemize}
+        \item Matches "\$12.40" and "82\%"
+        \item Keeps monetary amounts together
+    \end{itemize}
+    
+    \item \textbf{Ellipsis} (\texttt{\textbackslash.\textbackslash.\textbackslash.}):
+    \begin{itemize}
+        \item Treats "..." as a single token
+        \item Distinguishes from sentence-ending periods
+    \end{itemize}
+    
+    \item \textbf{Separate punctuation tokens} (\texttt{[][.,;"'?():-\_`]}):
+    \begin{itemize}
+        \item These punctuation marks become individual tokens
+        \item Includes brackets, parentheses, quotes, etc.
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Advantages of regex tokenization:}
+\begin{itemize}
+    \item Highly customizable for specific domains
+    \item Can handle complex patterns
+    \item Explicit rules make behavior predictable
+    \item Can be tuned for different languages and text types
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item Requires careful pattern design
+    \item May not generalize well to new domains
+    \item Can become complex and hard to maintain
+    \item Order of patterns matters (first match wins)
+\end{itemize}
+
+\section{Tokenization in Languages Without Spaces}
+
+\subsection{The Challenge}
+
+Many languages (like Chinese, Japanese, Thai) don't use spaces to separate words!
+
+\textbf{Fundamental question:} How do we decide where the token boundaries should be?
+
+\textbf{Example (Chinese):}
+\begin{itemize}
+    \item Written text: \begin{CJK}{UTF8}{gbsn}我爱自然语言处理\end{CJK}
+    \item Possible tokenizations:
+    \begin{itemize}
+        \item \begin{CJK}{UTF8}{gbsn}我 / 爱 / 自然 / 语言 / 处理\end{CJK} (I / love / natural / language / processing)
+        \item \begin{CJK}{UTF8}{gbsn}我 / 爱 / 自然语言 / 处理\end{CJK} (I / love / natural-language / processing)
+        \item \begin{CJK}{UTF8}{gbsn}我 / 爱 / 自然语言处理\end{CJK} (I / love / natural-language-processing)
+    \end{itemize}
+    \item Different segmentations can be valid depending on the interpretation
+    \item No spaces in the original text to guide segmentation
+\end{itemize}
+
+\subsection{Approaches to Word Segmentation}
+
+\textbf{1. Dictionary-based methods:}
+\begin{itemize}
+    \item Use a lexicon of known words
+    \item Find the longest matching words in the text
+    \item \textbf{Problem}: Ambiguity when multiple segmentations are possible
+    \item \textbf{Problem}: Out-of-vocabulary words (new terms, names)
+\end{itemize}
+
+\textbf{2. Statistical methods:}
+\begin{itemize}
+    \item Learn word boundaries from segmented training data
+    \item Use probabilistic models (e.g., Hidden Markov Models)
+    \item Choose the most likely segmentation based on learned patterns
+    \item Better handles ambiguity and unknown words
+\end{itemize}
+
+\textbf{3. Neural methods:}
+\begin{itemize}
+    \item Use deep learning models (LSTMs, Transformers)
+    \item Learn character-level representations
+    \item Predict word boundaries as a sequence labeling task
+    \item State-of-the-art performance for many languages
+\end{itemize}
+
+\textbf{4. Subword tokenization:}
+\begin{itemize}
+    \item Break words into smaller units (characters or subwords)
+    \item Used in modern neural NLP (BPE, WordPiece, SentencePiece)
+    \item Avoids the word segmentation problem entirely
+    \item Works across languages, including those with and without spaces
+\end{itemize}
+
+\subsection{Language-Specific Challenges}
+
+\textbf{Chinese:}
+\begin{itemize}
+    \item No spaces between words
+    \item Characters can be words or parts of words
+    \item Ambiguous segmentation is common
+    \item Proper nouns and new terms are challenging
+\end{itemize}
+
+\subsection{Word Tokenization in Chinese: A Detailed Look}
+
+\textbf{Chinese Character Structure}
+
+Chinese words are composed of characters called \textbf{"hanzi"} (or sometimes just \textbf{"zi"}).
+
+\textbf{Key properties:}
+\begin{itemize}
+    \item Each character represents a \textbf{meaning unit} called a \textbf{morpheme}
+    \item Each word has on average \textbf{2.4 characters}
+    \item Deciding what counts as a word is \textbf{complex and not agreed upon}
+\end{itemize}
+
+\textbf{The ambiguity problem:} Unlike English where word boundaries are marked by spaces, Chinese text is continuous, making it unclear where one word ends and another begins.
+
+\subsection{Example: Multiple Segmentation Possibilities}
+
+Consider the Chinese sentence: \begin{CJK}{UTF8}{gbsn}姚明进入总决赛\end{CJK} ("Yao Ming reaches the finals")
+
+This sentence can be segmented in multiple valid ways:
+
+\textbf{1. Three words (3-word segmentation):}
+\begin{itemize}
+    \item \begin{CJK}{UTF8}{gbsn}姚明\end{CJK} / \begin{CJK}{UTF8}{gbsn}进入\end{CJK} / \begin{CJK}{UTF8}{gbsn}总决赛\end{CJK}
+    \item YaoMing / reaches / finals
+    \item This treats "Yao Ming" as a single name token
+\end{itemize}
+
+\textbf{2. Five words (5-word segmentation):}
+\begin{itemize}
+    \item \begin{CJK}{UTF8}{gbsn}姚\end{CJK} / \begin{CJK}{UTF8}{gbsn}明\end{CJK} / \begin{CJK}{UTF8}{gbsn}进入\end{CJK} / \begin{CJK}{UTF8}{gbsn}总\end{CJK} / \begin{CJK}{UTF8}{gbsn}决赛\end{CJK}
+    \item Yao / Ming / reaches / overall / finals
+    \item This splits the name and breaks down compound words
+\end{itemize}
+
+\textbf{3. Seven characters (character-level, don't use words at all):}
+\begin{itemize}
+    \item \begin{CJK}{UTF8}{gbsn}姚\end{CJK} / \begin{CJK}{UTF8}{gbsn}明\end{CJK} / \begin{CJK}{UTF8}{gbsn}进\end{CJK} / \begin{CJK}{UTF8}{gbsn}入\end{CJK} / \begin{CJK}{UTF8}{gbsn}总\end{CJK} / \begin{CJK}{UTF8}{gbsn}决\end{CJK} / \begin{CJK}{UTF8}{gbsn}赛\end{CJK}
+    \item Yao / Ming / enter / enter / overall / decision / game
+    \item This treats each character as a separate token
+\end{itemize}
+
+\textbf{Key insight:} Each segmentation is linguistically defensible, but they lead to different analyses and different vocabulary sizes.
+
+\subsection{Practical Approach: Character-Based Tokenization}
+
+\textbf{Common solution:} In Chinese, it's common to just treat each character (zi) as a token.
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item \textbf{Very simple}: The segmentation step is trivial - just split into characters
+    \item \textbf{No ambiguity}: No need to decide word boundaries
+    \item \textbf{Consistent}: Works uniformly across all texts
+    \item \textbf{Handles unknowns}: New words are automatically handled as character sequences
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item Loses word-level semantic information
+    \item Larger sequence lengths (more tokens per sentence)
+    \item May not capture multi-character word meanings effectively
+\end{itemize}
+
+\subsection{Comparison with Other Languages}
+
+\textbf{Chinese:} Character-based tokenization is simple and effective
+\begin{itemize}
+    \item So the segmentation step is very simple
+    \item Just split on character boundaries
+\end{itemize}
+
+\textbf{Thai and Japanese:} More complex word segmentation is required
+\begin{itemize}
+    \item Cannot simply use character-level tokenization
+    \item Thai: Requires understanding of word boundaries within continuous script
+    \item Japanese: Must handle three writing systems and grammatical particles
+\end{itemize}
+
+\textbf{Modern approach:} The standard algorithms are \textbf{neural sequence models trained by supervised machine learning}
+\begin{itemize}
+    \item Use deep learning (LSTMs, Transformers)
+    \item Learn from annotated training data
+    \item Predict word boundaries as a sequence labeling task
+    \item Achieve state-of-the-art performance
+\end{itemize}
+
+\subsection{Summary: Chinese Tokenization}
+
+\begin{itemize}
+    \item \textbf{Hanzi/zi}: Chinese characters are meaning units (morphemes)
+    \item \textbf{Average word length}: 2.4 characters per word
+    \item \textbf{Ambiguity}: Multiple valid segmentations exist for the same text
+    \item \textbf{Practical solution}: Character-level tokenization is common and simple
+    \item \textbf{Alternative}: Neural sequence models for word-level segmentation
+    \item \textbf{Trade-off}: Simplicity vs. linguistic accuracy
+\end{itemize}
+
+\textbf{Japanese:}
+\begin{itemize}
+    \item Mixes three writing systems (Hiragana, Katakana, Kanji)
+    \item No spaces between words
+    \item Highly agglutinative (words combine with particles)
+    \item Writing system can provide some segmentation clues
+\end{itemize}
+
+\textbf{Thai:}
+\begin{itemize}
+    \item No spaces between words
+    \item Spaces indicate phrase or sentence boundaries
+    \item Requires specialized segmentation tools
+\end{itemize}
+
+\subsection{Practical Tools}
+
+Several tools are available for segmenting languages without spaces:
+
+\begin{itemize}
+    \item \textbf{Jieba} (Chinese): Popular open-source Chinese segmenter
+    \item \textbf{MeCab} (Japanese): Morphological analyzer and tokenizer
+    \item \textbf{PyThaiNLP} (Thai): Thai language processing toolkit
+    \item \textbf{Stanford Word Segmenter}: Multi-language statistical segmenter
+    \item \textbf{SentencePiece}: Language-agnostic subword tokenizer
+\end{itemize}
+
+\section{Subword Tokenization}
+
+\subsection{Motivation}
+
+Instead of white-space or single-character segmentation, we can \textbf{use the data to tell us how to tokenize}.
+
+\textbf{Subword tokenization}: Tokens can be parts of words as well as whole words.
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item Handles unknown words
+    \item Reduces vocabulary size
+    \item Captures morphology
+    \item No out-of-vocabulary problem
+\end{itemize}
+
+\subsection{Three Common Algorithms}
+
+\begin{enumerate}
+    \item \textbf{Byte-Pair Encoding (BPE)} (Sennrich et al., 2016) - Used in GPT
+    \item \textbf{Unigram Language Modeling} (Kudo, 2018) - Used in T5
+    \item \textbf{WordPiece} (Schuster and Nakajima, 2012) - Used in BERT
+\end{enumerate}
+
+\textbf{All have 2 parts:}
+\begin{enumerate}
+    \item \textbf{Token learner}: Takes training corpus, induces vocabulary
+    \item \textbf{Token segmenter}: Tokenizes new text using that vocabulary
+\end{enumerate}
+
+\subsection{Byte-Pair Encoding (BPE)}
+
+\textbf{Initial vocabulary:} All individual characters $V = \{A, B, C, \ldots, a, b, c, \ldots\}$
+
+\textbf{Algorithm - Repeat $k$ times:}
+\begin{enumerate}
+    \item Choose the two symbols most frequently adjacent in corpus (e.g., 'A', 'B')
+    \item Add merged symbol 'AB' to vocabulary: $V \leftarrow V \cup \{\text{AB}\}$
+    \item Replace every 'A' 'B' in corpus with 'AB'
+\end{enumerate}
+
+Parameter $k$ controls vocabulary size.
+
+\subsection{BPE Algorithm Pseudocode}
+
+\begin{algorithm}
+\caption{Byte-Pair Encoding}
+\begin{algorithmic}
+\STATE \textbf{function} BPE(corpus $C$, merges $k$) \textbf{returns} vocab $V$
+\STATE $V \leftarrow$ all unique characters in $C$
+\FOR{$i = 1$ to $k$}
+    \STATE $t_L, t_R \leftarrow$ Most frequent adjacent pair in $C$
+    \STATE $t_{NEW} \leftarrow t_L + t_R$
+    \STATE $V \leftarrow V + t_{NEW}$
+    \STATE Replace $t_L, t_R$ in $C$ with $t_{NEW}$
+\ENDFOR
+\STATE \textbf{return} $V$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{BPE Practical Details}
+
+\textbf{Most subword algorithms run inside space-separated tokens.}
+
+\textbf{Common approach:}
+\begin{enumerate}
+    \item Add end-of-word symbol '\_\_' before spaces
+    \item Separate into letters
+    \item Run BPE (merges don't cross word boundaries)
+\end{enumerate}
+
+\textbf{Example:} "the cat" $\rightarrow$ "the\_\_ cat\_\_" $\rightarrow$ "t h e \_\_ c a t \_\_"
+
+\subsection{BPE Example: Step by Step}
+
+\textbf{Original corpus:}
+\begin{verbatim}
+low low low low low lowest lowest newer newer newer 
+newer newer newer wider wider wider new new
+\end{verbatim}
+
+\textbf{After adding end-of-word tokens (\_\_), initial vocabulary:}
+\begin{center}
+\texttt{\_\_, d, e, i, l, n, o, r, s, t, w}
+\end{center}
+
+\textbf{Initial corpus state:}
+\begin{verbatim}
+Frequency  Corpus
+5          l o w __
+2          l o w e s t __
+6          n e w e r __
+3          w i d e r __
+2          n e w __
+\end{verbatim}
+
+\textbf{Iteration 1: Merge} \texttt{e r} $\rightarrow$ \texttt{er}
+
+Most frequent adjacent pair is 'e' 'r' (appears 9 times: 6 in "newer" + 3 in "wider")
+
+\begin{verbatim}
+Vocabulary: __, d, e, i, l, n, o, r, s, t, w, er
+Corpus:
+5          l o w __
+2          l o w e s t __
+6          n e w er __
+3          w i d er __
+2          n e w __
+\end{verbatim}
+
+\textbf{Iteration 2: Merge} \texttt{er \_\_} $\rightarrow$ \texttt{er\_\_}
+
+Most frequent adjacent pair is 'er' '\_\_' (appears 9 times)
+
+\begin{verbatim}
+Vocabulary: __, d, e, i, l, n, o, r, s, t, w, er, er__
+Corpus:
+5          l o w __
+2          l o w e s t __
+6          n e w er__
+3          w i d er__
+2          n e w __
+\end{verbatim}
+
+\textbf{Iteration 3: Merge} \texttt{n e} $\rightarrow$ \texttt{ne}
+
+Most frequent adjacent pair is 'n' 'e' (appears 8 times: 6 in "newer" + 2 in "new")
+
+\begin{verbatim}
+Vocabulary: __, d, e, i, l, n, o, r, s, t, w, er, er__, ne
+Corpus:
+5          l o w __
+2          l o w e s t __
+6          ne w er__
+3          w i d er__
+2          ne w __
+\end{verbatim}
+
+\textbf{Subsequent merges:}
+\begin{itemize}
+    \item \textbf{(ne, w)}: $\rightarrow$ \texttt{new} - Vocabulary adds: \texttt{new}
+    \item \textbf{(l, o)}: $\rightarrow$ \texttt{lo} - Vocabulary adds: \texttt{lo}
+    \item \textbf{(lo, w)}: $\rightarrow$ \texttt{low} - Vocabulary adds: \texttt{low}
+    \item \textbf{(new, er\_\_)}: $\rightarrow$ \texttt{newer\_\_} - Vocabulary adds: \texttt{newer\_\_}
+    \item \textbf{(low, \_\_)}: $\rightarrow$ \texttt{low\_\_} - Vocabulary adds: \texttt{low\_\_}
+\end{itemize}
+
+\textbf{Final vocabulary includes:}
+\begin{center}
+\texttt{\_\_, d, e, i, l, n, o, r, s, t, w, er, er\_\_, ne, new, lo, low, newer\_\_, low\_\_}
+\end{center}
+
+\textbf{Final corpus:}
+\begin{verbatim}
+5          low__
+2          low e s t __
+6          newer__
+3          w i d er__
+2          new __
+\end{verbatim}
+
+\textbf{Key observations:}
+\begin{itemize}
+    \item Frequent words become single tokens (\texttt{low\_\_}, \texttt{newer\_\_})
+    \item Rare words remain as character sequences (\texttt{w i d er\_\_})
+    \item Common morphemes are learned (\texttt{er}, \texttt{new})
+    \item Vocabulary grows incrementally with each merge
+\end{itemize}
+
+\subsection{BPE Token Segmenter Algorithm}
+
+Once we have learned the vocabulary, we use it to tokenize new test data.
+
+\textbf{On test data, run each merge learned from training data:}
+\begin{itemize}
+    \item \textbf{Greedily}
+    \item \textbf{In the order we learned them}
+    \item \textbf{Test frequencies don't play a role}
+\end{itemize}
+
+\textbf{Process:} Apply merges sequentially - merge every \texttt{e r} to \texttt{er}, then merge \texttt{er \_\_} to \texttt{er\_\_}, etc.
+
+\textbf{Examples:}
+
+\begin{itemize}
+    \item Test word "\texttt{n e w e r \_\_}" would be tokenized as a full word: \texttt{newer\_\_}
+    \begin{itemize}
+        \item Applies merges: \texttt{e r} $\rightarrow$ \texttt{er}, then \texttt{er \_\_} $\rightarrow$ \texttt{er\_\_}, then \texttt{n e} $\rightarrow$ \texttt{ne}, then \texttt{ne w} $\rightarrow$ \texttt{new}, finally \texttt{new er\_\_} $\rightarrow$ \texttt{newer\_\_}
+    \end{itemize}
+    
+    \item Test word "\texttt{l o w e r \_\_}" would be two tokens: \texttt{low er\_\_}
+    \begin{itemize}
+        \item Applies merges: \texttt{e r} $\rightarrow$ \texttt{er}, then \texttt{er \_\_} $\rightarrow$ \texttt{er\_\_}, then \texttt{l o} $\rightarrow$ \texttt{lo}, then \texttt{lo w} $\rightarrow$ \texttt{low}
+        \item Result: \texttt{low} and \texttt{er\_\_} remain as separate tokens (no merge learned for this combination)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key point:} The segmenter applies merges deterministically in the learned order, regardless of frequencies in the test data.
+
+\subsection{Properties of BPE Tokens}
+
+BPE tokens have useful linguistic properties:
+
+\textbf{Usually include:}
+\begin{itemize}
+    \item \textbf{Frequent words}: Common words become single tokens
+    \item \textbf{Frequent subwords}: Often morphemes like \textit{-est} or \textit{-er}
+\end{itemize}
+
+\textbf{Morphemes:} A \textbf{morpheme} is the smallest meaning-bearing unit of a language.
+
+\textbf{Example:} The word \textit{unlikeliest} has 3 morphemes:
+\begin{itemize}
+    \item \textit{un-}: prefix meaning "not"
+    \item \textit{likely}: root word
+    \item \textit{-est}: suffix meaning "most"
+\end{itemize}
+
+\textbf{Why this matters:}
+\begin{itemize}
+    \item BPE naturally discovers morphological structure
+    \item Related words share subword components
+    \item Example: \textit{play}, \textit{playing}, \textit{played} share the \textit{play} subword
+    \item Enables better generalization across morphological variants
+\end{itemize}
+
+\subsection{Modern Usage}
+
+\textbf{Subword tokenization is standard in modern NLP:}
+\begin{itemize}
+    \item \textbf{GPT}: BPE
+    \item \textbf{BERT}: WordPiece  
+    \item \textbf{T5}: Unigram
+    \item Most transformer models use subword tokenization
+\end{itemize}
+
+\textbf{Why it works:} Balances vocabulary size and sequence length, handles morphology, no unknown words problem.
+
+\section{Word Normalization}
+
+After tokenization, we often need to normalize words to standard forms. Word normalization involves putting words/tokens in a standard, canonical form.
+
+\textbf{Common examples:}
+\begin{itemize}
+    \item \textbf{U.S.A.} or \textbf{USA} - Standardizing abbreviations
+    \item \textbf{uhhuh} or \textbf{uh-huh} - Normalizing disfluencies
+    \item \textbf{Fed} or \textbf{fed} - Case normalization
+    \item \textbf{am, is, be, are} - Lemmatization to base form
+\end{itemize}
+
+\subsection{Case Folding}
+
+\textbf{Case folding} means reducing all letters to lower case.
+
+\textbf{Applications like Information Retrieval (IR):}
+\begin{itemize}
+    \item Users tend to use lower case in queries
+    \item Improves recall by matching regardless of case
+\end{itemize}
+
+\textbf{Possible exceptions - Upper case in mid-sentence may be meaningful:}
+\begin{itemize}
+    \item \textit{General Motors} - Proper noun (company name)
+    \item \textit{Fed} vs. \textit{fed} - Federal Reserve vs. past tense of "feed"
+    \item \textit{SAIL} vs. \textit{sail} - Acronym vs. common word
+\end{itemize}
+
+\textbf{For sentiment analysis, MT, Information Extraction:}
+\begin{itemize}
+    \item Case is helpful (\textit{US} versus \textit{us} is important)
+    \item Trade-off between generalization and precision
+\end{itemize}
+
+\subsection{Lemmatization}
+
+\textbf{Lemmatization} represents all words as their lemma - their shared root or dictionary headword form.
+
+\textbf{The lemma} is the canonical form of a word, typically the form you would look up in a dictionary.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textit{am, are, is} $\rightarrow$ \textit{be}
+    \item \textit{car, cars, car's, cars'} $\rightarrow$ \textit{car}
+    \item Spanish: \textit{quiero} ('I want'), \textit{quieres} ('you want') $\rightarrow$ \textit{querer} 'want'
+    \item \textit{He is reading detective stories} $\rightarrow$ \textit{He be read detective story}
+\end{itemize}
+
+\textbf{Benefits:} Reduces vocabulary size, groups related word forms together, useful for search and IR.
+
+\subsection{Lemmatization by Morphological Parsing}
+
+Lemmatization is typically done through \textbf{morphological parsing}.
+
+\textbf{Morphemes} are the small meaningful units that make up words:
+\begin{itemize}
+    \item \textbf{Stems}: The core meaning-bearing units
+    \begin{itemize}
+        \item Example: \textit{cat} in "cats", \textit{walk} in "walking"
+    \end{itemize}
+    \item \textbf{Affixes}: Parts that adhere to stems, often with grammatical functions
+    \begin{itemize}
+        \item Prefixes: \textit{un-}, \textit{re-}, \textit{pre-}
+        \item Suffixes: \textit{-s}, \textit{-ing}, \textit{-ed}, \textit{-er}
+    \end{itemize}
+\end{itemize}
+
+\textbf{Morphological parsers} analyze words into their component morphemes:
+\begin{itemize}
+    \item Parse \textit{cats} into: \textit{cat} (stem) + \textit{s} (plural suffix)
+    \item Parse Spanish \textit{amaren} ('if in the future they would love') into:
+    \begin{itemize}
+        \item Morpheme: \textit{amar} 'to love' (stem)
+        \item Features: 3PL and future subjunctive
+    \end{itemize}
+\end{itemize}
+
+\textbf{Challenges:} Irregular forms (\textit{went} $\rightarrow$ \textit{go}), ambiguity (\textit{saw}), language-specific rules.
+
+\subsection{Stemming}
+
+\textbf{Stemming} reduces terms to stems, chopping off affixes crudely.
+
+\textbf{Difference from lemmatization:}
+\begin{itemize}
+    \item Stemming is simpler and faster
+    \item May produce non-words
+    \item Doesn't use morphological analysis
+    \item Just applies rules to remove suffixes/prefixes
+\end{itemize}
+
+\textbf{Example comparison:}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Original text} & \textbf{After stemming} \\
+\hline
+This was not the map we found & Thi wa not the map we found \\
+in Billy Bones's chest, but an & in Billi Bone s chest but an \\
+accurate copy, complete in all & accur copi complet in all \\
+things-names and heights and & thing name and height and \\
+soundings-with the single & sound with the singl except \\
+exception of the red crosses & of the red cross and the \\
+and the written notes. & written note \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Notice:} Words are reduced to stems that may not be valid words (\textit{Billi}, \textit{accur}, \textit{copi}).
+
+\subsubsection{Porter Stemmer}
+
+The most common stemming algorithm for English.
+
+\textbf{Based on a series of rewrite rules run in series:}
+\begin{itemize}
+    \item A cascade, in which output of each pass fed to next pass
+    \item Rules applied sequentially
+\end{itemize}
+
+\textbf{Some sample rules:}
+
+\begin{itemize}
+    \item \texttt{ATIONAL} $\rightarrow$ \texttt{ATE} (e.g., \textit{relational} $\rightarrow$ \textit{relate})
+    \item \texttt{ING} $\rightarrow$ $\epsilon$ if stem contains vowel (e.g., \textit{motoring} $\rightarrow$ \textit{motor})
+    \item \texttt{SSES} $\rightarrow$ \texttt{SS} (e.g., \textit{grasses} $\rightarrow$ \textit{grass})
+\end{itemize}
+
+\textbf{Characteristics:}
+\begin{itemize}
+    \item Fast and simple
+    \item Language-specific (different rules for each language)
+    \item May over-stem or under-stem
+    \item Widely used despite imperfections
+\end{itemize}
+
+\subsection{Complex Morphology in Other Languages}
+
+Dealing with complex morphology is necessary for many languages.
+
+\textbf{Example: Turkish word}
+
+\textit{Uygarlastiramadiklarimizdanmissiniz}
+
+\textbf{Meaning:} '(behaving) as if you are among those whom we could not civilize'
+
+\textbf{Morphological breakdown:}
+\begin{itemize}
+    \item \textit{Uygar} 'civilized' + \textit{las} 'become'
+    \item + \textit{tir} 'cause' + \textit{ama} 'not able'
+    \item + \textit{dik} 'past' + \textit{lar} 'plural'
+    \item + \textit{imiz} 'p1pl' + \textit{dan} 'abl'
+    \item + \textit{mis} 'past' + \textit{siniz} '2pl' + \textit{casina} 'as if'
+\end{itemize}
+
+\textbf{Key insight:} Languages like Turkish, Finnish, Hungarian have highly agglutinative morphology where many morphemes combine into single words. Simple stemming is insufficient - proper morphological analysis is essential.
+
+\section{Sentence Segmentation}
+
+The third step of text normalization (after tokenization and word normalization) is segmenting text into sentences.
+
+\subsection{The Challenge}
+
+\textbf{!, ? mostly unambiguous} - Usually mark sentence boundaries
+
+\textbf{Period "." is very ambiguous:}
+\begin{itemize}
+    \item \textbf{Sentence boundary}: "I went home. She stayed."
+    \item \textbf{Abbreviations}: Inc., Dr., Mr., U.S.A.
+    \item \textbf{Numbers}: .02\%, 4.3
+\end{itemize}
+
+\subsection{Common Algorithm}
+
+\textbf{Tokenize first:} Use rules or ML to classify a period as either:
+\begin{enumerate}
+    \item \textbf{(a) Part of the word} (abbreviation, number)
+    \item \textbf{(b) A sentence boundary}
+\end{enumerate}
+
+\textbf{Helpful resource:} An abbreviation dictionary can help identify periods that are part of abbreviations.
+
+\textbf{Sentence segmentation can then often be done by rules based on this tokenization.}
+
+\subsection{Rule-Based Approach}
+
+\textbf{Common rules:}
+\begin{itemize}
+    \item Period followed by uppercase letter usually indicates sentence boundary
+    \item Period at end of line is usually sentence boundary
+    \item Period followed by known abbreviation is not sentence boundary
+    \item Use whitelist of common abbreviations (Dr., Inc., etc.)
+\end{itemize}
+
+\subsection{Machine Learning Approach}
+
+\textbf{Features for classification:}
+\begin{itemize}
+    \item Word before period
+    \item Word after period
+    \item Capitalization of following word
+    \item Length of words around period
+    \item Presence in abbreviation dictionary
+\end{itemize}
+
+\textbf{Models:} Decision trees, logistic regression, or neural networks can be trained on annotated data.
+
+\subsection{Challenges}
+
+\begin{itemize}
+    \item \textbf{Abbreviations at end of sentence}: "The company is called Yahoo Inc." (period serves both functions)
+    \item \textbf{Quotations}: "He said, 'I'm leaving.' Then he left."
+    \item \textbf{Multiple punctuation}: "Really?! No way!"
+    \item \textbf{Ellipsis}: "And then..."
+    \item \textbf{Domain-specific}: Scientific text, legal documents have different conventions
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
