@@ -1,0 +1,301 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% CJK support for Chinese, Japanese, Korean characters
+\usepackage{CJKutf8}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[section]
+\newtheorem{example}{Esempio}[section]
+\newtheorem{exercise}{Esercizio}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposizione}
+\newtheorem{corollary}[theorem]{Corollario}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Nota}
+\newtheorem*{observation}{Osservazione}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{ML\&DL}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Machine Learning \& Deep Learning}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\part{Introduction to Machine Learning}
+
+\section{What is Machine Learning?}
+
+Machine Learning is a branch of Artificial Intelligence that enables software to use data to find solutions to specific tasks without being explicitly programmed to do so.
+
+\subsection{Machine Learning vs Statistical Modelling}
+
+In traditional statistical modelling, we follow a structured process:
+\begin{enumerate}
+    \item Collect data
+    \item Verify and clean the data (correct or discard if not clean)
+    \item Use the clean data to test hypotheses, make predictions and forecasts
+\end{enumerate}
+
+In contrast, Machine Learning takes a different approach:
+\begin{itemize}
+    \item It is the \textbf{data} that determines which analytic techniques to use
+    \item The computer uses data to \textbf{train} algorithms to find patterns and make predictions
+    \item Algorithms are no longer \textbf{static} but become \textbf{dynamic}
+\end{itemize}
+
+\subsection{Conventional Programming vs Machine Learning}
+
+The fundamental difference between conventional programming and machine learning can be understood through their inputs and outputs:
+
+\subsubsection{Conventional Programming}
+\begin{itemize}
+    \item \textbf{Input}: Program + Data
+    \item \textbf{Output}: Result
+    \item You write the program, give it data, and get results
+\end{itemize}
+
+\subsubsection{Machine Learning}
+\begin{itemize}
+    \item \textbf{Input}: Data + Result
+    \item \textbf{Output}: Program
+    \item You give the computer data and desired results, and it learns to generate a program/algorithm
+\end{itemize}
+
+\subsection{The Machine Learning Recipe}
+
+The ML recipe consists of 4 fundamental steps:
+\begin{enumerate}
+    \item Collect data
+    \item Define a family of possible models
+    \item Define an objective (error) function to quantify how well a model fits the data
+    \item Find the model that minimizes the error function (training/learning a model)
+\end{enumerate}
+
+\subsubsection{The Key Ingredients}
+
+Every machine learning problem requires five essential ingredients:
+\begin{itemize}
+    \item \textbf{Task}: The problem we want to solve
+    \item \textbf{Data}: The information we use to learn
+    \item \textbf{Model hypothesis}: The family of functions we consider
+    \item \textbf{Objective function}: How we measure success
+    \item \textbf{Learning algorithm}: How we find the best model
+\end{itemize}
+
+\section{Machine Learning Tasks}
+
+A task represents the type of prediction being made to solve a problem on some data. We can identify a task with the set of functions that can potentially solve the problem. In general, it consists of functions assigning each \textbf{input} $x \in \mathcal{X}$ an \textbf{output} $y \in \mathcal{Y}$.
+
+\subsection{Classification Task}
+
+\begin{definition}[Classification]
+Find a function $f \in \mathcal{Y}^{\mathcal{X}}$ assigning each input $x \in \mathcal{X}$ a \textbf{discrete} label, $f(x) \in \mathcal{Y} = \{c_1, \ldots, c_k\}$.
+\end{definition}
+
+In classification, the output space is a finite set of discrete categories or classes. The goal is to learn a decision boundary that separates different classes.
+
+\subsection{Regression Task}
+
+\begin{definition}[Regression]
+Find a function $f \in \mathcal{Y}^{\mathcal{X}}$ assigning each input $x \in \mathcal{X}$ a \textbf{continuous} label, $f(x) \in \mathcal{Y} = \mathbb{R}$.
+\end{definition}
+
+In regression, the output is a continuous value, allowing for predictions of quantities such as prices, temperatures, or probabilities.
+
+\subsection{Density Estimation Task}
+
+\begin{definition}[Density Estimation]
+Find a probability distribution $f \in \Delta(\mathcal{X})$ that best fits the data $x \in \mathcal{X}$.
+\end{definition}
+
+There is no reference to an output space (as in classification and regression tasks). Instead, we make a reasoning on the \textbf{input} $x$ itself, trying to model the underlying probability distribution that generated the data.
+
+\subsection{Clustering Task}
+
+\begin{definition}[Clustering]
+Find a function $f \in \mathbb{N}^{\mathcal{X}}$ that assigns each input $x \in \mathcal{X}$ a \textbf{cluster index} $f(x) \in \mathbb{N}$.
+\end{definition}
+
+All points mapped to the same index form a cluster. The goal is to group similar data points together without prior knowledge of the groups.
+
+\subsection{Dimensionality Reduction Task}
+
+\begin{definition}[Dimensionality Reduction]
+Find a function $f \in \mathcal{Y}^{\mathcal{X}}$ that \textbf{maps} each (\textbf{high-dimensional}) input $x \in \mathcal{X}$ to a \textbf{lower-dimensional} embedding $f(x) \in \mathcal{Y}$, where $\dim(\mathcal{Y}) < \dim(\mathcal{X})$.
+\end{definition}
+
+This task aims to reduce the number of features while preserving the essential information in the data.
+
+\section{Data in Machine Learning}
+
+\subsection{Data Representation}
+
+We represent inputs of our algorithm as $x \in \mathcal{X}$ and outputs as $y \in \mathcal{Y}$. The dataset is the set of both, where each input is associated with an output.
+
+\textbf{Key considerations:}
+\begin{itemize}
+    \item The quality of the data is crucial for the performance of the algorithm
+    \item It is equally important to have a large amount of data to learn effective models
+    \item Poor quality or insufficient data can lead to poor model performance
+\end{itemize}
+
+\subsection{Features}
+
+\begin{definition}[Features]
+Features are the measurable properties or characteristics of the phenomenon being observed.
+\end{definition}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item To identify a flower: color, petal length, petal width, sepal length, sepal width
+    \item To identify a fruit: color, shape, size, texture, weight
+    \item To classify images: pixel values, edges, textures, shapes
+\end{itemize}
+
+We can say that features are how our algorithm "sees" the data and are in general represented with (fixed-size) vectors.
+
+\section{Data Distributions and Learning Types}
+
+In machine learning, the information about the problem we want to solve is represented in the form of a data distribution, usually denoted as $p_{\text{data}}$.
+
+\subsection{Supervised Learning}
+
+\subsubsection{Classification and Regression}
+
+The data distribution is over pairs of inputs and outputs:
+\[
+p_{\text{data}} \in \Delta(\mathcal{X} \times \mathcal{Y})
+\]
+
+Here:
+\begin{itemize}
+    \item $\mathcal{X}$ is the input space
+    \item $\mathcal{Y}$ is the output space (labels or targets)
+    \item The goal is to learn a mapping from inputs to outputs using labeled data
+\end{itemize}
+
+\subsection{Unsupervised Learning}
+
+\subsubsection{Density Estimation, Clustering, and Dimensionality Reduction}
+
+The data distribution is only over the input space:
+\[
+p_{\text{data}} \in \Delta(\mathcal{X})
+\]
+
+Here:
+\begin{itemize}
+    \item We do not have explicit labels or targets
+    \item The goal is to discover structure, patterns, or representations within the data itself
+\end{itemize}
+
+\subsection{Summary of Learning Types}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Task Type} & \textbf{Data Distribution} & \textbf{Learning Type} \\
+\hline
+Classification, Regression & $p_{\text{data}} \in \Delta(\mathcal{X} \times \mathcal{Y})$ & Supervised Learning \\
+\hline
+Density Estimation, Clustering, & $p_{\text{data}} \in \Delta(\mathcal{X})$ & Unsupervised Learning \\
+Dimensionality Reduction & & \\
+\hline
+\end{tabular}
+\caption{Comparison of learning types based on data distribution}
+\end{table}
+
+\begin{remark}
+In \textbf{supervised learning}, each data point consists of an input and a corresponding output (label). In \textbf{unsupervised learning}, each data point consists only of the input, and the algorithm tries to find patterns or structure without explicit labels.
+
+This distinction is fundamental in machine learning, as it determines the type of algorithms and approaches used to solve different problems.
+\end{remark}
+
+
+
+
+
+
+
+
+\end{document}
