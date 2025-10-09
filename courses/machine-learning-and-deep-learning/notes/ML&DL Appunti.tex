@@ -16,6 +16,9 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, shapes}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -290,6 +293,902 @@ In \textbf{supervised learning}, each data point consists of an input and a corr
 
 This distinction is fundamental in machine learning, as it determines the type of algorithms and approaches used to solve different problems.
 \end{remark}
+
+\section{Data Sampling and Dataset Splitting}
+
+\subsection{The Data Distribution Problem}
+
+In both supervised and unsupervised learning, the true data distribution $p_{\text{data}}$ is typically \textbf{unknown}. This presents a fundamental challenge:
+\begin{itemize}
+    \item We do not have direct access to the underlying probability distribution that generates the data
+    \item We only have access to a finite sample of data points drawn from this distribution
+\end{itemize}
+
+\textbf{Solution}: We perform \textbf{sampling} from the distribution. By collecting a representative sample of data, we can approximate the true distribution and use it to train our models.
+
+\subsection{Training, Validation, and Test Sets}
+
+To properly evaluate machine learning models, we split our data into three distinct sets. Each set serves a specific purpose in the machine learning pipeline.
+
+\begin{definition}[Dataset Splitting]
+A dataset is typically divided into three subsets:
+\begin{itemize}
+    \item \textbf{Training set} ($D_{\text{train}}$): Used to train the model
+    \item \textbf{Validation set} ($D_{\text{val}}$): Used to tune hyperparameters and select the best model
+    \item \textbf{Test set} ($D_{\text{test}}$): Used to evaluate the final model performance
+\end{itemize}
+\end{definition}
+
+\begin{remark}
+\textbf{Critical requirement}: All three sets (training, validation, and test) should be sampled from the \textbf{same probability distribution}. This ensures that the model's performance on the test set is a reliable indicator of its performance on new, unseen data.
+\end{remark}
+
+\subsection{How to Use the Three Sets}
+
+The three datasets serve different purposes in the machine learning workflow:
+
+\subsubsection{Learning/Training Phase}
+
+During the learning phase, the \textbf{training set} is used to train the machine learning algorithm, which learns patterns and relationships in the data to produce a \textbf{program} (model). 
+
+The \textbf{validation set} plays a crucial role in this phase:
+\begin{itemize}
+    \item Evaluates different model configurations
+    \item Tunes hyperparameters
+    \item Selects the best performing model
+\end{itemize}
+
+This process involves iterative feedback between training and validation until we find the optimal configuration.
+
+\subsubsection{Testing/Model Evaluation Phase}
+
+Once the best model is selected, we use the \textbf{test set} to evaluate its performance. The trained model is applied to the test data, which it has never seen before. This gives us an unbiased estimate of how well the model will perform in real-world scenarios, telling us whether our model can truly generalize to new data.
+
+\subsection{The Importance of Distribution Similarity}
+
+\subsubsection{Correct Scenario: Same Distribution}
+
+When training, validation, and test sets are sampled from the \textbf{same distribution}:
+\begin{itemize}
+    \item The sets are \textbf{similar} in terms of statistical properties
+    \item They represent the same underlying phenomenon
+    \item However, they \textbf{do not overlap} (no data point appears in multiple sets)
+\end{itemize}
+
+This ensures that the model can generalize well from training to test data.
+
+\textbf{Example}: If we're classifying fruits, all three sets might contain apples and bananas in similar proportions, but with different specific instances.
+
+\subsubsection{Incorrect Scenario: Different Distributions}
+
+When training/validation and test sets come from \textbf{different distributions}, the model learns patterns from one distribution but is tested on another. This problematic scenario typically leads to:
+\begin{itemize}
+    \item Poor performance on the test set
+    \item Unreliable predictions on new data
+    \item Inability to generalize to real-world applications
+\end{itemize}
+
+\textbf{Example}: Training on apples and bananas, but testing on oranges and limes. The model cannot classify fruits it has never seen during training.
+
+\begin{remark}
+\textbf{Key principle}: The fundamental assumption in machine learning is that training and test data come from the same distribution. Violating this assumption leads to poor generalization and unreliable models.
+\end{remark}
+
+\section{Training and Testing: The Role of Features}
+
+\subsection{Training (Learning, Induction)}
+
+During the training phase, the model learns to distinguish between different classes based on the features provided in the training data. 
+
+\textbf{Example}: Consider a fruit classification task with the following training data:
+\begin{itemize}
+    \item \textit{red, round, leaf, 3oz, ...} $\rightarrow$ apple
+    \item \textit{green, round, no leaf, 4oz, ...} $\rightarrow$ apple
+    \item \textit{yellow, curved, no leaf, 8oz, ...} $\rightarrow$ banana
+    \item \textit{green, curved, no leaf, 7oz, ...} $\rightarrow$ banana
+\end{itemize}
+
+The model learns to associate patterns in the features (color, shape, presence of leaf, weight) with the corresponding labels (apple or banana). \textbf{What distinguishes apples and bananas is based on the features!} The model identifies which feature combinations are characteristic of each class.
+
+\subsection{Testing}
+
+Once trained, the model can classify new examples based on the same features it learned during training. When presented with a new example described by the same semantic features, the model makes a prediction.
+
+\textbf{Example}: Given a new fruit with features \textit{red, round, no leaf, 4oz, ...}, the model uses the learned patterns to predict whether it is an apple or a banana.
+
+\begin{remark}
+\textbf{Critical assumption}: The features of the training and testing data must be the same! The model can only make predictions based on the features it was trained on. If the test data uses different features or feature representations, the model cannot function properly.
+\end{remark}
+
+\subsection{Learning and Generalization}
+
+Learning is fundamentally about \textbf{generalizing} from the training data. The goal is not simply to memorize the training examples, but to learn patterns that apply to new, unseen data.
+
+However, the failure of a machine learning algorithm is often caused by a \textbf{bad selection of training samples}. The key issue is that we might introduce \textbf{unwanted correlations} from which the algorithm derives \textbf{wrong conclusions}.
+
+\textbf{Example}: Consider a model trained to recognize objects in images. If all training images were captured on sunny days, the model might learn to associate sunny weather conditions with the objects. When tested on images taken on cloudy days, the model might fail to recognize the same objects because it never encountered cloudy conditions during training. The model incorrectly learned that sunny weather is a relevant feature for object recognition.
+
+\begin{observation}
+The quality and diversity of training data are crucial. Training data should be representative of all conditions the model will encounter in real-world applications, avoiding spurious correlations that lead to poor generalization.
+\end{observation}
+
+\section{The Complete Machine Learning Recipe}
+
+We can now revisit the complete machine learning workflow with all its essential ingredients:
+
+\subsection{The Five Ingredients of Machine Learning}
+
+Every machine learning problem requires five fundamental components that work together:
+
+\begin{enumerate}
+    \item \textbf{Task}: The specific problem we want to solve (e.g., classify birds vs. non-birds in images)
+    
+    \item \textbf{Data}: The collection of examples used to train and evaluate the model. Data quality and quantity are critical for success.
+    
+    \item \textbf{Model Hypothesis}: The family of functions or models we consider as potential solutions. This defines the space of possible models the learning algorithm can explore.
+    
+    \item \textbf{Objective Function}: A mathematical function that quantifies how well a model performs on the data. The learning algorithm aims to optimize this function.
+    
+    \item \textbf{Learning Algorithm}: The method used to search through the model hypothesis space and find the model that optimizes the objective function.
+\end{enumerate}
+
+\subsection{The Interplay of Ingredients}
+
+These five ingredients are interconnected:
+\begin{itemize}
+    \item The \textbf{task} determines what kind of \textbf{data} we need and what \textbf{model hypothesis} is appropriate
+    \item The \textbf{data} influences which features are available and how we define the \textbf{objective function}
+    \item The \textbf{model hypothesis} constrains what the \textbf{learning algorithm} can discover
+    \item The \textbf{objective function} guides the \textbf{learning algorithm} toward better models
+\end{itemize}
+
+Understanding and carefully selecting each ingredient is essential for building effective machine learning systems.
+
+\section{Model and Hypothesis Space}
+
+\subsection{What is a Model?}
+
+\begin{definition}[Model]
+A \textbf{model} is the implementation of a function $f \in \mathcal{F}_{\text{task}}$ that can be tractably computed.
+\end{definition}
+
+In practice, when searching for our function $f$, we don't look at everything in $\mathcal{F}_{\text{task}}$. Instead, we look at a subset called the \textbf{hypothesis space}: $\mathcal{H} \subset \mathcal{F}_{\text{task}}$, which is composed of a set of models (e.g., neural networks, decision trees, linear models).
+
+The learning algorithm seeks a \textbf{solution within the hypothesis space}. In other words, a model is a simplified representation of the world that we can actually compute and optimize.
+
+\begin{observation}
+The choice of hypothesis space is crucial:
+\begin{itemize}
+    \item If $\mathcal{H}$ is too small, it may not contain a good solution
+    \item If $\mathcal{H}$ is too large, finding the best model becomes computationally intractable
+    \item The hypothesis space defines the types of patterns the model can learn
+\end{itemize}
+\end{observation}
+
+\subsection{Types of Learning Paradigms}
+
+Machine learning can be categorized into different paradigms based on the type and availability of labeled data:
+
+\subsubsection{Supervised Learning}
+
+In supervised learning, we have labeled data where each input is paired with its corresponding output. This includes:
+\begin{itemize}
+    \item \textbf{Classification}: Predicting discrete labels
+    \item \textbf{Regression}: Predicting continuous values
+\end{itemize}
+
+\subsubsection{Unsupervised Learning}
+
+In unsupervised learning, we only have input data without labels. The goal is to discover structure in the data. This includes:
+\begin{itemize}
+    \item \textbf{Clustering}: Grouping similar data points
+    \item \textbf{Density Estimation}: Modeling the probability distribution of data
+    \item \textbf{Dimensionality Reduction}: Finding lower-dimensional representations
+\end{itemize}
+
+\subsubsection{Semi-Supervised Learning}
+
+Semi-supervised learning addresses scenarios where we have a large amount of unlabeled data and only some labeled examples. This paradigm has gained significant popularity in recent years to leverage large datasets through self-supervised learning techniques.
+
+The key idea is to provide the model with tasks different from the one to be solved, but that allow the model to learn the data distribution from the unlabeled data. Once the model understands the general structure of the data, it can then specialize on the few labeled examples to solve the target task.
+
+\textbf{Example}: Training a language model on large amounts of unlabeled text to learn general language patterns, then fine-tuning it on a small labeled dataset for sentiment analysis.
+
+\section{Model-Based vs. Instance-Based Learning}
+
+Machine learning algorithms can be further categorized based on how they make predictions:
+
+\subsection{Model-Based (Parametric) Learning}
+
+\begin{definition}[Parametric Model]
+A learning model that summarizes data with a \textbf{set of parameters of fixed size} (independent of the number of training examples) is called a \textbf{parametric model}.
+\end{definition}
+
+Key characteristics:
+\begin{itemize}
+    \item The model learns a fixed set of parameters from the training data
+    \item Once trained, the original training data can be discarded
+    \item No matter how much data you give to a parametric model, it won't change its mind about how many parameters it needs
+    \item The model makes predictions using only the learned parameters
+\end{itemize}
+
+\textbf{Examples}: Naive Bayes, Linear Regression, Logistic Regression, Neural Networks
+
+In a model-based approach, the algorithm learns a function (e.g., a decision boundary) described by parameters. For instance, a linear classifier might learn the curve $\alpha x_1 + \beta x_2 + \gamma$ that separates two classes, where $\alpha, \beta, \gamma$ are the parameters.
+
+\subsection{Instance-Based (Nonparametric) Learning}
+
+\begin{definition}[Nonparametric Model]
+These algorithms \textbf{do not learn parameters} but instead use the data itself to compare a new example through similarity metrics.
+\end{definition}
+
+Key characteristics:
+\begin{itemize}
+    \item The model stores (some or all of) the training data
+    \item Predictions are made by comparing new examples to stored training examples
+    \item The model's complexity can grow with the amount of training data
+    \item No explicit training phase that produces a fixed set of parameters
+\end{itemize}
+
+\textbf{Examples}: K-Nearest Neighbors (KNN), Support Vector Machines (SVM), Random Forest
+
+In an instance-based approach, when a new example arrives, it is compared with nearby training examples and classified according to a similarity policy. For example, in KNN, a new point is classified based on the majority class of its $k$ nearest neighbors in the training data.
+
+\subsection{Comparison}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{Aspect} & \textbf{Model-Based} & \textbf{Instance-Based} \\
+\hline
+Parameters & Fixed number of parameters & No fixed parameters \\
+\hline
+Training data & Can be discarded after training & Must be retained for predictions \\
+\hline
+Prediction speed & Fast (only uses parameters) & Slower (compares with stored data) \\
+\hline
+Memory & Low (stores only parameters) & High (stores training examples) \\
+\hline
+Flexibility & Fixed model complexity & Complexity grows with data \\
+\hline
+\end{tabular}
+\caption{Comparison between model-based and instance-based learning}
+\end{table}
+
+\section{Error Function (Objective Function)}
+
+To allow an algorithm to learn, we need to provide it with a metric, a measure that helps it understand the direction of the optimal solution we are seeking. For this reason, \textbf{performance measures} are defined to enable the algorithm to learn.
+
+\subsection{What is an Error Function?}
+
+In machine learning, \textbf{training a model} means finding a \textbf{function} which maps a set of values $x$ to a value $y$. We can calculate how well a predictive model is doing by comparing the \textbf{predicted values} with the \textbf{true values} for $y$.
+
+\begin{definition}[Training Error vs. Test Error]
+\begin{itemize}
+    \item If we apply the model to the data it was trained on, we are calculating the \textbf{training error}
+    \item If we calculate the error on data which was \textbf{unknown} in the training phase, we are calculating the \textbf{test error}
+\end{itemize}
+\end{definition}
+
+The test error is the most important metric because it tells us how well the model generalizes to new, unseen data.
+
+\subsection{Types of Error Functions}
+
+There are different types of error functions (also called loss functions or objective functions), each suited for different tasks:
+
+\begin{itemize}
+    \item \textbf{Mean Absolute Error (MAE)}: Measures the average absolute difference between predictions and true values
+    \item \textbf{Mean Squared Error (MSE)}: Measures the average squared difference between predictions and true values
+    \item \textbf{Binary Cross-Entropy}: Used for binary classification problems
+    \item \textbf{Mean Average Precision}: Used for ranking and information retrieval tasks
+\end{itemize}
+
+The choice of error function depends on the task and the desired properties of the model.
+
+\section{Example: Polynomial Fitting}
+
+Let's consider a concrete example to understand how models, hypothesis spaces, and error functions work together.
+
+\subsection{Problem Setup}
+
+Consider a regression problem with the following setup:
+\begin{itemize}
+    \item \textbf{Data}: $\mathcal{D}_n = \{(x_1, y_1), \ldots, (x_n, y_n)\}$
+    \item Data generated from $\sin(2\pi x) + \text{noise}$
+    \item Training set with $n = 10$ points
+    \item \textbf{Goal}: Learn a function (shown as the purple line) that fits the data
+\end{itemize}
+
+The correct solution should capture the underlying sinusoidal pattern while being robust to the noise in the training data.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=10cm,
+    height=7cm,
+    xlabel={$x$},
+    ylabel={$y$},
+    xmin=0, xmax=1,
+    ymin=-1.5, ymax=1.5,
+    grid=major,
+    legend pos=north east,
+    legend style={font=\small}
+]
+
+% True function (purple, sinusoidal)
+\addplot[violet, very thick, smooth, domain=0:1, samples=100] {sin(deg(2*pi*x))};
+\addlegendentry{Correct solution}
+
+% Training data points (black dots with some noise)
+\addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+    (0.05, 0.35)
+    (0.15, 0.92)
+    (0.25, 0.88)
+    (0.35, 0.65)
+    (0.45, -0.15)
+    (0.55, -0.82)
+    (0.65, -0.95)
+    (0.75, -0.72)
+    (0.85, 0.05)
+    (0.95, 0.85)
+};
+\addlegendentry{Training data}
+
+\end{axis}
+\end{tikzpicture}
+\caption{Polynomial Fitting Problem: Data generated from $\sin(2\pi x)$ with noise}
+\end{figure}
+
+\subsection{Model: Polynomial Functions}
+
+We choose to model the data using polynomial functions:
+
+\[
+f_w(x) = \sum_{j=0}^{M} w_j x^j
+\]
+
+where:
+\begin{itemize}
+    \item $M$ is the \textbf{degree of the polynomial} (a hyperparameter)
+    \item $w = \{w_0, \ldots, w_M\}$ are the \textbf{parameters} to be learned
+    \item The \textbf{hypothesis space} for a fixed degree $M$ is: $\mathcal{H}_M = \{f_w : w \in \mathbb{R}^{M+1}\}$
+\end{itemize}
+
+Different values of $M$ give us different hypothesis spaces:
+\begin{itemize}
+    \item $M = 0$: Constant functions (horizontal lines)
+    \item $M = 1$: Linear functions (straight lines)
+    \item $M = 2$: Quadratic functions (parabolas)
+    \item $M = 3$: Cubic functions
+    \item Higher $M$: More complex curves
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+
+% M=0 (Underfitting)
+\begin{scope}[xshift=0cm]
+\begin{axis}[
+    width=5.5cm,
+    height=4.5cm,
+    title={$M=0$ (Underfitting)},
+    title style={font=\small},
+    xlabel={$x$},
+    ylabel={$y$},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    xmin=0, xmax=1,
+    ymin=-1.5, ymax=1.5,
+    xtick=\empty,
+    ytick=\empty,
+]
+% Data points
+\addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
+    (0.05, 0.35) (0.15, 0.92) (0.25, 0.88) (0.35, 0.65) (0.45, -0.15)
+    (0.55, -0.82) (0.65, -0.95) (0.75, -0.72) (0.85, 0.05) (0.95, 0.85)
+};
+% True function (purple)
+\addplot[violet, thick, smooth, domain=0:1, samples=50] {sin(deg(2*pi*x))};
+% M=0 fit (green horizontal line)
+\addplot[green!70!black, very thick, domain=0:1] {0.1};
+\end{axis}
+\end{scope}
+
+% M=3 (Good fit)
+\begin{scope}[xshift=6.5cm]
+\begin{axis}[
+    width=5.5cm,
+    height=4.5cm,
+    title={$M=3$ (Good Fit)},
+    title style={font=\small},
+    xlabel={$x$},
+    ylabel={$y$},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    xmin=0, xmax=1,
+    ymin=-1.5, ymax=1.5,
+    xtick=\empty,
+    ytick=\empty,
+]
+% Data points
+\addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
+    (0.05, 0.35) (0.15, 0.92) (0.25, 0.88) (0.35, 0.65) (0.45, -0.15)
+    (0.55, -0.82) (0.65, -0.95) (0.75, -0.72) (0.85, 0.05) (0.95, 0.85)
+};
+% True function (purple)
+\addplot[violet, thick, smooth, domain=0:1, samples=50] {sin(deg(2*pi*x))};
+% M=3 fit (green, close to true function)
+\addplot[green!70!black, very thick, smooth, domain=0:1, samples=50] {sin(deg(2*pi*x)) + 0.1*sin(deg(6*pi*x))};
+\end{axis}
+\end{scope}
+
+% M=9 (Overfitting)
+\begin{scope}[xshift=3.25cm, yshift=-5.5cm]
+\begin{axis}[
+    width=5.5cm,
+    height=4.5cm,
+    title={$M=9$ (Overfitting)},
+    title style={font=\small},
+    xlabel={$x$},
+    ylabel={$y$},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    xmin=0, xmax=1,
+    ymin=-1.5, ymax=1.5,
+    xtick=\empty,
+    ytick=\empty,
+]
+% Data points
+\addplot[only marks, mark=*, mark size=1.5pt, black] coordinates {
+    (0.05, 0.35) (0.15, 0.92) (0.25, 0.88) (0.35, 0.65) (0.45, -0.15)
+    (0.55, -0.82) (0.65, -0.95) (0.75, -0.72) (0.85, 0.05) (0.95, 0.85)
+};
+% True function (purple)
+\addplot[violet, thick, smooth, domain=0:1, samples=50] {sin(deg(2*pi*x))};
+% M=9 fit (green, oscillating wildly)
+\addplot[green!70!black, very thick, smooth, domain=0:1, samples=100] {
+    sin(deg(2*pi*x)) + 0.8*sin(deg(20*pi*x)) + 0.3*cos(deg(30*pi*x))
+};
+\end{axis}
+\end{scope}
+
+\end{tikzpicture}
+\caption{Polynomial fits with different degrees: $M=0$ (underfitting), $M=3$ (good fit), $M=9$ (overfitting). Purple: true function, Green: fitted polynomial, Black dots: training data.}
+\end{figure}
+
+\subsection{Error Function: Mean Squared Error}
+
+To measure how well our polynomial fits the data, we use the Mean Squared Error (MSE):
+
+\[
+E(f; \mathcal{D}_n) = \frac{1}{n} \sum_{i=1}^{n} [f(x_i) - y_i]^2
+\]
+
+This error function:
+\begin{itemize}
+    \item Computes the squared difference between the prediction $f(x_i)$ and the ground-truth label $y_i$ for each point
+    \item Averages these squared differences over all $n$ training points
+    \item Is also called a \textbf{pointwise loss} because it measures the error at each individual data point
+\end{itemize}
+
+The learning algorithm's goal is to find the parameters $w$ that minimize this error function:
+
+\[
+w^* = \arg\min_{w \in \mathbb{R}^{M+1}} E(f_w; \mathcal{D}_n)
+\]
+
+\begin{observation}
+The choice of polynomial degree $M$ is crucial:
+\begin{itemize}
+    \item Too small $M$ (e.g., $M=0$ or $M=1$): The model is too simple and cannot capture the sinusoidal pattern (\textbf{underfitting})
+    \item Appropriate $M$ (e.g., $M=2$ or $M=3$): The model captures the underlying pattern well
+    \item Too large $M$: The model fits the noise in the training data and doesn't generalize well (\textbf{overfitting})
+\end{itemize}
+\end{observation}
+
+\section{Underfitting and Overfitting}
+
+Two fundamental problems can occur when training machine learning models: underfitting and overfitting. Understanding these concepts is crucial for building models that generalize well.
+
+\subsection{Definitions}
+
+\begin{definition}[Underfitting]
+\textbf{Underfitting} is a scenario where a model is unable to capture the relationship between the input ($x$) and output ($y$) variables accurately, generating a high error rate on both the training set and unseen data (e.g., testing set).
+\end{definition}
+
+The model is too simple and has not yet learned from the data. It performs poorly on both training and test data.
+
+\begin{definition}[Overfitting]
+\textbf{Overfitting} occurs when the model gives accurate predictions for training data (lower training error) but not for testing data (higher testing error).
+\end{definition}
+
+The model is too sensitive to the training data and has essentially memorized it, including its noise and peculiarities, rather than learning the underlying pattern.
+
+\subsection{The Bias-Variance Trade-off}
+
+The relationship between model complexity, training error, and test error can be visualized as follows:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=13cm,
+    height=8cm,
+    xlabel={Model Complexity},
+    ylabel={Error},
+    xmin=0, xmax=10,
+    ymin=0, ymax=5.5,
+    xtick=\empty,
+    ytick=\empty,
+    axis lines=left,
+    legend pos=north west,
+    legend style={font=\normalsize}
+]
+
+% Training Error curve (decreasing)
+\addplot[blue, thick, smooth, domain=0:10] {1.5 + 3*exp(-0.5*x)};
+\addlegendentry{Training Error}
+
+% Test Error curve (U-shaped)
+\addplot[orange, thick, smooth, domain=0:10] {2 + 2*exp(-0.8*x) + 0.08*x^2};
+\addlegendentry{Test Error}
+
+% Vertical line for "Best Fit"
+\draw[red, dashed, thick] (axis cs:3.5,0) -- (axis cs:3.5,2.2);
+
+\end{axis}
+\end{tikzpicture}
+\caption{Bias-Variance Trade-off: Training and Test Error vs. Model Complexity}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Left side of the graph (low complexity)}: High error rate in both training and testing $\rightarrow$ \textbf{Underfitting}
+    \item \textbf{Middle region (optimal complexity)}: Low error rate in both training and testing $\rightarrow$ \textbf{Best Fit}
+    \item \textbf{Right side of the graph (high complexity)}: Low error rate in training but high error rate in testing $\rightarrow$ \textbf{Overfitting}
+\end{itemize}
+
+\subsection{Diagnostic Matrix}
+
+We can diagnose the state of our model by examining both training and test errors:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+ & \textbf{Low Training Error} & \textbf{High Training Error} \\
+\hline
+\textbf{Low Test Error} & OK (Good fit) & Underfitting \\
+\hline
+\textbf{High Test Error} & Overfitting & Underfitting \\
+\hline
+\end{tabular}
+\caption{Diagnostic matrix for model performance}
+\end{table}
+
+\subsection{How to Handle Overfitting}
+
+When the model is too sensitive to training data and overfits, we can apply several strategies:
+
+\begin{enumerate}
+    \item \textbf{Try a simpler model}: Use a model with fewer parameters or lower complexity
+    
+    \item \textbf{Try a less powerful model}: Choose a model architecture with reduced capacity
+    
+    \item \textbf{Increase regularization impact}: Apply techniques that penalize model complexity:
+    \begin{itemize}
+        \item Early stopping: Stop training before the model overfits
+        \item L1/L2 regularization: Add penalty terms to the loss function
+    \end{itemize}
+    
+    \item \textbf{Use a smaller number of features}:
+    \begin{itemize}
+        \item Remove some features that may be causing overfitting
+        \item Apply feature selection techniques to identify the most relevant features
+    \end{itemize}
+    
+    \item \textbf{Get more data}: Increasing the training set size helps the model learn more generalizable patterns
+\end{enumerate}
+
+\subsection{How to Handle Underfitting}
+
+When the model has not yet learned from the data and underfits, we can try:
+
+\begin{enumerate}
+    \item \textbf{Try more complex models}: Use models with a larger number of parameters that can capture more intricate patterns
+    \begin{itemize}
+        \item Ensemble learning: Combine multiple models
+    \end{itemize}
+    
+    \item \textbf{Less regularization}: Reduce or remove regularization constraints that may be limiting the model's capacity
+    
+    \item \textbf{A larger quantity of features}: Add more features or engineer new features that better capture the underlying relationships (get more features)
+\end{enumerate}
+
+\subsection{Polynomial Fitting Example Revisited}
+
+Let's examine how different polynomial degrees affect the fit:
+
+\begin{itemize}
+    \item \textbf{$M = 0$} (constant function): Severe underfitting. The horizontal line cannot capture any of the sinusoidal pattern. Both training and validation errors are high.
+    
+    \item \textbf{$M = 1$} (linear function): Still underfitting. A straight line cannot represent the curved pattern. Both errors remain high.
+    
+    \item \textbf{$M = 3$} (cubic polynomial): Good fit. The model captures the underlying sinusoidal pattern well. Both training and validation errors are low, and the curves are similar.
+    
+    \item \textbf{$M = 9$} (9th-degree polynomial): Overfitting. The model passes through all training points (very low training error) but oscillates wildly between them. The validation error is high because the model has learned the noise rather than the signal.
+\end{itemize}
+
+The error plot shows:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=12cm,
+    height=8cm,
+    xlabel={$M$ (Polynomial Degree)},
+    ylabel={Error},
+    xlabel style={font=\normalsize},
+    ylabel style={font=\normalsize},
+    xmin=-0.5, xmax=9.5,
+    ymin=0, ymax=4.5,
+    xtick={0,1,2,3,4,5,6,7,8,9},
+    grid=major,
+    legend pos=north east,
+    legend style={font=\normalsize}
+]
+
+% Training error (blue, decreasing)
+\addplot[blue, thick, mark=*, smooth] coordinates {
+    (0, 3.5)
+    (1, 2.8)
+    (2, 1.8)
+    (3, 1.2)
+    (4, 0.8)
+    (5, 0.5)
+    (6, 0.3)
+    (7, 0.2)
+    (8, 0.15)
+    (9, 0.1)
+};
+\addlegendentry{Training}
+
+% Validation error (orange, U-shaped)
+\addplot[orange, thick, mark=square*, smooth] coordinates {
+    (0, 3.5)
+    (1, 2.5)
+    (2, 1.5)
+    (3, 1.0)
+    (4, 1.1)
+    (5, 1.3)
+    (6, 1.6)
+    (7, 2.0)
+    (8, 2.5)
+    (9, 3.2)
+};
+\addlegendentry{Validation}
+
+
+\end{axis}
+\end{tikzpicture}
+\caption{Training and Validation Error vs. Polynomial Degree $M$}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Training error} (blue line): Decreases monotonically as $M$ increases
+    \item \textbf{Validation error} (orange line): Decreases initially, reaches a minimum around $M = 3$, then increases again
+    \item The optimal model complexity is where the validation error is minimized
+\end{itemize}
+
+\begin{remark}
+The key insight is that minimizing training error alone is not sufficient. We must monitor validation/test error to ensure the model generalizes well to new data. The best model is the one that balances fitting the training data with generalizing to unseen data.
+\end{remark}
+
+\section{Regularization}
+
+Regularization is one of the most important techniques in machine learning to prevent overfitting and improve model generalization.
+
+\subsection{What is Regularization?}
+
+\begin{definition}[Regularization]
+Regularization refers to techniques that are used to calibrate machine learning models in order to minimize the adjusted loss function and prevent overfitting or underfitting.
+\end{definition}
+
+In practice, regularization is a modification of the training error function by appending a term $\Omega(f)$ that typically penalizes complex solutions.
+
+\subsection{The Regularized Objective Function}
+
+The regularized objective function has the following form:
+
+\[
+E_{\text{reg}}(f; \mathcal{D}_n) = E(f; \mathcal{D}_n) + \lambda_n \Omega(f)
+\]
+
+where:
+\begin{itemize}
+    \item $E(f; \mathcal{D}_n)$ is the \textbf{training error function} (e.g., MSE)
+    \item $\Omega(f)$ is the \textbf{regularization term} that penalizes model complexity
+    \item $\lambda_n$ is the \textbf{tradeoff hyperparameter} that controls the strength of regularization
+\end{itemize}
+
+The regularization term acts as a penalty that discourages the model from becoming too complex. By minimizing this combined objective, we find models that fit the data well while remaining relatively simple.
+
+\subsection{Effect of Regularization}
+
+The regularization term $\Omega(f)$ typically measures some notion of model complexity. When we minimize the regularized objective:
+\begin{itemize}
+    \item We balance fitting the training data (low $E(f; \mathcal{D}_n)$) with keeping the model simple (low $\Omega(f)$)
+    \item The hyperparameter $\lambda_n$ controls this tradeoff
+    \item Higher $\lambda_n$ means stronger regularization (simpler models)
+    \item Lower $\lambda_n$ means weaker regularization (more complex models allowed)
+\end{itemize}
+
+\subsection{Regularization in Polynomial Fitting}
+
+For the polynomial fitting example, we can regularize by penalizing polynomials with large coefficients. The regularized error function becomes:
+
+\[
+E_{\text{reg}}(f_w; \mathcal{D}_n) = \frac{1}{n} \sum_{i=1}^{n} [f_w(x_i) - y_i]^2 + \frac{\lambda}{n} \|w\|^2
+\]
+
+where:
+\begin{itemize}
+    \item The first term is the training error (MSE)
+    \item $\frac{\lambda}{n} \|w\|^2 = \frac{\lambda}{n} \sum_{j=0}^{M} w_j^2$ is the regularization term (L2 regularization)
+    \item $\lambda$ is the tradeoff hyperparameter
+\end{itemize}
+
+\subsubsection{Effect of the Regularization Parameter $\lambda$}
+
+The choice of $\lambda$ significantly affects the model:
+
+\begin{itemize}
+    \item \textbf{$\lambda \approx 10^{-18}$ (very small)}: Almost no regularization. The model can have large coefficients and may overfit. The polynomial fits the training data very closely, including noise.
+    
+    \item \textbf{$\lambda = 1$ (moderate)}: Balanced regularization. The model is penalized for having large coefficients, leading to a smoother curve that generalizes better. This often provides the best tradeoff between training and validation error.
+    
+    \item \textbf{$\lambda$ very large}: Strong regularization. The penalty for large coefficients is so high that the model becomes too simple and may underfit. The curve becomes nearly flat.
+\end{itemize}
+
+\subsubsection{Regularization Path}
+
+The plot of error vs. $\ln(\lambda)$ shows:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=13cm,
+    height=8cm,
+    xlabel={$\ln(\lambda)$},
+    ylabel={Error},
+    xlabel style={font=\normalsize},
+    ylabel style={font=\normalsize},
+    xmin=-40, xmax=5,
+    ymin=0, ymax=5,
+    grid=major,
+    legend pos=north west,
+    legend style={font=\normalsize}
+]
+
+% Training error (blue, increasing)
+\addplot[blue, thick, smooth, domain=-40:5] {0.1 + 0.05*(x+20)^2/100 + 0.8/(1+exp(-0.3*(x+10)))};
+\addlegendentry{Training}
+
+% Validation error (orange, U-shaped)
+\addplot[orange, thick, smooth, domain=-40:5] {1.5 + 0.08*(x+5)^2/50 + 1.2*exp(-0.15*(x+20))};
+\addlegendentry{Validation}
+
+
+\end{axis}
+\end{tikzpicture}
+\caption{Training and Validation Error vs. $\ln(\lambda)$ (Regularization Strength)}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Left side (small $\lambda$)}: Low training error, high validation error $\rightarrow$ Overfitting
+    \item \textbf{Middle region}: Both errors are low $\rightarrow$ Good fit
+    \item \textbf{Right side (large $\lambda$)}: Both errors increase $\rightarrow$ Underfitting
+\end{itemize}
+
+The optimal $\lambda$ is found where the validation error is minimized.
+
+\subsection{Generalization and Data Size}
+
+An important theoretical result in machine learning relates training error to generalization error:
+
+\begin{theorem}[Generalization with Infinite Data]
+As the number of training samples approaches infinity, the training error approximates the generalization error:
+\[
+E(f; \mathcal{D}_n) \to E(f; p_{\text{data}}) \quad \text{as} \quad n \to \infty
+\]
+\end{theorem}
+
+This means:
+\begin{itemize}
+    \item With a small dataset ($n = 15$), even a complex model ($M = 9$) may overfit because there isn't enough data to constrain the parameters
+    \item With a large dataset ($n = 100$), the same complex model can generalize well because the abundant data prevents overfitting
+    \item More data allows us to use more complex models without overfitting
+\end{itemize}
+
+\textbf{Visual example}:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+
+% n=15, M=9 (Overfitting)
+\begin{scope}[xshift=0cm]
+\begin{axis}[
+    width=6.5cm,
+    height=5.5cm,
+    title={$n=15$, $M=9$ (Overfitting)},
+    title style={font=\normalsize},
+    xlabel={$x$},
+    ylabel={$y$},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    xmin=0, xmax=1,
+    ymin=-1.5, ymax=1.5,
+    xtick=\empty,
+    ytick=\empty,
+]
+% Few data points (15 points, but showing representative subset)
+\addplot[only marks, mark=*, mark size=2pt, black] coordinates {
+    (0.05, 0.35) (0.15, 0.92) (0.25, 0.88) (0.35, 0.65) (0.45, -0.15)
+    (0.55, -0.82) (0.65, -0.95) (0.75, -0.72) (0.85, 0.05) (0.95, 0.85)
+};
+% True function (purple)
+\addplot[violet, thick, smooth, domain=0:1, samples=50] {sin(deg(2*pi*x))};
+% Overfitted polynomial (blue, oscillating wildly)
+\addplot[blue, very thick, smooth, domain=0:1, samples=100] {
+    sin(deg(2*pi*x)) + 0.8*sin(deg(20*pi*x)) + 0.3*cos(deg(30*pi*x))
+};
+\end{axis}
+\end{scope}
+
+% n=100, M=9 (Good fit)
+\begin{scope}[xshift=7.5cm]
+\begin{axis}[
+    width=6.5cm,
+    height=5.5cm,
+    title={$n=100$, $M=9$ (Good Fit)},
+    title style={font=\normalsize},
+    xlabel={$x$},
+    ylabel={$y$},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    xmin=0, xmax=1,
+    ymin=-1.5, ymax=1.5,
+    xtick=\empty,
+    ytick=\empty,
+]
+% Many data points (showing more points)
+\addplot[only marks, mark=*, mark size=1pt, black, samples=50, domain=0:1] {sin(deg(2*pi*x)) + 0.15*rand};
+% True function (purple)
+\addplot[violet, thick, smooth, domain=0:1, samples=50] {sin(deg(2*pi*x))};
+% Well-fitted polynomial (blue, smooth)
+\addplot[blue, very thick, smooth, domain=0:1, samples=100] {
+    sin(deg(2*pi*x)) + 0.05*sin(deg(6*pi*x))
+};
+\end{axis}
+\end{scope}
+
+\end{tikzpicture}
+\caption{Effect of data size on generalization: With few data points ($n=15$), a complex model ($M=9$) overfits. With many data points ($n=100$), the same model generalizes well. Purple: true function, Blue: fitted polynomial, Black dots: training data.}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{$n = 15$, $M = 9$}: The 9th-degree polynomial overfits, oscillating wildly between the few training points
+    \item \textbf{$n = 100$, $M = 9$}: With 100 training points, the same 9th-degree polynomial fits smoothly and generalizes well
+\end{itemize}
+
+\begin{observation}
+This illustrates why "get more data" is often the most effective solution to overfitting. With sufficient data, even complex models can learn to generalize well. However, collecting more data is not always feasible, which is why regularization and other techniques remain important.
+\end{observation}
 
 
 
