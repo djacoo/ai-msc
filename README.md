@@ -14,7 +14,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/University-Verona-DC143C?style=for-the-badge" alt="University"/>
   <img src="https://img.shields.io/badge/Year-2025/2026-4169E1?style=for-the-badge" alt="Year"/>
-  <img src="https://img.shields.io/badge/Courses-4-00CED1?style=for-the-badge" alt="Courses"/>
+  <img src="https://img.shields.io/badge/Courses-5-00CED1?style=for-the-badge" alt="Courses"/>
 </p>
 
 <p align="center">
@@ -49,6 +49,10 @@ AI---PRIMO-SEMESTRE/
 │   ├── planning-and-reinforcement-learning/
 │   │   ├── notes/
 │   │   └── slides/
+│   ├── machine-learning-and-deep-learning/
+│   │   ├── notes/
+│   │   ├── slides/
+│   │   └── lab/
 │   └── human-computer-interaction/
 │       ├── notes/
 │       └── slides/
@@ -64,25 +68,31 @@ AI---PRIMO-SEMESTRE/
 
 <table>
 <tr>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://img.shields.io/badge/🤖-Automated_Reasoning-f093fb?style=for-the-badge&labelColor=764ba2" alt="AR"/>
 <br/><br/>
 <b>5 Slides</b><br/>
 <sub>Logic & Theorem Proving</sub>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://img.shields.io/badge/💬-Natural_Language_Processing-4facfe?style=for-the-badge&labelColor=00f2fe" alt="NLP"/>
 <br/><br/>
 <b>16 Slides • 500+ Pages</b><br/>
 <sub>3 Parts • 17 Sections</sub>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
 <img src="https://img.shields.io/badge/🎯-Planning_&_RL-43e97b?style=for-the-badge&labelColor=38f9d7" alt="Planning"/>
 <br/><br/>
 <b>6 Slides • 23 Pages</b><br/>
 <sub>Classical Planning</sub>
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
+<img src="https://img.shields.io/badge/🧠-Machine_Learning_&_DL-FF6B6B?style=for-the-badge&labelColor=C44569" alt="ML&DL"/>
+<br/><br/>
+<b>1 Slide • 20 Pages</b><br/>
+<sub>ML Foundations</sub>
+</td>
+<td align="center" width="20%">
 <img src="https://img.shields.io/badge/👁️-Human_Computer_Interaction-fa709a?style=for-the-badge&labelColor=fee140" alt="HCI"/>
 <br/><br/>
 <b>Multiple Slides</b><br/>
@@ -146,6 +156,30 @@ AI---PRIMO-SEMESTRE/
 </td>
 </tr>
 <tr>
+<td width="50%" valign="top">
+
+<div align="center">
+
+### 🧠 **Machine Learning & Deep Learning**
+[![Course](https://img.shields.io/badge/Slides-1-blue?style=flat-square)](courses/machine-learning-and-deep-learning/slides)
+[![Notes](https://img.shields.io/badge/Notes-20_pages-red?style=flat-square&logo=adobe-acrobat-reader)](courses/machine-learning-and-deep-learning/notes)
+[![Lab](https://img.shields.io/badge/Lab-Available-green?style=flat-square)](courses/machine-learning-and-deep-learning/lab)
+
+</div>
+
+> 📄 **ML&DL Appunti.pdf** • Comprehensive foundations
+
+**🔬 Key Topics:**
+```
+✓ Introduction to Machine Learning
+✓ Supervised & Unsupervised Learning
+✓ Model Training & Hypothesis Space
+✓ Overfitting & Underfitting
+✓ Regularization Techniques
+✓ Polynomial Fitting & Error Functions
+```
+
+</td>
 <td width="50%" valign="top">
 
 <div align="center">
@@ -305,10 +339,10 @@ Course slides and materials are property of their respective professors and the 
 <table>
   <tr>
     <td align="center">
-      <img src="https://img.shields.io/badge/Total_Courses-4-blue?style=for-the-badge&logo=bookstack" alt="Courses"/>
+      <img src="https://img.shields.io/badge/Total_Courses-5-blue?style=for-the-badge&logo=bookstack" alt="Courses"/>
     </td>
     <td align="center">
-      <img src="https://img.shields.io/badge/Lecture_Slides-28+-green?style=for-the-badge&logo=slideshare" alt="Slides"/>
+      <img src="https://img.shields.io/badge/Lecture_Slides-29+-green?style=for-the-badge&logo=slideshare" alt="Slides"/>
     </td>
     <td align="center">
       <img src="https://img.shields.io/badge/Notes_Pages-500+-purple?style=for-the-badge&logo=read-the-docs" alt="Pages"/>
@@ -347,7 +381,7 @@ Found this helpful? ⭐ **Star this repository** to support the project!
 
 <br/>
 
-<sub>📅 Last updated: October 2025 (8th) | Made with ❤️ for AI students at University of Verona</sub>
+<sub>📅 Last updated: October 2025 (10th) | Made with ❤️ for AI students at University of Verona</sub>
 
 <br/><br/>
 
