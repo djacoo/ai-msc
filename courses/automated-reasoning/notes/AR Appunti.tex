@@ -69,7 +69,7 @@
 \pagestyle{fancy}
 \setlength{\headheight}{14pt}
 \fancyhf{}
-\lhead{AR}
+\lhead{\leftmark}
 \rhead{AR}
 \cfoot{\thepage}
 
@@ -250,7 +250,6 @@ For example, the term $f(x, g(a), z)$ has the tree representation:
 \end{array}
 \]
 
-Terms may contain subterms, which correspond to subtrees in this representation. Complex terms are constructed recursively from simpler subterms, reflecting the hierarchical nature of the syntactic structure.
 
 Terms may contain subterms, which correspond to subtrees in this representation. Complex terms are constructed recursively from simpler subterms, reflecting the hierarchical nature of the syntactic structure.
 
@@ -303,7 +302,6 @@ The set of \textbf{formulas} (or \textbf{well-formed formulas}) $\mathcal{F}_\Si
         \end{itemize}
 \end{itemize}
 
-This inductive definition ensures that all syntactically valid logical expressions can be systematically constructed from the basic building blocks of atomic formulas through the application of logical connectives. 
 
 This inductive definition ensures that all syntactically valid logical expressions can be systematically constructed from the basic building blocks of atomic formulas through the application of logical connectives.
 
@@ -334,7 +332,6 @@ Where:
     \item $x \neq y$ expresses that points $x$ and $y$ are distinct
 \end{itemize}
 
-This axiom formalizes the geometric principle that given any two distinct points in space, there exists exactly one line passing through both points, capturing a fundamental property of Euclidean geometry within the framework of first-order logic. 
 
 This axiom formalizes the geometric principle that given any two distinct points in space, there exists exactly one line passing through both points, capturing a fundamental property of Euclidean geometry within the framework of first-order logic.
 
@@ -1271,10 +1268,394 @@ where $s \sim_R p$ denotes $s \, R \, p$.
 Conversely, every element belongs to exactly one equivalence class, and the union of all equivalence classes equals $S$.
 \end{proposition}
 
-This partition property is fundamental to the congruence closure algorithm, as it allows us to represent the congruence relation efficiently using a union-find data structure. 
+This partition property is fundamental to the congruence closure algorithm, as it allows us to represent the congruence relation efficiently using a union-find data structure.
 
+\newpage
 
+\part{Decision Procedures for Quantifier-Free Theories}
 
+\section{The Congruence Closure Algorithm}
+
+\subsection{Computing Congruence Closure}
+
+We now describe how to compute the congruence closure for the quantifier-free fragment of the theory of equality $\mathcal{T}_E$.
+
+\subsubsection{Input Problem Structure}
+
+Consider an input formula $F$ consisting of a conjunction of equality and disequality literals:
+\[
+F = \underbrace{\{s_1 = t_1, \dots, s_n = t_n\}}_{F^+} \cup \underbrace{\{s_{n+1} \neq t_{n+1}, \dots, s_{n+m} \neq t_{n+m}\}}_{F^-}
+\]
+
+where:
+\begin{itemize}
+    \item $F^+$ denotes the set of \textbf{positive equalities} (equations)
+    \item $F^-$ denotes the set of \textbf{negative equalities} (disequations)
+\end{itemize}
+
+The congruence closure algorithm will construct the smallest congruence containing all equalities in $F^+$, then check whether any disequality in $F^-$ is violated.
+
+\subsubsection{Equivalence Relations and Representatives}
+
+Given a binary equivalence relation $R \subseteq S \times S$ on a set $S$, we can construct its quotient:
+\[
+S/R = \{[s]_R \mid s \in S\}
+\]
+
+where the equivalence class of $s$ is:
+\[
+[s]_R = \{p \in S \mid p \, R \, s\}
+\]
+
+The element $s$ is called a \textbf{representative} of the equivalence class $[s]_R$.
+
+\subsubsection{Disjointness of Equivalence Classes}
+
+\begin{proposition}[Disjoint Classes]
+For any two equivalence classes $[s_1]_R$ and $[s_2]_R$, either they are identical or they are disjoint:
+\[
+[s_1]_R \cap [s_2]_R \neq \emptyset \quad \implies \quad [s_1]_R = [s_2]_R
+\]
+\end{proposition}
+
+\begin{proof}
+Suppose there exists $p \in [s_1]_R \cap [s_2]_R$. Then:
+\begin{itemize}
+    \item $p \, R \, s_1$ (since $p \in [s_1]_R$)
+    \item $p \, R \, s_2$ (since $p \in [s_2]_R$)
+\end{itemize}
+
+By symmetry and transitivity of $R$, we have $s_1 \, R \, s_2$. Therefore, for any $q \in [s_1]_R$, we have $q \, R \, s_1$ and $s_1 \, R \, s_2$, so by transitivity $q \, R \, s_2$, which means $q \in [s_2]_R$. Similarly, $[s_2]_R \subseteq [s_1]_R$. Thus $[s_1]_R = [s_2]_R$.
+\end{proof}
+
+\subsubsection{Example: Equivalence Closure}
+
+Consider the binary relation:
+\[
+R = \{(a, b), (b, c), (d, d)\}
+\]
+
+We can visualize this as a directed graph:
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm, auto]
+    \node (a) {$a$};
+    \node (b) [right of=a] {$b$};
+    \node (c) [right of=b] {$c$};
+    \node (d) [right of=c, node distance=2.5cm] {$d$};
+    
+    \draw[->] (a) -- (b);
+    \draw[->] (b) -- (c);
+    \draw[->] (d) edge [loop right] (d);
+\end{tikzpicture}
+\end{center}
+
+The \textbf{equivalence closure} $R^*$ of $R$ must include:
+\begin{itemize}
+    \item \textbf{Reflexivity}: $(a, a), (b, b), (c, c), (d, d)$
+    \item \textbf{Symmetry}: $(b, a), (c, b)$
+    \item \textbf{Transitivity}: $(a, c), (c, a)$
+\end{itemize}
+
+Thus:
+\[
+R^* = \{(a, a), (a, b), (a, c), (b, a), (b, b), (b, c), (c, a), (c, b), (c, c), (d, d)\}
+\]
+
+The quotient set is:
+\[
+S/R^* = \{\{a, b, c\}, \{d\}\}
+\]
+
+\begin{definition}[Equivalence Closure]
+Given a binary relation $R$ on set $S$, the \textbf{equivalence closure} of $R$, denoted $R^*$, is the $\subseteq$-smallest equivalence relation such that:
+\begin{enumerate}
+    \item $R^*$ is an equivalence relation
+    \item $R \subseteq R^*$
+\end{enumerate}
+
+Equivalently, $R^*$ is the intersection of all equivalence relations containing $R$.
+\end{definition}
+
+The equivalence closure can be computed by iteratively applying reflexivity, symmetry, and transitivity rules until a fixed point is reached.
+
+\subsubsection{Understanding the $\subseteq$-Smallest Property}
+
+\begin{proposition}[Minimality of Equivalence Closure]
+Let $R$ be a binary relation and $R^*$ be its equivalence closure. For any equivalence relation $P$ such that $R \subseteq P$, we have $R^* \subseteq P$.
+\end{proposition}
+
+This means that $R^*$ is the \textbf{smallest} equivalence relation containing $R$ with respect to the subset ordering $\subseteq$.
+
+\begin{definition}[Congruence Closure]
+Given a binary relation $R$, the \textbf{congruence closure} of $R$, denoted $R^*_{\text{cong}}$, is the $\subseteq$-smallest relation such that:
+\begin{enumerate}
+    \item $R^*_{\text{cong}}$ is a congruence relation
+    \item $R \subseteq R^*_{\text{cong}}$
+\end{enumerate}
+\end{definition}
+
+A congruence relation is an equivalence relation that is preserved under function application: if $s_1 \sim t_1, \dots, s_n \sim t_n$, then $f(s_1, \dots, s_n) \sim f(t_1, \dots, t_n)$ for all function symbols $f$.
+
+\subsubsection{Example: Refinement of Equivalence Relations}
+
+To illustrate the concept of one equivalence relation being smaller (finer) than another, consider the following example on the natural numbers $\N$.
+
+\textbf{Equivalence modulo 2}: Define the relation $\equiv_2 \subseteq \N \times \N$ by:
+\[
+n \equiv_2 m \quad \text{iff} \quad n \equiv m \pmod{2}
+\]
+
+This relation partitions $\N$ into two equivalence classes:
+\begin{center}
+\begin{tikzpicture}
+    \draw (0,0) circle (2cm);
+    \node at (0, 1.5) {$\N/{\equiv_2}$};
+    \draw[dashed] (0,0) -- (0,-2);
+    \node at (-0.7, 0.3) {$[0]_2$};
+    \node at (-0.7, -0.3) {(even)};
+    \node at (0.7, 0.3) {$[1]_2$};
+    \node at (0.7, -0.3) {(odd)};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Equivalence modulo 4}: Define the relation $\equiv_4 \subseteq \N \times \N$ by:
+\[
+n \equiv_4 m \quad \text{iff} \quad n \equiv m \pmod{4}
+\]
+
+This relation partitions $\N$ into four equivalence classes:
+\begin{center}
+\begin{tikzpicture}
+    \draw (0,0) circle (2cm);
+    \node at (0, 2.3) {$\N/{\equiv_4}$};
+    \draw[dashed] (0,0) -- (0,-2);
+    \draw[dashed] (0,0) -- (2,0);
+    \node at (-0.7, 0.7) {$[0]_4$};
+    \node at (0.7, 0.7) {$[1]_4$};
+    \node at (-0.7, -0.7) {$[2]_4$};
+    \node at (0.7, -0.7) {$[3]_4$};
+\end{tikzpicture}
+\end{center}
+
+\begin{proposition}[Refinement]
+The relation $\equiv_4$ is a \textbf{refinement} of $\equiv_2$. That is:
+\[
+n \equiv_4 m \quad \implies \quad n \equiv_2 m
+\]
+
+However, the converse does not hold:
+\[
+n \equiv_2 m \quad \not\Rightarrow \quad n \equiv_4 m
+\]
+\end{proposition}
+
+\begin{proof}
+If $n \equiv_4 m$, then $n \equiv m \pmod{4}$, which means $n - m = 4k$ for some $k \in \mathbb{Z}$. Therefore, $n - m = 2(2k)$, so $n \equiv m \pmod{2}$, i.e., $n \equiv_2 m$.
+
+For the converse, consider $n = 0$ and $m = 2$. Then $n \equiv_2 m$ (both are even), but $n \not\equiv_4 m$ (since $0 \equiv 0 \pmod{4}$ and $2 \equiv 2 \pmod{4}$).
+\end{proof}
+
+\textbf{Set-theoretic interpretation}: This means that $(n, m) \in {\equiv_4} \implies (n, m) \in {\equiv_2}$, so:
+\[
+{\equiv_4} \subseteq {\equiv_2}
+\]
+
+In this sense, $\equiv_4$ is \textbf{strictly smaller} than $\equiv_2$ (it is a proper subset), and provides a finer partition of $\N$.
+
+\subsection{The Congruence Closure Decision Procedure}
+
+We now return to the main problem: deciding satisfiability for a quantifier-free formula in the theory of equality.
+
+\subsubsection{Algorithm Description}
+
+Recall that the input formula $F$ has the form:
+\[
+F = \underbrace{\{s_1 = t_1, \dots, s_n = t_n\}}_{F^+} \cup \underbrace{\{s_{n+1} \neq t_{n+1}, \dots, s_{n+m} \neq t_{n+m}\}}_{F^-}
+\]
+
+The congruence closure algorithm proceeds as follows:
+
+\begin{algorithm}[H]
+\caption{Congruence Closure Decision Procedure}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Formula $F = F^+ \cup F^-$
+\STATE Compute the congruence closure $\text{CC}(F^+)$ of the positive equalities $F^+$
+\STATE \textbf{for} $i = n+1$ to $n+m$ \textbf{do}
+\STATE \quad \textbf{if} $(s_i, t_i) \in \text{CC}(F^+)$ \textbf{then}
+\STATE \quad \quad \textbf{return} UNSATISFIABLE
+\STATE \quad \textbf{end if}
+\STATE \textbf{end for}
+\STATE \textbf{return} SATISFIABLE
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Step 1}: Compute $\text{CC}(F^+)$, the smallest congruence relation containing all pairs $(s_i, t_i)$ for $i = 1, \dots, n$.
+
+\textbf{Step 2}: For each disequality $s_i \neq t_i$ in $F^-$ (where $n+1 \leq i \leq n+m$), check whether $(s_i, t_i)$ belongs to the same equivalence class in $\text{CC}(F^+)$.
+
+\textbf{Step 3}: 
+\begin{itemize}
+    \item If $(s_j, t_j) \in \text{CC}(F^+)$ for some $j$ with $n+1 \leq j \leq n+m$, then $F$ is \textbf{unsatisfiable}
+    \item Otherwise, $F$ is \textbf{satisfiable}
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm, auto]
+    \node (input) {$F = F^+ \cup F^-$};
+    \node (cc) [rectangle, draw, right of=input, node distance=4cm] {Compute $\text{CC}(F^+)$};
+    \node (unsat) [below right of=cc, node distance=3.5cm] {\textbf{UNSATISFIABLE}};
+    \node (sat) [above right of=cc, node distance=3.5cm] {\textbf{SATISFIABLE}};
+    
+    \draw[->] (input) -- (cc);
+    \draw[->] (cc) -- (unsat);
+    \draw[->] (cc) -- (sat);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Correctness of the Algorithm}
+
+\begin{theorem}[Soundness and Completeness]
+The congruence closure algorithm is sound and complete for deciding satisfiability in the quantifier-free fragment of $\mathcal{T}_E$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+\textbf{Soundness (Unsatisfiability)}: Suppose there exists $j$ with $n+1 \leq j \leq n+m$ such that $(s_j, t_j) \in \text{CC}(F^+)$. 
+
+Since $\text{CC}(F^+)$ is the smallest congruence relation containing $F^+$, the pair $(s_j, t_j)$ must belong to \emph{every} congruence relation that contains $F^+$. 
+
+Therefore, in any model $\mathcal{I}$ that satisfies all equalities in $F^+$, we must have $\mathcal{I} \models s_j = t_j$. But $F$ also contains $s_j \neq t_j$, so $\mathcal{I} \not\models s_j \neq t_j$. Thus, no model can satisfy both $F^+$ and $F^-$, making $F$ unsatisfiable.
+
+\textbf{Completeness (Satisfiability)}: If $(s_i, t_i) \notin \text{CC}(F^+)$ for all $i$ with $n+1 \leq i \leq n+m$, then we can construct a model by interpreting the equivalence classes of $\text{CC}(F^+)$ as domain elements. This model satisfies all equalities in $F^+$ (by construction) and all disequalities in $F^-$ (since the terms belong to different equivalence classes).
+\end{proof}
+
+The key insight is that the congruence closure captures exactly those equalities that are \emph{forced} by the positive equalities in $F^+$ together with the congruence axioms of equality.
+
+\subsection{Examples: Manual Execution}
+
+We now illustrate the congruence closure algorithm with concrete examples.
+
+\subsubsection{Notation and Setup}
+
+For a formula $F$ of the form:
+\[
+F = \{s_1 = t_1, \dots, s_n = t_n\} \cup \{s_{n+1} \neq t_{n+1}, \dots, s_{n+m} \neq t_{n+m}\}
+\]
+
+we define $S_F$ as the \textbf{set of all terms} that appear in $F$.
+
+\subsubsection{Example 1}
+
+Consider the formula:
+\[
+F = \{x = g(x), \, f(x, x) = g(g(x)), \, f(x, g(g(x))) \neq g(x)\}
+\]
+
+The set of terms is:
+\[
+S_F = \{x, \, g(x), \, f(x, x), \, g(g(x)), \, f(x, g(g(x)))\}
+\]
+
+\textbf{Notation}:
+\begin{itemize}
+    \item $x$ is a \textbf{free variable symbol}
+    \item $f$ is a \textbf{binary function symbol} (arity 2)
+    \item $g$ is a \textbf{unary function symbol} (arity 1)
+\end{itemize}
+
+\textbf{Positive equalities}: $F^+ = \{x = g(x), \, f(x, x) = g(g(x))\}$
+
+\textbf{Negative equalities}: $F^- = \{f(x, g(g(x))) \neq g(x)\}$
+
+\subsubsection{Example 2}
+
+Consider the formula:
+\[
+F = \{f(a, b) = a, \, f(f(a, b), b) \neq a\}
+\]
+
+The set of terms is:
+\[
+S_F = \{f(a, b), \, a, \, b, \, f(f(a, b), b)\}
+\]
+
+\textbf{Notation}:
+\begin{itemize}
+    \item $a, b$ are \textbf{constant symbols} (by convention)
+    \item $f$ is a \textbf{binary function symbol}
+\end{itemize}
+
+\textbf{Positive equalities}: $F^+ = \{f(a, b) = a\}$
+
+\textbf{Negative equalities}: $F^- = \{f(f(a, b), b) \neq a\}$
+
+\begin{remark}[Free Variables vs. Constants]
+In the quantifier-free fragment, all variables are free. From a semantic perspective, free variables and constants can be used interchangeably: both are interpreted as arbitrary elements of the domain. The distinction is purely syntactic.
+\end{remark}
+
+\subsubsection{Step-by-Step Execution for Example 1}
+
+We now execute the congruence closure algorithm on Example 1:
+\[
+F = \{x = g(x), \, f(x, x) = g(g(x)), \, f(x, g(g(x))) \neq g(x)\}
+\]
+
+\textbf{Step 1: Initialize the partition}
+
+Create a partition of $S_F$ where every term is in its own singleton equivalence class:
+\[
+\{\{x\}, \{g(x)\}, \{f(x, x)\}, \{g(g(x))\}, \{f(x, g(g(x)))\}\}
+\]
+
+\textbf{Step 2: Process positive equalities}
+
+For each equality $(s_i = t_i) \in F^+$ (for all $i$ with $1 \leq i \leq n$):
+\begin{itemize}
+    \item Unite the equivalence class of $s_i$ with the equivalence class of $t_i$
+    \item Unite the classes of all terms in $S_F$ that become congruent as a consequence of $s_i = t_i$
+\end{itemize}
+
+\textbf{Processing $x = g(x)$}:
+
+Merge the classes $\{x\}$ and $\{g(x)\}$:
+\[
+\{\{x, g(x)\}, \{f(x, x)\}, \{g(g(x))\}, \{f(x, g(g(x)))\}\}
+\]
+
+Since $x = g(x)$, by congruence we derive $g(x) = g(g(x))$ (applying $g$ to both sides). Merge these classes:
+\[
+\{\{x, g(x), g(g(x))\}, \{f(x, x)\}, \{f(x, g(g(x)))\}\}
+\]
+
+\textbf{Processing $f(x, x) = g(g(x))$}:
+
+Since $g(g(x)) \in \{x, g(x), g(g(x))\}$ and $f(x, x) \in \{f(x, x)\}$, merge these classes:
+\[
+\{\{x, g(x), g(g(x)), f(x, x)\}, \{f(x, g(g(x)))\}\}
+\]
+
+Now check for congruence: since $x \sim g(g(x))$ (both in the same class), we have:
+\[
+f(x, x) \sim f(x, g(g(x)))
+\]
+
+by the congruence property (both arguments are in the same equivalence classes). Merge these classes:
+\[
+\{\{x, g(x), g(g(x)), f(x, x), f(x, g(g(x)))\}\}
+\]
+
+\textbf{Step 3: Check negative equalities}
+
+Check whether $(s_i, t_i) \in \text{CC}(F^+)$ for all $i$ with $n+1 \leq i \leq n+m$.
+
+For the disequality $f(x, g(g(x))) \neq g(x)$:
+\begin{itemize}
+    \item $f(x, g(g(x))) \in \{x, g(x), g(g(x)), f(x, x), f(x, g(g(x)))\}$
+    \item $g(x) \in \{x, g(x), g(g(x)), f(x, x), f(x, g(g(x)))\}$
+\end{itemize}
+
+Both terms are in the same equivalence class, so $(f(x, g(g(x))), g(x)) \in \text{CC}(F^+)$.
+
+\textbf{Conclusion}: The formula $F$ is \textbf{UNSATISFIABLE}.
 
 
 
