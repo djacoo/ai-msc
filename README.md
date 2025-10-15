@@ -20,9 +20,12 @@
 <p align="center">
   <img src="https://img.shields.io/badge/LaTeX-008080?style=for-the-badge&logo=latex&logoColor=white" alt="LaTeX"/>
   <img src="https://img.shields.io/badge/PDF-Ready-32CD32?style=for-the-badge&logo=adobe-acrobat-reader&logoColor=white" alt="PDF"/>
+  <img src="https://img.shields.io/badge/AI_Quiz-NEW!-FF6B6B?style=for-the-badge&logo=openai&logoColor=white" alt="AI Quiz"/>
 </p>
 
 <br/>
+
+### ⭐ **NEW: AI-Powered Quiz App** | Test Your Knowledge with Intelligent Evaluation!
 
 ###  *Made with 💜 by jaco for AI students at University of Verona*
 
@@ -39,6 +42,12 @@ AI---PRIMO-SEMESTRE/
 ├── 📄 README.md
 ├── 📄 LICENSE
 ├── 📄 .gitignore
+├── 🎓 quizzer-v2/              ⭐ NEW: AI-POWERED QUIZ APP!
+│   ├── run.py                  # Main launcher with dependency checker
+│   ├── start_quiz.sh           # Shell wrapper for macOS compatibility
+│   ├── quiz.py                 # Core quiz logic engine
+│   ├── quiz_gui.py             # Modern GUI with animations
+│   └── local_ai.py             # Local AI integration (Ollama)
 ├── 📁 courses/
 │   ├── automated-reasoning/
 │   │   ├── notes/
@@ -59,6 +68,215 @@ AI---PRIMO-SEMESTRE/
 └── 📁 docs/
     └── CORSI 1 ANNO AI provvisorio.pdf
 ```
+
+---
+
+<div align="center">
+
+## 🎓 **AI-POWERED QUIZ APP** ⭐ NEW!
+
+<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="700">
+
+### Test Your Knowledge with Intelligent AI Evaluation!
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![AI](https://img.shields.io/badge/AI-Powered-FF6B6B?style=for-the-badge&logo=openai&logoColor=white)](https://ollama.com)
+[![Tkinter](https://img.shields.io/badge/GUI-Tkinter-4B8BBE?style=for-the-badge&logo=python&logoColor=white)](https://docs.python.org/3/library/tkinter.html)
+[![Free](https://img.shields.io/badge/100%25-FREE-00D9FF?style=for-the-badge&logo=github&logoColor=white)](https://github.com)
+
+</div>
+
+### ✨ **Features**
+
+<table>
+<tr>
+<td width="50%">
+
+#### 🤖 **Smart AI Evaluation**
+- **Local AI** powered by Ollama (FREE, no API key!)
+- Intelligent grading on 5-level scale
+- Context-aware evaluation (calculations, definitions, explanations)
+- Contradiction detection
+- Reference-based scoring
+
+#### 🎨 **Modern Beautiful UI**
+- Dark themed interface
+- Smooth animations & transitions
+- Staggered card slide-ins
+- Bounce effects on results
+- Responsive design
+
+</td>
+<td width="50%">
+
+#### 📚 **Smart Content Extraction**
+- Auto-extracts from your LaTeX notes
+- Supports: definitions, theorems, propositions, lemmas
+- Randomized questions (15 per session)
+- Course-specific testing
+
+#### ⚡ **Performance & UX**
+- **PERFECT** score for correct answers
+- Fair grading (no false negatives)
+- Instant feedback
+- Streak tracking
+- No internet required (local AI)
+
+</td>
+</tr>
+</table>
+
+---
+
+### 🚀 **Quick Start**
+
+<details>
+<summary><b>📦 Installation (One-Time Setup)</b></summary>
+
+<br/>
+
+**1. Install Dependencies:**
+
+```bash
+# Install Ollama (for local AI)
+brew install ollama
+
+# Install Python 3.11+ (if needed)
+brew install python@3.11 python-tk@3.11
+
+# Pull the AI model (one time, ~2GB)
+ollama pull llama3.2:3b
+```
+
+**2. Start Ollama Service:**
+
+```bash
+brew services start ollama
+```
+
+✅ **That's it! You're ready to quiz!**
+
+</details>
+
+<details>
+<summary><b>🎮 How to Use</b></summary>
+
+<br/>
+
+**Launch the Quiz App:**
+
+```bash
+cd quizzer-v2
+./start_quiz.sh
+```
+
+**Or with Python directly:**
+
+```bash
+python3.11 run.py
+```
+
+**Quiz Workflow:**
+1. 📚 **Choose your course** (Automated Reasoning, NLP, ML, etc.)
+2. ⚡ **AI generates questions** from your notes automatically
+3. ✍️ **Answer the question** in the text box
+4. 🤖 **AI evaluates** your answer (PERFECT/GOOD/PARTIAL/WEAK/WRONG)
+5. 📊 **Get detailed feedback** with reference material
+6. 🔥 **Build your streak** and track perfect scores!
+
+</details>
+
+---
+
+### 🎯 **Grading System**
+
+The AI uses a **strict but fair** 5-level evaluation:
+
+| Level | Grade | Description |
+|-------|-------|-------------|
+| ⭐⭐⭐⭐⭐ | **PERFECT** | Complete, accurate, covers all key points |
+| ⭐⭐⭐⭐ | **GOOD** | Covers most concepts with minor gaps |
+| ⭐⭐⭐ | **PARTIAL** | Shows genuine partial understanding |
+| ⭐⭐ | **WEAK** | Major gaps or errors |
+| ⭐ | **WRONG** | Incorrect, contradicts reference, or off-topic |
+
+**Smart Evaluation:**
+- ✅ Detects question types (calculation, factual, definition, explanation)
+- ✅ Doesn't penalize for missing unrequested information
+- ✅ Catches contradictions (marks as WRONG, not PARTIAL)
+- ✅ Correct numerical answers = PERFECT (no extra explanation needed)
+- ✅ Verifies against actual course reference material
+
+---
+
+### 🛠️ **Technical Highlights**
+
+```python
+# Intelligent Question Type Detection
+✓ Calculations: Formula + Result = PERFECT
+✓ Factual: Correct fact/number = PERFECT  
+✓ Definitions: Key concepts from reference required
+✓ Explanations: Reasoning aligned with reference needed
+
+# Strict Contradiction Detection
+✓ "without X" vs "with X" → WRONG
+✓ "randomly" vs "maintains proportion" → WRONG
+✓ Opposite statements caught immediately
+
+# Fair Grading
+✓ Only grades what was ACTUALLY asked
+✓ Doesn't invent requirements
+✓ Context-aware evaluation
+```
+
+---
+
+### 📸 **Screenshots**
+
+<div align="center">
+
+**Course Selection Screen**
+
+*Beautiful animated cards for each course*
+
+**Quiz Interface**
+
+*Clean, modern design with progress tracking*
+
+**Results & Feedback**
+
+*Detailed evaluation with reference material*
+
+</div>
+
+---
+
+### 💡 **Why Use This Quiz App?**
+
+<table>
+<tr>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/fluency/96/000000/artificial-intelligence.png" width="60"/><br/>
+<b>AI-Powered</b><br/>
+<sub>Smart evaluation like a real professor</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/fluency/96/000000/money-bag.png" width="60"/><br/>
+<b>100% Free</b><br/>
+<sub>No API keys, no subscriptions</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/fluency/96/000000/offline.png" width="60"/><br/>
+<b>Works Offline</b><br/>
+<sub>Local AI, no internet needed</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/fluency/96/000000/checked.png" width="60"/><br/>
+<b>Fair Grading</b><br/>
+<sub>No false negatives</sub>
+</td>
+</tr>
+</table>
 
 ---
 
@@ -308,6 +526,9 @@ Course slides and materials are property of their respective professors and the 
     <td align="center">
       <img src="https://img.shields.io/badge/PDF_Files-Ready-red?style=for-the-badge&logo=adobe" alt="PDFs"/>
     </td>
+    <td align="center">
+      <img src="https://img.shields.io/badge/AI_Quiz-Powered-FF6B6B?style=for-the-badge&logo=openai" alt="Quiz"/>
+    </td>
   </tr>
 </table>
 
@@ -337,9 +558,11 @@ Course slides and materials are property of their respective professors and the 
 
 Found this helpful? ⭐ **Star this repository** to support the project!
 
+**New:** Try the AI-Powered Quiz App! 🎓
+
 <br/>
 
-<sub>📅 Last updated: October 2025 | Made with ❤️ for AI students at University of Verona</sub>
+<sub>📅 Last updated: October 2025 | Made with ❤️ for AI students at University of Verona | Now with AI Quiz! 🤖</sub>
 
 <br/><br/>
 

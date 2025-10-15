@@ -83,5 +83,9 @@ venv/
 ENV/
 env/
 
+# Environment variables and secrets
+.env
+.env.local
+
 # Node modules (if any web tools are added)
 node_modules/
