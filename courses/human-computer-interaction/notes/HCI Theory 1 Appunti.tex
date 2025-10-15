@@ -16,6 +16,9 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, shapes}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -66,12 +69,18 @@
 % ========================================
 % HEADER AND FOOTER
 % ========================================
-\pagestyle{fancy}
 \setlength{\headheight}{14pt}
+\pagestyle{fancy}
 \fancyhf{}
-\lhead{HCI}
+\lhead{\leftmark}
 \rhead{HCI}
 \cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
 
 % ========================================
 % DOCUMENT INFORMATION
@@ -92,6 +101,949 @@
 \newpage
 
 
+
+\part{Multimodal Interfaces}
+
+\section{Introduction to Multimodal Interfaces}
+
+This section covers the fundamentals of multimodal interfaces, including their history, definitions, and the motivations behind their development. We will explore the differences between multimedia and multimodal systems, and examine various communication paradigms.
+
+\subsection{Topics Covered}
+
+The main topics we will discuss include:
+\begin{itemize}
+    \item Multimodal interfaces and their historical development
+    \item What constitutes multimodal systems
+    \item Understanding modality in human-computer interaction
+    \item Multimedia vs. multimodal systems
+    \item Motivations for multimodality
+    \item Verbal and nonverbal communications
+    \item Social signal processing and affective computing
+    \item Applications and practical examples
+\end{itemize}
+
+\section{Graphical User Interfaces (GUIs) and WIMP}
+
+\subsection{The WIMP Paradigm}
+
+The most traditional, consolidated, commonly used, and widespread interfaces are \textbf{graphical user interfaces} (GUIs). These interfaces adopt the so-called \textbf{WIMP paradigm}, which stands for:
+
+\begin{center}
+\colorbox{blue!15}{\parbox{0.85\textwidth}{
+\centering
+\textbf{WIMP Paradigm}\\[0.2cm]
+\textbf{W}indows • \textbf{I}cons • \textbf{M}enus • \textbf{P}ointing devices
+}}
+\end{center}
+
+\begin{definition}[WIMP Paradigm]
+The WIMP paradigm is a user interface design approach that uses windows to organize content, icons to represent objects and actions, menus to provide options, and pointing devices (such as a mouse) for interaction.
+\end{definition}
+
+\subsection{Why WIMP Interfaces Are Prevalent}
+
+WIMP interfaces have become so prevalent because they offer several advantages:
+
+\begin{itemize}
+    \item \textbf{Good at abstracting workspaces and documents}: They provide a clear visual metaphor for organizing information
+    \item \textbf{Analogous to physical documents}: Windows and icons are analogous to documents as paper sheets or folders, making them intuitive for users
+    \item \textbf{Rectangular regions on 2D flat screens}: Their basic representations as rectangular regions on a 2D flat screen make them a good fit for system programmers
+    \item \textbf{Suitable for multitasking}: They are well-suited for multitasking work environments, allowing users to work with multiple applications simultaneously
+\end{itemize}
+
+\begin{example}
+A typical WIMP interface includes:
+\begin{itemize}
+    \item Multiple overlapping windows showing different applications
+    \item A menu bar with dropdown options
+    \item Icons representing files, folders, and applications
+    \item A pointer (cursor) controlled by a mouse or trackpad
+\end{itemize}
+\end{example}
+
+\section{Post-WIMP Interfaces}
+
+\subsection{Limitations of WIMP}
+
+While WIMP interfaces are excellent for many tasks, they are not optimal for all scenarios. Specifically:
+
+\begin{itemize}
+    \item \textbf{Not optimal for complex tasks}: WIMP interfaces struggle with complex tasks such as computer-aided design
+    \item \textbf{Limited for natural interaction paradigms}: Applications needing more natural interaction paradigms, such as interactive games, require different approaches
+\end{itemize}
+
+\subsection{What Are Post-WIMP Interfaces?}
+
+Post-WIMP interfaces, as introduced by Van Dam in 1997, aim at overcoming the limitations of traditional WIMP interfaces.
+
+\begin{definition}[Post-WIMP Interfaces]
+Post-WIMP interfaces consist of \textbf{widgetless user interfaces}, including:
+\begin{itemize}
+    \item \textbf{Virtual reality systems}
+    \item User interfaces based on \textbf{gestures}
+    \item User interfaces based on \textbf{speech}
+    \item User interfaces based on \textbf{physical controls}
+\end{itemize}
+\end{definition}
+
+\subsection{Key Characteristics of Post-WIMP Interfaces}
+
+Post-WIMP interfaces have two fundamental characteristics:
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Characteristics of Post-WIMP}\\[0.2cm]
+1. Multiple sensory channels (input)\\
+2. Multimedia output (engaging multiple senses)
+}}
+\end{center}
+
+\begin{enumerate}
+    \item \textbf{Multiple sensory channels}: They integrate input from \textbf{several sensory channels}, allowing for richer interaction
+    \item \textbf{Multimedia output}: They produce \textbf{multimedia output}, engaging multiple senses simultaneously
+\end{enumerate}
+
+\begin{observation}
+The shift from WIMP to Post-WIMP represents a move towards more natural and intuitive human-computer interaction, leveraging the full range of human sensory and motor capabilities.
+\end{observation}
+
+\subsection{Examples of Post-WIMP Interfaces}
+
+Post-WIMP interfaces are increasingly common in modern technology:
+
+\begin{itemize}
+    \item \textbf{Wall-size displays}: Large interactive displays used in collaborative environments
+    \item \textbf{Multi-touch displays}: Touchscreens that can detect multiple simultaneous touch points, enabling gestures like pinch-to-zoom
+    \item \textbf{Vehicle applications}: In-car infotainment systems with touchscreens and voice control
+    \item \textbf{Public kiosks}: Interactive information terminals in public spaces
+\end{itemize}
+
+\begin{example}
+Modern smartphones exemplify Post-WIMP interfaces by combining:
+\begin{itemize}
+    \item Multi-touch gestures (swipe, pinch, tap)
+    \item Voice assistants (Siri, Google Assistant)
+    \item Accelerometers and gyroscopes for motion-based interaction
+    \item Haptic feedback for tactile responses
+\end{itemize}
+\end{example}
+
+\begin{remark}
+The evolution from WIMP to Post-WIMP interfaces reflects the changing needs of users and the expanding capabilities of technology. As computing devices become more diverse (smartphones, tablets, wearables, AR/VR headsets), the rigid WIMP paradigm becomes less suitable, and more flexible, multimodal approaches become necessary.
+\end{remark}
+
+\subsection{Virtual Reality, Augmented Reality, and Mixed Reality}
+
+Post-WIMP interfaces encompass various reality technologies that blend the physical and digital worlds in different ways:
+
+\begin{center}
+\colorbox{magenta!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Reality Technologies}\\[0.2cm]
+VR: Fully artificial environment\\
+AR: Virtual objects overlaid on real world\\
+MR: Virtual + real world combined
+}}
+\end{center}
+
+\begin{definition}[Virtual Reality (VR)]
+\textbf{Virtual Reality} provides a fully artificial environment where users are completely immersed in a virtual world. Users experience full immersion in a virtual environment, typically through head-mounted displays (HMDs) and controllers.
+\end{definition}
+
+\begin{definition}[Augmented Reality (AR)]
+\textbf{Augmented Reality} overlays virtual objects on the real-world environment. The real world is enhanced with digital objects, allowing users to see both simultaneously.
+\end{definition}
+
+\begin{definition}[Mixed Reality (MR)]
+\textbf{Mixed Reality} combines virtual environments with the real world, allowing users to interact with both the real world and the virtual environment simultaneously. Virtual and physical objects coexist and interact in real-time.
+\end{definition}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Technology} & \textbf{Characteristics} \\
+\hline
+Virtual Reality (VR) & Fully artificial environment; Full immersion in virtual environment \\
+\hline
+Augmented Reality (AR) & Virtual objects overlaid on real-world environment; The real world enhanced with digital objects \\
+\hline
+Mixed Reality (MR) & Virtual environment combined with real world; Interact with both the real world and the virtual environment \\
+\hline
+\end{tabular}
+\caption{Comparison of VR, AR, and MR technologies}
+\end{table}
+
+\subsection{Pervasive Computing}
+
+\begin{definition}[Pervasive Computing]
+Pervasive Computing involves integrating computation into everyday objects and activities, making computing accessible anytime and anywhere.
+\end{definition}
+
+Key aspects of pervasive computing include:
+
+\begin{itemize}
+    \item \textbf{Computers exiting everywhere}: Embedded into fridges, washing machines, door locks, cars, furniture, and even people
+    \item \textbf{Mobile} portable computing devices
+    \item \textbf{Wireless} communication
+    \item Examples include wearable health trackers, smart home devices, and IoT sensors
+\end{itemize}
+
+\subsection{Ubiquitous Computing}
+
+\begin{definition}[Ubiquitous Computing]
+Ubiquitous Computing is a vision where computing devices are seamlessly integrated into the environment and used naturally without conscious thought.
+\end{definition}
+
+Characteristics of ubiquitous computing:
+
+\begin{itemize}
+    \item \textbf{More user and application-driven} compared to Pervasive computing
+    \item Both keywords are often used interchangeably
+    \item Examples: Smart home devices, like lights and thermostats, that automatically adjust based on your preferences without needing direct control
+\end{itemize}
+
+\begin{observation}
+While pervasive computing focuses on the physical distribution of computing devices, ubiquitous computing emphasizes the seamless and invisible integration of these devices into our daily lives.
+\end{observation}
+
+\subsection{Disappearing Computing}
+
+\begin{definition}[Disappearing Computing]
+Disappearing Computing is the idea that technology becomes so embedded and integrated into the environment that it effectively "disappears" from the user's perception.
+\end{definition}
+
+Examples of disappearing computing include:
+
+\begin{itemize}
+    \item \textbf{Smart fabrics and wearables}: Clothing with embedded sensors and computing capabilities
+    \item \textbf{Voice-activated assistants}: Such as Alexa, which respond to natural language commands
+    \item \textbf{Smart buildings}: Environments that adapt automatically to occupants' needs
+    \item \textbf{Augmented reality contact lenses}: Technology so integrated it becomes part of the user's vision
+\end{itemize}
+
+\begin{remark}
+Disappearing computing represents the ultimate goal of ubiquitous computing: technology that is so well-integrated into our environment that we interact with it naturally and unconsciously, without being aware of the underlying computational systems.
+\end{remark}
+
+\subsection{Ambient Intelligence}
+
+\begin{definition}[Ambient Intelligence]
+Ambient Intelligence refers to environments that are sensitive and responsive to the presence of people, utilizing embedded systems and artificial intelligence to enhance user experience.
+\end{definition}
+
+Key features of ambient intelligence:
+
+\begin{itemize}
+    \item \textbf{Sensitive environments}: Detect and respond to human presence and behavior
+    \item \textbf{Embedded systems}: Computing integrated throughout the environment
+    \item \textbf{Artificial intelligence}: Systems that learn and adapt to user preferences
+    \item \textbf{Enhanced user experience}: Seamless interaction without explicit commands
+\end{itemize}
+
+\begin{example}
+Examples of ambient intelligence include:
+\begin{itemize}
+    \item Automated lighting that adjusts based on occupancy and time of day
+    \item Climate control systems that learn user preferences
+    \item Traffic lights that adapt in real-time to traffic conditions
+    \item Cars that communicate with each other to improve safety and traffic flow
+    \item Smart homes that anticipate user needs based on patterns and context
+\end{itemize}
+\end{example}
+
+\section{Theoretical Foundations of Post-WIMP Interfaces}
+
+\subsection{Interdisciplinary Grounding}
+
+Post-WIMP interfaces are grounded on models and theories from multiple disciplines:
+
+\begin{itemize}
+    \item \textbf{Psychology}: Understanding human perception, cognition, and behavior
+    \item \textbf{Physiology}: How the human body processes sensory information
+    \item \textbf{Biomechanics}: Human movement and physical interaction
+    \item \textbf{Neurosciences}: Brain function and neural processing
+    \item \textbf{Cognitive sciences}: Mental processes and information processing
+    \item \textbf{Social sciences}: Human social behavior and communication
+\end{itemize}
+
+\subsection{Key Principles Exploited by Post-WIMP Interfaces}
+
+Post-WIMP interfaces leverage several fundamental human capabilities:
+
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\centering
+\textbf{7 Key Principles}\\[0.2cm]
+Human sensory system • Multiple sensory channels • Sensory interconnections\\
+Non-verbal communication • Affect \& emotion • Social signals • Art \& human sciences
+}}
+\end{center}
+
+\begin{enumerate}
+    \item \textbf{Exploit the human sensory system}: Utilizing vision, hearing, touch, and other senses
+    
+    \item \textbf{Exploit multiple sensory channels}: Engaging several senses simultaneously for richer interaction
+    
+    \item \textbf{Exploit the deep interconnections between sensory channels}: Leveraging how different senses work together (e.g., audio-visual integration)
+    
+    \item \textbf{Exploit non-verbal communication}: Using gestures, facial expressions, body language
+    
+    \item \textbf{Exploit affect and emotion}: Recognizing and responding to emotional states
+    
+    \item \textbf{Exploit social signals}: Understanding social cues and interpersonal dynamics
+    
+    \item \textbf{Exploit theories from art and human sciences}: Drawing from music, choreography, theatre, and cinema to create engaging experiences
+\end{enumerate}
+
+\begin{observation}
+The effectiveness of Post-WIMP interfaces stems from their ability to align with natural human capabilities and behaviors, rather than forcing users to adapt to rigid computational paradigms. This human-centered approach makes interactions more intuitive, efficient, and satisfying.
+\end{observation}
+
+\begin{remark}
+By integrating knowledge from diverse fields, Post-WIMP interfaces create more natural and holistic interaction experiences. This interdisciplinary approach is essential for developing systems that truly understand and respond to human needs, emotions, and social contexts.
+\end{remark}
+
+\section{Multimodal Interfaces and Systems}
+
+\subsection{Understanding Multimodal Interfaces}
+
+Post-WIMP interfaces are often \textbf{multimodal interfaces}, meaning they exploit multiple \textbf{sensory modalities}.
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.85\textwidth}{
+\centering
+\textbf{Multimodal = Multiple Sensory Channels}\\[0.2cm]
+Integration of information from several different sensory modalities
+}}
+\end{center}
+
+\begin{definition}[Sensory Modality]
+A \textbf{sensory modality} is the sensory channel through which information is perceived. It refers to the type of communication channel used for transferring or acquiring information.
+\end{definition}
+
+\begin{definition}[Multimodal]
+In our context, \textbf{multimodal} refers to the integration of information from several different \textbf{sensory channels}.
+\end{definition}
+
+\begin{observation}
+Multimodal interfaces leverage the human ability to process information through multiple senses simultaneously, creating richer and more natural interaction experiences.
+\end{observation}
+
+\subsection{What is Multimodal?}
+
+The term "multimodal" can be understood in different ways depending on the context:
+
+\subsubsection{Multimodal Distribution}
+
+In a statistical or mathematical context, \textbf{multimodal distribution} refers to:
+\begin{itemize}
+    \item Multiple modes (i.e., peaks) in a probability density function
+    \item A distribution with several local maxima
+\end{itemize}
+
+\begin{example}
+A histogram showing multiple peaks represents a multimodal distribution, where different groups or clusters in the data create distinct modes.
+\end{example}
+
+\subsubsection{Multimodal in HCI Context}
+
+In the context of human-computer interaction, "multimodal" specifically refers to the use of multiple sensory channels for communication and interaction.
+
+\subsection{What is Modality?}
+
+\begin{definition}[Modality]
+\textbf{Modality} refers to the way in which something is expressed or perceived.
+\end{definition}
+
+Modalities can be understood at different levels of abstraction:
+
+\subsubsection{Raw Modalities vs. Abstract Modalities}
+
+\begin{itemize}
+    \item \textbf{Raw Modalities} (closest from sensor):
+    \begin{itemize}
+        \item Direct sensory input from physical sensors
+        \item Examples: Speech signal, Image data
+    \end{itemize}
+    
+    \item \textbf{Intermediate Modalities}:
+    \begin{itemize}
+        \item Processed information from raw data
+        \item Examples: Language (from speech), Detected objects (from images)
+    \end{itemize}
+    
+    \item \textbf{Abstract Modalities} (farthest from sensor):
+    \begin{itemize}
+        \item High-level interpretations and semantic information
+        \item Examples: Sentiment intensity, Object categories
+    \end{itemize}
+\end{itemize}
+
+\begin{example}
+Consider processing visual information:
+\begin{enumerate}
+    \item \textbf{Raw modality}: Image pixels captured by a camera
+    \item \textbf{Intermediate modality}: Detected objects in the image (e.g., "person", "car")
+    \item \textbf{Abstract modality}: Object categories and their relationships (e.g., "pedestrian crossing street")
+\end{enumerate}
+\end{example}
+
+\subsection{What is Multimodality?}
+
+\begin{definition}[Multimodality]
+\textbf{Multimodality} is related to sensory modalities and encompasses:
+\begin{itemize}
+    \item Touch
+    \item Speech
+    \item What you see (visual attention)
+    \item Hearing
+    \item Taste
+    \item Smell
+\end{itemize}
+\end{definition}
+
+\begin{center}
+\colorbox{cyan!15}{\parbox{0.85\textwidth}{
+\centering
+\textbf{The Five Human Senses}\\[0.2cm]
+Vision • Hearing • Touch • Taste • Smell
+}}
+\end{center}
+
+The five primary human senses form the basis of multimodal interaction:
+
+\begin{itemize}
+    \item \textbf{Vision}: Visual perception and attention
+    \item \textbf{Hearing}: Auditory information processing
+    \item \textbf{Touch}: Tactile and haptic feedback
+    \item \textbf{Taste}: Gustatory perception (less common in HCI)
+    \item \textbf{Smell}: Olfactory perception (emerging in HCI research)
+\end{itemize}
+
+\begin{observation}
+While vision, hearing, and touch are the most commonly exploited modalities in current HCI systems, emerging technologies are beginning to incorporate taste and smell for more immersive experiences.
+\end{observation}
+
+\subsection{Multimodality vs. Multimedia}
+
+It is important to distinguish between \textbf{multimodality} and \textbf{multimedia}, as these terms are often confused:
+
+\begin{definition}[Multimodality vs. Multimedia]
+\begin{itemize}
+    \item \textbf{Multimodality}:
+    \begin{itemize}
+        \item \textit{Modality} refers to a certain type of information and/or the representation of the information
+        \item Focuses on \textbf{sensory modalities} (vision, hearing, touch, etc.)
+        \item Concerns how information is perceived and processed by humans
+    \end{itemize}
+    
+    \item \textbf{Multimedia}:
+    \begin{itemize}
+        \item \textit{Medium} is the instrument for storing or communicating information
+        \item Focuses on the \textbf{technical medium} used to convey information
+        \item Concerns the format and delivery mechanism of content
+    \end{itemize}
+\end{itemize}
+\end{definition}
+
+\begin{example}
+A TV show is a \textbf{medium} that uses \textbf{auditory} and \textbf{visual modalities}:
+\begin{itemize}
+    \item The \textbf{medium} is television (the instrument for communicating)
+    \item The \textbf{modalities} are auditory (sound) and visual (images)
+\end{itemize}
+\end{example}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{5cm}|p{5cm}|}
+\hline
+\textbf{Aspect} & \textbf{Multimodality} & \textbf{Multimedia} \\
+\hline
+Focus & Sensory channels & Communication instruments \\
+\hline
+Definition & Type of information/representation & Medium for storing/communicating \\
+\hline
+Examples & Vision, hearing, touch, smell, taste & TV, radio, internet, print \\
+\hline
+In HCI & How users perceive information & How systems deliver information \\
+\hline
+\end{tabular}
+\caption{Comparison between Multimodality and Multimedia}
+\end{table}
+
+\begin{remark}
+Understanding the distinction between multimodality and multimedia is crucial in HCI:
+\begin{itemize}
+    \item \textbf{Multimedia} refers to the technical infrastructure (e.g., video, audio, text files)
+    \item \textbf{Multimodality} refers to the human sensory experience (e.g., seeing, hearing, touching)
+\end{itemize}
+
+A multimodal interface uses multiple sensory channels for interaction, while a multimedia system uses multiple media formats for content delivery. Modern systems often combine both approaches.
+\end{remark}
+
+\subsection{Formal Definition of Multimodal Systems}
+
+\begin{definition}[Multimodal Systems - W3C Definition]
+Multimodal systems are "systems that support a user communicating with an application by using \textbf{different modalities} such as \textbf{voice} (in a human language), \textbf{gesture}, \textbf{handwriting}, \textbf{typing}, \textbf{audio-visual speech}, etc."
+
+\vspace{0.2cm}
+\textit{Source: W3C Multimodal Interaction Working Group, Multimodal Interaction Requirements, W3C NOTE 8 January 2003}
+\end{definition}
+
+\begin{definition}[Multimodal HCI System]
+A multimodal HCI system is simply one that responds to inputs in more than \textbf{one modality} or \textbf{communication channel} (e.g., speech, gesture, writing, and others).
+\end{definition}
+
+\begin{observation}
+The key characteristic of multimodal systems is their ability to accept and process input through multiple channels, providing users with flexibility in how they interact with the system.
+\end{observation}
+
+\subsection{Input and Output in Multimodal Systems}
+
+\subsubsection{User Input and Output}
+
+In multimodal systems, interaction is bidirectional:
+
+\begin{itemize}
+    \item \textbf{User provides input} in one or more modalities
+    \item \textbf{User receives output} in one or more modalities
+\end{itemize}
+
+This bidirectional communication allows for rich, natural interaction patterns that mirror human-to-human communication.
+
+\subsubsection{Classification of Input Modalities}
+
+Input in multimodal systems may be classified into three categories:
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Three Types of Input}\\[0.2cm]
+Sequential • Simultaneous • Composite
+}}
+\end{center}
+
+\begin{definition}[Sequential Input]
+\textbf{Sequential} input is received on a single modality, though that modality can change over time.
+\end{definition}
+
+\begin{example}
+A user first speaks a command ("Open the file"), then switches to typing the filename. The modalities are used one at a time, in sequence.
+\end{example}
+
+\begin{definition}[Simultaneous Input]
+\textbf{Simultaneous} input is received on multiple modalities, and treated separately.
+\end{definition}
+
+\begin{example}
+A user speaks while also using hand gestures, but the system processes speech and gestures as independent input streams without combining them.
+\end{example}
+
+\begin{definition}[Composite Input]
+\textbf{Composite} input is received on multiple modalities at the same time and treated as a single, integrated "composite" input.
+\end{definition}
+
+\begin{example}
+A user points at a map (gesture) while saying "zoom in here" (speech). The system combines both inputs to understand that the user wants to zoom in at the specific location being pointed to. The meaning emerges from the integration of both modalities.
+\end{example}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Input Type} & \textbf{Characteristics} \\
+\hline
+Sequential & Single modality at a time; modality can change over time \\
+\hline
+Simultaneous & Multiple modalities used at once; processed separately \\
+\hline
+Composite & Multiple modalities used at once; integrated into single input \\
+\hline
+\end{tabular}
+\caption{Classification of input modalities in multimodal systems}
+\end{table}
+
+\subsubsection{Multimodal Output}
+
+The output generated by a multimodal system can take various forms:
+
+\begin{itemize}
+    \item \textbf{Audio}: Spoken feedback, sounds, music
+    \item \textbf{Visual}: Graphics, text, animations, video
+    \item \textbf{Haptic feedback}: Vibrations, force feedback, tactile sensations
+    \item \textbf{Lighting}: Visual cues through ambient or directed lighting
+    \item And other forms of sensory output
+\end{itemize}
+
+\begin{observation}
+Multimodal output allows systems to communicate with users through the most appropriate channel(s) for the context, enhancing comprehension and user experience.
+\end{observation}
+
+\subsection{Examples of Multimodal Systems}
+
+Multimodal systems perform several key functions to enable natural interaction:
+
+\subsubsection{Observing and Analyzing Users}
+
+Multimodal systems excel at:
+
+\begin{itemize}
+    \item \textbf{Gathering} information from several modalities
+    \item \textbf{Analyzing} the collected multimodal data
+    \item \textbf{Integrating} information from different sources
+\end{itemize}
+
+\subsubsection{Building Internal Representations}
+
+Multimodal systems build internal representations of the user(s), for example, in terms of:
+
+\begin{itemize}
+    \item \textbf{Cognitive states}: Goals, beliefs, intentions, attention
+    \item \textbf{Emotional states}: Mood, emotion, stress levels, engagement
+\end{itemize}
+
+\begin{example}[Virtual Therapist System]
+A virtual therapist system tracks a user's:
+\begin{itemize}
+    \item Facial expressions
+    \item Tone of voice
+    \item Body language
+\end{itemize}
+
+The system uses these multiple modalities to assess the user's emotional state. It builds an internal model to understand their stress levels and mental health, tailoring responses and suggestions accordingly.
+\end{example}
+
+\subsubsection{Generating Real-Time Multimedia Feedback}
+
+Multimodal systems generate real-time multimedia feedback for the user(s), based on:
+
+\begin{itemize}
+    \item Analysis of the input
+    \item Internal models of the user
+    \item The tasks at hand
+\end{itemize}
+
+\begin{example}[Smart Fitness Coach App]
+A smart fitness coach app analyzes a user's exercise performance through:
+\begin{itemize}
+    \item Video (analyzing form and movement)
+    \item Sensor data (heart rate, speed, repetitions)
+\end{itemize}
+
+It provides real-time feedback through:
+\begin{itemize}
+    \item \textbf{Audio prompts}: "Straighten your back"
+    \item \textbf{Visual cues}: Highlighting correct form on screen
+    \item \textbf{Haptic vibrations}: Alerting to incorrect posture
+\end{itemize}
+
+This multimodal feedback helps correct form and enhance performance in real-time.
+\end{example}
+
+\subsubsection{Providing Natural Interfaces for Complex Tasks}
+
+Multimodal systems provide users with a multimodal interface to the machine for the execution of complex tasks needing natural interfaces.
+
+\begin{example}[Smart Home Assistant]
+A smart home assistant allows users to control their home environment using:
+\begin{itemize}
+    \item \textbf{Voice commands}: "Set the temperature to 22 degrees"
+    \item \textbf{Touchscreens}: Tapping controls on a display
+    \item \textbf{Gestures}: Waving to turn on lights
+\end{itemize}
+
+Users can adjust lighting, set thermostats, and control entertainment systems through a natural, integrated interface. The system accepts input through whichever modality is most convenient for the user at that moment.
+\end{example}
+
+\begin{remark}
+These examples demonstrate how multimodal systems enhance user experience by:
+\begin{enumerate}
+    \item Providing multiple ways to interact, increasing accessibility and convenience
+    \item Understanding users more deeply through multiple information channels
+    \item Responding through the most appropriate output modalities for the context
+    \item Enabling more natural, human-like interaction patterns
+\end{enumerate}
+
+The power of multimodal systems lies in their ability to combine information from multiple sources to create a richer understanding of user intent and context, leading to more intelligent and responsive interactions.
+\end{remark}
+
+\section{Motivations for Multimodality}
+
+Understanding why multimodal interfaces are important helps us design better human-computer interaction systems. There are several key motivations for adopting multimodality in interface design.
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Four Key Motivations}\\[0.2cm]
+1. Human-human communication is multimodal\\
+2. Input/output by the most effective means\\
+3. Adapting to the environment\\
+4. Task performance and user preference
+}}
+\end{center}
+
+\subsection{Human-Human Communication is Multimodal}
+
+\begin{observation}
+Human-human communication is inherently multimodal. Unimodal communication is an artifact of communication technology, not natural human behavior.
+\end{observation}
+
+When people communicate with each other, they naturally use:
+\begin{itemize}
+    \item Speech and language
+    \item Facial expressions
+    \item Hand gestures
+    \item Body language
+    \item Eye contact and gaze
+    \item Tone of voice and prosody
+\end{itemize}
+
+\begin{remark}
+The restriction to single modalities (e.g., text-only chat, voice-only phone calls) is a limitation imposed by technology, not a natural preference. As technology advances, interfaces should move toward supporting the multimodal nature of human communication.
+\end{remark}
+
+\subsection{Input and Output by the Most Effective Means}
+
+Different types of information are best expressed through different modalities. Multimodal interfaces allow users to choose the most effective means for each type of communication.
+
+\subsubsection{Non-Verbal Modalities for Spatial Information}
+
+Certain kinds of content are most easily expressed in specific \textbf{non-verbal modalities}.
+
+\begin{example}[Spatial Information]
+Consider giving directions or describing a region:
+\begin{itemize}
+    \item \textbf{Visual/gestural}: Drawing the borders of a region on a map is intuitive and precise
+    \item \textbf{Verbal}: Describing "the left bank of the river" verbally can be ambiguous or cumbersome
+\end{itemize}
+
+Example: Drawing the borders of a region on a map is much more natural than trying to describe the boundaries verbally.
+\end{example}
+
+\subsubsection{Verbal Communication for Abstract Concepts}
+
+Some information is better suited to \textbf{verbal communication}.
+
+\begin{example}[Abstract Descriptions]
+Describing location with phrases like "the left bank of the river" is more natural verbally than trying to convey the same information through gestures alone.
+\end{example}
+
+\begin{observation}
+The principle of using the most effective modality for each type of information leads to more efficient and natural interactions. Users can seamlessly switch between modalities based on what they need to communicate.
+\end{observation}
+
+\subsection{Adapting to the Environment}
+
+Multimodal interfaces enable rapid adaptation to changing environments, by switching to the most suitable modality or by complementing different modalities.
+
+\subsubsection{Adaptation to Physical Environment}
+
+Environmental conditions can make certain modalities more or less effective:
+
+\begin{itemize}
+    \item \textbf{Ambient noise}: In noisy environments, visual or haptic feedback may be more effective than audio
+    \item \textbf{Darkness/brightness}: Lighting conditions affect the usability of visual interfaces
+    \item \textbf{Hands-free situations}: When hands are occupied (e.g., driving, cooking), voice commands become essential
+\end{itemize}
+
+\begin{example}
+A smartphone can adapt to a noisy environment by switching from audio alerts to vibration (haptic feedback) or visual notifications.
+\end{example}
+
+\subsubsection{Adaptation to Social Environment}
+
+Social context also influences modality preferences:
+
+\begin{itemize}
+    \item \textbf{Single user vs. multiple users}: Interfaces may need to support individual or collaborative interaction
+    \item \textbf{Social interaction}: In public spaces, users may prefer silent input methods (typing, gestures) over voice commands
+    \item \textbf{Collaborative applications}: Interfaces for group work need to support multiple simultaneous users
+\end{itemize}
+
+\begin{example}
+In a quiet library, a user might prefer typing or using touch gestures rather than speaking to a voice assistant. In contrast, while driving alone, voice commands are the safest option.
+\end{example}
+
+\begin{remark}
+The ability to adapt to environmental changes is crucial for creating robust, usable systems. Multimodal interfaces provide flexibility that unimodal systems cannot match, ensuring that users can interact effectively regardless of their context.
+\end{remark}
+
+\subsection{Task Performance and User Preference}
+
+\subsubsection{Empirical Evidence}
+
+Many empirical studies have demonstrated that multimodal interfaces improve task performance and are preferred by users over unimodal interfaces.
+
+\begin{observation}
+Research consistently shows that multimodal interaction leads to:
+\begin{itemize}
+    \item Faster task completion
+    \item Higher accuracy
+    \item Greater user satisfaction
+    \item Reduced cognitive load
+\end{itemize}
+\end{observation}
+
+\subsubsection{Research Findings}
+
+Several landmark studies have demonstrated the advantages of multimodal interfaces:
+
+\begin{itemize}
+    \item \textbf{Oviatt (1996)}: Clear advantages over unimodal speech for map-based tasks
+    
+    \item \textbf{Cohen et al. (1998)}: Multimodal interfaces were faster than GUI for map-based tasks
+    
+    \item \textbf{Nishimoto et al. (1995)}: Multimodal interfaces were faster than GUI for drawing applications
+    
+    \item \textbf{Hauptmann (1989)}: User preference for speech and gesture in object manipulation tasks
+\end{itemize}
+
+\begin{remark}
+These studies provide strong empirical support for multimodal design. The benefits are not merely theoretical—they translate into measurable improvements in real-world tasks. This evidence should guide interface designers toward multimodal solutions when appropriate.
+\end{remark}
+
+\section{Frameworks for Multimodal Systems}
+
+\subsection{Understanding Frameworks}
+
+Frameworks and conceptual models have been proposed for multimodal systems to help organize and understand their structure.
+
+\begin{definition}[Frameworks vs. Architectures]
+Frameworks are \textbf{not architectures}. Rather, they are a level of abstraction above an architecture.
+\begin{itemize}
+    \item Frameworks do not indicate how components are allocated to hardware devices and the communication among devices
+    \item They provide conceptual organization and design principles
+    \item They help understand the flow of information and processing stages
+\end{itemize}
+\end{definition}
+
+\subsection{Types of Frameworks}
+
+Frameworks have been developed for different types of multimodal systems:
+
+\begin{itemize}
+    \item \textbf{Verbal communication frameworks}: Focusing on multimodal systems that emphasize speech and language
+    \item \textbf{Non-verbal communication frameworks}: Focusing on multimodal systems that emphasize gestures, expressions, and other non-verbal modalities
+\end{itemize}
+
+\begin{observation}
+In this course, we will be focusing on \textbf{nonverbal communication} frameworks, as they are particularly relevant for understanding modern multimodal interfaces that leverage gestures, facial expressions, and body language.
+\end{observation}
+
+\subsection{Example Framework: Layered Architecture}
+
+A typical framework for multimodal systems uses a layered architecture that processes information at different levels of abstraction:
+
+\begin{center}
+\colorbox{teal!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Four-Layer Framework}\\[0.2cm]
+Layer 1: Physical Signals \& Virtual Sensors\\
+Layer 2: Low-Level Features\\
+Layer 3: Mid-Level Features\\
+Layer 4: Qualities Communication (Emotions \& Social Signals)
+}}
+\end{center}
+
+\subsubsection{Layer 1: Physical Signals and Virtual Sensors}
+
+The lowest layer deals with raw sensory input:
+
+\begin{itemize}
+    \item \textbf{Physical sensors}: Hardware devices that capture raw data
+    \item \textbf{Virtual sensors}: Software abstractions of sensor data
+\end{itemize}
+
+\begin{example}[RGB-D Sensor]
+Layer 1 might include an RGB-D sensor such as Kinect, which provides:
+\begin{itemize}
+    \item 3D trajectories of specific body parts
+    \item The silhouette of the tracked bodies
+    \item Captured depth image
+    \item RGB color image
+\end{itemize}
+
+This raw sensor data forms the foundation for higher-level processing.
+\end{example}
+
+\subsubsection{Layer 2: Low-Level Features}
+
+The second layer extracts basic features from the raw sensor data:
+
+\begin{itemize}
+    \item \textbf{Sub-layered processing}: From physical space to model spaces
+    \item Feature extraction and preprocessing
+    \item Noise reduction and normalization
+\end{itemize}
+
+\begin{example}
+From the Kinect depth data, Layer 2 might extract:
+\begin{itemize}
+    \item Joint positions and angles
+    \item Body pose estimation
+    \item Hand positions and orientations
+\end{itemize}
+\end{example}
+
+\subsubsection{Layer 3: Mid-Level Features}
+
+The third layer processes features at an intermediate level of abstraction:
+
+\begin{itemize}
+    \item \textbf{Points or trajectories in multidimensional spaces} (amodal)
+    \item Temporal patterns and sequences
+    \item Spatial relationships
+\end{itemize}
+
+\begin{example}
+Layer 3 might track:
+\begin{itemize}
+    \item Hand movement trajectories over time
+    \item Velocity and acceleration of gestures
+    \item Relative positions of body parts
+\end{itemize}
+\end{example}
+
+\subsubsection{Layer 4: Qualities Communication}
+
+The highest layer interprets the meaning of the processed data:
+
+\begin{itemize}
+    \item \textbf{Nonverbal emotions and social signals}
+    \item High-level semantic interpretation
+    \item User intent and affective states
+\end{itemize}
+
+\begin{example}
+Layer 4 might recognize:
+\begin{itemize}
+    \item Specific gestures (e.g., "wave", "point", "swipe")
+    \item Emotional states (e.g., "frustrated", "engaged", "confused")
+    \item Social signals (e.g., "greeting", "agreement", "attention")
+\end{itemize}
+\end{example}
+
+\begin{remark}
+This layered framework illustrates how multimodal systems progressively transform raw sensor data into meaningful interpretations. Each layer builds upon the previous one, moving from low-level physical signals to high-level semantic understanding. This abstraction is crucial for:
+\begin{enumerate}
+    \item \textbf{Modularity}: Each layer can be developed and tested independently
+    \item \textbf{Reusability}: Lower layers can support multiple higher-level interpretations
+    \item \textbf{Clarity}: The framework makes the processing pipeline explicit and understandable
+\end{enumerate}
+
+Understanding these frameworks helps designers and developers create more effective multimodal systems by providing a clear conceptual structure for organizing complex processing pipelines.
+\end{remark}
+
+
+
+\newpage
+
+\section{}
+
+Aggiungere appunti fino alla fine del primo pdf 1 intro.pdf
 
 
 
