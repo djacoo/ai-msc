@@ -1,6 +1,6 @@
 #!/bin/bash
-# Wrapper script to launch quiz app with Python 3.11 (compatible with macOS 26)
-
+# Quizzer V2 - macOS launcher
+# Grounded Q&A engine with teacher-grade evaluation
 # Use Homebrew Python 3.11 instead of system Python 3.9
 PYTHON3_11="/opt/homebrew/bin/python3.11"
 

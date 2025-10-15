@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-AI Quiz Launcher
-Checks dependencies and launches the quiz app
+Quizzer V2 Launcher
+Grounded Q&A engine with teacher-grade evaluation
 """
 
+import os
 import sys
 import subprocess
-import os
+import platform
 from pathlib import Path
 
 # Silence tkinter deprecation warnings
@@ -20,65 +21,6 @@ def check_python_version():
         print(f"Current version: {version.major}.{version.minor}")
         sys.exit(1)
     print(f"✅ Python {version.major}.{version.minor} detected")
-
-def check_ollama():
-    """Check if Ollama is installed and running."""
-    try:
-        # Check if ollama command exists
-        result = subprocess.run(['which', 'ollama'], 
-                              capture_output=True, 
-                              text=True)
-        if result.returncode != 0:
-            print("❌ Ollama is not installed")
-            print("\n📥 Installing Ollama...")
-            try:
-                subprocess.run(['brew', 'install', 'ollama'], check=True)
-                print("✅ Ollama installed successfully")
-            except subprocess.CalledProcessError:
-                print("⚠️  Please install Ollama manually:")
-                print("   Visit: https://ollama.com/download")
-                print("   Or run: brew install ollama")
-                return False
-        else:
-            print("✅ Ollama is installed")
-        
-        # Check if ollama is running
-        result = subprocess.run(['ollama', 'list'], 
-                              capture_output=True, 
-                              text=True,
-                              timeout=5)
-        if result.returncode != 0:
-            print("⚠️  Ollama is not running, starting it...")
-            subprocess.run(['brew', 'services', 'start', 'ollama'], 
-                         capture_output=True)
-            import time
-            time.sleep(2)
-            print("✅ Ollama service started")
-        else:
-            print("✅ Ollama is running")
-        
-        # Check if model is downloaded
-        result = subprocess.run(['ollama', 'list'], 
-                              capture_output=True, 
-                              text=True)
-        if 'llama3.2:3b' not in result.stdout and 'llama3.2' not in result.stdout:
-            print("📥 Downloading AI model (Llama 3.2 - 3B, ~2GB)...")
-            print("⏳ This may take a few minutes on first run...")
-            subprocess.run(['ollama', 'pull', 'llama3.2:3b'], check=True)
-            print("✅ Model downloaded successfully")
-        else:
-            print("✅ AI model is ready")
-        
-        return True
-        
-    except subprocess.TimeoutExpired:
-        print("⚠️  Ollama appears to be hung, restarting...")
-        subprocess.run(['brew', 'services', 'restart', 'ollama'], 
-                     capture_output=True)
-        return True
-    except Exception as e:
-        print(f"⚠️  Error checking Ollama: {e}")
-        return False
 
 def check_tkinter():
     """Check if tkinter is available."""
@@ -96,8 +38,8 @@ def check_tkinter():
         return False
 
 def main():
-    """Main launcher function."""
-    print("=" * 60)
+    print("🚀 Quizzer V2 Launcher - Grounded Q&A Engine")
+    print("=" * 50)
     print("🎓 AI-POWERED QUIZ - Dependency Checker")
     print("=" * 60)
     print()
@@ -109,34 +51,39 @@ def main():
     if not check_tkinter():
         sys.exit(1)
     
-    # Check Ollama
-    if not check_ollama():
-        print("\n⚠️  Ollama setup incomplete. The app may not work properly.")
-        response = input("Continue anyway? (y/n): ")
-        if response.lower() != 'y':
-            sys.exit(1)
-    
-    print()
-    print("=" * 60)
-    print("✅ All dependencies are ready!")
-    print("🚀 Launching AI Quiz App...")
-    print("=" * 60)
-    print()
-    
-    # Launch the GUI directly in same process (so monkey patches work)
+    print("\n📦 Checking PDF parser...")
     try:
-        # Add script directory to path
-        script_dir = Path(__file__).parent
-        sys.path.insert(0, str(script_dir))
+        import PyPDF2
+        print("   ✓ PyPDF2 installed")
+    except ImportError:
+        print("   Installing PyPDF2...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "PyPDF2==3.0.1"], check=True)
+        print("   ✓ PyPDF2 installed")
+    
+    # Step 5: Launch Quizzer V2 GUI
+    print("\n📱 Launching Quizzer V2 GUI...")
+    try:
+        from quizzer_v2_gui import QuizzerV2GUI
+        from quizzer_v2_engine import QuizzerV2
+        from local_ai import LocalAI
         
-        # Now import and run the GUI
-        from quiz_gui import main as gui_main
-        gui_main()
+        # Find repo root
+        repo_root = Path(__file__).parent.parent
         
-    except KeyboardInterrupt:
-        print("\n\n👋 Quiz app closed")
+        # Initialize AI
+        print("   Initializing AI engine...")
+        ai = LocalAI("llama3.2:3b")
+        
+        # Initialize Quizzer V2
+        print("   Initializing Quizzer V2...")
+        engine = QuizzerV2(str(repo_root), ai)
+        
+        # Launch GUI
+        print("   ✓ Starting application...\n")
+        app = QuizzerV2GUI(engine, ai)
+        app.run()
     except Exception as e:
-        print(f"\n❌ Error launching app: {e}")
+        print(f"❌ Failed to launch GUI: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
