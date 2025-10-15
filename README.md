@@ -24,7 +24,7 @@
 
 <br/>
 
-###  *Made with 💜💜💜 by Jacooooo for AI students at University of Verona*
+###  *Made with 💜 by jaco for AI students at University of Verona*
 
 <br/>
 

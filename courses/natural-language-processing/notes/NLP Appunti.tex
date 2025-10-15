@@ -3648,6 +3648,129 @@ The third step of text normalization (after tokenization and word normalization)
 
 
 
+\newpage
+
+\part{Language Modeling}
+
+\section{Introduction to N-grams}
+
+\subsection{Probabilistic Language Models}
+
+A \textbf{Language Model} (LM) is a model that assigns probabilities to sequences of words.
+
+\textbf{Goal:} Compute the probability of a sentence or sequence of words:
+\[
+P(W) = P(w_1, w_2, w_3, w_4, w_5 \ldots w_n)
+\]
+
+\textbf{Related task:} Probability of an upcoming word:
+\[
+P(w_5 \mid w_1, w_2, w_3, w_4)
+\]
+
+A model that computes either of these is called a \textbf{language model}.
+
+\textbf{Terminology note:} Better term would be "the grammar", but \textbf{language model} or \textbf{LM} is standard.
+
+\subsection{Why Probabilistic Language Models?}
+
+Language models are fundamental for many NLP applications.
+
+\subsubsection{Machine Translation}
+
+A language model helps choose the most natural translation.
+
+\textbf{Example:}
+\begin{itemize}
+    \item $P(\text{high winds tonite}) > P(\text{large winds tonite})$
+\end{itemize}
+
+"High winds" is a more common collocation than "large winds".
+
+\subsubsection{Spell Correction}
+
+\textbf{Example:} "The office is about fifteen minuets from my house"
+
+\[
+P(\text{about fifteen \textbf{minutes} from}) > P(\text{about fifteen \textbf{minuets} from})
+\]
+
+Both "minuets" and "minutes" are valid words, but the context makes "minutes" much more likely.
+
+\subsubsection{Speech Recognition}
+
+Many word sequences sound similar when spoken.
+
+\textbf{Example:}
+\[
+P(\text{I saw a van}) \gg P(\text{eyes awe of an})
+\]
+
+The language model helps disambiguate between phonetically similar sequences.
+
+\subsubsection{Other Applications}
+
+\begin{itemize}
+    \item \textbf{Summarization}
+    \item \textbf{Question-answering}
+    \item \textbf{Dialogue systems}
+    \item \textbf{Text generation}
+    \item And many more!
+\end{itemize}
+
+\subsection{How to Compute P(W)}
+
+How do we compute the probability of a word sequence?
+
+\textbf{Example:} How to compute this joint probability:
+\[
+P(\text{its, water, is, so, transparent, that})
+\]
+
+\subsubsection{Naive Approach: Counting}
+
+We could count how many times this exact sequence appears in a corpus:
+
+\[
+P(W) = \frac{\text{Count}(w_1, w_2, \ldots, w_n)}{\text{Total number of word sequences of length } n}
+\]
+
+\textbf{Problems:}
+\begin{itemize}
+    \item \textbf{Data sparsity}: Most sequences never appear in any corpus
+    \item \textbf{Combinatorial explosion}: Number of possible sequences grows exponentially
+    \item \textbf{No generalization}: Can't handle novel sequences
+\end{itemize}
+
+\subsubsection{Chain Rule of Probability}
+
+\textbf{Intuition:} Break down the joint probability into conditional probabilities.
+
+The \textbf{Chain Rule} decomposes a joint probability:
+
+\[
+P(w_1, w_2, \ldots, w_n) = P(w_1) \cdot P(w_2 \mid w_1) \cdot P(w_3 \mid w_1, w_2) \cdots P(w_n \mid w_1, \ldots, w_{n-1})
+\]
+
+Or more compactly:
+\[
+P(W) = \prod_{i=1}^{n} P(w_i \mid w_1, \ldots, w_{i-1})
+\]
+
+\textbf{Example:} For "its water is so transparent that":
+\begin{align*}
+P(\text{its, water, is, so, transparent, that}) = \; & P(\text{its}) \\
+& \times P(\text{water} \mid \text{its}) \\
+& \times P(\text{is} \mid \text{its, water}) \\
+& \times P(\text{so} \mid \text{its, water, is}) \\
+& \times P(\text{transparent} \mid \text{its, water, is, so}) \\
+& \times P(\text{that} \mid \text{its, water, is, so, transparent})
+\end{align*}
+
+\textbf{Why this helps:} Conditional probabilities like $P(\text{water} \mid \text{its})$ are easier to estimate from data.
+
+\textbf{Remaining problem:} Long contexts are still rare. This is where \textbf{N-gram models} come in.
+
 
 
 
