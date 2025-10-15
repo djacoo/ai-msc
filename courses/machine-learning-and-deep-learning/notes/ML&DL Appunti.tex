@@ -1192,9 +1192,1239 @@ This illustrates why "get more data" is often the most effective solution to ove
 
 
 
+\newpage
 
+\part{Model Evaluation and Regression Methods}
 
+\section{Model Evaluation for Classification and Regression}
 
+\subsection{Recap: Train, Validation, and Test Sets}
 
+The machine learning workflow involves three distinct datasets, each serving a specific purpose:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm and 2.5cm,
+    box/.style={rectangle, minimum width=2.5cm, minimum height=0.8cm, align=center, font=\large\bfseries},
+    computer/.style={rectangle, draw, minimum width=2.2cm, minimum height=1.8cm, align=center},
+    arrow/.style={->, >=stealth, very thick}
+]
+
+% Top row: Training set -> ML Computer -> Program
+\node[box] (train) {Training set};
+\node[computer, right=3cm of train] (ml1) {ML};
+\node[box, right=3cm of ml1] (program1) {Program};
+
+% Draw computer screen
+\draw[thick] ([xshift=-0.6cm, yshift=0.3cm]ml1.center) rectangle ([xshift=0.6cm, yshift=0.7cm]ml1.center);
+\draw[thick] ([xshift=-0.7cm, yshift=-0.7cm]ml1.center) -- ([xshift=0.7cm, yshift=-0.7cm]ml1.center);
+
+% Arrows for top row
+\draw[arrow] (train) -- (ml1);
+\draw[arrow] (ml1) -- (program1);
+
+% Middle row: Validation evaluation with feedback
+\node[computer, below=3.5cm of ml1] (ml2) {};
+\node[box, right=2.5cm of ml2] (val) {Validation set};
+
+% Draw computer screen for ml2
+\draw[thick] ([xshift=-0.6cm, yshift=0.3cm]ml2.center) rectangle ([xshift=0.6cm, yshift=0.7cm]ml2.center);
+\draw[thick] ([xshift=-0.7cm, yshift=-0.7cm]ml2.center) -- ([xshift=0.7cm, yshift=-0.7cm]ml2.center);
+
+% Arrow from Program to validation computer
+\draw[arrow] (program1.south) -- (ml2.north);
+
+% Bidirectional arrows between validation computer and validation set
+\draw[arrow] (ml2.east) -- (val.west);
+\draw[arrow] (val.west) -- (ml2.east);
+
+% Thumbs down (red) - feedback to training
+\node[left=1.5cm of train, yshift=-2.5cm, fill=red!70!black, circle, minimum size=1.2cm] (thumbdown) {\textcolor{white}{\Large\textbf{X}}};
+\draw[->, very thick, red!70!black] (thumbdown.north) to[out=90, in=180] ([yshift=-0.3cm]train.west);
+\draw[->, very thick, red!70!black] ([xshift=-0.5cm]ml2.west) to[out=180, in=0] (thumbdown.east);
+
+% Thumbs up (green) - proceed to testing
+\node[left=1.5cm of train, yshift=-5.5cm, fill=green!60!black, circle, minimum size=1.2cm] (thumbup) {\textcolor{white}{\huge$\checkmark$}};
+\node[box, below=1.5cm of thumbup] (program2) {Program};
+
+\draw[->, very thick, green!60!black] (thumbup.south) -- (program2.north);
+\draw[->, very thick, green!60!black] ([xshift=-0.5cm]ml2.west) to[out=180, in=90] (thumbup.north);
+
+% Bottom row: Test data -> Computer -> Check model performance
+\node[box, right=1.5cm of program2] (test) {Test data};
+\node[computer, right=2.5cm of test] (ml3) {};
+\node[box, right=2.5cm of ml3] (check) {Check model\\performance};
+
+% Draw computer screen for ml3
+\draw[thick] ([xshift=-0.6cm, yshift=0.3cm]ml3.center) rectangle ([xshift=0.6cm, yshift=0.7cm]ml3.center);
+\draw[thick] ([xshift=-0.7cm, yshift=-0.7cm]ml3.center) -- ([xshift=0.7cm, yshift=-0.7cm]ml3.center);
+
+% Arrows for bottom row
+\draw[arrow] (program2) -- (test);
+\draw[arrow] (test) -- (ml3);
+\draw[arrow] (ml3) -- (check);
+
+\end{tikzpicture}
+\caption{Machine Learning Workflow: Training set trains the model, validation set evaluates and provides feedback (thumbs down = retrain, thumbs up = proceed to testing), test set checks final performance}
+\end{figure}
+
+\subsubsection{The Three Datasets}
+
+\begin{enumerate}
+    \item \textbf{Training Set}: Used to train the machine learning algorithm
+    \begin{itemize}
+        \item The model learns patterns and relationships from this data
+        \item Parameters are optimized to minimize training error
+    \end{itemize}
+    
+    \item \textbf{Validation Set}: Used during the learning phase
+    \begin{itemize}
+        \item Also called the \textit{mini test set}
+        \item Helps select the better performing algorithm among alternatives
+        \item Used to tune hyperparameters of the model
+        \item Provides feedback to adjust the model before final testing
+    \end{itemize}
+    
+    \item \textbf{Test Set}: Used for final model evaluation
+    \begin{itemize}
+        \item Provides an unbiased assessment of model performance
+        \item The model has never seen this data during training or validation
+        \item Tells us how well the model will perform on new, real-world data
+    \end{itemize}
+\end{enumerate}
+
+\subsection{The Importance of the Validation Set}
+
+The validation set plays a crucial role in the machine learning pipeline and must be kept \textbf{separate from the training set}.
+
+\subsubsection{Why Separate the Validation Set?}
+
+The validation set is used for two main purposes:
+
+\begin{enumerate}
+    \item \textbf{Algorithm Selection}: To pick the better performing algorithm
+    \begin{itemize}
+        \item Compare different model architectures (e.g., decision trees vs. neural networks)
+        \item Select the model that performs best on unseen data
+    \end{itemize}
+    
+    \item \textbf{Hyperparameter Tuning}: To decide the hyperparameters of an algorithm
+    \begin{itemize}
+        \item Hyperparameters are configuration settings that are not learned from data
+        \item Examples: learning rate, regularization strength ($\lambda$), number of layers, tree depth
+        \item The validation set helps find the optimal hyperparameter values
+    \end{itemize}
+\end{enumerate}
+
+\begin{remark}
+\textbf{ATTENTION}: Splitting the datasets into training and validation sets can be done randomly to avoid bias. However, there are some \textbf{specific rules} to apply when performing this split to ensure reliable model evaluation.
+\end{remark}
+
+\subsection{Specific Rules for Dataset Splitting}
+
+When splitting data into training, validation, and testing sets, you can have conflicting priorities. The key is to balance these priorities appropriately.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    node distance=0.8cm,
+    box/.style={rectangle, draw, minimum width=10cm, minimum height=0.8cm, align=center}
+]
+
+% All Data
+\node[box, fill=cyan!40] (all) {\textbf{All Data}};
+
+% Three splits
+\node[box, fill=green!30, below=of all, xshift=-3cm, minimum width=4.5cm] (train) {\textbf{Training}};
+\node[box, fill=violet!30, below=of all, xshift=1cm, minimum width=2.5cm] (val) {\textbf{Validation}};
+\node[box, fill=red!30, below=of all, xshift=4.5cm, minimum width=2cm] (test) {\textbf{Test}};
+
+% Descriptions
+\node[below=0.3cm of train, align=center, font=\small] {Models learn the task};
+\node[below=0.3cm of val, align=center, font=\small] {Which model\\is the best?};
+\node[below=0.3cm of test, align=center, font=\small] {How good\\is this model\\truly?};
+
+% Arrows
+\draw[->, thick] (all.south) -- (train.north);
+\draw[->, thick] (all.south) -- (val.north);
+\draw[->, thick] (all.south) -- (test.north);
+
+\end{tikzpicture}
+\caption{Dataset splitting: Training for learning, Validation for model selection, Test for final evaluation}
+\end{figure}
+
+\subsubsection{Priority 1: Accurate Error Estimation}
+
+\textbf{Goal}: Estimate future error (i.e., validation/testing error) as accurately as possible.
+
+\textbf{How to achieve this}: By making the \textbf{validation set as big as possible}.
+
+\textit{(High confidence interval)}
+
+\begin{itemize}
+    \item A larger validation set provides more reliable error estimates
+    \item Reduces variance in performance metrics
+    \item Gives higher confidence that the measured performance reflects true generalization
+\end{itemize}
+
+\subsubsection{Priority 2: Accurate Classifier Learning}
+
+\textbf{Goal}: Learn classifier as accurately as possible.
+
+\textbf{How to achieve this}: By making the \textbf{training set as big as possible}.
+
+\textit{(Better estimates, maybe better generalization)}
+
+\begin{itemize}
+    \item More training data allows the model to learn more robust patterns
+    \item Reduces overfitting by providing diverse examples
+    \item Generally leads to better generalization on unseen data
+\end{itemize}
+
+\subsubsection{The Critical Rule}
+
+\begin{center}
+\colorbox{red!20}{\parbox{0.9\textwidth}{
+\centering
+\textbf{CRITICAL REQUIREMENT}\\[0.3cm]
+Training and validation/testing instances \textbf{CANNOT OVERLAP !!!!}
+}}
+\end{center}
+
+\begin{itemize}
+    \item If the same data appears in both training and validation/test sets, the evaluation is invalid
+    \item The model would be tested on data it has already seen during training
+    \item This leads to overly optimistic performance estimates that don't reflect real-world performance
+    \item Data leakage between sets is one of the most common mistakes in machine learning
+\end{itemize}
+
+\begin{observation}
+The split between training and validation/test sets represents a fundamental tradeoff:
+\begin{itemize}
+    \item Larger training set $\rightarrow$ Better model learning, but less reliable error estimation
+    \item Larger validation/test set $\rightarrow$ More reliable error estimation, but potentially worse model learning
+\end{itemize}
+
+Common splits include 70-15-15, 80-10-10, or 60-20-20 (train-validation-test), depending on the total dataset size and specific requirements.
+\end{observation}
+
+\section{Cross Validation}
+
+\subsection{When Do We Need Cross Validation?}
+
+In cases where we don't have enough data to randomly split between training (e.g., 60\% of the total data), validation (e.g., 20\% of the total data), and testing (e.g., 20\% of the total data), we need to use \textbf{cross-validation}.
+
+\begin{definition}[Cross Validation]
+Cross-validation is a resampling technique that involves reusing a portion of the training set itself to validate performance by retraining not just one, but $N$ models.
+\end{definition}
+
+\subsection{Key Characteristics of Cross Validation}
+
+\begin{itemize}
+    \item \textbf{Multiple models}: Cross-validation involves training $N$ models instead of just one
+    
+    \item \textbf{Computational cost}: Performing cross-validation requires $N$ training sessions and can be more computationally demanding
+    
+    \item \textbf{Better use of limited data}: When data is scarce, cross-validation allows us to use the available data more efficiently for both training and validation
+\end{itemize}
+
+\subsection{Fundamental Rules of Cross Validation}
+
+Cross validation must respect certain constraints to ensure valid model evaluation:
+
+\begin{enumerate}
+    \item \textbf{No overlap}: Training and validation cannot overlap, but $n_{\text{train}} + n_{\text{validation}} = \text{constant}$
+    
+    \item \textbf{Each instance used once per fold}: At each fold (step), you use each instance only in one set, so there is no overlapping within a single fold
+    
+    \item \textbf{Every sample participates}: Every sample is in both training and testing but not at the same time
+    \begin{itemize}
+        \item This reduces the chances of getting a biased training set
+        \item Ensures all data contributes to both training and validation across different folds
+    \end{itemize}
+\end{enumerate}
+
+\subsection{K-Fold Cross Validation}
+
+K-fold cross validation is the most common form of cross validation, where the dataset is divided into $k$ equal parts (folds).
+
+\subsubsection{How K-Fold Cross Validation Works}
+
+In the case of k-fold cross-validation:
+
+\begin{enumerate}
+    \item We split our dataset into $k$ groups (folds)
+    
+    \item We perform training $k$ times on $(N/k)(k-1)$ data points
+    
+    \item We measure performance on the last $N/k$ data points (the validation fold)
+    
+    \item Our cross-validation performance will be the \textbf{average of the performance of the $k$ tests}
+\end{enumerate}
+
+\begin{remark}
+\textbf{Important constraint}: Training set and validation set cannot overlap, but the sum of training and validation data is a constant (the total dataset size).
+\end{remark}
+
+\subsubsection{Visual Representation of K-Fold Cross Validation}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    fold/.style={rectangle, draw, minimum width=1.5cm, minimum height=0.8cm},
+    val/.style={fill=blue!40},
+    train/.style={fill=gray!20}
+]
+
+% Labels
+\node[anchor=east] at (-0.5, 0) {1st};
+\node[anchor=east] at (-0.5, -1.2) {2nd};
+\node[anchor=east] at (-0.5, -2.4) {3rd};
+\node[anchor=east] at (-0.5, -3.6) {4th};
+\node[anchor=east] at (-0.5, -4.8) {5th};
+
+\node[anchor=south, font=\small] at (1.5, 1) {Validation Fold};
+\node[anchor=south, font=\small] at (5.5, 1) {Training Fold};
+
+% Fold 1
+\node[fold, val] at (0, 0) {};
+\node[fold, train] at (1.5, 0) {};
+\node[fold, train] at (3, 0) {};
+\node[fold, train] at (4.5, 0) {};
+\node[fold, train] at (6, 0) {};
+
+% Fold 2
+\node[fold, train] at (0, -1.2) {};
+\node[fold, val] at (1.5, -1.2) {};
+\node[fold, train] at (3, -1.2) {};
+\node[fold, train] at (4.5, -1.2) {};
+\node[fold, train] at (6, -1.2) {};
+
+% Fold 3
+\node[fold, train] at (0, -2.4) {};
+\node[fold, train] at (1.5, -2.4) {};
+\node[fold, val] at (3, -2.4) {};
+\node[fold, train] at (4.5, -2.4) {};
+\node[fold, train] at (6, -2.4) {};
+
+% Fold 4
+\node[fold, train] at (0, -3.6) {};
+\node[fold, train] at (1.5, -3.6) {};
+\node[fold, train] at (3, -3.6) {};
+\node[fold, val] at (4.5, -3.6) {};
+\node[fold, train] at (6, -3.6) {};
+
+% Fold 5
+\node[fold, train] at (0, -4.8) {};
+\node[fold, train] at (1.5, -4.8) {};
+\node[fold, train] at (3, -4.8) {};
+\node[fold, train] at (4.5, -4.8) {};
+\node[fold, val] at (6, -4.8) {};
+
+% Y-axis label
+\node[rotate=90, anchor=south] at (-2, -2.4) {K iterations (K-Folds)};
+
+\end{tikzpicture}
+\caption{K-Fold Cross Validation: Each row represents one iteration where a different fold serves as validation (blue) while the rest serve as training (gray)}
+\end{figure}
+
+\subsection{Example: 5-Fold Cross Validation}
+
+Let's examine a concrete example with 5 folds:
+
+\begin{itemize}
+    \item \textbf{Step 1}: Randomly split the data into 5 folds
+    \item \textbf{Step 2}: Test on each fold while training on 4 other folds (80\% train, 20\% test)
+    \item \textbf{Step 3}: Average the results over 5 folds
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    fold/.style={rectangle, draw, minimum width=1.2cm, minimum height=0.7cm},
+    val/.style={fill=violet!40},
+    train/.style={fill=cyan!40}
+]
+
+% Iteration labels
+\node[anchor=east, font=\small] at (-0.5, 0) {1st};
+\node[anchor=east, font=\small] at (-0.5, -1.2) {2nd};
+\node[anchor=east, font=\small] at (-0.5, -2.4) {3rd};
+\node[anchor=east, font=\small] at (-0.5, -3.6) {4th};
+\node[anchor=east, font=\small] at (-0.5, -4.8) {5th};
+
+% Fold 1
+\node[fold, val] at (0, 0) {};
+\node[fold, train] at (1.3, 0) {};
+\node[fold, train] at (2.6, 0) {};
+\node[fold, train] at (3.9, 0) {};
+\node[fold, train] at (5.2, 0) {};
+\node[anchor=west, font=\small] at (6.5, 0) {Performance 1};
+
+% Fold 2
+\node[fold, train] at (0, -1.2) {};
+\node[fold, val] at (1.3, -1.2) {};
+\node[fold, train] at (2.6, -1.2) {};
+\node[fold, train] at (3.9, -1.2) {};
+\node[fold, train] at (5.2, -1.2) {};
+\node[anchor=west, font=\small] at (6.5, -1.2) {Performance 2};
+
+% Fold 3
+\node[fold, train] at (0, -2.4) {};
+\node[fold, train] at (1.3, -2.4) {};
+\node[fold, val] at (2.6, -2.4) {};
+\node[fold, train] at (3.9, -2.4) {};
+\node[fold, train] at (5.2, -2.4) {};
+\node[anchor=west, font=\small] at (6.5, -2.4) {Performance 3};
+
+% Fold 4
+\node[fold, train] at (0, -3.6) {};
+\node[fold, train] at (1.3, -3.6) {};
+\node[fold, train] at (2.6, -3.6) {};
+\node[fold, val] at (3.9, -3.6) {};
+\node[fold, train] at (5.2, -3.6) {};
+\node[anchor=west, font=\small] at (6.5, -3.6) {Performance 4};
+
+% Fold 5
+\node[fold, train] at (0, -4.8) {};
+\node[fold, train] at (1.3, -4.8) {};
+\node[fold, train] at (2.6, -4.8) {};
+\node[fold, train] at (3.9, -4.8) {};
+\node[fold, val] at (5.2, -4.8) {};
+\node[anchor=west, font=\small] at (6.5, -4.8) {Performance 5};
+
+% Arrow and final result
+\draw[->, thick] (9, -1.2) -- (9, -3.6);
+\node[anchor=west, font=\small, align=left] at (9.5, -2.4) {Average\\Performance\\of all the folds};
+
+% Legend
+\node[fold, val, minimum width=0.8cm] at (1, -6.2) {};
+\node[anchor=west, font=\small] at (1.6, -6.2) {Validation Fold};
+\node[fold, train, minimum width=0.8cm] at (4.5, -6.2) {};
+\node[anchor=west, font=\small] at (5.1, -6.2) {Training Fold};
+
+\end{tikzpicture}
+\caption{5-Fold Cross Validation Example: Each fold serves as validation once, and the final performance is the average of all 5 iterations}
+\end{figure}
+
+\subsubsection{The Process in Detail}
+
+For each of the 5 iterations:
+
+\begin{enumerate}
+    \item \textbf{Iteration 1}: Use fold 1 as validation, folds 2-5 as training $\rightarrow$ Get Performance 1
+    \item \textbf{Iteration 2}: Use fold 2 as validation, folds 1,3-5 as training $\rightarrow$ Get Performance 2
+    \item \textbf{Iteration 3}: Use fold 3 as validation, folds 1-2,4-5 as training $\rightarrow$ Get Performance 3
+    \item \textbf{Iteration 4}: Use fold 4 as validation, folds 1-3,5 as training $\rightarrow$ Get Performance 4
+    \item \textbf{Iteration 5}: Use fold 5 as validation, folds 1-4 as training $\rightarrow$ Get Performance 5
+\end{enumerate}
+
+\textbf{Final Cross-Validation Performance}:
+\[
+\text{CV Performance} = \frac{1}{5} \sum_{i=1}^{5} \text{Performance}_i
+\]
+
+\subsection{Advantages of Cross Validation}
+
+\begin{itemize}
+    \item \textbf{Better use of limited data}: Every data point is used for both training and validation
+    
+    \item \textbf{More reliable performance estimates}: Averaging over multiple folds reduces variance in the performance estimate
+    
+    \item \textbf{Reduces bias}: Every sample participates in validation, reducing the risk of a biased validation set
+    
+    \item \textbf{Detects overfitting}: If performance varies significantly across folds, it may indicate overfitting or data quality issues
+\end{itemize}
+
+\subsection{Disadvantages of Cross Validation}
+
+\begin{itemize}
+    \item \textbf{Computationally expensive}: Requires training $k$ models instead of one
+    
+    \item \textbf{Time-consuming}: Training time is multiplied by the number of folds
+    
+    \item \textbf{Not suitable for very large datasets}: When data is abundant, a simple train-validation-test split is more efficient
+\end{itemize}
+
+\begin{observation}
+The choice of $k$ (number of folds) involves a tradeoff:
+\begin{itemize}
+    \item \textbf{Larger $k$}: More accurate performance estimate, but more computationally expensive
+    \item \textbf{Smaller $k$}: Faster computation, but less reliable performance estimate
+    \item Common choices: $k = 5$ or $k = 10$
+    \item Extreme case: $k = N$ (Leave-One-Out Cross Validation) uses each single sample as validation once
+\end{itemize}
+\end{observation}
+
+\section{Leave-One-Out Cross Validation}
+
+\subsection{What is Leave-One-Out Cross Validation?}
+
+Leave-One-Out Cross Validation (LOOCV) is an extreme case of k-fold cross validation that is particularly useful when we have very few data points.
+
+\begin{definition}[Leave-One-Out Cross Validation]
+LOOCV is $n$-fold cross validation where $n$ equals the total number of samples. In each iteration, we train on all $(n-1)$ samples and test on exactly 1 instance.
+\end{definition}
+
+\subsection{How LOOCV Works}
+
+The process involves:
+
+\begin{enumerate}
+    \item Take the entire dataset of $n$ samples
+    \item For each sample $i$ (where $i = 1, 2, \ldots, n$):
+    \begin{itemize}
+        \item Use sample $i$ as the validation set (1 sample)
+        \item Use all other samples $(n-1)$ as the training set
+        \item Train the model and evaluate on the single validation sample
+    \end{itemize}
+    \item Repeat this process $n$ times (once for each sample)
+    \item Average the performance across all $n$ experiments
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    box/.style={rectangle, draw, minimum width=7cm, minimum height=0.6cm},
+    val/.style={fill=gray!60},
+    train/.style={fill=white}
+]
+
+% Title
+\node[anchor=south] at (3.5, 3.5) {\small Total number of examples};
+\draw[<->] (0, 3.3) -- (7, 3.3);
+
+% Experiment 1
+\node[anchor=east, font=\small] at (-0.3, 2.5) {Experiment 1};
+\node[box, train] at (3.5, 2.5) {};
+\node[rectangle, draw, fill=gray!60, minimum width=0.3cm, minimum height=0.6cm] at (0.15, 2.5) {};
+
+% Experiment 2
+\node[anchor=east, font=\small] at (-0.3, 1.7) {Experiment 2};
+\node[box, train] at (3.5, 1.7) {};
+\node[rectangle, draw, fill=gray!60, minimum width=0.3cm, minimum height=0.6cm] at (0.45, 1.7) {};
+
+% Experiment 3
+\node[anchor=east, font=\small] at (-0.3, 0.9) {Experiment 3};
+\node[box, train] at (3.5, 0.9) {};
+\node[rectangle, draw, fill=gray!60, minimum width=0.3cm, minimum height=0.6cm] at (0.75, 0.9) {};
+
+% Dots
+\node at (3.5, 0.3) {$\vdots$};
+
+% Experiment N
+\node[anchor=east, font=\small] at (-0.3, -0.3) {Experiment N};
+\node[box, train] at (3.5, -0.3) {};
+\node[rectangle, draw, fill=gray!60, minimum width=0.3cm, minimum height=0.6cm] at (6.85, -0.3) {};
+
+% Arrow pointing to validation
+\draw[->, thick] (7.5, -0.3) -- (7.2, -0.3);
+\node[anchor=west, font=\small] at (7.6, -0.3) {Single validation example};
+
+\end{tikzpicture}
+\caption{Leave-One-Out Cross Validation: Each experiment uses exactly one sample for validation (gray) and all others for training (white)}
+\end{figure}
+
+\subsection{Pros and Cons of LOOCV}
+
+\subsubsection{Advantages}
+
+\begin{itemize}
+    \item \textbf{Best possible classifier}: The model is learned from $n-1$ training examples, which is the maximum possible training data
+    
+    \item \textbf{Maximizes training data}: Each model uses almost all available data for training
+    
+    \item \textbf{Unbiased estimate}: Provides a nearly unbiased estimate of model performance
+    
+    \item \textbf{Deterministic}: No randomness in the splitting process (every sample is used exactly once as validation)
+\end{itemize}
+
+\subsubsection{Disadvantages}
+
+\begin{itemize}
+    \item \textbf{High computational cost}: Must re-learn everything for $n$ times, where $n$ is the total number of samples
+    
+    \item \textbf{Time-consuming}: For large datasets, LOOCV becomes impractical
+    
+    \item \textbf{High variance}: Performance estimates can have high variance, especially with small datasets
+\end{itemize}
+
+\begin{remark}
+LOOCV is most appropriate when:
+\begin{itemize}
+    \item The dataset is very small (e.g., $n < 50$)
+    \item Computational resources are available
+    \item You need the most accurate performance estimate possible
+\end{itemize}
+
+For larger datasets, standard k-fold cross validation (with $k = 5$ or $k = 10$) is typically preferred due to its better balance between computational cost and performance estimation accuracy.
+\end{remark}
+
+\section{Stratification in Cross Validation}
+
+\subsection{The Problem: Imbalanced Classes}
+
+In many real-world datasets, class labels are not evenly distributed. For example, in a medical diagnosis dataset, healthy patients might vastly outnumber sick patients. When performing cross validation on such imbalanced datasets, random splitting can lead to folds with very different class distributions.
+
+\subsection{What is Stratification?}
+
+\begin{definition}[Stratification]
+Stratification is a technique to keep class labels \textbf{balanced across training and validation sets} during cross validation. Instead of randomly dividing the dataset, we ensure that each fold maintains approximately the same proportion of samples for each class as the complete dataset.
+\end{definition}
+
+\subsection{How Stratified K-Fold Works}
+
+The stratification process works as follows:
+
+\begin{enumerate}
+    \item \textbf{Divide by class}: Instead of taking the dataset and dividing it randomly into $K$ parts, take the dataset and divide it into individual classes
+    
+    \item \textbf{Split each class}: Then for each class, divide the instances into $K$ parts
+    
+    \item \textbf{Assemble folds}: Assemble the $i$-th part from all classes to make the $i$-th fold
+    
+    \item \textbf{Important}: It is still random! The splitting within each class is random, but the proportions are maintained
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+
+% Title
+\node[font=\Large\bfseries] at (4, 7.8) {StratifiedKFold};
+
+% Y-axis label
+\node[rotate=90, font=\large] at (-1.3, 3.5) {Sample index};
+
+% X-axis label
+\node[font=\large] at (4, -1.2) {CV iteration};
+
+% Column labels
+\node[font=\normalsize] at (0.4, -0.5) {class};
+\node[font=\normalsize] at (1.5, -0.5) {1};
+\node[font=\normalsize] at (2.5, -0.5) {2};
+\node[font=\normalsize] at (3.5, -0.5) {3};
+\node[font=\normalsize] at (4.5, -0.5) {4};
+\node[font=\normalsize] at (5.5, -0.5) {5};
+
+% Class column (first column) - 3 colors
+\fill[cyan!40] (0, 0) rectangle (0.8, 2.3);
+\fill[orange!60] (0, 2.3) rectangle (0.8, 5);
+\fill[brown!70] (0, 5) rectangle (0.8, 7);
+
+% Fold 1
+\fill[blue!60] (1.2, 0) rectangle (1.8, 3.1);
+\fill[red!60] (1.2, 3.1) rectangle (1.8, 3.4);
+\fill[blue!60] (1.2, 3.4) rectangle (1.8, 6);
+\fill[red!60] (1.2, 6) rectangle (1.8, 7);
+
+% Fold 2
+\fill[blue!60] (2.2, 0) rectangle (2.8, 1);
+\fill[red!60] (2.2, 1) rectangle (2.8, 1.2);
+\fill[blue!60] (2.2, 1.2) rectangle (2.8, 2.3);
+\fill[red!60] (2.2, 2.3) rectangle (2.8, 2.6);
+\fill[blue!60] (2.2, 2.6) rectangle (2.8, 4);
+\fill[red!60] (2.2, 4) rectangle (2.8, 5.1);
+\fill[blue!60] (2.2, 5.1) rectangle (2.8, 7);
+
+% Fold 3
+\fill[blue!60] (3.2, 0) rectangle (3.8, 1.2);
+\fill[red!60] (3.2, 1.2) rectangle (3.8, 1.4);
+\fill[blue!60] (3.2, 1.4) rectangle (3.8, 3.4);
+\fill[red!60] (3.2, 3.4) rectangle (3.8, 3.7);
+\fill[blue!60] (3.2, 3.7) rectangle (3.8, 4.7);
+\fill[red!60] (3.2, 4.7) rectangle (3.8, 6.1);
+\fill[blue!60] (3.2, 6.1) rectangle (3.8, 7);
+
+% Fold 4
+\fill[blue!60] (4.2, 0) rectangle (4.8, 1.2);
+\fill[red!60] (4.2, 1.2) rectangle (4.8, 1.4);
+\fill[blue!60] (4.2, 1.4) rectangle (4.8, 2.4);
+\fill[red!60] (4.2, 2.4) rectangle (4.8, 2.7);
+\fill[blue!60] (4.2, 2.7) rectangle (4.8, 3.7);
+\fill[red!60] (4.2, 3.7) rectangle (4.8, 4);
+\fill[blue!60] (4.2, 4) rectangle (4.8, 5);
+\fill[red!60] (4.2, 5) rectangle (4.8, 6.1);
+\fill[blue!60] (4.2, 6.1) rectangle (4.8, 7);
+
+% Fold 5
+\fill[blue!60] (5.2, 0) rectangle (5.8, 1.2);
+\fill[red!60] (5.2, 1.2) rectangle (5.8, 1.5);
+\fill[blue!60] (5.2, 1.5) rectangle (5.8, 2.7);
+\fill[red!60] (5.2, 2.7) rectangle (5.8, 3.1);
+\fill[blue!60] (5.2, 3.1) rectangle (5.8, 3.7);
+\fill[red!60] (5.2, 3.7) rectangle (5.8, 4.1);
+\fill[blue!60] (5.2, 4.1) rectangle (5.8, 4.7);
+\fill[red!60] (5.2, 4.7) rectangle (5.8, 6.1);
+\fill[blue!60] (5.2, 6.1) rectangle (5.8, 7);
+
+% Draw borders for all columns
+\draw[thick] (0, 0) rectangle (0.8, 7);
+\draw[thick] (1.2, 0) rectangle (1.8, 7);
+\draw[thick] (2.2, 0) rectangle (2.8, 7);
+\draw[thick] (3.2, 0) rectangle (3.8, 7);
+\draw[thick] (4.2, 0) rectangle (4.8, 7);
+\draw[thick] (5.2, 0) rectangle (5.8, 7);
+
+% Legend
+\node[rectangle, fill=red!60, draw, minimum width=0.6cm, minimum height=0.4cm] at (7.5, 6) {};
+\node[anchor=west, font=\normalsize] at (8.1, 6) {Validation};
+
+\node[rectangle, fill=blue!60, draw, minimum width=0.6cm, minimum height=0.4cm] at (7.5, 5.2) {};
+\node[anchor=west, font=\normalsize] at (8.1, 5.2) {Training set};
+
+\end{tikzpicture}
+\caption{Stratified K-Fold: Each fold maintains the same class proportions across all folds}
+\end{figure}
+
+\subsection{Example: Stratified 5-Fold Cross Validation}
+
+Let's consider a concrete scenario with an imbalanced dataset containing 300 samples, divided into three classes (A, B, and C), where Class A has more samples than the other two.
+
+\subsubsection{Imbalanced Dataset}
+
+\begin{itemize}
+    \item \textbf{Class A}: 200 samples (66.7\%)
+    \item \textbf{Class B}: 50 samples (16.7\%)
+    \item \textbf{Class C}: 50 samples (16.7\%)
+    \item \textbf{Total}: 300 samples
+\end{itemize}
+
+\subsubsection{Split the Dataset into Five Folds with Stratification}
+
+Each fold will have 60 samples total, maintaining the class proportions:
+
+\begin{itemize}
+    \item \textbf{Fold 1}: 60 samples (Class A: 40, Class B: 10, Class C: 10)
+    \item \textbf{Fold 2}: 60 samples (Class A: 40, Class B: 10, Class C: 10)
+    \item \textbf{Fold 3}: 60 samples (Class A: 40, Class B: 10, Class C: 10)
+    \item \textbf{Fold 4}: 60 samples (Class A: 40, Class B: 10, Class C: 10)
+    \item \textbf{Fold 5}: 60 samples (Class A: 40, Class B: 10, Class C: 10)
+\end{itemize}
+
+Notice that each fold maintains the same 66.7\%-16.7\%-16.7\% class distribution as the original dataset.
+
+\subsubsection{Train and Validate}
+
+The cross-validation process proceeds as follows:
+
+\begin{enumerate}
+    \item \textbf{Iteration 1}: Train on Folds 1, 2, 3, and 4, Validate on Fold 5
+    \item \textbf{Iteration 2}: Train on Folds 2, 3, 4, and 5, Validate on Fold 1
+    \item \textbf{Iteration 3}: Train on Folds 1, 3, 4, and 5, Validate on Fold 2
+    \item \textbf{Iteration 4}: Train on Folds 1, 2, 4, and 5, Validate on Fold 3
+    \item \textbf{Iteration 5}: Train on Folds 1, 2, 3, and 5, Validate on Fold 4
+\end{enumerate}
+
+\subsubsection{Average the Performance Metrics}
+
+\begin{itemize}
+    \item Calculate performance metrics for each iteration
+    \item Average these metrics to evaluate the model's performance robustly
+\end{itemize}
+
+\subsection{Why Stratification Matters}
+
+\begin{itemize}
+    \item \textbf{Prevents biased folds}: Without stratification, some folds might have very few (or no) examples of minority classes
+    
+    \item \textbf{Consistent evaluation}: Each fold represents the overall dataset distribution, leading to more reliable performance estimates
+    
+    \item \textbf{Better for imbalanced datasets}: Particularly important when dealing with class imbalance
+    
+    \item \textbf{Reduces variance}: Performance estimates have lower variance across folds
+\end{itemize}
+
+\begin{remark}
+\textbf{When to use stratification}:
+\begin{itemize}
+    \item Always use stratification for classification problems with imbalanced classes
+    \item It's generally a good practice even for balanced datasets
+    \item Most machine learning libraries (e.g., scikit-learn) provide stratified cross-validation functions
+    \item For regression problems, stratification is not applicable (since there are no discrete classes)
+\end{itemize}
+\end{remark}
+
+\begin{observation}
+Stratification ensures that:
+\begin{itemize}
+    \item Each fold is a good representative of the whole dataset
+    \item Minority classes are adequately represented in both training and validation sets
+    \item Performance metrics are more stable and reliable across folds
+    \item The model sees a balanced distribution of classes during each training iteration
+\end{itemize}
+\end{observation}
+
+\section{Evaluation Measures}
+
+Once we have trained our models and performed cross-validation, we need to evaluate their performance. Different tasks require different evaluation metrics.
+
+\subsection{Why Do We Need Evaluation Measures?}
+
+Evaluation measures serve two primary purposes:
+
+\begin{enumerate}
+    \item \textbf{To decide if our model is performing well}: Assess whether the model meets the requirements for the task
+    
+    \item \textbf{To decide out of many models, which one performs better than the other}: Compare different models and select the best one for deployment
+\end{enumerate}
+
+\subsection{Evaluation Measures by Task Type}
+
+Different machine learning tasks require different evaluation approaches:
+
+\subsubsection{Classification}
+
+\textbf{Question}: How often does our model classify something right/wrong?
+
+Classification metrics measure the correctness of predictions, focusing on whether the predicted class matches the actual class.
+
+\subsubsection{Regression}
+
+\textbf{Question}: How close is our model to what we are trying to predict?
+
+Regression metrics measure the distance or error between predicted continuous values and actual values.
+
+\subsubsection{Clustering}
+
+\textbf{Question}: How well does our model describe our data?
+
+Clustering evaluation is generally very hard because there's often no ground truth to compare against. Metrics must assess the quality of discovered patterns.
+
+\section{Evaluation Measures for Classification}
+
+\subsection{Types of Classification Problems}
+
+A classification model takes a set of features as input and produces one or more classes as output.
+
+\begin{definition}[Classification Types]
+Classification can be categorized into different types based on the number of classes:
+
+\begin{itemize}
+    \item \textbf{Binary Classification}: In the case of two classes (0/1) or one vs rest (e.g., apples vs other fruits)
+    
+    \item \textbf{Multi-class Classification}: In the case of having $N$ classes to choose from (e.g., cat, dog, wolf, etc.)
+    
+    \item \textbf{Multi-label Classification}: A problem where an example can belong to multiple classes simultaneously
+\end{itemize}
+\end{definition}
+
+\subsection{The Confusion Matrix}
+
+The confusion matrix is a fundamental tool for evaluating binary classification models. It provides a complete picture of how the model performs across different types of predictions.
+
+\subsubsection{Confusion Matrix for Binary Classification}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    cell/.style={rectangle, draw, thick, minimum width=3.5cm, minimum height=2.2cm, align=center, font=\normalsize},
+    header/.style={rectangle, draw, thick, fill=gray!50, align=center, font=\bfseries}
+]
+
+% Top header - Predicted Label
+\node[font=\Large\bfseries] at (4, 4.5) {Predicted Label};
+
+% Column headers (horizontal text)
+\node[header, minimum width=3.5cm, minimum height=1cm] at (2, 3.5) {\textcolor{blue!70}{Positive}};
+\node[header, minimum width=3.5cm, minimum height=1cm] at (6, 3.5) {\textcolor{green!60!black}{Negative}};
+
+% Left header - Actual Label
+\node[font=\Large\bfseries, rotate=90] at (-2.5, 0.85) {Actual Label};
+
+% Row headers (vertical text)
+\node[header, minimum width=2.2cm, minimum height=1.2cm, rotate=90] at (-0.5, 2) {\textcolor{blue!70}{Positive}};
+\node[header, minimum width=2.2cm, minimum height=1.2cm, rotate=90] at (-0.5, -0.3) {\textcolor{green!60!black}{Negative}};
+
+% Matrix cells (all same size)
+\node[cell, fill=cyan!40] at (2, 2) {TRUE POSITIVE\\[0.3cm]\textbf{TP}};
+\node[cell, fill=yellow!40] at (6, 2) {FALSE NEGATIVE\\[0.3cm]\textbf{FN}};
+\node[cell, fill=pink!40] at (2, -0.3) {FALSE POSITIVE\\[0.3cm]\textbf{FP}};
+\node[cell, fill=green!30] at (6, -0.3) {TRUE NEGATIVE\\[0.3cm]\textbf{TN}};
+
+% Note box
+\node[anchor=west, align=left, font=\small, text=red!70!black, draw, thick, rounded corners, fill=red!5, inner sep=8pt] at (8.5, 0.85) {
+    \textit{We want to have}\\[0.1cm]
+    \textit{large values in}\\[0.1cm]
+    \textbf{TP and TN}\\[0.1cm]
+    \textit{while smaller}\\[0.1cm]
+    \textit{values in}\\[0.1cm]
+    \textbf{FP and FN}
+};
+
+\end{tikzpicture}
+\caption{Confusion Matrix for Binary Classification}
+\end{figure}
+
+\subsubsection{Understanding the Confusion Matrix}
+
+The confusion matrix has four components:
+
+\begin{itemize}
+    \item \textbf{True Positive (TP)}: The model correctly predicted the positive class
+    \begin{itemize}
+        \item Actual label: Positive
+        \item Predicted label: Positive
+        \item \textcolor{blue!70}{Good prediction!}
+    \end{itemize}
+    
+    \item \textbf{True Negative (TN)}: The model correctly predicted the negative class
+    \begin{itemize}
+        \item Actual label: Negative
+        \item Predicted label: Negative
+        \item \textcolor{green!60!black}{Good prediction!}
+    \end{itemize}
+    
+    \item \textbf{False Positive (FP)}: The model incorrectly predicted positive (Type I error)
+    \begin{itemize}
+        \item Actual label: Negative
+        \item Predicted label: Positive
+        \item \textcolor{red}{Bad prediction!} (False alarm)
+    \end{itemize}
+    
+    \item \textbf{False Negative (FN)}: The model incorrectly predicted negative (Type II error)
+    \begin{itemize}
+        \item Actual label: Positive
+        \item Predicted label: Negative
+        \item \textcolor{red}{Bad prediction!} (Missed detection)
+    \end{itemize}
+\end{itemize}
+
+\begin{remark}
+\textbf{Goal}: We want to maximize TP and TN (correct predictions) while minimizing FP and FN (incorrect predictions).
+\end{remark}
+
+\subsection{Classification Error and Accuracy}
+
+From the confusion matrix, we can derive several important metrics.
+
+\subsubsection{Classification Error}
+
+\begin{definition}[Classification Error]
+The classification error (also called misclassification rate) measures the proportion of incorrect predictions:
+
+\[
+\text{Classification Error} = \frac{FP + FN}{TP + TN + FP + FN}
+\]
+
+This represents the fraction of all predictions that were wrong.
+\end{definition}
+
+\subsubsection{Accuracy}
+
+\begin{definition}[Accuracy]
+Accuracy measures the proportion of correct predictions:
+
+\[
+\text{Accuracy} = 1 - \text{Error} = \frac{TP + TN}{TP + TN + FP + FN}
+\]
+
+This represents the fraction of all predictions that were correct.
+\end{definition}
+
+\subsection{The Problem with Accuracy: Imbalanced Classes}
+
+While accuracy is a basic measure of "goodness" of a classifier, it can be very misleading when dealing with imbalanced classes.
+
+\begin{center}
+\colorbox{red!20}{\parbox{0.9\textwidth}{
+\centering
+\textbf{ATTENTION!}\\[0.2cm]
+Accuracy is \textbf{very misleading} if we have \textbf{imbalanced classes}
+}}
+\end{center}
+
+\subsubsection{Example: The Imbalanced Dataset Problem}
+
+Consider a dataset with severe class imbalance:
+\begin{itemize}
+    \item 90 samples for class "NO"
+    \item 10 samples for class "YES"
+\end{itemize}
+
+\textbf{Naive Strategy}: A trivial classifier that predicts "NO" for every sample would achieve:
+\[
+\text{Accuracy} = \frac{90}{100} = 90\%
+\]
+
+\textbf{The Problem}: Despite having 90\% accuracy, this model is completely useless! It cannot classify any data belonging to the "YES" class. The model has learned nothing meaningful about the data.
+
+\begin{observation}
+This example illustrates why accuracy alone is insufficient for evaluating classifiers, especially with imbalanced datasets. We need additional metrics that provide a more nuanced view of model performance across all classes.
+\end{observation}
+
+\begin{remark}
+When dealing with imbalanced datasets, always consider:
+\begin{itemize}
+    \item Using stratified cross-validation
+    \item Examining the confusion matrix in detail
+    \item Using additional metrics beyond accuracy (precision, recall, F1-score)
+    \item Considering class-specific performance
+    \item Using techniques like oversampling, undersampling, or class weights
+\end{itemize}
+\end{remark}
+
+\subsection{Misses and False Alarms}
+
+Beyond accuracy, we need more specific metrics to understand model performance. These metrics focus on different aspects of classification errors.
+
+\subsubsection{False Alarm Rate (False Positive Rate)}
+
+\begin{definition}
+\textbf{False Alarm Rate} = \textbf{False Positive Rate} = $\frac{\text{FP}}{\text{FP} + \text{TN}}$
+
+This represents the \textit{percentage of negative samples we misclassified as positive}.
+\end{definition}
+
+\subsubsection{Miss Rate (False Negative Rate)}
+
+\begin{definition}
+\textbf{Miss Rate} = \textbf{False Negative Rate} = $\frac{\text{FN}}{\text{TP} + \text{FN}}$
+
+This represents the \textit{percentage of positive samples we misclassified as negative}.
+\end{definition}
+
+\subsubsection{Recall (True Positive Rate)}
+
+\begin{definition}
+\textbf{Recall} = \textbf{True Positive Rate} = $\frac{\text{TP}}{\text{TP} + \text{FN}}$
+
+This represents the \textit{percentage of positive samples we classified correctly}. 
+
+It is also known as \textbf{Sensitivity} and can be expressed as: Recall = 1 - Miss Rate
+\end{definition}
+
+\begin{observation}
+Recall answers the question: "Of all the actual positive cases, how many did we identify?"
+\end{observation}
+
+\subsubsection{Precision}
+
+\begin{definition}
+\textbf{Precision} = $\frac{\text{TP}}{\text{TP} + \text{FP}}$
+
+This represents the \textit{percentage positive out of what we predicted was positive}.
+\end{definition}
+
+\begin{observation}
+Precision answers the question: "Of all the cases we predicted as positive, how many were actually positive?"
+\end{observation}
+
+\subsection{Cost of the Task}
+
+In practice, we typically do not use evaluation metrics like accuracy, recall, or precision alone. Instead, we declare a combination of them together based on the specific requirements of the task.
+
+\subsubsection{The Need for a Single Evaluation Measure}
+
+\begin{itemize}
+    \item In order to optimize a learner automatically (i.e., during training), we need a \textbf{single evaluation measure}
+    \item How do we decide that single metric?
+    \begin{itemize}
+        \item \textbf{Domain specific!} – It depends on the task
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Weighting Errors by Cost}
+
+Depending on the \textbf{cost of the task}, we can decide whether we take care more about having:
+\begin{itemize}
+    \item \textit{Less false positives}, or
+    \item \textit{Less false negatives}
+\end{itemize}
+
+This is achieved through weighting them:
+
+\begin{equation}
+\text{Cost} = C_{\text{FP}} \cdot \text{FP} + C_{\text{FN}} \cdot \text{FN}
+\end{equation}
+
+where $C_{\text{FP}}$ and $C_{\text{FN}}$ are the costs associated with false positives and false negatives, respectively.
+
+\begin{example}
+\textbf{Medical Diagnosis (Cancer Detection)}:
+\begin{itemize}
+    \item False Negative (missing a cancer diagnosis): Very high cost – patient doesn't receive treatment
+    \item False Positive (false alarm): Lower cost – patient undergoes additional tests
+    \item Therefore: $C_{\text{FN}} \gg C_{\text{FP}}$, we prioritize high recall
+\end{itemize}
+\end{example}
+
+\begin{example}
+\textbf{Spam Email Filter}:
+\begin{itemize}
+    \item False Positive (marking important email as spam): High cost – user misses important messages
+    \item False Negative (spam gets through): Lower cost – minor annoyance
+    \item Therefore: $C_{\text{FP}} > C_{\text{FN}}$, we prioritize high precision
+\end{itemize}
+\end{example}
+
+\subsection{F-Measure (F1 Score)}
+
+The F-measure combines precision and recall into a single metric, providing a balance between the two.
+
+\begin{definition}
+The \textbf{F1 Score} is the harmonic mean of precision and recall:
+
+\begin{equation}
+F_1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{equation}
+\end{definition}
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.8\textwidth}{
+\centering
+\textit{Harmonic mean of precision and recall}\\[0.1cm]
+One of the most frequently used metrics in machine learning
+}}
+\end{center}
+
+\subsubsection{Properties of F1 Score}
+
+\begin{itemize}
+    \item \textbf{(+)} If you do some mathematics, you will see that the F1 measure is sort of an accuracy without TN
+    \item \textbf{(+)} Used frequently in information retrieval systems
+    \item \textbf{(+)} Provides a single number that balances precision and recall
+    \item \textbf{Range}: $F_1 \in [0, 1]$, where 1 is perfect and 0 is the worst
+\end{itemize}
+
+\begin{remark}
+The harmonic mean (used in F1) is always less than or equal to the arithmetic mean. This means F1 score gives more weight to the lower value between precision and recall, ensuring both metrics need to be reasonably high for a good F1 score.
+\end{remark}
+
+\subsubsection{Generalized F-Measure}
+
+The F1 score can be generalized to $F_\beta$ score, which allows adjusting the relative importance of precision and recall:
+
+\begin{equation}
+F_\beta = (1 + \beta^2) \cdot \frac{\text{Precision} \times \text{Recall}}{\beta^2 \cdot \text{Precision} + \text{Recall}}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $\beta < 1$: Emphasizes precision
+    \item $\beta > 1$: Emphasizes recall
+    \item $\beta = 1$: Equal weight (standard F1 score)
+\end{itemize}
+
+\subsection{Multiclass Classification -- Evaluation}
+
+For multiclass classification problems (more than two classes), we need to extend our evaluation metrics.
+
+\subsubsection{Multiclass Confusion Matrix}
+
+\begin{itemize}
+    \item $n_{ij}$ is the number of examples with actual label (true label) $y_i$ and predicted label $y_j$
+    \item The \textbf{main diagonal} contains true positives for each class
+    \item The \textbf{sum of off-diagonal elements along a column} is the number of false positives for the column label
+    \item The \textbf{sum of off-diagonal elements along a row} is the number of false negatives for the row label
+\end{itemize}
+
+\subsubsection{Multiclass Metrics}
+
+For each class $i$, we can compute:
+
+\begin{equation}
+FP_i = \sum_{j \neq i} n_{ji} \quad \quad FN_i = \sum_{j \neq i} n_{ij}
+\end{equation}
+
+\begin{equation}
+\text{Precision}_i = \frac{n_{ii}}{n_{ii} + FP_i} \quad \quad \text{Recall}_i = \frac{n_{ii}}{n_{ii} + FN_i}
+\end{equation}
+
+\begin{equation}
+\text{Multiclass Accuracy (MAcc)} = \frac{\sum_i n_{ii}}{\sum_i \sum_j n_{ij}}
+\end{equation}
+
+\subsubsection{Macro vs. Micro Averaging}
+
+When reporting overall metrics for multiclass problems, we have two main approaches:
+
+\begin{itemize}
+    \item \textbf{Macro-averaging}: Compute metric for each class independently, then take the average
+    \begin{equation}
+    \text{Macro-Precision} = \frac{1}{C} \sum_{i=1}^{C} \text{Precision}_i
+    \end{equation}
+    This gives equal weight to each class regardless of size
+    
+    \item \textbf{Micro-averaging}: Aggregate the contributions of all classes to compute the average metric
+    \begin{equation}
+    \text{Micro-Precision} = \frac{\sum_i TP_i}{\sum_i (TP_i + FP_i)}
+    \end{equation}
+    This gives equal weight to each sample
+\end{itemize}
+
+\subsection{ROC Curve -- Receiver Operating Characteristic}
+
+The ROC curve is a powerful tool for evaluating and comparing binary classifiers, especially when the decision threshold can be varied.
+
+\subsubsection{What is the ROC Curve?}
+
+The \textbf{ROC curve} is a graphical plot that illustrates the diagnostic ability of a binary classifier as its discrimination threshold is varied.
+
+\begin{itemize}
+    \item \textbf{X-axis}: False Positive Rate (FPR) = $\frac{FP}{FP + TN}$
+    \item \textbf{Y-axis}: True Positive Rate (TPR) = Recall = $\frac{TP}{TP + FN}$
+\end{itemize}
+
+\subsubsection{Uses of ROC Curves}
+
+The ROC curve allows us to:
+\begin{itemize}
+    \item \textbf{Compare different classifiers}: Different models can be plotted on the same ROC space
+    \item \textbf{Estimate the false positive rate / negative rate depending on the thresholds} that we set to classify
+    \item Visualize the trade-off between sensitivity (recall) and specificity
+\end{itemize}
+
+\subsubsection{Understanding the ROC Space}
+
+\begin{itemize}
+    \item \textbf{Perfect Classifier}: A point at (0, 1) – 100\% TPR, 0\% FPR
+    \item \textbf{Random Classifier}: Lies on the diagonal line from (0,0) to (1,1)
+    \item \textbf{Better Classifiers}: Curves that bow toward the upper left corner
+    \item \textbf{Worse Classifiers}: Curves below the diagonal (worse than random guessing)
+\end{itemize}
+
+\subsubsection{Area Under the ROC Curve (AUC)}
+
+\begin{definition}
+The \textbf{Area Under the ROC Curve (AUC)} is a single scalar value that summarizes the performance of a classifier across all possible thresholds.
+
+\begin{equation}
+\text{AUC} \in [0, 1]
+\end{equation}
+\end{definition}
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.85\textwidth}{
+\centering
+\textbf{Goal:} Maximize the Area Under the ROC Curve (AUC)
+}}
+\end{center}
+
+\subsubsection{Interpreting AUC Values}
+
+\begin{itemize}
+    \item \textbf{AUC = 1.0}: Perfect classifier
+    \item \textbf{AUC = 0.9 - 1.0}: Excellent
+    \item \textbf{AUC = 0.8 - 0.9}: Good
+    \item \textbf{AUC = 0.7 - 0.8}: Fair
+    \item \textbf{AUC = 0.6 - 0.7}: Poor
+    \item \textbf{AUC = 0.5}: No better than random guessing
+    \item \textbf{AUC < 0.5}: Worse than random (predictions are inverted)
+\end{itemize}
+
+\begin{observation}
+The AUC can be interpreted as the probability that the classifier will rank a randomly chosen positive instance higher than a randomly chosen negative instance.
+\end{observation}
+
+\subsubsection{Advantages of ROC and AUC}
+
+\begin{itemize}
+    \item \textbf{Threshold-independent}: Evaluates the model across all possible thresholds
+    \item \textbf{Class imbalance robust}: Unlike accuracy, AUC is less sensitive to class imbalance
+    \item \textbf{Single metric}: Provides a single value for model comparison
+    \item \textbf{Visual interpretation}: The ROC curve provides intuitive visualization of classifier performance
+\end{itemize}
 
 \end{document}
