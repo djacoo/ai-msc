@@ -62,48 +62,6 @@ AI---PRIMO-SEMESTRE/
 
 ---
 
-<div align="center">
-
-## 📚 Course Overview
-
-<table>
-<tr>
-<td align="center" width="20%">
-<img src="https://img.shields.io/badge/🤖-Automated_Reasoning-f093fb?style=for-the-badge&labelColor=764ba2" alt="AR"/>
-<br/><br/>
-<b>5 Slides</b><br/>
-<sub>Logic & Theorem Proving</sub>
-</td>
-<td align="center" width="20%">
-<img src="https://img.shields.io/badge/💬-Natural_Language_Processing-4facfe?style=for-the-badge&labelColor=00f2fe" alt="NLP"/>
-<br/><br/>
-<b>16 Slides • 500+ Pages</b><br/>
-<sub>3 Parts • 17 Sections</sub>
-</td>
-<td align="center" width="20%">
-<img src="https://img.shields.io/badge/🎯-Planning_&_RL-43e97b?style=for-the-badge&labelColor=38f9d7" alt="Planning"/>
-<br/><br/>
-<b>6 Slides • 23 Pages</b><br/>
-<sub>Classical Planning</sub>
-</td>
-<td align="center" width="20%">
-<img src="https://img.shields.io/badge/🧠-Machine_Learning_&_DL-FF6B6B?style=for-the-badge&labelColor=C44569" alt="ML&DL"/>
-<br/><br/>
-<b>1 Slide • 20 Pages</b><br/>
-<sub>ML Foundations</sub>
-</td>
-<td align="center" width="20%">
-<img src="https://img.shields.io/badge/👁️-Human_Computer_Interaction-fa709a?style=for-the-badge&labelColor=fee140" alt="HCI"/>
-<br/><br/>
-<b>Multiple Slides</b><br/>
-<sub>Multimodal Systems</sub>
-</td>
-</tr>
-</table>
-
-</div>
-
-<br/>
 <a name="courses"></a>
 
 <table>
