@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=venom&color=0:4FC3F7,100:81D4FA&height=300&section=header&text=AI%20Master's%20Degree&fontSize=50&fontColor=000&fontAlignY=35&desc=First%20Semester%202025/2026&descAlignY=51&descAlign=50" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=venom&color=0:4FC3F7,100:81D4FA&height=300&section=header&text=AI%20Master's%20Degree&fontSize=50&fontColor=000&fontAlignY=35&desc=2025/2026&descAlignY=51&descAlign=50" width="100%"/>
 
 <br/>
 
