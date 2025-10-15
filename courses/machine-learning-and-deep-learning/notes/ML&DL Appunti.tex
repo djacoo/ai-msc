@@ -145,6 +145,14 @@ The fundamental difference between conventional programming and machine learning
 
 \subsection{The Machine Learning Recipe}
 
+\begin{center}
+\colorbox{blue!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{The 4 Fundamental Steps of ML}\\[0.2cm]
+Collect data $\rightarrow$ Define models $\rightarrow$ Define objective function $\rightarrow$ Minimize error
+}}
+\end{center}
+
 The ML recipe consists of 4 fundamental steps:
 \begin{enumerate}
     \item Collect data
@@ -154,6 +162,14 @@ The ML recipe consists of 4 fundamental steps:
 \end{enumerate}
 
 \subsubsection{The Key Ingredients}
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.85\textwidth}{
+\centering
+\textbf{5 Essential Ingredients}\\[0.2cm]
+Task • Data • Model • Objective Function • Learning Algorithm
+}}
+\end{center}
 
 Every machine learning problem requires five essential ingredients:
 \begin{itemize}
@@ -319,9 +335,13 @@ A dataset is typically divided into three subsets:
 \end{itemize}
 \end{definition}
 
-\begin{remark}
-\textbf{Critical requirement}: All three sets (training, validation, and test) should be sampled from the \textbf{same probability distribution}. This ensures that the model's performance on the test set is a reliable indicator of its performance on new, unseen data.
-\end{remark}
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Critical Requirement}\\[0.2cm]
+All three sets (training, validation, test) must be sampled from the \textbf{same probability distribution}
+}}
+\end{center}
 
 \subsection{How to Use the Three Sets}
 
@@ -370,9 +390,14 @@ When training/validation and test sets come from \textbf{different distributions
 
 \textbf{Example}: Training on apples and bananas, but testing on oranges and limes. The model cannot classify fruits it has never seen during training.
 
-\begin{remark}
-\textbf{Key principle}: The fundamental assumption in machine learning is that training and test data come from the same distribution. Violating this assumption leads to poor generalization and unreliable models.
-\end{remark}
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Principle}\\[0.2cm]
+Training and test data must come from the \textbf{same distribution}\\[0.1cm]
+Violating this leads to poor generalization
+}}
+\end{center}
 
 \section{Training and Testing: The Role of Features}
 
@@ -396,9 +421,14 @@ Once trained, the model can classify new examples based on the same features it 
 
 \textbf{Example}: Given a new fruit with features \textit{red, round, no leaf, 4oz, ...}, the model uses the learned patterns to predict whether it is an apple or a banana.
 
-\begin{remark}
-\textbf{Critical assumption}: The features of the training and testing data must be the same! The model can only make predictions based on the features it was trained on. If the test data uses different features or feature representations, the model cannot function properly.
-\end{remark}
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Critical Assumption}\\[0.2cm]
+The features of training and testing data \textbf{must be the same!}\\[0.1cm]
+The model can only make predictions based on features it was trained on
+}}
+\end{center}
 
 \subsection{Learning and Generalization}
 
@@ -408,9 +438,13 @@ However, the failure of a machine learning algorithm is often caused by a \textb
 
 \textbf{Example}: Consider a model trained to recognize objects in images. If all training images were captured on sunny days, the model might learn to associate sunny weather conditions with the objects. When tested on images taken on cloudy days, the model might fail to recognize the same objects because it never encountered cloudy conditions during training. The model incorrectly learned that sunny weather is a relevant feature for object recognition.
 
-\begin{observation}
-The quality and diversity of training data are crucial. Training data should be representative of all conditions the model will encounter in real-world applications, avoiding spurious correlations that lead to poor generalization.
-\end{observation}
+\begin{center}
+\colorbox{blue!10}{\parbox{0.85\textwidth}{
+\centering
+\textit{Quality and diversity of training data are crucial}\\[0.1cm]
+Training data should be representative of all real-world conditions
+}}
+\end{center}
 
 \section{The Complete Machine Learning Recipe}
 
@@ -780,16 +814,26 @@ The learning algorithm's goal is to find the parameters $w$ that minimize this e
 w^* = \arg\min_{w \in \mathbb{R}^{M+1}} E(f_w; \mathcal{D}_n)
 \]
 
-\begin{observation}
-The choice of polynomial degree $M$ is crucial:
+\begin{center}
+\colorbox{cyan!10}{\parbox{0.9\textwidth}{
+\textbf{Choice of Model Complexity is Crucial:}
 \begin{itemize}
-    \item Too small $M$ (e.g., $M=0$ or $M=1$): The model is too simple and cannot capture the sinusoidal pattern (\textbf{underfitting})
-    \item Appropriate $M$ (e.g., $M=2$ or $M=3$): The model captures the underlying pattern well
-    \item Too large $M$: The model fits the noise in the training data and doesn't generalize well (\textbf{overfitting})
+    \item Too small $M$: Underfitting (cannot capture pattern)
+    \item Appropriate $M$: Good fit (captures underlying pattern)
+    \item Too large $M$: Overfitting (fits noise, poor generalization)
 \end{itemize}
-\end{observation}
+}}
+\end{center}
 
 \section{Underfitting and Overfitting}
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Two Fundamental Problems in ML}\\[0.2cm]
+Underfitting (too simple) $\leftrightarrow$ Overfitting (too complex)
+}}
+\end{center}
 
 Two fundamental problems can occur when training machine learning models: underfitting and overfitting. Understanding these concepts is crucial for building models that generalize well.
 
@@ -983,11 +1027,24 @@ The error plot shows:
     \item The optimal model complexity is where the validation error is minimized
 \end{itemize}
 
-\begin{remark}
-The key insight is that minimizing training error alone is not sufficient. We must monitor validation/test error to ensure the model generalizes well to new data. The best model is the one that balances fitting the training data with generalizing to unseen data.
-\end{remark}
+\begin{center}
+\colorbox{yellow!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Insight}\\[0.2cm]
+Minimizing training error alone is \textbf{not sufficient}\\[0.1cm]
+Must monitor validation/test error for generalization
+}}
+\end{center}
 
 \section{Regularization}
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.85\textwidth}{
+\centering
+\textbf{One of the Most Important Techniques in ML}\\[0.1cm]
+Prevents overfitting and improves generalization
+}}
+\end{center}
 
 Regularization is one of the most important techniques in machine learning to prevent overfitting and improve model generalization.
 
@@ -1186,9 +1243,13 @@ This means:
     \item \textbf{$n = 100$, $M = 9$}: With 100 training points, the same 9th-degree polynomial fits smoothly and generalizes well
 \end{itemize}
 
-\begin{observation}
-This illustrates why "get more data" is often the most effective solution to overfitting. With sufficient data, even complex models can learn to generalize well. However, collecting more data is not always feasible, which is why regularization and other techniques remain important.
-\end{observation}
+\begin{center}
+\colorbox{blue!10}{\parbox{0.9\textwidth}{
+\centering
+\textit{"Get more data" is often the most effective solution to overfitting}\\[0.1cm]
+With sufficient data, even complex models can generalize well
+}}
+\end{center}
 
 
 
@@ -2426,5 +2487,155 @@ The AUC can be interpreted as the probability that the classifier will rank a ra
     \item \textbf{Single metric}: Provides a single value for model comparison
     \item \textbf{Visual interpretation}: The ROC curve provides intuitive visualization of classifier performance
 \end{itemize}
+
+\section{Regression Evaluation Metrics}
+
+While classification tasks allow us to count correct and incorrect predictions, regression tasks require different evaluation approaches since we're predicting continuous values.
+
+\subsection{The Fundamental Difference}
+
+\begin{itemize}
+    \item \textbf{Classification}: We can count how often we are correct or wrong in our predictions
+    \item \textbf{Regression}: We cannot do that counting!
+    \begin{itemize}
+        \item Predicting $y_i$ (not discrete, continuous value) from inputs $x_i$
+        \item The question is not "\textit{how many times your method is wrong}" but "\textit{how much your method is wrong with respect to the groundtruth-labels}"
+    \end{itemize}
+\end{itemize}
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Difference}\\[0.2cm]
+Classification: Count errors $\leftrightarrow$ Regression: Measure error magnitude
+}}
+\end{center}
+
+\subsection{Mean Squared Error (MSE)}
+
+The Mean Squared Error is one of the most commonly used metrics for regression tasks.
+
+\begin{definition}[Mean Squared Error]
+\begin{equation}
+MSE(f) = \frac{1}{N} \sum_{i=1}^{N} (f(x_i) - y_i)^2
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $f$ is the model that takes a feature vector $x$ as input and generates a prediction $f(x_i)$
+    \item $i$, ranging from $1$ to $N$, denotes the index of a sample in the dataset
+    \item $y_i$ is the ground truth (actual value)
+\end{itemize}
+\end{definition}
+
+\subsubsection{Properties of MSE}
+
+\begin{itemize}
+    \item The sum of predictions minus real values over $N$ indicates the average
+    \item \textbf{Squaring} removes the negative sign and gives more weight to larger differences
+    \item \textbf{The lower the MSE, the better}
+    \item MSE is \textbf{influenced by outliers}, i.e., data values that are abnormally distant from the true regression line
+    \item MSE is \textbf{differentiable}, which makes it suitable for gradient-based optimization algorithms
+\end{itemize}
+
+\begin{observation}
+The squaring operation in MSE has two important effects:
+\begin{enumerate}
+    \item It ensures all errors are positive (no cancellation between positive and negative errors)
+    \item It penalizes large errors more heavily than small errors (quadratic penalty)
+\end{enumerate}
+\end{observation}
+
+\subsection{Mean Absolute Error (MAE)}
+
+The Mean Absolute Error provides an alternative way to measure regression performance.
+
+\begin{definition}[Mean Absolute Error]
+\begin{equation}
+MAE(f) = \frac{1}{N} \sum_{i=1}^{N} |f(x_i) - y_i|
+\end{equation}
+\end{definition}
+
+\subsubsection{Properties of MAE}
+
+\begin{itemize}
+    \item MAE is similar to MSE in that it returns absolute values of the residuals $f(x_i) - y_i$ without squaring
+    
+    \item It does not consider the direction of the error, which means we will not know whether negative or positive errors weigh more on the overall average
+    
+    \item \textbf{MAE is more robust to outliers} precisely due to the absence of squaring of distant forecast error values
+    
+    \item However, MAE is \textbf{not differentiable} at zero. It means that we cannot take the derivative of it, and taking derivatives is important if you want to build an algorithm that minimizes the function. Because of this, it is used a lot less than MSE.
+\end{itemize}
+
+\begin{center}
+\colorbox{cyan!10}{\parbox{0.9\textwidth}{
+\textbf{MSE vs MAE Comparison:}
+\begin{itemize}
+    \item \textbf{MSE}: Differentiable, penalizes large errors more, sensitive to outliers
+    \item \textbf{MAE}: Not differentiable at zero, treats all errors equally, robust to outliers
+\end{itemize}
+}}
+\end{center}
+
+\subsection{Choosing Between MSE and MAE}
+
+The choice between MSE and MAE depends on the specific requirements of your regression task:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|p{6cm}|p{6cm}|}
+\hline
+\textbf{Metric} & \multicolumn{1}{c|}{\textbf{Use When}} & \multicolumn{1}{c|}{\textbf{Avoid When}} \\
+\hline
+\textbf{MSE} & 
+\raggedright
+$\bullet$ Large errors are particularly undesirable\newline
+$\bullet$ You need gradient-based optimization\newline
+$\bullet$ Outliers should be heavily penalized
+& 
+\raggedright
+$\bullet$ Dataset contains many outliers\newline
+$\bullet$ All errors should be treated equally
+\tabularnewline
+\hline
+\textbf{MAE} & 
+\raggedright
+$\bullet$ Outliers are present in the data\newline
+$\bullet$ All errors should be weighted equally\newline
+$\bullet$ You want a more interpretable metric
+& 
+\raggedright
+$\bullet$ You need differentiability for optimization\newline
+$\bullet$ Large errors should be penalized more
+\tabularnewline
+\hline
+\end{tabular}
+\caption{Guidelines for choosing between MSE and MAE}
+\end{table}
+
+\subsection{Other Regression Metrics}
+
+Beyond MSE and MAE, there are other useful metrics for evaluating regression models:
+
+\subsubsection{Root Mean Squared Error (RMSE)}
+
+\begin{equation}
+RMSE(f) = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (f(x_i) - y_i)^2}
+\end{equation}
+
+RMSE is simply the square root of MSE. It has the advantage of being in the same units as the target variable, making it more interpretable.
+
+\subsubsection{R-Squared ($R^2$) Score}
+
+\begin{equation}
+R^2 = 1 - \frac{\sum_{i=1}^{N} (y_i - f(x_i))^2}{\sum_{i=1}^{N} (y_i - \bar{y})^2}
+\end{equation}
+
+where $\bar{y}$ is the mean of the observed values. $R^2$ represents the proportion of variance in the dependent variable that is predictable from the independent variables. It ranges from 0 to 1, with 1 indicating perfect prediction.
+
+\begin{remark}
+In practice, it's often beneficial to report multiple metrics to get a comprehensive view of model performance. For example, reporting both MSE (or RMSE) and MAE can provide insights into both the typical error magnitude and the presence of outliers.
+\end{remark}
 
 \end{document}
