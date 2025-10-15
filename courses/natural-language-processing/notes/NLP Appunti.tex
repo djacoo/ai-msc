@@ -3744,6 +3744,23 @@ P(W) = \frac{\text{Count}(w_1, w_2, \ldots, w_n)}{\text{Total number of word seq
 
 \subsubsection{Chain Rule of Probability}
 
+\textbf{Reminder:} Recall the definition of conditional probabilities:
+\[
+p(B \mid A) = \frac{P(A,B)}{P(A)}
+\]
+
+Rewriting this: $P(A,B) = P(A) \cdot P(B \mid A)$
+
+\textbf{Generalizing to more variables:}
+\[
+P(A,B,C,D) = P(A) \cdot P(B \mid A) \cdot P(C \mid A,B) \cdot P(D \mid A,B,C)
+\]
+
+\textbf{The Chain Rule in General:}
+\[
+P(x_1, x_2, x_3, \ldots, x_n) = P(x_1) \cdot P(x_2 \mid x_1) \cdot P(x_3 \mid x_1, x_2) \cdots P(x_n \mid x_1, \ldots, x_{n-1})
+\]
+
 \textbf{Intuition:} Break down the joint probability into conditional probabilities.
 
 The \textbf{Chain Rule} decomposes a joint probability:
@@ -3769,9 +3786,305 @@ P(\text{its, water, is, so, transparent, that}) = \; & P(\text{its}) \\
 
 \textbf{Why this helps:} Conditional probabilities like $P(\text{water} \mid \text{its})$ are easier to estimate from data.
 
-\textbf{Remaining problem:} Long contexts are still rare. This is where \textbf{N-gram models} come in.
+\subsubsection{How to Estimate These Probabilities}
 
+\textbf{Could we just count and divide?}
 
+\textbf{No!} The problem remains:
+\begin{itemize}
+    \item \textbf{Too many possible sentences}: The number of possible word sequences is astronomical
+    \item \textbf{Insufficient data}: We'll never see enough data to estimate probabilities for all possible sequences
+    \item Even with the Chain Rule, long contexts like $P(\text{transparent} \mid \text{its, water, is, so})$ are still extremely rare
+\end{itemize}
+
+\textbf{Solution:} This is where \textbf{N-gram models} come in — they make a simplifying assumption about context length.
+
+\subsection{Markov Assumption}
+
+The key idea: make a \textbf{simplifying assumption} about how much context we need.
+
+\textbf{Markov Assumption:} The probability of a word depends only on a \textbf{fixed, limited} window of previous words, not the entire history.
+
+In other words, we \textbf{approximate} each component in the product:
+\[
+P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-k}, \ldots, w_{i-1})
+\]
+
+where $k$ is a small fixed number (e.g., 1 or 2).
+
+\subsection{N-gram Models}
+
+\subsubsection{Unigram Model (Simplest Case)}
+
+The \textbf{unigram model} assumes each word is independent of all others:
+\[
+P(w_1, w_2, \ldots, w_n) \approx P(w_1) \cdot P(w_2) \cdot P(w_3) \cdots P(w_n) = \prod_{i=1}^{n} P(w_i)
+\]
+
+\textbf{Example of automatically generated sentences from a unigram model:}
+
+\begin{verbatim}
+fifth, an, of, futures, the, an, incorporated, a, a, the, 
+inflation, most, dollars, quarter, in, is, mass
+
+thrift, did, eighty, said, hard, 'm, july, bullish
+
+that, or, limited, the
+\end{verbatim}
+
+\textbf{Observation:} These sentences are nonsensical — no grammatical structure or coherence. The unigram model is too simple!
+
+\subsubsection{Bigram Model}
+
+The \textbf{bigram model} conditions on the \textbf{previous word}:
+\[
+P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-1})
+\]
+
+The joint probability becomes:
+\[
+P(w_1, w_2, \ldots, w_n) \approx P(w_1) \cdot P(w_2 \mid w_1) \cdot P(w_3 \mid w_2) \cdots P(w_n \mid w_{n-1})
+\]
+
+\textbf{Example of automatically generated sentences from a bigram model:}
+
+\begin{verbatim}
+texaco, rose, one, in, this, issue, is, pursuing, growth, in, 
+a, boiler, house, said, mr., gurria, mexico, 's, motion, 
+control, proposal, without, permission, from, five, hundred, 
+fifty, five, yen
+
+outside, new, car, parking, lot, of, the, agreement, reached
+
+this, would, be, a, record, november
+\end{verbatim}
+
+\textbf{Observation:} Better than unigrams! Some local coherence (e.g., "new car parking lot"), but still lacks long-range structure.
+
+\subsubsection{General N-gram Models}
+
+We can extend to \textbf{trigrams} (condition on 2 previous words), \textbf{4-grams}, \textbf{5-grams}, etc.
+
+\textbf{Trigram model:}
+\[
+P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-2}, w_{i-1})
+\]
+
+\textbf{N-gram model (general):}
+\[
+P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-n+1}, \ldots, w_{i-1})
+\]
+
+\subsubsection{Limitations of N-gram Models}
+
+In general, N-gram models are an \textbf{insufficient model of language} because language has \textbf{long-distance dependencies}.
+
+\textbf{Example:}
+\begin{quote}
+``The computer which I had just put into the machine room on the fifth floor crashed.''
+\end{quote}
+
+The verb ``crashed'' depends on the subject ``computer'' which is many words away. N-grams cannot capture such dependencies.
+
+\textbf{However:} Despite this limitation, we can often get away with N-gram models for many practical applications. They provide a good balance between:
+\begin{itemize}
+    \item \textbf{Simplicity}: Easy to train and use
+    \item \textbf{Data efficiency}: Require less data than full models
+    \item \textbf{Performance}: Work surprisingly well in practice
+\end{itemize}
+
+\subsection{Estimating N-gram Probabilities}
+
+Now that we have the N-gram model, how do we estimate the probabilities from data?
+
+\subsubsection{Maximum Likelihood Estimation (MLE)}
+
+The standard approach is \textbf{Maximum Likelihood Estimation}: count occurrences in a corpus and normalize.
+
+\textbf{For bigrams:}
+\[
+P(w_i \mid w_{i-1}) = \frac{\text{Count}(w_{i-1}, w_i)}{\text{Count}(w_{i-1})}
+\]
+
+\textbf{For N-grams in general:}
+\[
+P(w_i \mid w_{i-n+1}, \ldots, w_{i-1}) = \frac{\text{Count}(w_{i-n+1}, \ldots, w_{i-1}, w_i)}{\text{Count}(w_{i-n+1}, \ldots, w_{i-1})}
+\]
+
+\subsubsection{Example: Bigram Probabilities}
+
+Consider a small corpus with sentence boundaries marked by $\langle s \rangle$ and $\langle /s \rangle$:
+
+\begin{verbatim}
+<s> I am Sam </s>
+<s> Sam I am </s>
+<s> I do not like green eggs and ham </s>
+\end{verbatim}
+
+We can compute bigram probabilities by counting:
+
+\textbf{Unigram counts (for denominators):}
+\begin{align*}
+P(\text{I} \mid \langle s \rangle) &= \frac{2}{3} = 0.67 \\
+P(\text{Sam} \mid \langle s \rangle) &= \frac{1}{3} = 0.33 \\
+P(\text{am} \mid \text{I}) &= \frac{2}{3} = 0.67 \\
+P(\text{do} \mid \text{I}) &= \frac{1}{3} = 0.33
+\end{align*}
+
+\textbf{Bigram counts:}
+\begin{align*}
+P(\langle /s \rangle \mid \text{Sam}) &= \frac{1}{2} = 0.5 \\
+P(\text{Sam} \mid \text{am}) &= \frac{1}{2} = 0.5
+\end{align*}
+
+\textbf{Key observations:}
+\begin{itemize}
+    \item We include special tokens $\langle s \rangle$ (start) and $\langle /s \rangle$ (end) to model sentence boundaries
+    \item Probabilities are normalized: $\sum_{w} P(w \mid w_{i-1}) = 1$ for each context $w_{i-1}$
+    \item We need sufficient data to get reliable estimates
+\end{itemize}
+
+\subsubsection{Practical Example: Berkeley Restaurant Project}
+
+Real-world example sentences from a dialogue system corpus:
+
+\begin{verbatim}
+can you tell me about any good cantonese restaurants close by
+
+mid priced thai food is what i'm looking for
+
+tell me about chez panisse
+
+can you give me a listing of the kinds of food that are available
+
+i'm looking for a good place to eat breakfast
+
+when is caffe venezia open during the day
+\end{verbatim}
+
+From such corpora, we can estimate bigram probabilities like:
+\begin{itemize}
+    \item $P(\text{restaurants} \mid \text{cantonese})$
+    \item $P(\text{food} \mid \text{thai})$
+    \item $P(\text{about} \mid \text{me})$
+    \item $P(\text{breakfast} \mid \text{eat})$
+\end{itemize}
+
+These probabilities capture common word patterns in the domain of restaurant queries.
+
+\subsubsection{Detailed Example: Raw Bigram Counts}
+
+Let's look at a more realistic example from a corpus of 9,222 sentences.
+
+\textbf{Raw bigram count matrix:}
+
+\begin{center}
+\begin{tabular}{|l||c|c|c|c|c|c|c|c|}
+\hline
+ & i & want & to & eat & chinese & food & lunch & spend \\
+\hline\hline
+i & 5 & 827 & 0 & 9 & 0 & 0 & 0 & 2 \\
+want & 2 & 0 & 608 & 1 & 6 & 6 & 5 & 1 \\
+to & 2 & 0 & 4 & 686 & 2 & 0 & 6 & 211 \\
+eat & 0 & 0 & 2 & 0 & 16 & 2 & 42 & 0 \\
+chinese & 1 & 0 & 0 & 0 & 0 & 82 & 1 & 0 \\
+food & 15 & 0 & 15 & 0 & 1 & 4 & 0 & 0 \\
+lunch & 2 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+spend & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{center}
+
+Each cell $(w_{i-1}, w_i)$ contains $\text{Count}(w_{i-1}, w_i)$ — the number of times word $w_i$ follows word $w_{i-1}$.
+
+\textbf{Unigram counts (row totals):}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+i & want & to & eat & chinese & food & lunch & spend \\
+\hline
+2533 & 927 & 2417 & 746 & 158 & 1093 & 341 & 278 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Computing Bigram Probabilities}
+
+To get probabilities, we \textbf{normalize by unigrams} (divide each row by its total):
+
+\[
+P(w_i \mid w_{i-1}) = \frac{\text{Count}(w_{i-1}, w_i)}{\text{Count}(w_{i-1})}
+\]
+
+\textbf{Resulting bigram probability matrix:}
+
+\begin{center}
+\begin{tabular}{|l||c|c|c|c|c|c|c|c|}
+\hline
+ & i & want & to & eat & chinese & food & lunch & spend \\
+\hline\hline
+i & 0.002 & 0.33 & 0 & 0.0036 & 0 & 0 & 0 & 0.00079 \\
+want & 0.0022 & 0 & 0.66 & 0.0011 & 0.0065 & 0.0065 & 0.0054 & 0.0011 \\
+to & 0.00083 & 0 & 0.0017 & 0.28 & 0.00083 & 0 & 0.0025 & 0.087 \\
+eat & 0 & 0 & 0.0027 & 0 & 0.021 & 0.0027 & 0.056 & 0 \\
+chinese & 0.0063 & 0 & 0 & 0 & 0 & 0.52 & 0.0063 & 0 \\
+food & 0.014 & 0 & 0.014 & 0 & 0.00092 & 0.0037 & 0 & 0 \\
+lunch & 0.0059 & 0 & 0 & 0 & 0 & 0.0029 & 0 & 0 \\
+spend & 0.0036 & 0 & 0.0036 & 0 & 0 & 0 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key observations:}
+\begin{itemize}
+    \item Each row sums to 1 (or close to 1 due to rounding)
+    \item High probabilities indicate common word sequences: $P(\text{to} \mid \text{want}) = 0.66$, $P(\text{food} \mid \text{chinese}) = 0.52$
+    \item Zero probabilities indicate sequences never seen in the corpus
+\end{itemize}
+
+\subsubsection{Using Bigrams to Estimate Sentence Probability}
+
+Now we can compute the probability of a complete sentence using the bigram model.
+
+\textbf{Example:} $P(\langle s \rangle \text{ I want english food } \langle /s \rangle)$
+
+Using the Chain Rule with bigram approximation:
+\begin{align*}
+P(\langle s \rangle \text{ I want english food } \langle /s \rangle) &= P(\text{I} \mid \langle s \rangle) \\
+&\quad \times P(\text{want} \mid \text{I}) \\
+&\quad \times P(\text{english} \mid \text{want}) \\
+&\quad \times P(\text{food} \mid \text{english}) \\
+&\quad \times P(\langle /s \rangle \mid \text{food})
+\end{align*}
+
+Plugging in values from our bigram table:
+\begin{align*}
+&= 0.25 \times 0.33 \times 0.0011 \times 0.5 \times 0.68 \\
+&= 0.000031
+\end{align*}
+
+\subsubsection{What Knowledge Do Bigrams Capture?}
+
+Looking at specific bigram probabilities reveals linguistic patterns:
+
+\begin{align*}
+P(\text{english} \mid \text{want}) &= 0.0011 \quad \text{(rare)} \\
+P(\text{chinese} \mid \text{want}) &= 0.0065 \quad \text{(more common)} \\
+P(\text{to} \mid \text{want}) &= 0.66 \quad \text{(very common: ``want to'')} \\
+P(\text{eat} \mid \text{to}) &= 0.28 \quad \text{(common: ``to eat'')} \\
+P(\text{food} \mid \text{to}) &= 0 \quad \text{(never seen in corpus)} \\
+P(\text{want} \mid \text{spend}) &= 0 \quad \text{(never seen)} \\
+P(\text{i} \mid \langle s \rangle) &= 0.25 \quad \text{(25\% of sentences start with ``i'')}
+\end{align*}
+
+\textbf{Insights from these probabilities:}
+\begin{itemize}
+    \item \textbf{Syntactic patterns}: ``want to'' is much more common than ``want chinese''
+    \item \textbf{Semantic constraints}: ``to eat'' is common, but ``to food'' never occurs
+    \item \textbf{Domain knowledge}: In restaurant queries, people ask about ``chinese'' more than ``english'' food
+    \item \textbf{Zero probabilities}: Indicate unseen bigrams — a major problem we'll address later
+\end{itemize}
 
 
 
