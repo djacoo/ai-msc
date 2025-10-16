@@ -5,9 +5,13 @@ Extracts and indexes content from course PDF notes for grounded question generat
 """
 
 import re
+import warnings
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 import PyPDF2
+
+# Suppress PyPDF2 warnings about malformed PDFs (duplicate dictionary entries)
+warnings.filterwarnings("ignore", message=".*Multiple definitions in dictionary.*")
 
 
 class PDFGroundingEngine:
@@ -64,13 +68,28 @@ class PDFGroundingEngine:
         pages = {}
         
         try:
-            with open(pdf_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
+            # Suppress stderr output from PyPDF2 during PDF parsing
+            import sys
+            import os
+            
+            # Save original stderr
+            original_stderr = sys.stderr
+            
+            try:
+                # Redirect stderr to devnull to suppress PyPDF2 warnings
+                sys.stderr = open(os.devnull, 'w')
                 
-                for page_num, page in enumerate(reader.pages, start=1):
-                    text = page.extract_text()
-                    if text:
-                        pages[page_num] = text
+                with open(pdf_path, 'rb') as file:
+                    reader = PyPDF2.PdfReader(file)
+                    
+                    for page_num, page in enumerate(reader.pages, start=1):
+                        text = page.extract_text()
+                        if text:
+                            pages[page_num] = text
+            finally:
+                # Always restore stderr
+                sys.stderr.close()
+                sys.stderr = original_stderr
             
             self.pdf_cache[str(pdf_path)] = pages
             

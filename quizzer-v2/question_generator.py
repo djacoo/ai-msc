@@ -196,8 +196,8 @@ class QuestionGenerator:
             response = self.ai.generate_json(
                 prompt,
                 "You are an expert professor creating exam questions. Generate ONLY from the provided content. Respond with valid JSON only.",
-                temperature=0.7,
-                max_tokens=800
+                temperature=0.8,  # Higher for faster generation
+                max_tokens=600  # Reduced for speed
             )
             
             if not response or "error" in response:
@@ -228,13 +228,16 @@ class QuestionGenerator:
                 question["options"] = response.get("options", [])
                 question["answer_key"] = {
                     "correct": response.get("correct", []),
-                    "concepts_required": response.get("concepts", [topic])
+                    "concepts_required": response.get("concepts", [topic]),
+                    "max_points": max_points
                 }
             else:
+                concepts = response.get("concepts", [topic])
                 question["answer_key"] = {
                     "canonical_answer": response.get("answer", ""),
-                    "concepts_required": response.get("concepts", [topic]),
-                    "point_breakdown": self._generate_rubric(topic, max_points)
+                    "concepts_required": concepts,
+                    "point_breakdown": self._generate_rubric(topic, max_points, concepts),
+                    "max_points": max_points
                 }
             
             return question
@@ -245,47 +248,94 @@ class QuestionGenerator:
     
     def _build_mcq_prompt(self, topic: str, content: str, difficulty: str,
                           single: bool = True) -> str:
-        """Build prompt for MCQ generation."""
+        """Build prompt for MCQ generation following specification."""
         num_correct = "exactly 1" if single else "2 or more"
         
-        return f"""Based on this content about {topic}, create a multiple choice question.
+        difficulty_guide = {
+            "intro": "recall and comprehension (definitions, basic facts)",
+            "standard": "concept application (use ideas in new context)",
+            "advanced": "integration of multiple concepts",
+            "exam": "rigorous, multi-step reasoning required"
+        }.get(difficulty, "standard level")
+        
+        return f"""You are an expert professor creating exam questions. Generate ONLY from the provided content.
 
-Content:
+KNOWLEDGE CONSTRAINT:
+- The ONLY valid source is the content below
+- Every part of the question and all options must be traceable to this content
+- No external knowledge or invented facts
+
+CONTENT FROM COURSE NOTES (Topic: {topic}):
 {content[:800]}
 
-Requirements:
-- Create {num_correct} correct answer(s)
-- Create 3-4 total options
-- Make distractors plausible but clearly incorrect based on the content
-- Difficulty: {difficulty}
+TASK: Create a multiple choice question
+
+REQUIREMENTS:
+1. Question Clarity:
+   - Self-contained (understandable without external context)
+   - Clear, academic phrasing
+   - No ambiguity or opinion-based wording
+
+2. Options:
+   - {num_correct} correct answer(s)
+   - 3-4 total options (A, B, C, D)
+   - Distractors must be plausible but clearly incorrect based on the content
+   - Each option must relate to concepts in the content
+
+3. Difficulty: {difficulty_guide}
+
+4. Grounding:
+   - Must be answerable using ONLY the content above
+   - Extract key concepts that the question tests
 
 Respond with JSON:
 {{
-    "prompt": "question text",
-    "options": ["A: ...", "B: ...", "C: ...", "D: ..."],
+    "prompt": "<question text>",
+    "options": ["A: option 1", "B: option 2", "C: option 3", "D: option 4"],
     "correct": ["A"],
-    "concepts": ["key concept 1", "key concept 2"]
+    "concepts": ["<concept 1 from content>", "<concept 2 from content>"]
 }}"""
     
     def _build_short_answer_prompt(self, topic: str, content: str,
                                     difficulty: str) -> str:
-        """Build prompt for short answer generation."""
-        return f"""Based on this content about {topic}, create a short answer question.
+        """Build prompt for short answer generation following specification."""
+        difficulty_guide = {
+            "intro": "recall and comprehension",
+            "standard": "concept application and explanation",
+            "advanced": "integration and analysis",
+            "exam": "rigorous reasoning with multiple concepts"
+        }.get(difficulty, "standard")
+        
+        return f"""You are an expert professor creating exam questions. Generate ONLY from the provided content.
 
-Content:
+KNOWLEDGE CONSTRAINT:
+- The ONLY valid source is the content below
+- Question and answer must be traceable to this content
+- No external knowledge allowed
+
+CONTENT FROM COURSE NOTES (Topic: {topic}):
 {content[:800]}
 
-Requirements:
-- Question should test understanding, not just recall
-- Should be answerable in 2-4 sentences
-- Must be grounded in the provided content
-- Difficulty: {difficulty}
+TASK: Create a short answer question
+
+REQUIREMENTS:
+1. Question Clarity:
+   - Self-contained and unambiguous
+   - Test understanding, not just memorization
+   - Answerable in 2-4 sentences using the content
+
+2. Difficulty: {difficulty_guide}
+
+3. Grounding:
+   - Must be answerable using ONLY the content above
+   - Identify all key concepts tested
+   - Provide canonical answer derived from content
 
 Respond with JSON:
 {{
-    "prompt": "question text",
-    "answer": "expected answer (2-4 sentences)",
-    "concepts": ["key concept 1", "key concept 2"]
+    "prompt": "<question text>",
+    "answer": "<canonical answer from content, 2-4 sentences>",
+    "concepts": ["<concept 1 tested>", "<concept 2 tested>"]
 }}"""
     
     def _build_derivation_prompt(self, topic: str, content: str,
@@ -349,19 +399,38 @@ Respond with JSON:
     "concepts": ["algorithm name", "key concept"]
 }}"""
     
-    def _generate_rubric(self, topic: str, max_points: int) -> List[Dict]:
-        """Generate point breakdown rubric.
+    def _generate_rubric(self, topic: str, max_points: int, concepts: List[str] = None) -> List[Dict]:
+        """Generate point breakdown rubric following specification.
         
         Args:
             topic: Topic being tested
             max_points: Maximum points
+            concepts: Key concepts to grade (from question generation)
             
         Returns:
-            List of rubric criteria with points
+            List of rubric criteria with points, aligned with concepts
         """
-        # Simple rubric generation
-        return [
-            {"criterion": f"Defines {topic} correctly", "points": max_points // 3},
-            {"criterion": "Explains key concepts", "points": max_points // 3},
-            {"criterion": "Provides accurate details", "points": max_points - 2 * (max_points // 3)}
-        ]
+        if not concepts:
+            concepts = [topic]
+        
+        # Distribute points across concepts and overall quality
+        rubric = []
+        
+        # Core concept criteria (70% of points)
+        concept_points = int(max_points * 0.7)
+        points_per_concept = concept_points // len(concepts) if concepts else concept_points
+        
+        for concept in concepts:
+            rubric.append({
+                "criterion": f"Correctly explains/uses concept: {concept}",
+                "points": points_per_concept
+            })
+        
+        # Completeness and accuracy (30% of points)
+        remaining = max_points - sum(r["points"] for r in rubric)
+        rubric.append({
+            "criterion": "Answer is complete, accurate, and follows reasoning from notes",
+            "points": remaining
+        })
+        
+        return rubric

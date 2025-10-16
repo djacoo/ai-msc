@@ -94,6 +94,9 @@ class GradingEngine:
     def _grade_mcq_multi(self, question: Dict, user_answer: str) -> Dict:
         """Grade multi-choice MCQ with partial credit.
         
+        Formula: (# correct chosen / total correct) - (# incorrect chosen / total incorrect)
+        Clamped to [0, 1], then apply thresholds: ≥90% correct, 40-89% partial, <40% incorrect
+        
         Args:
             question: Question object
             user_answer: User's answer (e.g., "A,C" or "A, C")
@@ -103,7 +106,7 @@ class GradingEngine:
         """
         answer_key = question.get("answer_key", {})
         correct = answer_key.get("correct", [])
-        max_points = question.get("answer_key", {}).get("max_points", 10)
+        max_points = answer_key.get("max_points", 10)
         
         # Parse user answer
         user_choices = set()
@@ -117,26 +120,47 @@ class GradingEngine:
             if c:
                 correct_choices.add(c.strip().upper()[0])
         
-        # Calculate score
-        true_positives = len(user_choices & correct_choices)
-        false_positives = len(user_choices - correct_choices)
-        false_negatives = len(correct_choices - user_choices)
+        # Get all options from question
+        all_options = set()
+        for opt in question.get("options", []):
+            if opt and opt[0].isalpha():
+                all_options.add(opt[0].upper())
         
-        # Partial credit: (TP - FP) / total_correct, clamped to [0, 1]
+        incorrect_choices = all_options - correct_choices
+        
+        # Calculate components
+        correct_chosen = len(user_choices & correct_choices)
+        incorrect_chosen = len(user_choices & incorrect_choices)
+        
+        # Apply formula from specification
         if len(correct_choices) == 0:
             score_ratio = 0
         else:
-            score_ratio = max(0, (true_positives - false_positives) / len(correct_choices))
+            ratio_correct = correct_chosen / len(correct_choices)
+            ratio_incorrect = incorrect_chosen / len(incorrect_choices) if len(incorrect_choices) > 0 else 0
+            score_ratio = max(0.0, min(1.0, ratio_correct - ratio_incorrect))
         
-        points = int(score_ratio * max_points)
+        points = round(score_ratio * max_points)
         
-        # Decision
-        if score_ratio >= 1.0:
+        # Decision thresholds per specification: ≥90%, 40-89%, <40%
+        if score_ratio >= 0.9:
             decision = "correct"
-        elif score_ratio >= 0.5:
+        elif score_ratio >= 0.4:
             decision = "partially_correct"
         else:
             decision = "incorrect"
+        
+        # Build explanation with grounding
+        grounding = question.get("grounding", [])
+        citation_text = ""
+        if grounding:
+            g = grounding[0]
+            citation_text = f" (See {g.get('path', 'notes')}, p. {g.get('page', '?')})"
+        
+        explanation = f"""{decision.replace('_', ' ').title()}. Score: {points}/{max_points} points.
+✓ Correct options chosen: {correct_chosen}/{len(correct_choices)}
+✗ Incorrect options chosen: {incorrect_chosen}
+Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
         
         grading = {
             "question_id": question.get("id"),
@@ -146,22 +170,17 @@ class GradingEngine:
             "checks": [
                 {
                     "criterion": "Selected all correct options",
-                    "met": false_negatives == 0,
-                    "evidence": f"Correct options: {sorted(correct_choices)}, you selected: {sorted(user_choices)}"
+                    "met": correct_chosen == len(correct_choices),
+                    "evidence": f"Chose {correct_chosen}/{len(correct_choices)} correct options: {sorted(user_choices & correct_choices)}"
                 },
                 {
                     "criterion": "No incorrect options selected",
-                    "met": false_positives == 0,
-                    "evidence": f"False positives: {sorted(user_choices - correct_choices) if false_positives > 0 else 'none'}"
+                    "met": incorrect_chosen == 0,
+                    "evidence": f"Chose {incorrect_chosen} incorrect options: {sorted(user_choices & incorrect_choices) if incorrect_chosen > 0 else 'none'}"
                 }
             ],
-            "explanation_to_student": (
-                f"Score: {points}/{max_points}. "
-                f"Correct selections: {true_positives}/{len(correct_choices)}. "
-                f"Incorrect selections: {false_positives}. "
-                f"Correct answer: {sorted(correct_choices)}"
-            ),
-            "citations": question.get("grounding", []),
+            "explanation_to_student": explanation,
+            "citations": grounding,
             "false_positive_guard": True,
             "false_negative_guard": True
         }
@@ -227,10 +246,22 @@ class GradingEngine:
             points_awarded = response.get("points_awarded", 0)
             max_points = sum(c.get("points", 0) for c in point_breakdown)
             
-            # Determine decision
-            if points_awarded >= max_points * 0.9:
+            # FALSE POSITIVE GUARD: Detect minimal/empty answers
+            user_answer_clean = user_answer.strip().replace(".", "").replace(",", "").replace("!", "").replace("?", "").strip()
+            if len(user_answer_clean) < 5:
+                # Answer too short - force fail
+                print(f"⚠️ FALSE POSITIVE GUARD: Answer too short ({len(user_answer_clean)} chars), forcing 0 points")
+                points_awarded = 0
+                # Mark all checks as not met
+                for check in checks:
+                    check["met"] = False
+                    check["evidence"] = f"Answer is too short/empty to evaluate ({len(user_answer_clean)} meaningful characters)"
+            
+            # Determine decision per specification: ≥90%, 40-89%, <40%
+            percentage = points_awarded / max_points if max_points > 0 else 0
+            if percentage >= 0.9:
                 decision = "correct"
-            elif points_awarded >= max_points * 0.5:
+            elif percentage >= 0.4:
                 decision = "partially_correct"
             else:
                 decision = "incorrect"
@@ -257,7 +288,7 @@ class GradingEngine:
                                canonical_answer: str, concepts_required: List[str],
                                point_breakdown: List[Dict], reference_content: str,
                                rubric: Dict) -> str:
-        """Build prompt for AI grading.
+        """Build prompt for AI grading following academic specification.
         
         Returns:
             Grading prompt
@@ -267,54 +298,86 @@ class GradingEngine:
             for c in point_breakdown
         ])
         
-        concepts_text = ", ".join(concepts_required)
+        concepts_text = "\n".join([f"  • {c}" for c in concepts_required])
         
-        return f"""Grade this student answer with teacher-like rigor.
+        return f"""You are an academic-grade reasoning engine. Your role is to grade this student answer with PERFECT fairness.
 
-QUESTION: {question}
+KNOWLEDGE CONSTRAINTS:
+- The ONLY valid reference is the course notes content below
+- No external knowledge allowed
+- If a concept isn't in the notes, treat it as unknown
+
+QUESTION:
+{question}
 
 REFERENCE CONTENT FROM COURSE NOTES:
 {reference_content[:1500]}
 
-CANONICAL ANSWER:
+CANONICAL ANSWER (from notes):
 {canonical_answer}
 
-REQUIRED CONCEPTS: {concepts_text}
+REQUIRED CONCEPTS (must extract from student answer):
+{concepts_text}
 
-RUBRIC (point breakdown):
+RUBRIC - Point Breakdown:
 {rubric_text}
 
 STUDENT'S ANSWER:
 {user_answer}
 
-GRADING INSTRUCTIONS:
-1. Check each rubric criterion against the student's answer
-2. Award points ONLY if the criterion is met based on the reference content
-3. Accept synonyms and equivalent formulations if semantically identical
-4. For math: accept symbolic or numeric equivalence (tolerance ±1e-6)
-5. Penalize contradictions or missing core concepts
-6. If answer contradicts reference, award 0 points for that criterion
-7. Be strict but fair - don't invent requirements not in the rubric
+⚠️ CRITICAL: Check if the student answer is substantive!
+- If answer is empty, just punctuation, or < 5 meaningful words: ALL criteria = NOT MET, 0 points
+- Single word/symbol answers almost never satisfy rubric criteria
+- Be extremely strict with minimal answers
 
-FALSE POSITIVE PREVENTION:
-- Does the student's statement appear in or follow logically from the reference? 
-- If not, do NOT award credit
+EVALUATION ALGORITHM:
 
-FALSE NEGATIVE PREVENTION:
-- Did the student use an equivalent formulation present elsewhere in the notes?
-- If yes, award credit and cite that location
+1. CRITERION MATCHING:
+   - For EACH criterion in the rubric, verify if student's answer satisfies it
+   - Match = answer includes correct definition/explanation OR exact paraphrase from notes
+   - Fail = missing, wrong, or contradicts notes
+
+2. CONCEPT COVERAGE:
+   - Extract all required concepts from student's answer
+   - Award points ONLY for correctly used concepts
+   - Missing or wrong concepts = lose corresponding points
+
+3. REASONING VALIDITY:
+   - Logical flow must follow what is taught in notes
+   - Alternative reasoning from same notes = correct
+   - Reasoning not in notes = incorrect
+
+4. SEMANTIC UNDERSTANDING:
+   - Parse semantically, not just lexically
+   - Accept synonyms and rephrasings IF they match the concept
+   - For numbers: tolerance ±1e-6
+   - Minor notation differences OK if semantically correct
+
+5. FALSE POSITIVE PREVENTION:
+   - Re-check EACH awarded point against grounding evidence
+   - If student statement isn't logically supported by notes, REMOVE credit
+   - Never award credit for plausible-sounding but ungrounded statements
+
+6. FALSE NEGATIVE PREVENTION:
+   - Check if student used different but correct explanation from notes
+   - If found in notes (even different section), ADD credit
+   - Don't penalize valid alternative approaches from the same notes
+
+7. FINAL SCORING:
+   - Sum all awarded points
+   - Report each criterion with ✅ (met) or ❌ (not met)
 
 Respond with JSON:
 {{
     "points_awarded": <total points as integer>,
     "checks": [
         {{
-            "criterion": "criterion text",
+            "criterion": "<criterion from rubric>",
             "met": true/false,
-            "evidence": "brief explanation why met/not met, referencing the notes"
+            "evidence": "<Why met/not met, quote or cite specific part of reference notes>"
         }}
     ],
-    "explanation": "1-2 sentence summary for student, with page numbers from reference"
+    "explanation": "<Start with verdict (correct/partially correct/incorrect), then list ✅/❌ for each criterion with brief evidence from notes. End with learning remark.>"
 }}"""
     
     def _fallback_grading(self, question: Dict, user_answer: str,
@@ -338,7 +401,8 @@ Respond with JSON:
         max_points = 10
         points = int(ratio * max_points)
         
-        if ratio >= 0.7:
+        # Apply specification thresholds: ≥90%, 40-89%, <40%
+        if ratio >= 0.9:
             decision = "correct"
         elif ratio >= 0.4:
             decision = "partially_correct"
