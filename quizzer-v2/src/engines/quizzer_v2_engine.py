@@ -7,9 +7,12 @@ Main engine coordinating question generation and grading
 import json
 from typing import Dict, List, Optional
 from pathlib import Path
-from pdf_grounding import PDFGroundingEngine
-from question_generator import QuestionGenerator
-from grading_engine import GradingEngine
+from ..utils.pdf_grounding import PDFGroundingEngine
+from .question_generator import QuestionGenerator
+from .grading_engine import GradingEngine
+from ..utils.user_manager import UserManager
+from .rating_generator import RatingGenerator
+from .chatbot_engine import ChatbotEngine
 
 
 class QuizzerV2:
@@ -56,10 +59,20 @@ class QuizzerV2:
         self.grounding = PDFGroundingEngine(repo_root)
         self.question_gen = QuestionGenerator(repo_root, ai_engine)
         self.grader = GradingEngine(repo_root, ai_engine)
+        self.user_manager = UserManager(str(Path(repo_root) / "user_data" / "users.db"))
+        self.rating_gen = RatingGenerator(ai_engine)
+        self.chatbot = ChatbotEngine(repo_root, ai_engine, self.grounding)
         
         # Session state
         self.current_quiz = None
         self.current_question_idx = 0
+        self.quiz_request = None  # Store original request for lazy generation
+        self.generated_questions = []  # Questions generated so far
+        self.current_user_id = None  # Currently logged in user
+        self.current_session_id = None  # Current quiz session
+        self.session_total_points = 0  # Total points earned in session
+        self.session_max_points = 0  # Maximum possible points in session
+        self.current_course_code = None  # Currently selected course
     
     def generate_quiz(self, request: Dict) -> Dict:
         """Generate a quiz from JSON request.
@@ -109,14 +122,53 @@ class QuizzerV2:
         request.setdefault("grading_mode", "strict_concepts")
         request.setdefault("max_points_per_question", 10)
         
-        # Generate questions
-        result = self.question_gen.generate_questions(request)
-        
-        # Store current quiz
-        self.current_quiz = result
+        # Store request for lazy generation
+        self.quiz_request = request
+        self.generated_questions = []
         self.current_question_idx = 0
         
-        return result
+        # Store current course and configure chatbot
+        self.current_course_code = course
+        self.chatbot.set_course(course, request["note_files"])
+        
+        # Reset session tracking
+        self.session_total_points = 0
+        self.session_max_points = 0
+        
+        # Start quiz session if user is logged in
+        if self.current_user_id:
+            self.current_session_id = self.user_manager.record_quiz_session(
+                self.current_user_id,
+                request["course"],
+                request["difficulty"],
+                request["num_questions"]
+            )
+        
+        # Generate first question immediately
+        first_question = self._generate_next_question()
+        
+        if first_question:
+            self.generated_questions.append(first_question)
+            
+            # Build quiz structure
+            self.current_quiz = {
+                "meta": {
+                    "course": request["course"],
+                    "notes_used": [],
+                    "question_count": request["num_questions"],
+                    "lazy_generation": True
+                },
+                "questions": [first_question]
+            }
+            
+            return self.current_quiz
+        else:
+            return {
+                "error": {
+                    "type": "generation_failed",
+                    "message": "Failed to generate first question"
+                }
+            }
     
     def grade_answer(self, submission: Dict) -> Dict:
         """Grade a user's answer.
@@ -156,6 +208,25 @@ class QuizzerV2:
         # Grade answer
         result = self.grader.grade_answer(question, user_answer)
         
+        # Record attempt if user is logged in
+        if self.current_user_id and self.current_session_id and "grading" in result:
+            grading = result["grading"]
+            points_awarded = grading.get("points_awarded", 0)
+            points_possible = grading.get("points_possible", 10)
+            
+            # Track session scores
+            self.session_total_points += points_awarded
+            self.session_max_points += points_possible
+            
+            self.user_manager.record_question_attempt(
+                self.current_session_id,
+                self.current_user_id,
+                question.get("type", "unknown"),
+                points_awarded,
+                points_possible,
+                grading.get("decision") == "correct"
+            )
+        
         return result
     
     def get_current_question(self) -> Optional[Dict]:
@@ -175,15 +246,37 @@ class QuizzerV2:
         return None
     
     def next_question(self) -> Optional[Dict]:
-        """Move to next question.
+        """Move to next question. Generates on-demand if needed.
         
         Returns:
             Next question or None if quiz complete
         """
-        if not self.current_quiz:
+        if not self.current_quiz or not self.quiz_request:
             return None
         
         self.current_question_idx += 1
+        
+        # Check if we need to generate more questions
+        total_requested = self.quiz_request.get("num_questions", 10)
+        
+        if self.current_question_idx >= len(self.generated_questions):
+            # Generate next question if we haven't reached the limit
+            if len(self.generated_questions) < total_requested:
+                print(f"\n📝 Generating question {len(self.generated_questions) + 1}/{total_requested}...")
+                next_q = self._generate_next_question()
+                
+                if next_q:
+                    self.generated_questions.append(next_q)
+                    self.current_quiz["questions"].append(next_q)
+                    self.current_quiz["meta"]["question_count"] = len(self.generated_questions)
+                    return next_q
+                else:
+                    # Failed to generate, mark quiz as complete
+                    return None
+            else:
+                # Reached the requested limit
+                return None
+        
         return self.get_current_question()
     
     def get_quiz_progress(self) -> Dict:
@@ -200,19 +293,155 @@ class QuizzerV2:
                 "completed": False
             }
         
-        total = len(self.current_quiz.get("questions", []))
+        # Use requested total, not generated count (for lazy generation)
+        total = self.quiz_request.get("num_questions", 10) if self.quiz_request else len(self.current_quiz.get("questions", []))
         
         return {
             "active": True,
             "current": self.current_question_idx + 1,
             "total": total,
-            "completed": self.current_question_idx >= total
+            "completed": self.current_question_idx >= total,
+            "generated_so_far": len(self.generated_questions)
         }
+    
+    def _generate_next_question(self) -> Optional[Dict]:
+        """Generate the next question on-demand.
+        
+        Returns:
+            Generated question or None if failed
+        """
+        if not self.quiz_request:
+            return None
+        
+        # Create a single-question request
+        single_request = self.quiz_request.copy()
+        single_request["num_questions"] = 1
+        
+        # Generate one question
+        result = self.question_gen.generate_questions(single_request)
+        
+        if "questions" in result and result["questions"]:
+            question = result["questions"][0]
+            # Update question ID to be sequential
+            question["id"] = f"q{len(self.generated_questions) + 1}"
+            return question
+        
+        return None
+    
+    def complete_quiz(self):
+        """Complete the current quiz and calculate stars earned."""
+        if not self.current_session_id or not self.current_user_id:
+            return
+        
+        # Calculate stars based on actual performance
+        percentage = 0.0  # Initialize percentage
+        if self.session_max_points > 0:
+            percentage = (self.session_total_points / self.session_max_points) * 100
+            
+            # Star calculation: 
+            # 90-100% = 5 stars, 80-89% = 4 stars, 70-79% = 3 stars, 
+            # 60-69% = 2 stars, <60% = 1 star
+            if percentage >= 90:
+                stars = 5
+            elif percentage >= 80:
+                stars = 4
+            elif percentage >= 70:
+                stars = 3
+            elif percentage >= 60:
+                stars = 2
+            else:
+                stars = 1
+        else:
+            stars = 1
+        
+        print(f"\n⭐ Quiz completed! Score: {self.session_total_points}/{self.session_max_points} ({percentage:.1f}%) - {stars} stars earned")
+        self.user_manager.complete_quiz_session(self.current_session_id, stars)
     
     def reset_quiz(self):
         """Reset quiz state."""
+        if self.current_session_id and self.current_user_id:
+            # Complete the session if it wasn't already
+            self.complete_quiz()
+        
         self.current_quiz = None
         self.current_question_idx = 0
+        self.quiz_request = None
+        self.generated_questions = []
+        self.current_session_id = None
+        self.session_total_points = 0
+        self.session_max_points = 0
+        self.current_course_code = None
+    
+    # User management methods
+    
+    def login(self, username: str, password: str) -> tuple:
+        """Log in a user.
+        
+        Args:
+            username: Username
+            password: Password
+            
+        Returns:
+            Tuple of (success, message, user_id)
+        """
+        success, message, user_id = self.user_manager.login_user(username, password)
+        if success:
+            self.current_user_id = user_id
+        return success, message, user_id
+    
+    def register(self, username: str, password: str) -> tuple:
+        """Register a new user.
+        
+        Args:
+            username: Username
+            password: Password
+            
+        Returns:
+            Tuple of (success, message, user_id)
+        """
+        return self.user_manager.register_user(username, password)
+    
+    def logout(self):
+        """Log out the current user."""
+        if self.current_session_id:
+            self.complete_quiz()
+        self.current_user_id = None
+        self.current_session_id = None
+        self.reset_quiz()
+    
+    def delete_account(self) -> tuple:
+        """Delete the current user's account.
+        
+        Returns:
+            Tuple of (success, message)
+        """
+        if not self.current_user_id:
+            return False, "No user logged in"
+        
+        user_id = self.current_user_id
+        self.logout()
+        return self.user_manager.delete_user(user_id)
+    
+    def get_user_profile(self) -> Optional[Dict]:
+        """Get current user's profile with stats and rating.
+        
+        Returns:
+            User profile dictionary or None
+        """
+        if not self.current_user_id:
+            return None
+        
+        stats = self.user_manager.get_user_stats(self.current_user_id)
+        if not stats:
+            return None
+        
+        # Generate AI rating
+        rating = self.rating_gen.generate_rating(stats)
+        
+        return {
+            'stats': stats,
+            'rating': rating
+        }
     
     def validate_topics_in_notes(self, course: str, topics: List[str]) -> Dict:
         """Check which topics are covered in the notes.
@@ -294,6 +523,16 @@ class QuizzerV2:
             })
         
         return courses
+    
+    def get_current_course_name(self) -> Optional[str]:
+        """Get the name of the currently selected course.
+        
+        Returns:
+            Course name or None if no course selected
+        """
+        if self.current_course_code and self.current_course_code in self.COURSES:
+            return self.COURSES[self.current_course_code]["name"]
+        return None
 
 
 def main():

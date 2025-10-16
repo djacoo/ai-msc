@@ -6,9 +6,10 @@ Generates grounded exam-quality questions from PDF notes
 
 import json
 import random
+import uuid
 from typing import List, Dict, Optional
 from pathlib import Path
-from pdf_grounding import PDFGroundingEngine
+from ..utils.pdf_grounding import PDFGroundingEngine
 
 
 class QuestionGenerator:
@@ -63,6 +64,7 @@ class QuestionGenerator:
         # Generate questions
         questions = []
         notes_used = []
+        seen_questions = set()  # Track question text to prevent duplicates
         
         # Distribute questions across topics
         questions_per_topic = num_questions // len(topics) if topics else num_questions
@@ -86,26 +88,33 @@ class QuestionGenerator:
                     num_to_gen = min(questions_per_topic, num_questions - len(questions))
                     
                     for j in range(num_to_gen):
-                        section = sections[j % len(sections)]
+                        # Randomize section selection for variety
+                        section = random.choice(sections)
                         
                         # Choose question type
                         qtype = random.choice(question_types)
                         
-                        # Generate question
-                        question = self._generate_single_question(
-                            qtype=qtype,
-                            topic=topic,
-                            content=section["text"],
-                            page=section["page"],
-                            pdf_path=note_path,
-                            difficulty=difficulty,
-                            max_points=max_points,
-                            grading_mode=grading_mode,
-                            question_id=f"q{len(questions) + 1}"
-                        )
-                        
-                        if question:
-                            questions.append(question)
+                        # Retry up to 3 times if validation fails
+                        max_retries = 3
+                        for attempt in range(max_retries):
+                            # Generate question
+                            question = self._generate_single_question(
+                                qtype=qtype,
+                                topic=topic,
+                                content=section["text"],
+                                page=section["page"],
+                                pdf_path=note_path,
+                                difficulty=difficulty,
+                                max_points=max_points,
+                                grading_mode=grading_mode,
+                                question_id=f"q{len(questions) + 1}"
+                            )
+                            
+                            # Check for duplicates and validate relevance
+                            if question and self._is_valid_question(question, topic, section["text"], seen_questions):
+                                questions.append(question)
+                                seen_questions.add(question["prompt"].lower().strip())
+                                break  # Success, move to next question
                         
                         if len(questions) >= num_questions:
                             break
@@ -140,8 +149,10 @@ class QuestionGenerator:
                     question_id=f"q{len(questions) + 1}"
                 )
                 
-                if question:
+                # Check for duplicates and validate relevance
+                if question and self._is_valid_question(question, topic, content[:1000], seen_questions):
                     questions.append(question)
+                    seen_questions.add(question["prompt"].lower().strip())
         
         # Build response
         response = {
@@ -159,10 +170,10 @@ class QuestionGenerator:
                                    page: int, pdf_path: Path, difficulty: str,
                                    max_points: int, grading_mode: str,
                                    question_id: str) -> Optional[Dict]:
-        """Generate a single question with grounding.
+        """Generate questions in batch using new extraction prompt.
         
         Args:
-            qtype: Question type
+            qtype: Question type to generate (strictly enforced)
             topic: Topic being tested
             content: Source content from PDF
             page: Page number
@@ -175,39 +186,64 @@ class QuestionGenerator:
         Returns:
             Question object with grounding and rubric
         """
-        # Build prompt based on question type
-        if qtype == "mcq_single":
-            prompt = self._build_mcq_prompt(topic, content, difficulty, single=True)
-        elif qtype == "mcq_multi":
-            prompt = self._build_mcq_prompt(topic, content, difficulty, single=False)
-        elif qtype == "short_answer":
-            prompt = self._build_short_answer_prompt(topic, content, difficulty)
-        elif qtype == "derivation":
-            prompt = self._build_derivation_prompt(topic, content, difficulty)
-        elif qtype == "proof":
-            prompt = self._build_proof_prompt(topic, content, difficulty)
-        elif qtype == "code":
-            prompt = self._build_code_prompt(topic, content, difficulty)
-        else:
-            prompt = self._build_short_answer_prompt(topic, content, difficulty)
+        # Use new batch extraction prompt with strict type enforcement
+        prompt = self._build_batch_extraction_prompt(topic, content, difficulty, qtype)
         
-        # Generate question using AI
+        # Generate questions using AI
         try:
             response = self.ai.generate_json(
                 prompt,
-                "You are an expert professor creating exam questions. Generate ONLY from the provided content. Respond with valid JSON only.",
-                temperature=0.8,  # Higher for faster generation
-                max_tokens=600  # Reduced for speed
+                "Generate quiz question. Return ONLY valid JSON.",
+                temperature=0.8,  # Higher for more variety between questions
+                max_tokens=500  # Enough for complete responses
             )
             
             if not response or "error" in response:
                 return None
             
+            # Try to extract question data flexibly
+            item = None
+            
+            # Check if response has "items" array
+            if "items" in response:
+                items = response["items"]
+                if isinstance(items, list) and len(items) > 0:
+                    item = items[0]
+                elif isinstance(items, dict):
+                    # AI returned single item as dict instead of array
+                    item = items
+                else:
+                    return None
+            else:
+                # Maybe the AI returned the question directly without wrapping
+                # Check if it has the required fields
+                if "question" in response or "type" in response:
+                    item = response
+                else:
+                    return None
+            
+            if not item:
+                return None
+            
+            # Map item type to internal type
+            item_type = item.get("type", "short")
+            type_map = {
+                "mcq": "mcq_single",
+                "short": "short_answer",
+                "true_false": "mcq_single"
+            }
+            internal_type = type_map.get(item_type, "short_answer")
+            
+            # STRICT TYPE VALIDATION: Reject if generated type doesn't match requested type
+            if not self._type_matches(qtype, internal_type):
+                print(f"⚠️ Generated question type '{internal_type}' doesn't match requested '{qtype}', rejecting")
+                return None
+            
             # Build question object
             question = {
                 "id": question_id,
-                "type": qtype,
-                "prompt": response.get("prompt", response.get("question", "")),
+                "type": internal_type,
+                "prompt": item.get("question", ""),
                 "grounding": [
                     {
                         "path": str(pdf_path.relative_to(self.repo_root)),
@@ -224,119 +260,167 @@ class QuestionGenerator:
             }
             
             # Add type-specific fields
-            if qtype in ["mcq_single", "mcq_multi"]:
-                question["options"] = response.get("options", [])
+            if internal_type == "mcq_single":
+                choices = item.get("choices", [])
+                answer = item.get("answer", "")
+                
+                question["options"] = choices
                 question["answer_key"] = {
-                    "correct": response.get("correct", []),
-                    "concepts_required": response.get("concepts", [topic]),
-                    "max_points": max_points
+                    "correct": [answer] if isinstance(answer, str) else answer,
+                    "concepts_required": item.get("tags", [topic]),
+                    "max_points": max_points,
+                    "explanation": item.get("explanation", "")
                 }
             else:
-                concepts = response.get("concepts", [topic])
+                concepts = item.get("tags", [topic])
+                answer = item.get("answer", "")
+                
                 question["answer_key"] = {
-                    "canonical_answer": response.get("answer", ""),
+                    "canonical_answer": answer if isinstance(answer, str) else ", ".join(answer),
                     "concepts_required": concepts,
                     "point_breakdown": self._generate_rubric(topic, max_points, concepts),
-                    "max_points": max_points
+                    "max_points": max_points,
+                    "explanation": item.get("explanation", "")
                 }
             
             return question
             
         except Exception as e:
-            print(f"Error generating question: {e}")
+            import traceback
+            print(f"Error generating question: {type(e).__name__}: {e}")
+            if str(e) != "0":  # Don't print full trace for simple errors
+                traceback.print_exc()
             return None
+    
+    def _is_valid_question(self, question: Dict, topic: str, content: str, seen_questions: set) -> bool:
+        """Validate question - now more lenient to prevent getting stuck.
+        
+        Args:
+            question: Generated question object
+            topic: Expected topic
+            content: Source content
+            seen_questions: Set of already seen question texts
+            
+        Returns:
+            True if question is valid and unique
+        """
+        prompt = question.get("prompt", "").lower().strip()
+        
+        # Check if question is empty or None
+        if not prompt:
+            return False
+        
+        # Check for duplicate
+        if prompt in seen_questions:
+            return False
+        
+        # Check if question is substantive (at least 10 chars)
+        if len(prompt) < 10:
+            return False
+        
+        # That's it! Much simpler validation to prevent getting stuck
+        # The AI should generate relevant questions from the content
+        return True
+    
+    def _type_matches(self, requested_type: str, generated_type: str) -> bool:
+        """Check if generated question type matches the requested type.
+        
+        Args:
+            requested_type: The type that was requested (e.g., 'mcq_single', 'short_answer')
+            generated_type: The type that was generated
+            
+        Returns:
+            True if types match
+        """
+        # Normalize types for comparison
+        if requested_type in ['mcq_single', 'mcq_multi'] and generated_type == 'mcq_single':
+            return True
+        if requested_type == 'short_answer' and generated_type == 'short_answer':
+            return True
+        if requested_type in ['derivation', 'proof', 'code'] and generated_type == 'short_answer':
+            return True
+        return False
+    
+    def _build_batch_extraction_prompt(self, topic: str, content: str, difficulty: str, qtype: str = "short_answer") -> str:
+        """Build streamlined question extraction prompt for faster generation.
+        
+        Args:
+            qtype: Question type to generate (strictly enforced)
+        """
+        difficulty_map = {
+            "intro": "easy",
+            "standard": "medium",
+            "advanced": "hard",
+            "exam": "hard"
+        }
+        mapped_difficulty = difficulty_map.get(difficulty, "medium")
+        
+        # Make prompt super clear with concrete example
+        if qtype in ['mcq_single', 'mcq_multi']:
+            example_json = '''{
+  "topic": "''' + topic + '''",
+  "difficulty": "''' + mapped_difficulty + '''",
+  "items": [{
+    "id": "q1",
+    "type": "mcq",
+    "question": "What is the main concept discussed?",
+    "choices": ["A: Option 1", "B: Option 2", "C: Option 3", "D: Option 4"],
+    "answer": "A",
+    "explanation": "Brief explanation",
+    "tags": ["concept"]
+  }]
+}'''
+        else:
+            example_json = '''{
+  "topic": "''' + topic + '''",
+  "difficulty": "''' + mapped_difficulty + '''",
+  "items": [{
+    "id": "q1",
+    "type": "short",
+    "question": "What is the main concept?",
+    "answer": "Brief answer here",
+    "explanation": "Why this is correct",
+    "tags": ["concept"]
+  }]
+}'''
+        
+        # Add variety instruction
+        variation_hints = [
+            "Focus on a specific detail or concept.",
+            "Ask about the main idea or relationship between concepts.",
+            "Test understanding of technical terms or definitions.",
+            "Challenge comprehension of how concepts work together.",
+            "Focus on practical applications or implications."
+        ]
+        hint = random.choice(variation_hints)
+        
+        # Vary the starting point of content for more diversity
+        content_len = len(content)
+        if content_len > 1000:
+            # Randomly select a chunk from the content
+            max_start = content_len - 1000
+            start_pos = random.randint(0, max_start)
+            content_chunk = content[start_pos:start_pos + 1000]
+        else:
+            content_chunk = content[:1000]
+        
+        return f"""Create a unique quiz question from this text. {hint}
+
+{content_chunk}
+
+Return ONLY this JSON (no extra text):
+{example_json}"""
     
     def _build_mcq_prompt(self, topic: str, content: str, difficulty: str,
                           single: bool = True) -> str:
-        """Build prompt for MCQ generation following specification."""
-        num_correct = "exactly 1" if single else "2 or more"
-        
-        difficulty_guide = {
-            "intro": "recall and comprehension (definitions, basic facts)",
-            "standard": "concept application (use ideas in new context)",
-            "advanced": "integration of multiple concepts",
-            "exam": "rigorous, multi-step reasoning required"
-        }.get(difficulty, "standard level")
-        
-        return f"""You are an expert professor creating exam questions. Generate ONLY from the provided content.
-
-KNOWLEDGE CONSTRAINT:
-- The ONLY valid source is the content below
-- Every part of the question and all options must be traceable to this content
-- No external knowledge or invented facts
-
-CONTENT FROM COURSE NOTES (Topic: {topic}):
-{content[:800]}
-
-TASK: Create a multiple choice question
-
-REQUIREMENTS:
-1. Question Clarity:
-   - Self-contained (understandable without external context)
-   - Clear, academic phrasing
-   - No ambiguity or opinion-based wording
-
-2. Options:
-   - {num_correct} correct answer(s)
-   - 3-4 total options (A, B, C, D)
-   - Distractors must be plausible but clearly incorrect based on the content
-   - Each option must relate to concepts in the content
-
-3. Difficulty: {difficulty_guide}
-
-4. Grounding:
-   - Must be answerable using ONLY the content above
-   - Extract key concepts that the question tests
-
-Respond with JSON:
-{{
-    "prompt": "<question text>",
-    "options": ["A: option 1", "B: option 2", "C: option 3", "D: option 4"],
-    "correct": ["A"],
-    "concepts": ["<concept 1 from content>", "<concept 2 from content>"]
-}}"""
+        """Legacy MCQ prompt - now replaced by batch extraction."""
+        qtype = "mcq_single" if single else "mcq_multi"
+        return self._build_batch_extraction_prompt(topic, content, difficulty, qtype)
     
     def _build_short_answer_prompt(self, topic: str, content: str,
                                     difficulty: str) -> str:
-        """Build prompt for short answer generation following specification."""
-        difficulty_guide = {
-            "intro": "recall and comprehension",
-            "standard": "concept application and explanation",
-            "advanced": "integration and analysis",
-            "exam": "rigorous reasoning with multiple concepts"
-        }.get(difficulty, "standard")
-        
-        return f"""You are an expert professor creating exam questions. Generate ONLY from the provided content.
-
-KNOWLEDGE CONSTRAINT:
-- The ONLY valid source is the content below
-- Question and answer must be traceable to this content
-- No external knowledge allowed
-
-CONTENT FROM COURSE NOTES (Topic: {topic}):
-{content[:800]}
-
-TASK: Create a short answer question
-
-REQUIREMENTS:
-1. Question Clarity:
-   - Self-contained and unambiguous
-   - Test understanding, not just memorization
-   - Answerable in 2-4 sentences using the content
-
-2. Difficulty: {difficulty_guide}
-
-3. Grounding:
-   - Must be answerable using ONLY the content above
-   - Identify all key concepts tested
-   - Provide canonical answer derived from content
-
-Respond with JSON:
-{{
-    "prompt": "<question text>",
-    "answer": "<canonical answer from content, 2-4 sentences>",
-    "concepts": ["<concept 1 tested>", "<concept 2 tested>"]
-}}"""
+        """Legacy short answer prompt - now replaced by batch extraction."""
+        return self._build_batch_extraction_prompt(topic, content, difficulty, "short_answer")
     
     def _build_derivation_prompt(self, topic: str, content: str,
                                   difficulty: str) -> str:

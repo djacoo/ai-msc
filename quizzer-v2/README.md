@@ -16,9 +16,13 @@
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [How to Use](#-how-to-use)
+- [AI Model Selection](#-ai-model-selection)
+- [User Authentication](#-user-authentication)
+- [AI Chatbot](#-ai-chatbot)
 - [Question Types](#-question-types)
-- [Testing](#-testing)
+- [Project Structure](#-project-structure)
 - [Architecture](#-architecture)
+- [Testing](#-testing)
 - [Troubleshooting](#-troubleshooting)
 - [Advanced Configuration](#-advanced-configuration)
 
@@ -33,6 +37,10 @@
 - **🎯 Citation System**: Every answer includes citations to specific PDF pages
 - **🔒 Anti-Cheating**: Validates answers to prevent empty or minimal responses
 - **⚡ Fast Generation**: Optimized for speed with async processing
+- **💬 AI Chatbot**: Ask questions about your course notes with grounded responses
+- **👤 User System**: Authentication, registration, and personalized profiles
+- **📊 Performance Tracking**: Track your progress, ratings, and quiz history
+- **🏆 Rating System**: Dynamic rating based on performance (Beginner to Expert)
 
 ### User Experience
 - **🎨 Modern UI**: Clean, professional interface with smooth animations
@@ -40,6 +48,8 @@
 - **💫 Fluid Animations**: Hover effects, score counting, pulse effects
 - **⚙️ Customizable**: Choose question types before starting quiz
 - **📱 Responsive**: Adapts to different screen sizes
+- **🔐 Secure Authentication**: Password hashing and secure user management
+- **📖 User Profiles**: View statistics, change passwords, and track achievements
 
 ### Academic Rigor
 - **Strict Grading**: ≥90% for correct, 40-89% partially correct, <40% incorrect
@@ -53,9 +63,9 @@
 ## 🔧 Prerequisites
 
 ### Required
-- **Python 3.11+** (Python 3.8+ may work but 3.11 recommended)
+- **Python 3.8+** (Python 3.11 recommended)
 - **macOS** (tested on macOS, may work on Linux with modifications)
-- **Ollama** with `llama3.2:3b` model installed
+- **Ollama** with at least one Llama model installed (3.2:3b, 3.1:8b, or 3.1:70b)
 
 ### Automatic Dependencies
 The following are installed automatically on first run:
@@ -92,8 +102,17 @@ brew install ollama
 # Start Ollama service
 ollama serve
 
-# In another terminal, pull the model
+# In another terminal, pull a recommended model
+# Choose one based on your system capabilities:
+
+# Fast (3GB) - for quick testing
 ollama pull llama3.2:3b
+
+# Recommended (5GB) - best balance of speed and quality
+ollama pull llama3.1:8b
+
+# Highest quality (40GB) - requires powerful hardware
+ollama pull llama3.1:70b
 ```
 
 ### Step 4: Clone/Download Quizzer V2
@@ -136,17 +155,23 @@ cd /path/to/ai-masters-notes/quizzer-v2
 
 ### First-Time Setup
 
-1. **Launch**: Run `./start_quiz.sh`
-2. **Select Course**: Choose from available courses (NLP, ML, AR, etc.)
-3. **Configure Quiz**: Select question types:
+1. **Launch**: Run `./start_quiz.sh` or `python3 run.py`
+2. **Select AI Model**: Choose from available Llama models
+   - 🚀 Llama 3.2 (3B) - Fast, good for testing
+   - ⭐ Llama 3.1 (8B) - **Recommended** (best quality/speed balance)
+   - 💎 Llama 3.1 (70B) - Highest quality (requires powerful hardware)
+3. **Create Account**: Register with username and password
+4. **Login**: Enter your credentials
+5. **Select Course**: Choose from available courses (NLP, ML, AR, etc.)
+6. **Configure Quiz**: Select question types:
    - 📋 Multiple Choice Only
    - ✍️ Short Answers Only
    - 📝 Long Answers Only
    - 📊 Mixed Answers
    - 🎯 Everything Mixed (recommended)
-4. **Start Quiz**: Click "Start Quiz →"
-5. **Answer Questions**: Type answers or select options
-6. **View Results**: Get detailed feedback with citations
+7. **Start Quiz**: Click "Start Quiz →"
+8. **Answer Questions**: Type answers or select options
+9. **View Results**: Get detailed feedback with citations
 
 ---
 
@@ -202,6 +227,168 @@ After submitting, you'll see:
    - Evidence from reference notes
 
 4. **Citations**: PDF file and page numbers referenced
+
+---
+
+## 🤖 AI Model Selection
+
+Quizzer V2 supports multiple Llama models with different trade-offs:
+
+### Available Models
+
+| Model | Size | Speed | Quality | Best For | Recommendation |
+|-------|------|-------|---------|----------|----------------|
+| **Llama 3.2 (3B)** | ~2GB | ⚡⚡⚡ Very Fast | ⭐⭐ Fair | Quick testing, low-resource systems | Testing only |
+| **Llama 3.1 (8B)** | ~5GB | ⚡⚡ Fast | ⭐⭐⭐⭐ Excellent | Production use, best balance | ✅ **Recommended** |
+| **Llama 3.1 (70B)** | ~40GB | ⚡ Slower | ⭐⭐⭐⭐⭐ Outstanding | Maximum quality, powerful machines | Power users only |
+
+### Model Selection Process
+
+On first launch, you'll be presented with an interactive model selector:
+
+```
+🤖 AI MODEL SELECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[1] Llama 3.2 (3B)
+    Status: ✅ INSTALLED
+    Speed:  ⚡⚡⚡ Very Fast
+    Quality: ⭐⭐ Fair
+    Best for: Quick testing, low-resource systems
+
+[2] Llama 3.1 (8B) 🌟 RECOMMENDED
+    Status: ✅ INSTALLED
+    Speed:  ⚡⚡ Fast
+    Quality: ⭐⭐⭐⭐ Excellent
+    Best for: Production use, best balance
+
+[3] Llama 3.1 (70B)
+    Status: 📥 NOT INSTALLED
+    Speed:  ⚡ Slower
+    Quality: ⭐⭐⭐⭐⭐ Outstanding
+    Best for: Maximum quality, powerful machines
+
+💡 RECOMMENDATION: Option [2] Llama 3.1 (8B) for best results!
+```
+
+- **Auto-Download**: If a model isn't installed, the app will offer to download it
+- **Performance**: First question generation is slower (model loading), subsequent questions are faster
+- **Memory**: Ensure you have enough RAM for your selected model
+
+---
+
+## 🔐 User Authentication
+
+Quizzer V2 includes a complete user management system:
+
+### Features
+
+- **🔒 Secure Registration**: Username and password with validation
+- **🔑 Password Hashing**: Passwords stored securely with SHA-256 + salt
+- **👤 User Profiles**: Personalized experience for each user
+- **📊 Progress Tracking**: All quiz attempts are saved per user
+- **🏆 Rating System**: Dynamic rating based on performance
+
+### Registration
+
+1. Click **"Register"** on the login screen
+2. Enter a unique username (3+ characters, alphanumeric)
+3. Enter a password (8+ characters)
+4. Confirm your password
+5. Click **"Create Account"**
+
+**Password Requirements**:
+- Minimum 8 characters
+- At least one letter
+- At least one number or special character
+
+### Login
+
+1. Enter your username
+2. Enter your password
+3. Click **"Login"**
+
+### User Profile
+
+Access your profile from the main menu to view:
+
+- **Username** and **User ID**
+- **Total Quizzes Taken**
+- **Average Score** (percentage)
+- **Current Rating** (Beginner → Expert scale)
+- **Best Subject** performance
+
+**Available Actions**:
+- 🔑 **Change Password**: Update your password securely
+- 📊 **View Statistics**: See detailed performance metrics
+- 🚪 **Logout**: Return to login screen
+
+### Rating System
+
+Your rating evolves based on performance:
+
+| Rating | Requirements | Badge |
+|--------|-------------|-------|
+| **Beginner** | New users | 🌱 |
+| **Learner** | Average score: 40-59% | 📚 |
+| **Intermediate** | Average score: 60-74% | 📖 |
+| **Advanced** | Average score: 75-89% | 🎓 |
+| **Expert** | Average score: 90%+ | 🏆 |
+
+---
+
+## 💬 AI Chatbot
+
+Ask questions about your course material and get grounded, accurate answers.
+
+### Features
+
+- **📚 Course-Specific**: Chatbot only answers based on your selected course notes
+- **🎯 Grounded Responses**: All answers include citations to PDF pages
+- **🔍 Context-Aware**: Uses semantic search to find relevant content
+- **💡 Conversational**: Natural dialogue with chat history
+- **📝 Source Attribution**: Every response shows which PDF and pages were used
+
+### How to Use
+
+1. **Start a Quiz Session**: Select a course and start a quiz
+2. **Open Chatbot**: Click the **"💬 Ask AI"** button in the main window
+3. **Ask Questions**: Type your question in the input box
+4. **Get Answers**: Receive detailed responses with citations
+5. **Continue Conversation**: Ask follow-up questions
+6. **Close**: Click **"Close"** to return to the quiz
+
+### Example Interaction
+
+```
+You: What is backpropagation?
+
+AI Assistant:
+Backpropagation is the fundamental algorithm used to train neural 
+networks. It works by computing gradients of the loss function with 
+respect to each weight by propagating error information backwards 
+through the network, starting from the output layer.
+
+The algorithm uses the chain rule of calculus to efficiently compute 
+these gradients, allowing us to update weights using gradient descent.
+
+📖 Sources:
+• ML&DL Appunti.pdf (Pages 45-47)
+```
+
+### Best Practices
+
+- **Be Specific**: Ask focused questions about concepts from your course
+- **Use Context**: Reference topics from your notes
+- **Follow Up**: Ask clarifying questions based on previous answers
+- **Check Citations**: Verify answers by reviewing the cited pages
+
+### Limitations
+
+- Only answers questions based on loaded course PDFs
+- Cannot access external information or the internet
+- Quality depends on the selected AI model
+- Response time: 3-10 seconds depending on model and question complexity
 
 ---
 
@@ -323,21 +510,44 @@ Grading: Rubric-based (correct steps + reasoning)
 
 ---
 
-## 🏗️ Architecture
-
-### System Components
+## 📁 Project Structure
 
 ```
 quizzer-v2/
-├── start_quiz.sh          # Entry point launcher
-├── run.py                 # Dependency checker & app launcher
-├── quizzer_v2_gui.py      # User interface (36KB)
-├── quizzer_v2_engine.py   # Core quiz logic
-├── question_generator.py  # AI question generation
-├── grading_engine.py      # AI answer evaluation
-├── pdf_grounding.py       # PDF parsing & search
-└── local_ai.py            # Ollama integration
+├── run.py                    # Main entry point with dependency checks
+├── start_quiz.sh             # Shell launcher for macOS
+├── README.md                 # This file
+│
+├── src/                      # Source code
+│   ├── __init__.py
+│   │
+│   ├── engines/              # Core logic engines
+│   │   ├── __init__.py
+│   │   ├── quizzer_v2_engine.py    # Main quiz orchestrator
+│   │   ├── question_generator.py   # AI question generation
+│   │   ├── grading_engine.py       # AI answer evaluation
+│   │   ├── rating_generator.py     # User rating system
+│   │   └── chatbot_engine.py       # AI chatbot for Q&A
+│   │
+│   ├── gui/                  # User interface
+│   │   ├── __init__.py
+│   │   ├── quizzer_v2_gui.py       # Main application window
+│   │   ├── chatbot_gui.py          # Chat interface
+│   │   ├── auth_gui.py             # Login/registration
+│   │   └── profile_gui.py          # User profile page
+│   │
+│   └── utils/                # Utilities
+│       ├── __init__.py
+│       ├── local_ai.py             # Ollama AI interface
+│       ├── pdf_grounding.py        # PDF parsing & search
+│       └── user_manager.py         # User authentication
+│
+└── tests/                    # Test suite
+    ├── __init__.py
+    └── test_chatbot.py       # Chatbot integration tests
 ```
+
+## 🏗️ Architecture
 
 ### Data Flow
 
@@ -493,63 +703,91 @@ python3.11 -m tkinter
 
 ### Change Number of Questions
 
-Edit `quizzer_v2_gui.py`:
+Edit `src/gui/quizzer_v2_gui.py`:
 ```python
 # Line ~330
 "num_questions": 5,  # Change to desired number (3-10 recommended)
 ```
 
-### Change AI Model
+### Select Different AI Model
+
+The AI model is selected at launch. To change the default:
 
 Edit `run.py`:
 ```python
-# Line ~75
-ai = LocalAI("llama3.2:3b")  # Change to "llama3.2:1b" for faster (less accurate)
+# Line ~207 - Modify the model selection or set a default
+ai = LocalAI("llama3.1:8b")  # Options: llama3.2:3b, llama3.1:8b, llama3.1:70b
 ```
 
 ### Modify Grading Strictness
 
-Edit `grading_engine.py`:
+Edit `src/engines/grading_engine.py`:
 ```python
 # Line ~260-267 - Change thresholds
-if percentage >= 0.9:  # Change 0.9 to 0.85 for more lenient
+if percentage >= 0.9:  # Change 0.9 to 0.85 for more lenient grading
     decision = "correct"
+elif percentage >= 0.4:  # Change 0.4 to 0.3 for easier partial credit
+    decision = "partially_correct"
 ```
 
 ### Add New Course
 
-Edit `quizzer_v2_engine.py`:
+Edit `src/engines/quizzer_v2_engine.py`:
 ```python
-# Line ~19-42
+# Line ~22-46
 COURSES = {
     "your-course": {
         "name": "Your Course Name",
-        "default_notes": ["path/to/notes.pdf"]
+        "default_notes": ["courses/your-course/notes/notes.pdf"]
     },
     # ... existing courses
 }
 ```
 
+Then add your PDF files to the appropriate directory:
+```bash
+mkdir -p ../courses/your-course/notes/
+cp your-notes.pdf ../courses/your-course/notes/
+```
+
 ### Customize Colors
 
-Edit `quizzer_v2_gui.py`:
+Edit `src/gui/quizzer_v2_gui.py`:
 ```python
-# Line ~18-27
+# Line ~19-29
 COLORS = {
     "bg": "#1a1a2e",       # Main background
+    "fg": "#eee",          # Text color
     "primary": "#0f3460",  # Headers
-    "accent": "#e94560",   # Accent elements
+    "accent": "#e94560",   # Buttons and accents
+    "success": "#2ecc71",  # Success messages
     # Customize as needed
 }
 ```
 
+### Configure User Database Location
+
+Edit `src/engines/quizzer_v2_engine.py`:
+```python
+# Line ~63 - Change database path
+self.user_manager = UserManager("user_data/users.db")  # Modify path as needed
+```
+
 ### Disable Debug Logging
 
-Edit `quizzer_v2_gui.py`:
+Edit `src/gui/quizzer_v2_gui.py`:
 ```python
 # Comment out or remove print statements:
-# Line ~470-478 (GRADE_ANSWER RETURNED)
-# Line ~493-501 (GRADING RESULT)
+# Search for "DEBUG:", "GRADING RESULT", etc.
+# Line ~470-478 and similar debug output sections
+```
+
+### Adjust Question Generation Timeout
+
+Edit `src/gui/quizzer_v2_gui.py`:
+```python
+# Line ~340 - Increase timeout for slower systems
+timeout = 120  # Change from default 60 seconds to 120
 ```
 
 ---
@@ -574,6 +812,113 @@ Edit `quizzer_v2_gui.py`:
 3. **Smaller Quiz**: 3-5 questions for quick review
 4. **MCQ Only**: Fastest generation and grading
 5. **Warm-up**: Run a test quiz to load models
+
+---
+
+## 🛠️ Development
+
+### Module Overview
+
+The codebase is organized into three main packages:
+
+#### **Engines** (`src/engines/`)
+Core business logic for quiz generation and evaluation:
+- `quizzer_v2_engine.py` - Main orchestrator, course management
+- `question_generator.py` - AI-powered question generation from PDFs
+- `grading_engine.py` - AI-powered answer evaluation with rubrics
+- `rating_generator.py` - User rating calculation based on performance
+- `chatbot_engine.py` - Context-aware Q&A chatbot
+
+#### **GUI** (`src/gui/`)
+User interface components using Tkinter:
+- `quizzer_v2_gui.py` - Main quiz interface (1270 lines)
+- `chatbot_gui.py` - Chat window for AI assistant
+- `auth_gui.py` - Login and registration screens
+- `profile_gui.py` - User profile and statistics display
+
+#### **Utils** (`src/utils/`)
+Helper modules and infrastructure:
+- `local_ai.py` - Ollama API wrapper for local AI models
+- `pdf_grounding.py` - PDF parsing, semantic search, citation extraction
+- `user_manager.py` - SQLite-based user authentication and management
+
+### Import Structure
+
+The project uses **relative imports** within the `src` package:
+
+```python
+# Within engines/ modules
+from ..utils.pdf_grounding import PDFGroundingEngine
+from .grading_engine import GradingEngine
+
+# Within gui/ modules  
+from ..engines.quizzer_v2_engine import QuizzerV2
+from ..utils.local_ai import LocalAI
+
+# From external code (run.py, tests)
+from src.gui.quizzer_v2_gui import QuizzerV2GUI
+from src.engines.quizzer_v2_engine import QuizzerV2
+```
+
+### Running Tests
+
+```bash
+# Test chatbot integration
+python3 tests/test_chatbot.py
+
+# Test imports (syntax check)
+python3 -m py_compile run.py
+python3 -m py_compile src/engines/*.py
+python3 -m py_compile src/gui/*.py
+python3 -m py_compile src/utils/*.py
+```
+
+### Adding New Features
+
+1. **New Engine**: Add to `src/engines/` and update `__init__.py`
+2. **New GUI Component**: Add to `src/gui/` and import in main GUI
+3. **New Utility**: Add to `src/utils/` and update `__init__.py`
+4. **New Course**: Update `COURSES` dict in `quizzer_v2_engine.py`
+
+### Code Style
+
+- **Type Hints**: Use type hints for all function parameters and returns
+- **Docstrings**: Google-style docstrings for all public methods
+- **Error Handling**: Catch specific exceptions, provide helpful error messages
+- **Threading**: Use threading for long-running AI operations (don't block GUI)
+- **Logging**: Use print statements for debugging (can be removed for production)
+
+### Database Schema
+
+User data is stored in SQLite (`user_data/users.db`):
+
+**Users Table**:
+- `user_id` (INTEGER PRIMARY KEY)
+- `username` (TEXT UNIQUE)
+- `password_hash` (TEXT) - SHA-256 with salt
+- `salt` (TEXT)
+- `created_at` (TIMESTAMP)
+
+**Quiz Attempts Table**:
+- `attempt_id` (INTEGER PRIMARY KEY)
+- `user_id` (INTEGER FK)
+- `course` (TEXT)
+- `score` (REAL) - Percentage 0-100
+- `total_questions` (INTEGER)
+- `attempted_at` (TIMESTAMP)
+
+### Dependencies
+
+**Runtime**:
+- Python 3.8+ (3.11 recommended)
+- `PyPDF2==3.0.1` - PDF parsing
+- `tkinter` - GUI framework (built-in on most systems)
+- `ollama` - Local AI inference (external service)
+
+**Development** (optional):
+- `pytest` - For unit testing
+- `mypy` - Type checking
+- `black` - Code formatting
 
 ---
 

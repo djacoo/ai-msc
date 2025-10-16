@@ -13,6 +13,7 @@ class LocalAI:
         """Initialize local AI with specified model."""
         self.model = model
         self.check_ollama_installed()
+        self.check_model_available()  # Auto-pull model if not present
     
     def check_ollama_installed(self):
         """Check if Ollama is installed."""
@@ -119,6 +120,9 @@ class LocalAI:
             except json.JSONDecodeError as e:
                 # If JSON parsing fails, return a default structure
                 return {"error": f"Could not parse JSON: {str(e)}", "raw_response": response[:300]}
+            except Exception as e:
+                # Catch any other errors during parsing
+                return {"error": f"Error processing response: {type(e).__name__}: {str(e)}", "raw_response": response[:300] if response else "No response"}
         
         return None
 

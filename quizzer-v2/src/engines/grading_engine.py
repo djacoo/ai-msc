@@ -7,7 +7,7 @@ Teacher-grade grading with rubrics and citations
 import json
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
-from pdf_grounding import PDFGroundingEngine
+from ..utils.pdf_grounding import PDFGroundingEngine
 
 
 class GradingEngine:
@@ -228,11 +228,11 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
             rubric=rubric
         )
         
-        # Get AI grading
+        # Get AI grading using new evaluation format
         try:
             response = self.ai.generate_json(
                 prompt,
-                "You are a rigorous professor grading student work. Check EVERY criterion carefully against the reference content. Be strict but fair. Respond with valid JSON only.",
+                "You are an academic examiner evaluating a student's short answer for a university-level quiz. Grade fairly and educationally — focus on meaning, not wording. Return only valid JSON.",
                 temperature=0.2,
                 max_tokens=1000
             )
@@ -241,10 +241,16 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
                 # Fallback grading
                 return self._fallback_grading(question, user_answer, canonical)
             
-            # Parse grading response
-            checks = response.get("checks", [])
-            points_awarded = response.get("points_awarded", 0)
-            max_points = sum(c.get("points", 0) for c in point_breakdown)
+            # Parse new evaluation format
+            is_correct = response.get("is_correct", False)
+            score = response.get("score", 0.0)  # 0.0 to 1.0
+            verdict = response.get("verdict", "incorrect")
+            justification = response.get("justification", "")
+            expected_summary = response.get("expected_summary", canonical)
+            
+            # Calculate points from score
+            max_points = sum(c.get("points", 0) for c in point_breakdown) if point_breakdown else 10
+            points_awarded = int(score * max_points)
             
             # FALSE POSITIVE GUARD: Detect minimal/empty answers
             user_answer_clean = user_answer.strip().replace(".", "").replace(",", "").replace("!", "").replace("?", "").strip()
@@ -252,19 +258,35 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
                 # Answer too short - force fail
                 print(f"⚠️ FALSE POSITIVE GUARD: Answer too short ({len(user_answer_clean)} chars), forcing 0 points")
                 points_awarded = 0
-                # Mark all checks as not met
-                for check in checks:
-                    check["met"] = False
-                    check["evidence"] = f"Answer is too short/empty to evaluate ({len(user_answer_clean)} meaningful characters)"
+                score = 0.0
+                verdict = "incorrect"
+                is_correct = False
+                justification = f"Answer is too short/empty to evaluate ({len(user_answer_clean)} meaningful characters). {justification}"
             
-            # Determine decision per specification: ≥90%, 40-89%, <40%
-            percentage = points_awarded / max_points if max_points > 0 else 0
-            if percentage >= 0.9:
-                decision = "correct"
-            elif percentage >= 0.4:
-                decision = "partially_correct"
-            else:
-                decision = "incorrect"
+            # Map verdict to decision (for backward compatibility)
+            verdict_map = {
+                "exact": "correct",
+                "semantically_correct": "correct",
+                "partially_correct": "partially_correct",
+                "incorrect": "incorrect"
+            }
+            decision = verdict_map.get(verdict, "incorrect")
+            
+            # Build checks array for backward compatibility
+            checks = []
+            for criterion in point_breakdown:
+                criterion_name = criterion.get("criterion", "")
+                criterion_points = criterion.get("points", 0)
+                # Proportionally assign met status based on score
+                met = score >= 0.7  # If score is high, most criteria are met
+                checks.append({
+                    "criterion": criterion_name,
+                    "met": met,
+                    "evidence": justification
+                })
+            
+            # Build explanation from new format
+            explanation = f"{verdict.replace('_', ' ').title()}. Score: {points_awarded}/{max_points} points.\n\n{justification}\n\nExpected: {expected_summary}"
             
             grading = {
                 "question_id": question.get("id"),
@@ -272,10 +294,15 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
                 "points_possible": max_points,
                 "decision": decision,
                 "checks": checks,
-                "explanation_to_student": response.get("explanation", ""),
+                "explanation_to_student": explanation,
                 "citations": grounding,
                 "false_positive_guard": True,
-                "false_negative_guard": True
+                "false_negative_guard": True,
+                # Add new format fields
+                "is_correct": is_correct,
+                "score": score,
+                "verdict": verdict,
+                "expected_summary": expected_summary
             }
             
             return {"grading": grading}
@@ -288,97 +315,42 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
                                canonical_answer: str, concepts_required: List[str],
                                point_breakdown: List[Dict], reference_content: str,
                                rubric: Dict) -> str:
-        """Build prompt for AI grading following academic specification.
+        """Build prompt for AI grading using the new answer evaluation format.
         
         Returns:
             Grading prompt
         """
-        rubric_text = "\n".join([
-            f"- {c['criterion']}: {c['points']} points"
-            for c in point_breakdown
-        ])
+        # Build context section from reference content
+        context_section = f"\nContext (optional, if available):\n{reference_content[:1500]}" if reference_content else ""
         
-        concepts_text = "\n".join([f"  • {c}" for c in concepts_required])
-        
-        return f"""You are an academic-grade reasoning engine. Your role is to grade this student answer with PERFECT fairness.
-
-KNOWLEDGE CONSTRAINTS:
-- The ONLY valid reference is the course notes content below
-- No external knowledge allowed
-- If a concept isn't in the notes, treat it as unknown
-
-QUESTION:
+        return f"""Question:
 {question}
 
-REFERENCE CONTENT FROM COURSE NOTES:
-{reference_content[:1500]}
-
-CANONICAL ANSWER (from notes):
+Correct Answer:
 {canonical_answer}
 
-REQUIRED CONCEPTS (must extract from student answer):
-{concepts_text}
+Student Answer:
+{user_answer}{context_section}
 
-RUBRIC - Point Breakdown:
-{rubric_text}
+Now grade the student's answer according to the schema and principles above.
+Return **only JSON**, no commentary or markdown.
 
-STUDENT'S ANSWER:
-{user_answer}
-
-⚠️ CRITICAL: Check if the student answer is substantive!
-- If answer is empty, just punctuation, or < 5 meaningful words: ALL criteria = NOT MET, 0 points
-- Single word/symbol answers almost never satisfy rubric criteria
-- Be extremely strict with minimal answers
-
-EVALUATION ALGORITHM:
-
-1. CRITERION MATCHING:
-   - For EACH criterion in the rubric, verify if student's answer satisfies it
-   - Match = answer includes correct definition/explanation OR exact paraphrase from notes
-   - Fail = missing, wrong, or contradicts notes
-
-2. CONCEPT COVERAGE:
-   - Extract all required concepts from student's answer
-   - Award points ONLY for correctly used concepts
-   - Missing or wrong concepts = lose corresponding points
-
-3. REASONING VALIDITY:
-   - Logical flow must follow what is taught in notes
-   - Alternative reasoning from same notes = correct
-   - Reasoning not in notes = incorrect
-
-4. SEMANTIC UNDERSTANDING:
-   - Parse semantically, not just lexically
-   - Accept synonyms and rephrasings IF they match the concept
-   - For numbers: tolerance ±1e-6
-   - Minor notation differences OK if semantically correct
-
-5. FALSE POSITIVE PREVENTION:
-   - Re-check EACH awarded point against grounding evidence
-   - If student statement isn't logically supported by notes, REMOVE credit
-   - Never award credit for plausible-sounding but ungrounded statements
-
-6. FALSE NEGATIVE PREVENTION:
-   - Check if student used different but correct explanation from notes
-   - If found in notes (even different section), ADD credit
-   - Don't penalize valid alternative approaches from the same notes
-
-7. FINAL SCORING:
-   - Sum all awarded points
-   - Report each criterion with ✅ (met) or ❌ (not met)
-
-Respond with JSON:
+Expected JSON Schema:
 {{
-    "points_awarded": <total points as integer>,
-    "checks": [
-        {{
-            "criterion": "<criterion from rubric>",
-            "met": true/false,
-            "evidence": "<Why met/not met, quote or cite specific part of reference notes>"
-        }}
-    ],
-    "explanation": "<Start with verdict (correct/partially correct/incorrect), then list ✅/❌ for each criterion with brief evidence from notes. End with learning remark.>"
-}}"""
+  "is_correct": boolean,
+  "score": number,          // 0.0 to 1.0
+  "verdict": "exact" | "semantically_correct" | "partially_correct" | "incorrect",
+  "justification": string,  // brief academic feedback for the student
+  "expected_summary": string // concise gold-standard answer
+}}
+
+Grading principles:
+- Accept synonyms or equivalent phrasing.
+- Minor spelling or grammar errors are ignored.
+- Penalize missing key points, wrong facts, or contradictions.
+- If the answer shows partial understanding, mark "partially_correct" with score 0.4–0.7.
+- If the student adds incorrect facts, mark as "incorrect".
+- Always explain *why* the answer is or isn't correct, clearly and kindly."""
     
     def _fallback_grading(self, question: Dict, user_answer: str,
                           canonical: str) -> Dict:

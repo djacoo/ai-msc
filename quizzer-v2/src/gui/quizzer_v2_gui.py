@@ -29,15 +29,17 @@ class QuizzerV2GUI:
         "info": "#3498db"
     }
     
-    def __init__(self, engine, ai_engine):
+    def __init__(self, engine, ai_engine, username=None):
         """Initialize GUI.
         
         Args:
             engine: QuizzerV2 engine instance
             ai_engine: AI engine for display info
+            username: Optional username of logged in user
         """
         self.engine = engine
         self.ai = ai_engine
+        self.username = username
         
         # Session state
         self.current_question = None
@@ -53,9 +55,13 @@ class QuizzerV2GUI:
         
         # Create window
         self.root = tk.Tk()
-        self.root.title("Quizzer V2 - Grounded Exam Q&A")
+        title = f"Quizzer V2 - {username}" if username else "Quizzer V2 - Grounded Exam Q&A"
+        self.root.title(title)
         self.root.geometry("1000x800")
         self.root.configure(bg=self.COLORS["bg"])
+        
+        # Handle window close
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         # Configure styles
         self.setup_styles()
@@ -119,6 +125,43 @@ class QuizzerV2GUI:
         self.header_frame.pack(fill="x", side="top")
         self.header_frame.pack_propagate(False)
         
+        # Profile button (if logged in)
+        if self.username:
+            profile_btn = tk.Button(
+                self.header_frame,
+                text=f"👤 {self.username}",
+                font=("SF Pro", 13, "bold"),
+                bg="#1e3a5f",  # Dark blue background
+                fg="#ffffff",  # White text
+                activebackground="#2563eb",  # Lighter blue on hover
+                activeforeground="#ffffff",
+                relief="flat",
+                padx=20,
+                pady=10,
+                cursor="hand2",
+                command=self.show_profile,
+                borderwidth=0
+            )
+            profile_btn.pack(side="right", padx=20, pady=20)
+        
+        # Chatbot button (hidden by default, shown when course is selected)
+        self.chatbot_btn = tk.Button(
+            self.header_frame,
+            text="💬 Ask AI",
+            font=("SF Pro", 13, "bold"),
+            bg="#10b981",  # Green background
+            fg="#ffffff",
+            activebackground="#059669",
+            activeforeground="#ffffff",
+            relief="flat",
+            padx=20,
+            pady=10,
+            cursor="hand2",
+            command=self.open_chatbot,
+            borderwidth=0
+        )
+        # Don't pack yet - will show when course is selected
+        
         self.title_label = tk.Label(
             self.header_frame,
             text="🎓 Quizzer V2",
@@ -126,7 +169,7 @@ class QuizzerV2GUI:
             bg=self.COLORS["primary"],
             fg="white"
         )
-        self.title_label.pack(pady=20)
+        self.title_label.pack(side="left", padx=20, pady=20)
         
         # Main content area
         self.content_frame = tk.Frame(self.root, bg=self.COLORS["bg"])
@@ -167,9 +210,46 @@ class QuizzerV2GUI:
     
     def show_start_screen(self):
         """Show course selection screen."""
+        # Hide chatbot button when returning to main menu
+        if hasattr(self, 'chatbot_btn'):
+            self.chatbot_btn.pack_forget()
+        
         # Clear content with fade effect
         for widget in self.content_frame.winfo_children():
             widget.destroy()
+        
+        # User stats banner (if logged in)
+        if self.username:
+            profile = self.engine.get_user_profile()
+            if profile:
+                stats = profile['stats']
+                rating = profile['rating']
+                
+                stats_banner = tk.Frame(
+                    self.content_frame, 
+                    bg="#1a1a2e",  # Very dark background
+                    padx=20, 
+                    pady=15,
+                    highlightbackground="#0f3460",
+                    highlightthickness=2
+                )
+                stats_banner.pack(fill="x", pady=(0, 20))
+                
+                tk.Label(
+                    stats_banner,
+                    text=f"{rating['emoji']} {rating['tier']}",
+                    font=("SF Pro", 18, "bold"),
+                    fg="#00d4ff",  # Bright cyan for maximum visibility
+                    bg="#1a1a2e"
+                ).pack(anchor="w")
+                
+                tk.Label(
+                    stats_banner,
+                    text=f"{stats['total_quizzes']} quizzes • {stats['accuracy']:.0f}% accuracy • {stats['total_stars']} ⭐",
+                    font=("SF Pro", 13),
+                    fg="#ffffff",  # Pure white
+                    bg="#1a1a2e"
+                ).pack(anchor="w", pady=(5, 0))
         
         # Welcome message
         welcome = tk.Label(
@@ -184,32 +264,80 @@ class QuizzerV2GUI:
         # Get available courses
         courses = self.engine.get_available_courses()
         
-        # Course buttons
-        button_frame = tk.Frame(self.content_frame, bg=self.COLORS["bg"])
-        button_frame.pack(pady=20)
+        # Course cards with both quiz and chat options
+        courses_frame = tk.Frame(self.content_frame, bg=self.COLORS["bg"])
+        courses_frame.pack(pady=20, fill="both", expand=True)
         
         for course in courses:
             if course["notes_available"] > 0:
-                btn = tk.Button(
-                    button_frame,
-                    text=f"📚 {course['name']}\n({course['notes_available']} notes available)",
-                    font=("SF Pro", 14),
+                # Course card container
+                card = tk.Frame(
+                    courses_frame,
                     bg="white",
-                    fg="black",
-                    activebackground="#f0f0f0",
-                    activeforeground="black",
                     bd=2,
-                    relief="solid",
-                    padx=30,
-                    pady=15,
-                    cursor="hand2",
-                    command=lambda c=course: self.show_quiz_config(c["code"])
+                    relief="solid"
                 )
-                btn.pack(pady=10, fill="x")
+                card.pack(pady=10, padx=50, fill="x")
                 
-                # Add hover effect
-                btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#e8f4ff", bd=3))
-                btn.bind("<Leave>", lambda e, b=btn: b.config(bg="white", bd=2))
+                # Course title
+                title_label = tk.Label(
+                    card,
+                    text=f"📚 {course['name']}",
+                    font=("SF Pro", 16, "bold"),
+                    bg="white",
+                    fg="black"
+                )
+                title_label.pack(pady=(15, 5), anchor="w", padx=20)
+                
+                # Course info
+                info_label = tk.Label(
+                    card,
+                    text=f"{course['notes_available']} notes available",
+                    font=("SF Pro", 11),
+                    bg="white",
+                    fg="#666"
+                )
+                info_label.pack(pady=(0, 15), anchor="w", padx=20)
+                
+                # Action buttons frame
+                actions_frame = tk.Frame(card, bg="white")
+                actions_frame.pack(fill="x", padx=20, pady=(0, 15))
+                
+                # Chat button (left)
+                chat_btn = tk.Button(
+                    actions_frame,
+                    text="💬 Chat with AI",
+                    font=("SF Pro", 12, "bold"),
+                    bg="#10b981",
+                    fg="white",
+                    activebackground="#059669",
+                    activeforeground="white",
+                    relief="flat",
+                    padx=20,
+                    pady=10,
+                    cursor="hand2",
+                    command=lambda c=course: self.open_chatbot_from_home(c["code"], c["name"], c["note_files"]),
+                    borderwidth=0
+                )
+                chat_btn.pack(side="left", padx=(0, 10))
+                
+                # Quiz button (right)
+                quiz_btn = tk.Button(
+                    actions_frame,
+                    text="📝 Take Quiz",
+                    font=("SF Pro", 12, "bold"),
+                    bg="#2563eb",
+                    fg="white",
+                    activebackground="#1d4ed8",
+                    activeforeground="white",
+                    relief="flat",
+                    padx=20,
+                    pady=10,
+                    cursor="hand2",
+                    command=lambda c=course: self.show_quiz_config(c["code"]),
+                    borderwidth=0
+                )
+                quiz_btn.pack(side="left")
         
         # Info section - single line at bottom with contrast
         info_label = tk.Label(
@@ -388,6 +516,9 @@ class QuizzerV2GUI:
     def finish_loading(self):
         """Finish loading and show first question."""
         self.is_loading = False
+        # Show chatbot button now that course is loaded
+        if hasattr(self, 'chatbot_btn'):
+            self.chatbot_btn.pack(side="right", padx=(0, 10), pady=20)
         self.show_question()
     
     def show_loading_screen(self, message="Generating questions..."):
@@ -922,6 +1053,9 @@ class QuizzerV2GUI:
     
     def show_results(self):
         """Show final quiz results."""
+        # Complete the quiz session for user tracking
+        self.engine.complete_quiz()
+        
         # Clear content
         for widget in self.content_frame.winfo_children():
             widget.destroy()
@@ -973,6 +1107,17 @@ class QuizzerV2GUI:
         btn_frame = tk.Frame(card, bg=self.COLORS["secondary"])
         btn_frame.pack(pady=20)
         
+        # Back to Menu button
+        menu_btn = ttk.Button(
+            btn_frame,
+            text="Back to Menu",
+            style="Primary.TButton",
+            cursor="hand2",
+            command=self.show_start_screen
+        )
+        menu_btn.pack(side="left", padx=10)
+        
+        # New Quiz button
         new_quiz_btn = ttk.Button(
             btn_frame,
             text="New Quiz",
@@ -1013,6 +1158,7 @@ class QuizzerV2GUI:
         self.score = 0
         self.questions_answered = 0
         self.streak = 0
+        self.engine.reset_quiz()  # Clear course selection
         self.show_start_screen()
     
     def update_stats(self):
@@ -1026,6 +1172,67 @@ class QuizzerV2GUI:
         )
         
         self.stats_label.config(text=stats_text)
+    
+    def show_profile(self):
+        """Show user profile window."""
+        if not self.username:
+            return
+        
+        from profile_gui import ProfileGUI
+        
+        def on_profile_close(logout=False):
+            """Handle profile window close."""
+            if logout:
+                # User deleted account, close app
+                self.root.quit()
+                self.root.destroy()
+        
+        ProfileGUI(self.root, self.engine, self.username, on_profile_close)
+    
+    def open_chatbot(self):
+        """Open chatbot window for current course."""
+        # Check if a course is selected
+        if not self.engine.current_course_code:
+            from tkinter import messagebox
+            messagebox.showinfo("No Course Selected", "Please start a quiz first to use the chatbot.")
+            return
+        
+        # Get course info
+        course_code = self.engine.current_course_code
+        course_name = self.engine.get_current_course_name()
+        
+        if not course_name:
+            from tkinter import messagebox
+            messagebox.showerror("Error", "Could not load course information.")
+            return
+        
+        # Launch chatbot
+        from chatbot_gui import ChatbotGUI
+        ChatbotGUI(self.root, self.engine.chatbot, course_code, course_name)
+    
+    def open_chatbot_from_home(self, course_code: str, course_name: str, note_files: list):
+        """Open chatbot window directly from homepage.
+        
+        Args:
+            course_code: Course code (nlp, ml-dl, etc.)
+            course_name: Full course name
+            note_files: List of note file paths
+        """
+        # Configure chatbot for this course
+        self.engine.chatbot.set_course(course_code, note_files)
+        
+        # Launch chatbot
+        from chatbot_gui import ChatbotGUI
+        ChatbotGUI(self.root, self.engine.chatbot, course_code, course_name)
+    
+    def on_closing(self):
+        """Handle window close event."""
+        if messagebox.askokcancel("Quit", "Do you want to quit Quizzer V2?"):
+            # Logout user if logged in
+            if self.username and self.engine.current_user_id:
+                self.engine.logout()
+            self.root.quit()
+            self.root.destroy()
     
     def run(self):
         """Run the GUI application."""

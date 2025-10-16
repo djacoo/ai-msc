@@ -89,3 +89,8 @@ env/
 
 # Node modules (if any web tools are added)
 node_modules/
+
+# Quizzer V2 user data (protected)
+quizzer-v2/user_data/
+*.db
+*.db-journal
