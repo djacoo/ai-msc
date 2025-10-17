@@ -422,6 +422,21 @@ class QuizzerV2:
         self.logout()
         return self.user_manager.delete_user(user_id)
     
+    def change_password(self, old_password: str, new_password: str) -> tuple:
+        """Change the current user's password.
+        
+        Args:
+            old_password: Current password for verification
+            new_password: New password to set
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        if not self.current_user_id:
+            return False, "No user logged in"
+        
+        return self.user_manager.change_password(self.current_user_id, old_password, new_password)
+    
     def get_user_profile(self) -> Optional[Dict]:
         """Get current user's profile with stats and rating.
         

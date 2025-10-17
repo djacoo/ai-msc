@@ -267,6 +267,59 @@ class UserManager:
             conn.close()
             return False, f"Failed to delete account: {str(e)}"
     
+    def change_password(self, user_id: int, old_password: str, new_password: str) -> tuple:
+        """Change user's password.
+        
+        Args:
+            user_id: User ID
+            old_password: Current password for verification
+            new_password: New password to set
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        # Validate new password
+        valid, msg = self.validate_password(new_password)
+        if not valid:
+            return False, msg
+        
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            # Get current password hash and salt
+            cursor.execute('SELECT password_hash, salt FROM users WHERE id = ?', (user_id,))
+            result = cursor.fetchone()
+            
+            if not result:
+                conn.close()
+                return False, "User not found"
+            
+            stored_hash, salt = result
+            
+            # Verify old password
+            old_hash, _ = self._hash_password(old_password, salt)
+            if old_hash != stored_hash:
+                conn.close()
+                return False, "Current password is incorrect"
+            
+            # Hash new password with new salt
+            new_hash, new_salt = self._hash_password(new_password)
+            
+            # Update password
+            cursor.execute(
+                'UPDATE users SET password_hash = ?, salt = ? WHERE id = ?',
+                (new_hash, new_salt, user_id)
+            )
+            conn.commit()
+            conn.close()
+            
+            return True, "Password changed successfully"
+            
+        except Exception as e:
+            conn.close()
+            return False, f"Failed to change password: {str(e)}"
+    
     def get_user_stats(self, user_id: int) -> Dict:
         """Get comprehensive user statistics.
         

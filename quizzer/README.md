@@ -1,11 +1,38 @@
-# Quizzer V2 - AI-Powered Academic Quiz System
+# Quizzer V3 - AI-Powered Academic Quiz System
 
-> **Academic-grade quiz generator with AI teacher evaluation**  
-> Generate questions from your course PDFs and receive detailed, grounded feedback from an AI teacher.
+> **Academic-grade quiz generator with AI teacher evaluation + Smooth Animations**  
+> Generate questions from your course PDFs, receive detailed grounded feedback, and enjoy a fluid, animated user experience.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Version](https://img.shields.io/badge/Version-3.0-success.svg)](https://github.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![macOS](https://img.shields.io/badge/Platform-macOS-lightgrey.svg)](https://www.apple.com/macos/)
+
+---
+
+## 🆕 What's New in V3
+
+### ✨ Animations & Visual Feedback
+- **Success Animations**: Beautiful checkmark animation on login/register
+- **Loading Spinners**: Smooth 60px rotating arcs for all async operations
+- **Typing Indicators**: Animated dots in chatbot conversations
+- **Fluid Transitions**: 30-60 FPS animations throughout
+
+### 🎨 UI/UX Improvements
+- **Compact Layouts**: All content visible without scrolling
+- **Foreground Launch**: App always opens above other windows
+- **Optimized Scrolling**: 40% trackpad sensitivity for smooth control
+- **Consistent Styling**: Uniform button design across the app
+
+### 🔐 Enhanced Features
+- **Password Management**: Change passwords directly from profile
+- **Conversational Chatbot**: Handles greetings and casual conversation
+- **Better Error Messages**: More helpful feedback throughout
+
+### 📊 Refined Rating System
+- **5-Tier System**: From Beginner to Master Scholar
+- **Weighted Algorithm**: Smart calculation based on performance
+- **AI Descriptions**: Personalized motivational messages
 
 ---
 
@@ -40,16 +67,21 @@
 - **💬 AI Chatbot**: Ask questions about your course notes with grounded responses
 - **👤 User System**: Authentication, registration, and personalized profiles
 - **📊 Performance Tracking**: Track your progress, ratings, and quiz history
-- **🏆 Rating System**: Dynamic rating based on performance (Beginner to Expert)
+- **🏆 Rating System**: Dynamic rating based on performance (5-tier system)
 
 ### User Experience
-- **🎨 Modern UI**: Clean, professional interface with smooth animations
-- **📈 Progress Tracking**: Visual progress bar and real-time score updates
-- **💫 Fluid Animations**: Hover effects, score counting, pulse effects
+- **🎨 Modern UI**: Clean, professional interface with dark theme
+- **✨ Smooth Animations**: 
+  - Login/register success animations with checkmark
+  - Loading spinners for question generation and grading
+  - Animated typing indicators in chatbot
+  - Fluid page transitions
+- **📈 Compact Layouts**: All content visible without scrolling
 - **⚙️ Customizable**: Choose question types before starting quiz
-- **📱 Responsive**: Adapts to different screen sizes
+- **🪟 Window Management**: App always opens in foreground
 - **🔐 Secure Authentication**: Password hashing and secure user management
 - **📖 User Profiles**: View statistics, change passwords, and track achievements
+- **🖱️ Optimized Scrolling**: Smooth trackpad scrolling (40% sensitivity)
 
 ### Academic Rigor
 - **Strict Grading**: ≥90% for correct, 40-89% partially correct, <40% incorrect
@@ -312,28 +344,60 @@ Quizzer V2 includes a complete user management system:
 
 Access your profile from the main menu to view:
 
-- **Username** and **User ID**
-- **Total Quizzes Taken**
-- **Average Score** (percentage)
-- **Current Rating** (Beginner → Expert scale)
-- **Best Subject** performance
+- **Username** and member since date
+- **Current Rating** with AI-generated description
+- **🎯 Quizzes Taken** - Total number of quizzes completed
+- **❓ Questions Answered** - Total questions attempted
+- **✅ Correct Answers** - Number of questions answered correctly
+- **❌ Incorrect Answers** - Number of questions answered incorrectly
+- **📊 Accuracy** - Overall percentage of correct answers
+- **⭐ Total Stars** - Total stars earned from quizzes
+- **💯 Average Score** - Average percentage score across all quizzes
+- **📚 Favorite Course** - Your most-attempted course
 
 **Available Actions**:
 - 🔑 **Change Password**: Update your password securely
-- 📊 **View Statistics**: See detailed performance metrics
-- 🚪 **Logout**: Return to login screen
+- 🗑️ **Delete Account**: Permanently remove your account and all data
 
 ### Rating System
 
-Your rating evolves based on performance:
+Your rating evolves based on performance (calculated from accuracy, quizzes taken, and stars earned):
 
-| Rating | Requirements | Badge |
-|--------|-------------|-------|
-| **Beginner** | New users | 🌱 |
-| **Learner** | Average score: 40-59% | 📚 |
-| **Intermediate** | Average score: 60-74% | 📖 |
-| **Advanced** | Average score: 75-89% | 🎓 |
-| **Expert** | Average score: 90%+ | 🏆 |
+| Rating | Badge | Description |
+|--------|-------|-------------|
+| **Beginner** | 🎓 | New users starting their journey |
+| **Emerging Scholar** | 🌱 | Building foundational knowledge |
+| **Proficient Student** | 📚 | Demonstrating solid understanding |
+| **Expert Learner** | ⭐ | Advanced mastery of concepts |
+| **Master Scholar** | 🏆 | Exceptional performance and dedication |
+
+*Ratings are calculated using a weighted score combining accuracy (50%), total stars earned (30%), and quiz completion (20%).*
+
+---
+
+## ✨ Animations & Visual Feedback
+
+Quizzer V2 features smooth, fluid animations throughout the interface:
+
+### Login/Registration
+- **Success Animation**: Large green checkmark (✓) with fade-in effect
+- **Auto-transition**: Smoothly transitions to main app after 800ms
+
+### Loading States
+- **Rotating Spinner**: 60px smooth arc animation for question generation
+- **Animated Dots**: Text dots cycle (0-3) for loading messages
+- **Non-blocking**: All animations run at 30-60 FPS without lag
+
+### Chatbot
+- **Typing Indicator**: Animated "typing..." with cycling dots
+- **Smooth Scrolling**: Optimized trackpad scrolling (40% sensitivity)
+- **Auto-scroll**: Messages automatically scroll into view
+
+### UI Optimizations
+- **Compact Layouts**: All pages fit in view without scrolling
+- **Foreground Launch**: App always opens above other windows
+- **Consistent Styling**: Light gray buttons (#e5e7eb) with black text
+- **Responsive Design**: Adapts to window size changes
 
 ---
 
@@ -346,8 +410,9 @@ Ask questions about your course material and get grounded, accurate answers.
 - **📚 Course-Specific**: Chatbot only answers based on your selected course notes
 - **🎯 Grounded Responses**: All answers include citations to PDF pages
 - **🔍 Context-Aware**: Uses semantic search to find relevant content
-- **💡 Conversational**: Natural dialogue with chat history
+- **💡 Conversational**: Handles both casual greetings and technical questions
 - **📝 Source Attribution**: Every response shows which PDF and pages were used
+- **⌨️ Typing Animation**: Smooth animated dots while AI generates response
 
 ### How to Use
 
@@ -513,10 +578,11 @@ Grading: Rubric-based (correct steps + reasoning)
 ## 📁 Project Structure
 
 ```
-quizzer-v2/
+quizzer/
 ├── run.py                    # Main entry point with dependency checks
 ├── start_quiz.sh             # Shell launcher for macOS
 ├── README.md                 # This file
+├── VERSION                   # Version number (3.0.0)
 │
 ├── src/                      # Source code
 │   ├── __init__.py
@@ -526,26 +592,37 @@ quizzer-v2/
 │   │   ├── quizzer_v2_engine.py    # Main quiz orchestrator
 │   │   ├── question_generator.py   # AI question generation
 │   │   ├── grading_engine.py       # AI answer evaluation
-│   │   ├── rating_generator.py     # User rating system
-│   │   └── chatbot_engine.py       # AI chatbot for Q&A
+│   │   ├── rating_generator.py     # User rating system (5-tier)
+│   │   └── chatbot_engine.py       # AI chatbot with conversational AI
 │   │
 │   ├── gui/                  # User interface
 │   │   ├── __init__.py
-│   │   ├── quizzer_v2_gui.py       # Main application window
-│   │   ├── chatbot_gui.py          # Chat interface
-│   │   ├── auth_gui.py             # Login/registration
-│   │   └── profile_gui.py          # User profile page
+│   │   ├── quizzer_v2_gui.py       # Main application window (1300+ lines)
+│   │   ├── chatbot_gui.py          # Chat interface with animations
+│   │   ├── auth_gui.py             # Login/registration with success animation
+│   │   └── profile_gui.py          # Compact user profile page
 │   │
 │   └── utils/                # Utilities
 │       ├── __init__.py
 │       ├── local_ai.py             # Ollama AI interface
-│       ├── pdf_grounding.py        # PDF parsing & search
-│       └── user_manager.py         # User authentication
+│       ├── pdf_grounding.py        # PDF parsing & semantic search
+│       ├── user_manager.py         # User authentication & password management
+│       └── animations.py           # Animation engine & UI components (NEW!)
+│
+├── user_data/                # User database (auto-created)
+│   └── users.db              # SQLite database
 │
 └── tests/                    # Test suite
     ├── __init__.py
     └── test_chatbot.py       # Chatbot integration tests
 ```
+
+### Key Components
+
+**Engines**: Backend logic for quiz generation, grading, ratings, and chatbot  
+**GUI**: Modern Tkinter interfaces with smooth animations  
+**Utils**: Helper modules for AI, PDF processing, authentication, and animations  
+**Database**: SQLite for user data, quiz history, and statistics
 
 ## 🏗️ Architecture
 

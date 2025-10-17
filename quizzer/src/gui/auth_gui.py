@@ -6,7 +6,8 @@ Login and registration screens for Quizzer V2
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-
+import re
+from ..utils.animations import ProgressBar
 
 class AuthGUI:
     """Authentication GUI for login and registration."""
@@ -40,14 +41,17 @@ class AuthGUI:
         self.root.configure(bg=self.COLORS["bg"])
         self.root.resizable(False, False)
         
+        # Bring window to front (above all other windows)
+        self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
+        self.root.focus_force()
+        
         # Center window
         self.center_window()
         
-        # Setup styles
-        self.setup_styles()
-        
-        # Show login screen by default
-        self.show_login_screen()
+        # Show loading screen first
+        self.show_loading_screen()
     
     def center_window(self):
         """Center the window on screen."""
@@ -57,6 +61,85 @@ class AuthGUI:
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f'{width}x{height}+{x}+{y}')
+    
+    def show_loading_screen(self):
+        """Show loading screen with progress bar."""
+        # Create loading frame
+        loading_frame = tk.Frame(self.root, bg=self.COLORS["bg"])
+        loading_frame.pack(expand=True, fill="both")
+        
+        # Logo/Title
+        title = tk.Label(
+            loading_frame,
+            text="🎓 Quizzer V3",
+            font=("SF Pro", 32, "bold"),
+            bg=self.COLORS["bg"],
+            fg=self.COLORS["accent"]
+        )
+        title.pack(pady=(150, 30))
+        
+        # Subtitle
+        subtitle = tk.Label(
+            loading_frame,
+            text="AI-Powered Quiz System",
+            font=("SF Pro", 14),
+            bg=self.COLORS["bg"],
+            fg=self.COLORS["fg"]
+        )
+        subtitle.pack(pady=(0, 50))
+        
+        # Progress bar
+        self.progress_bar = ProgressBar(
+            loading_frame,
+            width=350,
+            height=6,
+            color="#2563eb",
+            bg="#374151"
+        )
+        self.progress_bar.pack(pady=20)
+        
+        # Loading text
+        self.loading_label = tk.Label(
+            loading_frame,
+            text="Loading authentication system...",
+            font=("SF Pro", 11),
+            bg=self.COLORS["bg"],
+            fg="#9ca3af"
+        )
+        self.loading_label.pack(pady=10)
+        
+        # Animate progress
+        self._animate_loading(0, loading_frame)
+    
+    def _animate_loading(self, progress, loading_frame):
+        """Animate loading progress bar.
+        
+        Args:
+            progress: Current progress (0-100)
+            loading_frame: Frame to remove when done
+        """
+        if progress <= 100:
+            self.progress_bar.set_progress(progress, animated=True)
+            
+            # Update loading text
+            if progress < 30:
+                text = "Loading authentication system..."
+            elif progress < 60:
+                text = "Initializing security modules..."
+            elif progress < 90:
+                text = "Preparing user interface..."
+            else:
+                text = "Almost ready..."
+            
+            self.loading_label.config(text=text)
+            
+            # Continue animation (5 seconds total: 100ms * 50 steps = 5000ms)
+            self.root.after(100, lambda: self._animate_loading(progress + 2, loading_frame))
+        else:
+            # Loading complete, show login screen
+            loading_frame.destroy()
+            self.setup_styles()
+            self.show_login_screen()
     
     def setup_styles(self):
         """Configure ttk styles."""
@@ -362,9 +445,8 @@ class AuthGUI:
         success, message, user_id = self.engine.login(username, password)
         
         if success:
-            messagebox.showinfo("Success", f"Welcome back, {username}!")
-            self.root.destroy()
-            self.on_success(user_id, username)
+            # Show success animation
+            self.show_success_animation(f"Welcome back, {username}!", user_id, username)
         else:
             messagebox.showerror("Login Failed", message)
             self.login_password.delete(0, tk.END)
@@ -391,13 +473,65 @@ class AuthGUI:
         success, message, user_id = self.engine.register(username, password)
         
         if success:
-            messagebox.showinfo("Success", f"Account created! Welcome, {username}!")
             # Auto-login after registration
             self.engine.login(username, password)
-            self.root.destroy()
-            self.on_success(user_id, username)
+            # Show success animation
+            self.show_success_animation(f"Account created! Welcome, {username}!", user_id, username)
         else:
             messagebox.showerror("Registration Failed", message)
+    
+    def show_success_animation(self, message, user_id, username):
+        """Show success animation before closing.
+        
+        Args:
+            message: Success message to display
+            user_id: User ID
+            username: Username
+        """
+        # Clear window
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Create success screen
+        success_frame = tk.Frame(self.root, bg=self.COLORS["bg"])
+        success_frame.pack(expand=True, fill="both")
+        
+        # Success icon with animation
+        success_label = tk.Label(
+            success_frame,
+            text="✓",
+            font=("SF Pro", 80, "bold"),
+            fg="#2ecc71",
+            bg=self.COLORS["bg"]
+        )
+        success_label.pack(pady=(100, 20))
+        
+        # Success message
+        msg_label = tk.Label(
+            success_frame,
+            text=message,
+            font=("SF Pro", 18),
+            fg=self.COLORS["fg"],
+            bg=self.COLORS["bg"]
+        )
+        msg_label.pack(pady=20)
+        
+        # Animate: fade in effect by scaling
+        def animate_checkmark(scale=0.0):
+            if scale < 1.0:
+                # Simple scale animation
+                self.root.update_idletasks()
+                self.root.after(20, lambda: animate_checkmark(scale + 0.1))
+            else:
+                # After animation, wait then close
+                self.root.after(800, lambda: self.finish_auth(user_id, username))
+        
+        animate_checkmark()
+    
+    def finish_auth(self, user_id, username):
+        """Finish authentication and launch main app."""
+        self.root.destroy()
+        self.on_success(user_id, username)
     
     def run(self):
         """Start the authentication GUI."""

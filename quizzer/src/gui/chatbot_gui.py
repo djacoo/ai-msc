@@ -5,8 +5,9 @@ Modern chat interface for course Q&A
 """
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, messagebox
 import threading
+from ..utils.animations import ProgressBar
 import time
 from pathlib import Path
 from typing import Optional
@@ -90,10 +91,10 @@ class ChatbotGUI:
             header_frame,
             text="🗑️ Clear",
             font=("SF Pro", 11),
-            bg="#4b5563",
-            fg="white",
-            activebackground="#374151",
-            activeforeground="white",
+            bg="#e5e7eb",
+            fg="#000000",
+            activebackground="#d1d5db",
+            activeforeground="#000000",
             relief="flat",
             padx=15,
             pady=8,
@@ -124,16 +125,15 @@ class ChatbotGUI:
         self.chat_frame.bind("<Configure>", self.on_frame_configure)
         self.canvas.bind("<Configure>", self.on_canvas_configure)
         
-        # Bind mousewheel scrolling (for touchpad and mouse wheel)
-        self.canvas.bind("<MouseWheel>", self.on_mousewheel)  # Windows/Linux
-        self.canvas.bind("<Button-4>", self.on_mousewheel)    # Linux scroll up
-        self.canvas.bind("<Button-5>", self.on_mousewheel)    # Linux scroll down
+        # Bind mousewheel scrolling to multiple widgets for better coverage
+        # This ensures scrolling works regardless of where the mouse is
+        self._bind_mousewheel(self.window)
+        self._bind_mousewheel(chat_container)
+        self._bind_mousewheel(self.canvas)
+        self._bind_mousewheel(self.chat_frame)
         
-        # macOS touchpad scrolling
-        self.canvas.bind("<MouseWheel>", self.on_mousewheel)
-        
-        # Enable scrolling when mouse enters the canvas
-        self.canvas.bind("<Enter>", lambda e: self.canvas.focus_set())
+        # Show loading screen before displaying welcome message
+        self.show_chatbot_loading()
         
         # Input area
         input_frame = tk.Frame(self.window, bg=self.COLORS["secondary"], height=100)
@@ -165,10 +165,10 @@ class ChatbotGUI:
             input_frame,
             text="Send\n➤",
             font=("SF Pro", 11, "bold"),
-            bg=self.COLORS["user_bubble"],
-            fg="white",
-            activebackground="#1d4ed8",
-            activeforeground="white",
+            bg="#e5e7eb",
+            fg="#000000",
+            activebackground="#d1d5db",
+            activeforeground="#000000",
             relief="flat",
             padx=15,
             cursor="hand2",
@@ -180,6 +180,17 @@ class ChatbotGUI:
         # Focus input
         self.input_text.focus()
     
+    def _bind_mousewheel(self, widget):
+        """Bind mousewheel events to a widget for scrolling.
+        
+        Args:
+            widget: The widget to bind scroll events to
+        """
+        # Bind all scroll event types
+        widget.bind("<MouseWheel>", self.on_mousewheel, add="+")
+        widget.bind("<Button-4>", self.on_mousewheel, add="+")  # Linux scroll up
+        widget.bind("<Button-5>", self.on_mousewheel, add="+")  # Linux scroll down
+    
     def on_frame_configure(self, event=None):
         """Update canvas scroll region when frame size changes."""
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -190,22 +201,112 @@ class ChatbotGUI:
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
     
     def on_mousewheel(self, event):
-        """Handle mousewheel/touchpad scrolling."""
-        # macOS and Windows handle wheel events differently
+        """Handle mousewheel/trackpad scrolling with smooth support for macOS."""
+        # Linux scroll wheel
         if event.num == 4:  # Linux scroll up
             self.canvas.yview_scroll(-1, "units")
         elif event.num == 5:  # Linux scroll down
             self.canvas.yview_scroll(1, "units")
         else:
             # macOS and Windows
-            # macOS uses event.delta directly, positive = scroll up
-            # Windows uses event.delta / 120
             delta = event.delta
-            if abs(delta) > 100:  # Windows
-                delta = int(-1 * (delta / 120))
-            else:  # macOS
-                delta = int(-1 * delta)
-            self.canvas.yview_scroll(delta, "units")
+            
+            # Reduce sensitivity to 40% of original (divide by 2.5x more)
+            # Detect platform and handle appropriately
+            if abs(delta) > 100:  
+                # Windows: delta is typically ±120 per notch
+                scroll_amount = int(-1 * (delta / 300))  # 40% of original (120 * 2.5)
+            else:  
+                # macOS: delta is typically small values for trackpad
+                # Reduce trackpad sensitivity to 40%
+                if abs(delta) <= 3:
+                    # Very small movements - ignore to reduce sensitivity
+                    scroll_amount = 0
+                elif abs(delta) <= 12:
+                    # Medium trackpad scrolling - every 4 delta units = 1 scroll
+                    scroll_amount = int(-1 * delta / 4) if abs(delta) > 3 else 0
+                else:
+                    # Mouse wheel on macOS
+                    scroll_amount = int(-1 * delta / 25)  # 40% of original (10 * 2.5)
+            
+            if scroll_amount != 0:
+                self.canvas.yview_scroll(scroll_amount, "units")
+    
+    def show_chatbot_loading(self):
+        """Show loading screen for chatbot initialization."""
+        # Create temporary loading overlay
+        loading_overlay = tk.Frame(self.chat_frame, bg=self.COLORS["bg"])
+        loading_overlay.pack(expand=True, fill="both", pady=100)
+        
+        # Chatbot icon
+        icon = tk.Label(
+            loading_overlay,
+            text="💬",
+            font=("SF Pro", 50),
+            bg=self.COLORS["bg"],
+            fg="#3498db"
+        )
+        icon.pack(pady=20)
+        
+        # Loading title
+        title = tk.Label(
+            loading_overlay,
+            text="Initializing AI Assistant",
+            font=("SF Pro", 16, "bold"),
+            bg=self.COLORS["bg"],
+            fg=self.COLORS["fg"]
+        )
+        title.pack(pady=10)
+        
+        # Progress bar
+        self.chatbot_progress = ProgressBar(
+            loading_overlay,
+            width=300,
+            height=5,
+            color="#3498db",
+            bg="#374151"
+        )
+        self.chatbot_progress.pack(pady=20)
+        
+        # Loading text
+        self.chatbot_load_label = tk.Label(
+            loading_overlay,
+            text="Loading course notes...",
+            font=("SF Pro", 10),
+            bg=self.COLORS["bg"],
+            fg="#9ca3af"
+        )
+        self.chatbot_load_label.pack(pady=5)
+        
+        # Animate loading
+        self._animate_chatbot_loading(0, loading_overlay)
+    
+    def _animate_chatbot_loading(self, progress, overlay):
+        """Animate chatbot loading progress.
+        
+        Args:
+            progress: Current progress (0-100)
+            overlay: Overlay frame to destroy when done
+        """
+        if progress <= 100:
+            self.chatbot_progress.set_progress(progress, animated=True)
+            
+            # Update text
+            if progress < 33:
+                text = "Loading course notes..."
+            elif progress < 66:
+                text = "Initializing AI engine..."
+            else:
+                text = "Preparing chat interface..."
+            
+            self.chatbot_load_label.config(text=text)
+            
+            # Continue animation (5 seconds total: 100ms * 50 steps = 5000ms)
+            self.window.after(100, lambda: self._animate_chatbot_loading(progress + 2, overlay))
+        else:
+            # Loading complete
+            overlay.destroy()
+            self.show_welcome_message()
     
     def show_welcome_message(self):
         """Display welcome message."""
@@ -229,6 +330,11 @@ class ChatbotGUI:
             pady=12
         )
         msg_label.pack()
+        
+        # Bind scrolling to new widgets
+        self._bind_mousewheel(welcome_bubble)
+        self._bind_mousewheel(bubble)
+        self._bind_mousewheel(msg_label)
         
         self.scroll_to_bottom()
     
@@ -289,6 +395,11 @@ class ChatbotGUI:
         )
         msg_label.pack()
         
+        # Bind scrolling to new widgets
+        self._bind_mousewheel(msg_frame)
+        self._bind_mousewheel(bubble)
+        self._bind_mousewheel(msg_label)
+        
         self.scroll_to_bottom()
     
     def add_typing_indicator(self) -> tk.Frame:
@@ -301,7 +412,7 @@ class ChatbotGUI:
         
         typing_label = tk.Label(
             bubble,
-            text="typing...",
+            text="typing",
             font=("SF Pro", 11, "italic"),
             bg=self.COLORS["ai_bubble"],
             fg="#9ca3af",
@@ -310,8 +421,23 @@ class ChatbotGUI:
         )
         typing_label.pack()
         
+        # Animate typing dots
+        self._animate_typing_dots(typing_label, 0)
+        
         self.scroll_to_bottom()
         return typing_frame
+    
+    def _animate_typing_dots(self, label, dot_count):
+        """Animate typing indicator dots.
+        
+        Args:
+            label: Label widget to animate
+            dot_count: Current number of dots
+        """
+        if label.winfo_exists():
+            dots = "." * (dot_count % 4)
+            label.config(text=f"typing{dots}")
+            label.after(400, lambda: self._animate_typing_dots(label, dot_count + 1))
     
     def show_ai_response(self, result: dict, typing_indicator: tk.Frame):
         """Show AI response with sources."""
@@ -341,6 +467,11 @@ class ChatbotGUI:
         )
         answer_label.pack()
         
+        # Bind scrolling to main widgets
+        self._bind_mousewheel(msg_frame)
+        self._bind_mousewheel(bubble)
+        self._bind_mousewheel(answer_label)
+        
         # Sources (if any)
         if result.get("sources"):
             sources_frame = tk.Frame(bubble, bg=self.COLORS["ai_bubble"])
@@ -356,6 +487,10 @@ class ChatbotGUI:
             )
             sources_title.pack(anchor="w", pady=(5, 2))
             
+            # Bind scrolling to sources
+            self._bind_mousewheel(sources_frame)
+            self._bind_mousewheel(sources_title)
+            
             for source in result["sources"]:
                 source_text = f"• {source['path']}, page {source['page']}"
                 source_label = tk.Label(
@@ -367,6 +502,7 @@ class ChatbotGUI:
                     anchor="w"
                 )
                 source_label.pack(anchor="w", pady=1)
+                self._bind_mousewheel(source_label)
         
         self.scroll_to_bottom()
     

@@ -88,6 +88,66 @@ class ChatbotEngine:
         all_results.sort(key=lambda x: x["score"], reverse=True)
         return all_results[:max_pages]
     
+    def _is_casual_message(self, question: str) -> bool:
+        """Detect if message is casual/conversational rather than technical.
+        
+        Args:
+            question: User's question
+            
+        Returns:
+            True if casual, False if technical
+        """
+        question_lower = question.lower().strip()
+        
+        # Common greetings and casual phrases
+        casual_patterns = [
+            'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening',
+            'how are you', 'whats up', "what's up", 'thanks', 'thank you', 'bye',
+            'goodbye', 'see you', 'nice', 'cool', 'ok', 'okay', 'yes', 'no',
+            'sure', 'please', 'help'
+        ]
+        
+        # Check if it's a very short casual message
+        if len(question.split()) <= 3 and any(pattern in question_lower for pattern in casual_patterns):
+            return True
+        
+        # Check if it starts with a greeting
+        starts_with_casual = any(question_lower.startswith(pattern) for pattern in casual_patterns)
+        if starts_with_casual and len(question.split()) <= 5:
+            return True
+            
+        return False
+    
+    def _generate_casual_response(self, question: str) -> str:
+        """Generate a friendly conversational response.
+        
+        Args:
+            question: User's casual message
+            
+        Returns:
+            Friendly response
+        """
+        question_lower = question.lower().strip()
+        
+        # Specific responses for common patterns
+        if any(greeting in question_lower for greeting in ['hello', 'hi', 'hey']):
+            return "Hello! 👋 I'm your AI course assistant. I'm here to help you understand the course material. Feel free to ask me any questions about the topics we're covering!"
+        
+        if 'how are you' in question_lower:
+            return "I'm doing great, thank you for asking! 😊 I'm here and ready to help you with any questions about the course material. What would you like to learn about?"
+        
+        if any(thanks in question_lower for thanks in ['thanks', 'thank you']):
+            return "You're very welcome! 😊 Feel free to ask if you have any more questions. I'm here to help!"
+        
+        if any(bye in question_lower for bye in ['bye', 'goodbye', 'see you']):
+            return "Goodbye! 👋 Good luck with your studies! Come back anytime you need help with the course material."
+        
+        if 'help' in question_lower and len(question.split()) <= 3:
+            return "Of course! I'm here to help you understand the course material. You can ask me:\n\n• Conceptual questions (e.g., 'What is backpropagation?')\n• Definition questions (e.g., 'Define attention mechanism')\n• Clarification questions (e.g., 'Explain the difference between...')\n• Any topic covered in your course notes!\n\nJust type your question and I'll find the relevant information for you."
+        
+        # Generic friendly response
+        return "I'm here to help you with the course material! Feel free to ask me any questions about the topics covered in your notes. 📚"
+    
     def answer_question(self, question: str) -> Dict:
         """Answer a user question based on course notes.
         
@@ -104,12 +164,27 @@ class ChatbotEngine:
                 "found_info": False
             }
         
+        # Check if this is a casual/conversational message
+        if self._is_casual_message(question):
+            return {
+                "answer": self._generate_casual_response(question),
+                "sources": [],
+                "found_info": True,
+                "is_casual": True
+            }
+        
         # Get relevant context from notes (search more pages since we have all course files)
         relevant_pages = self.get_relevant_context(question, max_pages=5)
         
         if not relevant_pages:
+            # Try to be helpful even when no direct match is found
             return {
-                "answer": "❌ I couldn't find information about this topic in the course notes. Please ask about topics covered in the course materials.",
+                "answer": "❌ I couldn't find specific information about this topic in the course notes.\n\n"
+                         "This might mean:\n"
+                         "• The topic isn't covered in the loaded course materials\n"
+                         "• The question might be phrased differently than the course content\n"
+                         "• It might be a more general question not specific to this course\n\n"
+                         "💡 Try rephrasing your question or asking about a core concept from the course!",
                 "sources": [],
                 "found_info": False
             }
@@ -208,10 +283,23 @@ Please provide a comprehensive answer based on the context above. Explain the co
         
         file_names = [Path(f).name for f in self.current_notes]
         
-        message = f"""I have access to {len(self.current_notes)} course document(s) with {total_pages} pages of material:
+        message = f"""I'm your AI course assistant! 🤖📚
+
+I have access to {len(self.current_notes)} course document(s) with {total_pages} pages of material:
 
 {chr(10).join(f"• {name}" for name in file_names)}
 
-Ask me anything about the course content! I can help you understand concepts, explain definitions, clarify theories, or answer questions based on these notes."""
+**What I can help with:**
+• Answer questions about course concepts and theories
+• Explain definitions and technical terms  
+• Clarify complex topics with examples from your notes
+• Provide grounded answers with citations
+
+**How to interact:**
+• Ask technical questions about the course material
+• Have casual conversations (I'm friendly! 😊)
+• Request clarifications or deeper explanations
+
+Feel free to say hi or jump straight into asking questions!"""
         
         return message

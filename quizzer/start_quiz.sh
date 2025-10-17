@@ -1,5 +1,5 @@
 #!/bin/bash
-# Quizzer V2 - macOS launcher
+# 🚀 Quizzer V3 Launcher - AI-Powered Quiz System with Animations
 # Grounded Q&A engine with teacher-grade evaluation
 # Use Homebrew Python 3.11 instead of system Python 3.9
 PYTHON3_11="/opt/homebrew/bin/python3.11"

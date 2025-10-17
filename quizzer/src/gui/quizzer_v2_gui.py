@@ -11,6 +11,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Dict, Optional
+from ..utils.animations import LoadingSpinner, AnimationEngine, ProgressBar
 
 
 class QuizzerV2GUI:
@@ -60,6 +61,12 @@ class QuizzerV2GUI:
         self.root.geometry("1000x800")
         self.root.configure(bg=self.COLORS["bg"])
         
+        # Bring window to front (above all other windows)
+        self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
+        self.root.focus_force()
+        
         # Handle window close
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
@@ -69,8 +76,8 @@ class QuizzerV2GUI:
         # Build UI
         self.build_ui()
         
-        # Show start screen
-        self.show_start_screen()
+        # Show initial loading screen
+        self.show_initial_loading()
     
     def setup_styles(self):
         """Configure ttk styles."""
@@ -131,10 +138,10 @@ class QuizzerV2GUI:
                 self.header_frame,
                 text=f"👤 {self.username}",
                 font=("SF Pro", 13, "bold"),
-                bg="#1e3a5f",  # Dark blue background
-                fg="#ffffff",  # White text
-                activebackground="#2563eb",  # Lighter blue on hover
-                activeforeground="#ffffff",
+                bg="#e5e7eb",  # Light gray background
+                fg="#000000",  # Black text
+                activebackground="#d1d5db",
+                activeforeground="#000000",
                 relief="flat",
                 padx=20,
                 pady=10,
@@ -208,6 +215,77 @@ class QuizzerV2GUI:
         
         self.root.after(20, lambda: self.fade_in_content(widgets, index + 1, steps))
     
+    def show_initial_loading(self):
+        """Show initial loading screen with progress bar."""
+        # Clear content
+        for widget in self.content_frame.winfo_children():
+            widget.destroy()
+        
+        loading_frame = tk.Frame(self.content_frame, bg=self.COLORS["bg"])
+        loading_frame.pack(expand=True)
+        
+        # Welcome message
+        welcome = tk.Label(
+            loading_frame,
+            text=f"Welcome{', ' + self.username if self.username else ''}!",
+            font=("SF Pro", 28, "bold"),
+            bg=self.COLORS["bg"],
+            fg=self.COLORS["accent"]
+        )
+        welcome.pack(pady=(100, 20))
+        
+        # Progress bar
+        self.init_progress_bar = ProgressBar(
+            loading_frame,
+            width=400,
+            height=6,
+            color="#2563eb",
+            bg="#374151"
+        )
+        self.init_progress_bar.pack(pady=30)
+        
+        # Loading message
+        self.init_loading_label = tk.Label(
+            loading_frame,
+            text="Loading application...",
+            font=("SF Pro", 13),
+            bg=self.COLORS["bg"],
+            fg=self.COLORS["fg"]
+        )
+        self.init_loading_label.pack(pady=10)
+        
+        # Start animation
+        self._animate_initial_loading(0, loading_frame)
+    
+    def _animate_initial_loading(self, progress, loading_frame):
+        """Animate initial loading progress.
+        
+        Args:
+            progress: Current progress (0-100)
+            loading_frame: Frame to destroy when done
+        """
+        if progress <= 100:
+            self.init_progress_bar.set_progress(progress, animated=True)
+            
+            # Update text based on progress
+            if progress < 25:
+                text = "Loading application..."
+            elif progress < 50:
+                text = "Initializing quiz engine..."
+            elif progress < 75:
+                text = "Loading user data..."
+            else:
+                text = "Preparing interface..."
+            
+            self.init_loading_label.config(text=text)
+            
+            # Continue animation (5 seconds total: 100ms * 50 steps = 5000ms)
+            self.root.after(100, lambda: self._animate_initial_loading(progress + 2, loading_frame))
+        else:
+            # Loading complete
+            loading_frame.destroy()
+            self.show_start_screen()
+    
     def show_start_screen(self):
         """Show course selection screen."""
         # Hide chatbot button when returning to main menu
@@ -218,7 +296,7 @@ class QuizzerV2GUI:
         for widget in self.content_frame.winfo_children():
             widget.destroy()
         
-        # User stats banner (if logged in)
+        # User stats banner (if logged in) - compact version
         if self.username:
             profile = self.engine.get_user_profile()
             if profile:
@@ -227,128 +305,129 @@ class QuizzerV2GUI:
                 
                 stats_banner = tk.Frame(
                     self.content_frame, 
-                    bg="#1a1a2e",  # Very dark background
-                    padx=20, 
-                    pady=15,
+                    bg="#1a1a2e",
+                    padx=15, 
+                    pady=8,
                     highlightbackground="#0f3460",
-                    highlightthickness=2
+                    highlightthickness=1
                 )
-                stats_banner.pack(fill="x", pady=(0, 20))
+                stats_banner.pack(fill="x", pady=(0, 10))
                 
                 tk.Label(
                     stats_banner,
-                    text=f"{rating['emoji']} {rating['tier']}",
-                    font=("SF Pro", 18, "bold"),
-                    fg="#00d4ff",  # Bright cyan for maximum visibility
+                    text=f"{rating['emoji']} {rating['tier']} • {stats['total_quizzes']} quizzes • {stats['accuracy']:.0f}% • {stats['total_stars']} ⭐",
+                    font=("SF Pro", 12),
+                    fg="#00d4ff",
                     bg="#1a1a2e"
                 ).pack(anchor="w")
-                
-                tk.Label(
-                    stats_banner,
-                    text=f"{stats['total_quizzes']} quizzes • {stats['accuracy']:.0f}% accuracy • {stats['total_stars']} ⭐",
-                    font=("SF Pro", 13),
-                    fg="#ffffff",  # Pure white
-                    bg="#1a1a2e"
-                ).pack(anchor="w", pady=(5, 0))
         
-        # Welcome message
+        # Welcome message - more compact
         welcome = tk.Label(
             self.content_frame,
-            text="Select a Course to Begin",
-            font=("SF Pro", 20, "bold"),
+            text="Select a Course",
+            font=("SF Pro", 16, "bold"),
             bg=self.COLORS["bg"],
             fg=self.COLORS["fg"]
         )
-        welcome.pack(pady=30)
+        welcome.pack(pady=(10, 8))
         
         # Get available courses
         courses = self.engine.get_available_courses()
         
-        # Course cards with both quiz and chat options
-        courses_frame = tk.Frame(self.content_frame, bg=self.COLORS["bg"])
-        courses_frame.pack(pady=20, fill="both", expand=True)
+        # Course cards container - very compact grid layout
+        courses_container = tk.Frame(self.content_frame, bg=self.COLORS["bg"])
+        courses_container.pack(pady=5, fill="both", expand=True)
+        
+        # Configure grid to center content
+        courses_container.grid_columnconfigure(0, weight=1)
+        courses_container.grid_columnconfigure(1, weight=1)
+        
+        row = 0
+        col = 0
+        max_cols = 2  # Two columns for compact layout
         
         for course in courses:
             if course["notes_available"] > 0:
-                # Course card container
+                # Course card container - very compact
                 card = tk.Frame(
-                    courses_frame,
-                    bg="white",
-                    bd=2,
-                    relief="solid"
+                    courses_container,
+                    bg=self.COLORS["secondary"],
+                    highlightbackground="#0f3460",
+                    highlightthickness=1
                 )
-                card.pack(pady=10, padx=50, fill="x")
+                card.grid(row=row, column=col, pady=5, padx=10, sticky="ew")
                 
-                # Course title
+                # Inner padding frame - reduced padding
+                inner = tk.Frame(card, bg=self.COLORS["secondary"])
+                inner.pack(padx=10, pady=8, fill="both", expand=True)
+                
+                # Course title - compact
                 title_label = tk.Label(
-                    card,
+                    inner,
                     text=f"📚 {course['name']}",
-                    font=("SF Pro", 16, "bold"),
-                    bg="white",
-                    fg="black"
+                    font=("SF Pro", 12, "bold"),
+                    bg=self.COLORS["secondary"],
+                    fg=self.COLORS["fg"]
                 )
-                title_label.pack(pady=(15, 5), anchor="w", padx=20)
+                title_label.pack(anchor="w")
                 
-                # Course info
+                # Course info - smaller, inline with less spacing
                 info_label = tk.Label(
-                    card,
-                    text=f"{course['notes_available']} notes available",
-                    font=("SF Pro", 11),
-                    bg="white",
-                    fg="#666"
+                    inner,
+                    text=f"{course['notes_available']} notes",
+                    font=("SF Pro", 8),
+                    bg=self.COLORS["secondary"],
+                    fg="#888"
                 )
-                info_label.pack(pady=(0, 15), anchor="w", padx=20)
+                info_label.pack(anchor="w", pady=(1, 6))
                 
                 # Action buttons frame
-                actions_frame = tk.Frame(card, bg="white")
-                actions_frame.pack(fill="x", padx=20, pady=(0, 15))
+                actions_frame = tk.Frame(inner, bg=self.COLORS["secondary"])
+                actions_frame.pack(fill="x")
                 
-                # Chat button (left)
+                # Chat button - styled like "Back" button, more compact
                 chat_btn = tk.Button(
                     actions_frame,
-                    text="💬 Chat with AI",
-                    font=("SF Pro", 12, "bold"),
-                    bg="#10b981",
-                    fg="white",
-                    activebackground="#059669",
-                    activeforeground="white",
+                    text="💬 Chat",
+                    font=("SF Pro", 10, "bold"),
+                    bg="#d1d5db",  # Light gray like Back button
+                    fg="#1f2937",  # Dark text
+                    activebackground="#9ca3af",
+                    activeforeground="#1f2937",
                     relief="flat",
-                    padx=20,
-                    pady=10,
+                    padx=12,
+                    pady=6,
                     cursor="hand2",
                     command=lambda c=course: self.open_chatbot_from_home(c["code"], c["name"], c["note_files"]),
-                    borderwidth=0
+                    borderwidth=0,
+                    highlightthickness=0
                 )
-                chat_btn.pack(side="left", padx=(0, 10))
+                chat_btn.pack(side="left", padx=(0, 6))
                 
-                # Quiz button (right)
+                # Quiz button - styled like "Start Quiz" button, more compact
                 quiz_btn = tk.Button(
                     actions_frame,
-                    text="📝 Take Quiz",
-                    font=("SF Pro", 12, "bold"),
-                    bg="#2563eb",
-                    fg="white",
-                    activebackground="#1d4ed8",
-                    activeforeground="white",
+                    text="Start Quiz →",
+                    font=("SF Pro", 10, "bold"),
+                    bg="#e5e7eb",  # Light gray background
+                    fg="#000000",  # Black text
+                    activebackground="#d1d5db",
+                    activeforeground="#000000",
                     relief="flat",
-                    padx=20,
-                    pady=10,
+                    padx=12,
+                    pady=6,
                     cursor="hand2",
                     command=lambda c=course: self.show_quiz_config(c["code"]),
-                    borderwidth=0
+                    borderwidth=0,
+                    highlightthickness=0
                 )
                 quiz_btn.pack(side="left")
-        
-        # Info section - single line at bottom with contrast
-        info_label = tk.Label(
-            self.content_frame,
-            text="✨ Grounded PDFs  •  🎯 AI Teacher  •  📊 Detailed Feedback",
-            font=("SF Pro", 11, "italic"),
-            bg=self.COLORS["secondary"],  # Slightly lighter background
-            fg="#a0a0a0",  # Medium gray
-            pady=15
-        )
-        info_label.pack(side="bottom", fill="x", pady=(30, 0))
+                
+                # Move to next grid position
+                col += 1
+                if col >= max_cols:
+                    col = 0
+                    row += 1
     
     def show_quiz_config(self, course_code: str):
         """Show quiz configuration screen for question type selection."""
@@ -442,23 +521,39 @@ class QuizzerV2GUI:
         btn_frame = tk.Frame(config_card, bg="white")
         btn_frame.pack(pady=30)
         
-        # Back button
-        back_btn = ttk.Button(
+        # Back button - styled to match homepage
+        back_btn = tk.Button(
             btn_frame,
             text="← Back",
-            style="Exit.TButton",
+            font=("SF Pro", 13, "bold"),
+            bg="#d1d5db",  # Light gray
+            fg="#1f2937",  # Dark text
+            activebackground="#9ca3af",
+            activeforeground="#1f2937",
+            relief="flat",
+            padx=30,
+            pady=12,
             cursor="hand2",
-            command=self.show_start_screen
+            command=self.show_start_screen,
+            borderwidth=0
         )
         back_btn.pack(side="left", padx=10)
         
-        # Start button
-        start_btn = ttk.Button(
+        # Start button - styled to match homepage
+        start_btn = tk.Button(
             btn_frame,
             text="Start Quiz →",
-            style="Primary.TButton",
+            font=("SF Pro", 13, "bold"),
+            bg="#e5e7eb",  # Light gray background
+            fg="#000000",  # Black text
+            activebackground="#d1d5db",
+            activeforeground="#000000",
+            relief="flat",
+            padx=30,
+            pady=12,
             cursor="hand2",
-            command=lambda: self.start_quiz(course_code)
+            command=lambda: self.start_quiz(course_code),
+            borderwidth=0
         )
         start_btn.pack(side="left", padx=10)
     
@@ -516,6 +611,8 @@ class QuizzerV2GUI:
     def finish_loading(self):
         """Finish loading and show first question."""
         self.is_loading = False
+        if hasattr(self, 'loading_spinner'):
+            self.loading_spinner.stop()
         # Show chatbot button now that course is loaded
         if hasattr(self, 'chatbot_btn'):
             self.chatbot_btn.pack(side="right", padx=(0, 10), pady=20)
@@ -530,16 +627,12 @@ class QuizzerV2GUI:
         loading_frame = tk.Frame(self.content_frame, bg=self.COLORS["bg"])
         loading_frame.pack(expand=True)
         
-        # Animated spinner
-        self.loading_label = tk.Label(
-            loading_frame,
-            text="",
-            font=("SF Pro", 24, "bold"),
-            bg=self.COLORS["bg"],
-            fg=self.COLORS["info"]
-        )
-        self.loading_label.pack(pady=20)
+        # Loading spinner with smooth animation
+        self.loading_spinner = LoadingSpinner(loading_frame, size=60, color="#3498db")
+        self.loading_spinner.pack(pady=30)
+        self.loading_spinner.start()
         
+        # Loading message with animated dots
         self.loading_message = tk.Label(
             loading_frame,
             text=message,
@@ -550,19 +643,22 @@ class QuizzerV2GUI:
         self.loading_message.pack(pady=10)
         
         self.is_loading = True
-        self.animate_loading()
+        self._animate_loading_dots(0)
     
-    def animate_loading(self):
-        """Animate loading spinner."""
+    def _animate_loading_dots(self, count):
+        """Animate loading message dots.
+        
+        Args:
+            count: Current dot count
+        """
         if not self.is_loading:
             return
         
-        spinners = ["◐", "◓", "◑", "◒"]
-        self.loading_dots = (self.loading_dots + 1) % len(spinners)
-        
-        if hasattr(self, 'loading_label') and self.loading_label.winfo_exists():
-            self.loading_label.config(text=spinners[self.loading_dots])
-            self.root.after(100, self.animate_loading)  # Faster: 100ms instead of 150ms
+        if hasattr(self, 'loading_message') and self.loading_message.winfo_exists():
+            base_text = self.loading_message.cget("text").rstrip(".")
+            dots = "." * (count % 4)
+            self.loading_message.config(text=f"{base_text}{dots}")
+            self.root.after(400, lambda: self._animate_loading_dots(count + 1))
     
     def show_question(self):
         """Display current question."""
@@ -796,6 +892,8 @@ class QuizzerV2GUI:
     def finish_grading(self, result):
         """Finish grading and show result with animation."""
         self.is_loading = False
+        if hasattr(self, 'loading_spinner'):
+            self.loading_spinner.stop()
         self.show_result(result)
     
     def show_result(self, result: Dict):
@@ -1103,27 +1201,43 @@ class QuizzerV2GUI:
         )
         answered_label.pack(pady=5)
         
-        # Buttons (using ttk for macOS compatibility)
+        # Buttons - styled to match homepage
         btn_frame = tk.Frame(card, bg=self.COLORS["secondary"])
         btn_frame.pack(pady=20)
         
         # Back to Menu button
-        menu_btn = ttk.Button(
+        menu_btn = tk.Button(
             btn_frame,
-            text="Back to Menu",
-            style="Primary.TButton",
+            text="← Back to Menu",
+            font=("SF Pro", 13, "bold"),
+            bg="#d1d5db",  # Light gray
+            fg="#1f2937",  # Dark text
+            activebackground="#9ca3af",
+            activeforeground="#1f2937",
+            relief="flat",
+            padx=30,
+            pady=12,
             cursor="hand2",
-            command=self.show_start_screen
+            command=self.show_start_screen,
+            borderwidth=0
         )
         menu_btn.pack(side="left", padx=10)
         
         # New Quiz button
-        new_quiz_btn = ttk.Button(
+        new_quiz_btn = tk.Button(
             btn_frame,
-            text="New Quiz",
-            style="Primary.TButton",
+            text="New Quiz →",
+            font=("SF Pro", 13, "bold"),
+            bg="#e5e7eb",  # Light gray background
+            fg="#000000",  # Black text
+            activebackground="#d1d5db",
+            activeforeground="#000000",
+            relief="flat",
+            padx=30,
+            pady=12,
             cursor="hand2",
-            command=self.reset_and_start
+            command=self.reset_and_start,
+            borderwidth=0
         )
         new_quiz_btn.pack(side="left", padx=10)
         
@@ -1178,7 +1292,7 @@ class QuizzerV2GUI:
         if not self.username:
             return
         
-        from profile_gui import ProfileGUI
+        from .profile_gui import ProfileGUI
         
         def on_profile_close(logout=False):
             """Handle profile window close."""
@@ -1207,7 +1321,7 @@ class QuizzerV2GUI:
             return
         
         # Launch chatbot
-        from chatbot_gui import ChatbotGUI
+        from .chatbot_gui import ChatbotGUI
         ChatbotGUI(self.root, self.engine.chatbot, course_code, course_name)
     
     def open_chatbot_from_home(self, course_code: str, course_name: str, note_files: list):
@@ -1222,7 +1336,7 @@ class QuizzerV2GUI:
         self.engine.chatbot.set_course(course_code, note_files)
         
         # Launch chatbot
-        from chatbot_gui import ChatbotGUI
+        from .chatbot_gui import ChatbotGUI
         ChatbotGUI(self.root, self.engine.chatbot, course_code, course_name)
     
     def on_closing(self):
