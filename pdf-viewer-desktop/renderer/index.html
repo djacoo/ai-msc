@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Masters PDF Viewer</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <div class="logo-circle">
+          <i data-lucide="book-open"></i>
+        </div>
+      </div>
+      <h1 class="splash-title">AI Masters Notes</h1>
+      <div class="splash-loader">
+        <div class="loader-bar"></div>
+      </div>
+      <p class="splash-text">Loading your courses...</p>
+    </div>
+  </div>
+
+  <!-- PDF Loading Overlay -->
+  <div id="pdfLoadingOverlay" class="pdf-loading-overlay hidden">
+    <div class="pdf-loading-content">
+      <div class="loading-spinner"></div>
+      <p>Loading PDF...</p>
+    </div>
+  </div>
+
+  <div id="app">
+    <!-- Course List View -->
+    <div id="courseListView" class="view">
+      <div class="header">
+        <h1>AI Masters Notes</h1>
+        <p class="subtitle">Browse and study course materials with AI assistance</p>
+      </div>
+      
+      <div id="courseGrid" class="course-grid"></div>
+
+      <div class="info-box">
+        <h3>🚀 Getting Started</h3>
+        <ol>
+          <li>Make sure Ollama is installed and running: <code>ollama serve</code></li>
+          <li>Pull a model if you haven't: <code>ollama pull llama2</code></li>
+          <li>Select a course and PDF to start studying</li>
+          <li>Use the AI chatbot to ask questions about the course material</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- PDF Viewer View -->
+    <div id="pdfViewerView" class="view hidden">
+      <div class="toolbar">
+        <button id="backBtn" class="btn btn-ghost">
+          <i data-lucide="arrow-left"></i>
+          <span>Back</span>
+        </button>
+        
+        <div class="course-info">
+          <h2 id="courseName"></h2>
+          <p id="pdfName"></p>
+        </div>
+
+        <button id="toggleChatBtn" class="btn btn-primary">
+          <i data-lucide="message-square"></i>
+          <span id="chatBtnText">Hide Chat</span>
+        </button>
+      </div>
+
+      <div class="main-content">
+        <!-- Table of Contents Sidebar -->
+        <div id="tocSidebar" class="toc-sidebar hidden">
+          <div class="toc-header">
+            <h3>
+              <i data-lucide="list"></i>
+              <span>Contents</span>
+            </h3>
+            <button id="closeTocBtn" class="btn btn-icon">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+          <div id="tocList" class="toc-list">
+            <p class="toc-empty">Loading table of contents...</p>
+          </div>
+        </div>
+
+        <div id="pdfContainer" class="pdf-container">
+          <div class="pdf-controls">
+            <button id="prevPageBtn" class="btn btn-icon">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <span id="pageInfo">Page 1 of 1</span>
+            <button id="nextPageBtn" class="btn btn-icon">
+              <i data-lucide="chevron-right"></i>
+            </button>
+            
+            <div class="divider"></div>
+
+            <!-- Page Search -->
+            <div class="page-search">
+              <i data-lucide="search"></i>
+              <input 
+                type="number" 
+                id="pageSearchInput" 
+                placeholder="Go to page..."
+                min="1"
+              />
+            </div>
+
+            <div class="divider"></div>
+
+            <button id="zoomOutBtn" class="btn btn-icon">
+              <i data-lucide="zoom-out"></i>
+            </button>
+            <span id="zoomInfo">100%</span>
+            <button id="zoomInBtn" class="btn btn-icon">
+              <i data-lucide="zoom-in"></i>
+            </button>
+
+            <div class="divider"></div>
+
+            <!-- TOC Toggle -->
+            <button id="toggleTocBtn" class="btn btn-icon">
+              <i data-lucide="list"></i>
+            </button>
+          </div>
+
+          <div id="pdfViewer" class="pdf-viewer">
+            <div class="pdf-frame">
+              <canvas id="pdfCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Chat Toggle Button -->
+        <button id="floatingChatBtn" class="floating-chat-btn hidden">
+          <i data-lucide="message-circle"></i>
+        </button>
+
+        <div id="chatContainer" class="chat-container">
+          <div class="chat-header">
+            <div class="chat-title">
+              <i data-lucide="bot"></i>
+              <div>
+                <h3>AI Assistant</h3>
+                <p id="chatCourseName"></p>
+              </div>
+            </div>
+            <button id="chatSettingsBtn" class="btn btn-icon">
+              <i data-lucide="settings"></i>
+            </button>
+          </div>
+
+          <div id="chatSettings" class="chat-settings hidden">
+            <label>Select Model:</label>
+            <select id="modelSelect"></select>
+            <p class="settings-note">Make sure Ollama is running: <code>ollama serve</code></p>
+          </div>
+
+          <div id="chatMessages" class="chat-messages">
+            <div class="chat-welcome">
+              <i data-lucide="bot" class="welcome-icon"></i>
+              <p><strong>Ask me anything about this course!</strong></p>
+              <p class="welcome-subtitle">I can help with explanations, problem solving, and concept clarification.</p>
+            </div>
+          </div>
+
+          <form id="chatForm" class="chat-input-form">
+            <input 
+              type="text" 
+              id="chatInput" 
+              placeholder="Ask a question about this course..."
+              autocomplete="off"
+            />
+            <button type="submit" id="sendBtn" class="btn btn-primary">
+              <i data-lucide="send"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
