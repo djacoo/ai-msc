@@ -7,7 +7,7 @@ Teacher-grade grading with rubrics and citations
 import json
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
-from ..utils.pdf_grounding import PDFGroundingEngine
+from ..utils.enhanced_grounding import EnhancedGroundingEngine
 
 
 class GradingEngine:
@@ -20,7 +20,7 @@ class GradingEngine:
             repo_root: Root directory of repository
             ai_engine: AI engine for grading
         """
-        self.grounding = PDFGroundingEngine(repo_root)
+        self.grounding = EnhancedGroundingEngine(repo_root)
         self.ai = ai_engine
         self.repo_root = Path(repo_root)
     
@@ -228,12 +228,12 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
             rubric=rubric
         )
         
-        # Get AI grading using new evaluation format
+        # Get AI grading using STRICT university-level evaluation
         try:
             response = self.ai.generate_json(
                 prompt,
-                "You are an academic examiner evaluating a student's short answer for a university-level quiz. Grade fairly and educationally — focus on meaning, not wording. Return only valid JSON.",
-                temperature=0.2,
+                "You are a strict university professor grading an exam. Apply rigorous academic standards - penalize inaccuracies, missing details, and imprecise language. Grade as if this were a formal university examination. Return only valid JSON.",
+                temperature=0.15,  # Lower temperature for more consistent grading
                 max_tokens=1000
             )
             
@@ -248,9 +248,13 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
             justification = response.get("justification", "")
             expected_summary = response.get("expected_summary", canonical)
             
-            # Calculate points from score
+            # Calculate points with university-level strictness
             max_points = sum(c.get("points", 0) for c in point_breakdown) if point_breakdown else 10
-            points_awarded = int(score * max_points)
+            
+            # Apply stricter grading curve for university level
+            # Score adjustment: penalize more heavily for incomplete answers
+            adjusted_score = self._apply_university_grading_curve(score, verdict)
+            points_awarded = int(adjusted_score * max_points)
             
             # FALSE POSITIVE GUARD: Detect minimal/empty answers
             user_answer_clean = user_answer.strip().replace(".", "").replace(",", "").replace("!", "").replace("?", "").strip()
@@ -285,8 +289,20 @@ Correct answer: {', '.join(sorted(correct_choices))}{citation_text}"""
                     "evidence": justification
                 })
             
-            # Build explanation from new format
-            explanation = f"{verdict.replace('_', ' ').title()}. Score: {points_awarded}/{max_points} points.\n\n{justification}\n\nExpected: {expected_summary}"
+            # Build detailed explanation with university-level feedback
+            grade_percentage = (points_awarded / max_points * 100) if max_points > 0 else 0
+            grade_letter = self._calculate_letter_grade(grade_percentage)
+            
+            explanation = f"""Grade: {grade_letter} ({points_awarded}/{max_points} points - {grade_percentage:.1f}%)
+
+Assessment: {verdict.replace('_', ' ').title()}
+
+{justification}
+
+Model Answer:
+{expected_summary}
+
+Study Advice: {self._generate_study_advice(verdict, concepts)}"""
             
             grading = {
                 "question_id": question.get("id"),
@@ -344,13 +360,55 @@ Expected JSON Schema:
   "expected_summary": string // concise gold-standard answer
 }}
 
-Grading principles:
-- Accept synonyms or equivalent phrasing.
-- Minor spelling or grammar errors are ignored.
-- Penalize missing key points, wrong facts, or contradictions.
-- If the answer shows partial understanding, mark "partially_correct" with score 0.4–0.7.
-- If the student adds incorrect facts, mark as "incorrect".
-- Always explain *why* the answer is or isn't correct, clearly and kindly."""
+UNIVERSITY-LEVEL GRADING PRINCIPLES:
+- Apply STRICT academic standards as in a formal university examination
+- Penalize heavily for:
+  * Missing key concepts or details
+  * Imprecise or vague language
+  * Incomplete explanations
+  * Incorrect terminology
+  * Logical inconsistencies
+  * Lack of depth in understanding
+- Partial credit should be LIMITED:
+  * 80-100%: Complete, precise answer with all key points
+  * 60-79%: Good understanding but missing some details
+  * 40-59%: Basic understanding with significant gaps
+  * 0-39%: Poor understanding or major errors
+- DO NOT give credit for:
+  * Vague generalizations without specifics
+  * Correct buzzwords without demonstration of understanding
+  * Partial answers that miss core concepts
+- Provide constructive but firm feedback that helps students learn
+- Grade as if this determines their final course grade"""
+    
+    def _apply_university_grading_curve(self, base_score: float, verdict: str) -> float:
+        """Apply strict university-level grading curve.
+        
+        Args:
+            base_score: Initial score (0.0 to 1.0)
+            verdict: Grading verdict
+            
+        Returns:
+            Adjusted score with university-level strictness
+        """
+        # University grading is stricter - penalize partial understanding more
+        curve_adjustments = {
+            "exact": 1.0,  # Full marks only for perfect answers
+            "semantically_correct": 0.85,  # Slight penalty even for correct meaning
+            "partially_correct": 0.5,  # Heavy penalty for partial understanding
+            "incorrect": 0.0  # No points for incorrect answers
+        }
+        
+        adjustment = curve_adjustments.get(verdict, 0.5)
+        adjusted = base_score * adjustment
+        
+        # Additional penalties for university level
+        if base_score < 0.6 and verdict == "partially_correct":
+            # If understanding is below 60%, apply additional penalty
+            adjusted *= 0.8
+        
+        # Round down for strictness (university grading doesn't round up)
+        return min(adjusted, 1.0)
     
     def _fallback_grading(self, question: Dict, user_answer: str,
                           canonical: str) -> Dict:
@@ -400,3 +458,52 @@ Grading principles:
         }
         
         return {"grading": grading}
+    
+    def _calculate_letter_grade(self, percentage: float) -> str:
+        """Calculate letter grade from percentage using university scale.
+        
+        Args:
+            percentage: Score percentage (0-100)
+            
+        Returns:
+            Letter grade (A-F)
+        """
+        if percentage >= 90:
+            return "A"
+        elif percentage >= 85:
+            return "A-"
+        elif percentage >= 80:
+            return "B+"
+        elif percentage >= 75:
+            return "B"
+        elif percentage >= 70:
+            return "B-"
+        elif percentage >= 65:
+            return "C+"
+        elif percentage >= 60:
+            return "C"
+        elif percentage >= 55:
+            return "C-"
+        elif percentage >= 50:
+            return "D"
+        else:
+            return "F"
+    
+    def _generate_study_advice(self, verdict: str, concepts: List[str]) -> str:
+        """Generate personalized study advice based on performance.
+        
+        Args:
+            verdict: Grading verdict
+            concepts: Key concepts tested
+            
+        Returns:
+            Study advice string
+        """
+        advice_map = {
+            "exact": "Excellent work! Continue with this level of precision and detail in your responses.",
+            "semantically_correct": "Good understanding! Focus on using more precise technical terminology and providing complete details.",
+            "partially_correct": f"Review these key concepts thoroughly: {', '.join(concepts[:3]) if concepts else 'the material'}. Practice explaining them in detail with examples.",
+            "incorrect": f"Fundamental review needed. Start with understanding: {', '.join(concepts[:2]) if concepts else 'the basics'}. Read the relevant chapter carefully and practice with simpler examples first."
+        }
+        
+        return advice_map.get(verdict, "Review the material and practice more problems.")

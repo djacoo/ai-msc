@@ -7,26 +7,23 @@ Modern chat interface for course Q&A
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
-from ..utils.animations import ProgressBar
+from ..utils.animations import ProgressBar, AnimationEngine
 import time
 from pathlib import Path
 from typing import Optional
+from .macos_theme import MacOSTheme
 
 
 class ChatbotGUI:
     """Modern chat interface for asking questions about course notes."""
     
-    # Color scheme (matching main app)
-    COLORS = {
-        "bg": "#1a1a2e",
-        "fg": "#eee",
-        "primary": "#0f3460",
-        "secondary": "#16213e",
-        "accent": "#e94560",
-        "user_bubble": "#2563eb",
-        "ai_bubble": "#374151",
-        "success": "#2ecc71",
-        "info": "#3498db"
+    # Use native macOS color scheme
+    COLORS = MacOSTheme.COLORS
+    
+    # Chat-specific colors (light mode)
+    CHAT_COLORS = {
+        "user_bubble": MacOSTheme.COLORS["accent"],  # Blue bubble like iMessage
+        "ai_bubble": "#E9E9EB",  # Light gray bubble for AI (like iMessage received)
     }
     
     def __init__(self, parent, chatbot_engine, course_code: str, course_name: str, on_close=None):
@@ -48,9 +45,19 @@ class ChatbotGUI:
         
         # Create window
         self.window = tk.Toplevel(parent)
-        self.window.title(f"💬 Course Assistant - {course_name}")
-        self.window.geometry("800x700")
-        self.window.configure(bg=self.COLORS["bg"])
+        self.window.title(f"Course Assistant")
+        self.window.geometry("700x650")  # More compact, native size
+        self.window.minsize(500, 400)
+        
+        # Apply native macOS styling
+        MacOSTheme.configure_window(self.window)
+        if MacOSTheme.is_macos():
+            try:
+                # Unified toolbar appearance like Messages.app
+                self.window.tk.call("::tk::unsupported::MacWindowStyle", "style", 
+                                   self.window._w, "unified", "closeBox collapseBox resizable zoomBox")
+            except:
+                pass
         
         # Handle close
         self.window.protocol("WM_DELETE_WINDOW", self.close_window)
@@ -62,57 +69,47 @@ class ChatbotGUI:
         self.show_welcome_message()
     
     def build_ui(self):
-        """Build the chat interface."""
-        # Header
-        header_frame = tk.Frame(self.window, bg=self.COLORS["primary"], height=70)
-        header_frame.pack(fill="x", side="top")
-        header_frame.pack_propagate(False)
+        """Build the chat interface with native macOS toolbar."""
+        # Toolbar - native macOS unified toolbar
+        toolbar_frame = tk.Frame(self.window, bg=self.COLORS["window_bg"], height=52)
+        toolbar_frame.pack(fill="x", side="top", padx=MacOSTheme.SPACING["xl"], pady=(MacOSTheme.SPACING["md"], 0))
+        toolbar_frame.pack_propagate(False)
         
-        title = tk.Label(
-            header_frame,
-            text=f"💬 Course Assistant",
-            font=("SF Pro", 20, "bold"),
-            bg=self.COLORS["primary"],
-            fg="white"
-        )
-        title.pack(side="left", padx=20, pady=15)
+        # Left side - course title
+        left_frame = tk.Frame(toolbar_frame, bg=self.COLORS["window_bg"])
+        left_frame.pack(side="left", fill="y")
         
-        course_label = tk.Label(
-            header_frame,
+        title = MacOSTheme.create_label(
+            left_frame,
             text=f"📚 {self.course_name}",
-            font=("SF Pro", 12),
-            bg=self.COLORS["primary"],
-            fg="#a0a0a0"
+            style="title",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["text_primary"]
         )
-        course_label.pack(side="left", padx=10, pady=15)
+        title.pack(side="left", anchor="w", pady=8)
         
-        # Clear chat button
-        clear_btn = tk.Button(
-            header_frame,
-            text="🗑️ Clear",
-            font=("SF Pro", 11),
-            bg="#e5e7eb",
-            fg="#000000",
-            activebackground="#d1d5db",
-            activeforeground="#000000",
-            relief="flat",
-            padx=15,
-            pady=8,
-            cursor="hand2",
+        # Right side - clear button
+        right_frame = tk.Frame(toolbar_frame, bg=self.COLORS["window_bg"])
+        right_frame.pack(side="right", fill="y")
+        
+        clear_btn = MacOSTheme.create_button(
+            right_frame,
+            text="Clear",
             command=self.clear_chat,
-            borderwidth=0
+            style="secondary",
+            size="small"
         )
-        clear_btn.pack(side="right", padx=20, pady=15)
+        clear_btn.pack(side="right")
         
         # Chat display area
-        chat_container = tk.Frame(self.window, bg=self.COLORS["bg"])
-        chat_container.pack(fill="both", expand=True, padx=10, pady=10)
+        chat_container = tk.Frame(self.window, bg=self.COLORS["window_bg"])
+        chat_container.pack(fill="both", expand=True, padx=MacOSTheme.SPACING["md"], pady=MacOSTheme.SPACING["md"])
         
         # Create canvas for scrollable chat
-        self.canvas = tk.Canvas(chat_container, bg=self.COLORS["bg"], highlightthickness=0)
+        self.canvas = tk.Canvas(chat_container, bg=self.COLORS["window_bg"], highlightthickness=0)
         scrollbar = ttk.Scrollbar(chat_container, orient="vertical", command=self.canvas.yview)
         
-        self.chat_frame = tk.Frame(self.canvas, bg=self.COLORS["bg"])
+        self.chat_frame = tk.Frame(self.canvas, bg=self.COLORS["window_bg"])
         
         self.canvas.configure(yscrollcommand=scrollbar.set)
         
@@ -135,47 +132,61 @@ class ChatbotGUI:
         # Show loading screen before displaying welcome message
         self.show_chatbot_loading()
         
-        # Input area
-        input_frame = tk.Frame(self.window, bg=self.COLORS["secondary"], height=100)
-        input_frame.pack(fill="x", side="bottom", padx=10, pady=10)
+        # Input area - native macOS style
+        input_frame = tk.Frame(self.window, bg=self.COLORS["window_bg"], height=80)
+        input_frame.pack(fill="x", side="bottom", padx=MacOSTheme.SPACING["xl"], pady=MacOSTheme.SPACING["md"])
         input_frame.pack_propagate(False)
         
-        # Input field
-        self.input_text = tk.Text(
+        # Input field with rounded corners and proper styling
+        input_container = tk.Frame(
             input_frame,
-            font=("SF Pro", 12),
-            bg="white",
-            fg="black",
-            insertbackground="black",
-            height=3,
-            wrap="word",
-            bd=2,
-            relief="solid",
-            padx=10,
-            pady=10
+            bg=self.COLORS["window_bg"],
+            highlightbackground=self.COLORS["border"],
+            highlightthickness=2
         )
-        self.input_text.pack(side="left", fill="both", expand=True, padx=(10, 5), pady=10)
+        input_container.pack(side="left", fill="both", expand=True, padx=(0, MacOSTheme.SPACING["sm"]))
+        
+        self.input_text = tk.Text(
+            input_container,
+            font=("SF Pro", 14),
+            bg="#FFFFFF",  # White background for input
+            fg=self.COLORS["text_primary"],  # Dark text
+            insertbackground=self.COLORS["accent"],  # Blue cursor
+            selectbackground=self.COLORS["selection"],  # Blue selection
+            selectforeground="#FFFFFF",  # White selected text
+            height=2,
+            wrap="word",
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=MacOSTheme.SPACING["md"],
+            pady=MacOSTheme.SPACING["sm"]
+        )
+        self.input_text.pack(fill="both", expand=True, padx=2, pady=2)
+        
+        # Add focus effects
+        def on_focus_in(e):
+            input_container.configure(highlightbackground=self.COLORS["accent"], highlightthickness=2)
+        
+        def on_focus_out(e):
+            input_container.configure(highlightbackground=self.COLORS["border"], highlightthickness=2)
+        
+        self.input_text.bind("<FocusIn>", on_focus_in)
+        self.input_text.bind("<FocusOut>", on_focus_out)
         
         # Bind Enter key
         self.input_text.bind("<Return>", self.on_enter_key)
         self.input_text.bind("<Shift-Return>", lambda e: None)  # Allow Shift+Enter for new line
         
-        # Send button
-        send_btn = tk.Button(
+        # Send button - circular like Messages.app
+        send_btn = MacOSTheme.create_button(
             input_frame,
-            text="Send\n➤",
-            font=("SF Pro", 11, "bold"),
-            bg="#e5e7eb",
-            fg="#000000",
-            activebackground="#d1d5db",
-            activeforeground="#000000",
-            relief="flat",
-            padx=15,
-            cursor="hand2",
+            text="↑",  # Up arrow like Messages
             command=self.send_message,
-            borderwidth=0
+            style="primary",
+            size="regular"
         )
-        send_btn.pack(side="right", padx=(5, 10), pady=10, fill="y")
+        send_btn.pack(side="right")
         
         # Focus input
         self.input_text.focus()
@@ -235,48 +246,48 @@ class ChatbotGUI:
     def show_chatbot_loading(self):
         """Show loading screen for chatbot initialization."""
         # Create temporary loading overlay
-        loading_overlay = tk.Frame(self.chat_frame, bg=self.COLORS["bg"])
+        loading_overlay = tk.Frame(self.chat_frame, bg=self.COLORS["window_bg"])
         loading_overlay.pack(expand=True, fill="both", pady=100)
         
         # Chatbot icon
-        icon = tk.Label(
+        icon = MacOSTheme.create_label(
             loading_overlay,
             text="💬",
-            font=("SF Pro", 50),
-            bg=self.COLORS["bg"],
-            fg="#3498db"
+            style="display_large",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["accent"]
         )
         icon.pack(pady=20)
         
         # Loading title
-        title = tk.Label(
+        title = MacOSTheme.create_label(
             loading_overlay,
             text="Initializing AI Assistant",
-            font=("SF Pro", 16, "bold"),
-            bg=self.COLORS["bg"],
-            fg=self.COLORS["fg"]
+            style="headline",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["text_primary"]
         )
-        title.pack(pady=10)
+        title.pack(pady=MacOSTheme.SPACING["md"])
         
         # Progress bar
         self.chatbot_progress = ProgressBar(
             loading_overlay,
             width=300,
             height=5,
-            color="#3498db",
-            bg="#374151"
+            color=self.COLORS["accent"],
+            bg=self.COLORS["control_bg"]
         )
         self.chatbot_progress.pack(pady=20)
         
         # Loading text
-        self.chatbot_load_label = tk.Label(
+        self.chatbot_load_label = MacOSTheme.create_label(
             loading_overlay,
             text="Loading course notes...",
-            font=("SF Pro", 10),
-            bg=self.COLORS["bg"],
-            fg="#9ca3af"
+            style="footnote",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["text_tertiary"]
         )
-        self.chatbot_load_label.pack(pady=5)
+        self.chatbot_load_label.pack(pady=MacOSTheme.SPACING["sm"])
         
         # Animate loading
         self._animate_chatbot_loading(0, loading_overlay)
@@ -288,8 +299,15 @@ class ChatbotGUI:
             progress: Current progress (0-100)
             overlay: Overlay frame to destroy when done
         """
+        # Check if overlay still exists
+        if not overlay.winfo_exists():
+            return
+            
         if progress <= 100:
-            self.chatbot_progress.set_progress(progress, animated=True)
+            try:
+                self.chatbot_progress.set_progress(progress, animated=False)  # Changed to False to avoid nested animations
+            except:
+                return
             
             # Update text
             if progress < 33:
@@ -299,37 +317,52 @@ class ChatbotGUI:
             else:
                 text = "Preparing chat interface..."
             
-            self.chatbot_load_label.config(text=text)
+            try:
+                self.chatbot_load_label.config(text=text)
+            except:
+                return
             
-            # Continue animation (5 seconds total: 100ms * 50 steps = 5000ms)
-            self.window.after(100, lambda: self._animate_chatbot_loading(progress + 2, overlay))
+            # Continue animation (2 seconds total: 100ms * 20 steps = 2000ms)
+            self.window.after(100, lambda: self._animate_chatbot_loading(progress + 5, overlay))
         else:
             # Loading complete
-            overlay.destroy()
-            self.show_welcome_message()
+            try:
+                overlay.destroy()
+                self.show_welcome_message()
+            except:
+                pass
     
     def show_welcome_message(self):
         """Display welcome message."""
         overview = self.chatbot.get_course_overview()
         
-        welcome_bubble = tk.Frame(self.chat_frame, bg=self.COLORS["bg"])
-        welcome_bubble.pack(fill="x", padx=10, pady=10, anchor="w")
+        welcome_bubble = tk.Frame(self.chat_frame, bg=self.COLORS["window_bg"])
+        welcome_bubble.pack(fill="x", padx=MacOSTheme.SPACING["md"], pady=MacOSTheme.SPACING["md"], anchor="w")
         
-        bubble = tk.Frame(welcome_bubble, bg=self.COLORS["ai_bubble"], bd=0)
-        bubble.pack(anchor="w", padx=20)
+        # Rounded bubble with border
+        bubble = tk.Frame(
+            welcome_bubble, 
+            bg=self.CHAT_COLORS["ai_bubble"],
+            highlightbackground=self.COLORS["separator"],
+            highlightthickness=1
+        )
+        bubble.pack(anchor="w", padx=MacOSTheme.SPACING["xl"])
         
-        msg_label = tk.Label(
+        msg_label = MacOSTheme.create_label(
             bubble,
             text=f"Hello! 👋\n\n{overview}",
-            font=("SF Pro", 11),
-            bg=self.COLORS["ai_bubble"],
-            fg="white",
+            style="body",
+            bg=self.CHAT_COLORS["ai_bubble"],
+            fg=self.COLORS["text_primary"],  # Dark text on light gray
             wraplength=500,
             justify="left",
             padx=15,
             pady=12
         )
         msg_label.pack()
+        
+        # Animate welcome message
+        AnimationEngine.fade_in(welcome_bubble, duration=500)
         
         # Bind scrolling to new widgets
         self._bind_mousewheel(welcome_bubble)
@@ -356,15 +389,20 @@ class ChatbotGUI:
         # Clear input
         self.input_text.delete("1.0", "end")
         
-        # Show user message
+        # Show user message with animation
         self.add_user_message(question)
         
+        # Brief pause before showing typing indicator for better UX
+        self.window.after(200, lambda: self._show_typing_and_get_answer(question))
+    
+    def _show_typing_and_get_answer(self, question):
+        """Show typing indicator and get AI answer."""
         # Show typing indicator
         typing_indicator = self.add_typing_indicator()
         
         # Get answer in background thread
         def get_answer():
-            time.sleep(0.3)  # Brief delay for UX
+            time.sleep(0.5)  # Slightly longer delay for better perception
             result = self.chatbot.answer_question(question)
             
             # Update UI on main thread
@@ -375,25 +413,34 @@ class ChatbotGUI:
         thread.start()
     
     def add_user_message(self, message: str):
-        """Add user message bubble."""
-        msg_frame = tk.Frame(self.chat_frame, bg=self.COLORS["bg"])
-        msg_frame.pack(fill="x", padx=10, pady=5, anchor="e")
+        """Add user message bubble with animation."""
+        msg_frame = tk.Frame(self.chat_frame, bg=self.COLORS["window_bg"])
+        msg_frame.pack(fill="x", padx=MacOSTheme.SPACING["md"], pady=MacOSTheme.SPACING["sm"], anchor="e")
         
-        bubble = tk.Frame(msg_frame, bg=self.COLORS["user_bubble"], bd=0)
-        bubble.pack(anchor="e", padx=20)
+        # Rounded bubble with subtle shadow effect
+        bubble = tk.Frame(
+            msg_frame, 
+            bg=self.CHAT_COLORS["user_bubble"],
+            highlightbackground=self.COLORS["accent_pressed"],
+            highlightthickness=1
+        )
+        bubble.pack(anchor="e", padx=MacOSTheme.SPACING["xl"])
         
-        msg_label = tk.Label(
+        msg_label = MacOSTheme.create_label(
             bubble,
             text=message,
-            font=("SF Pro", 11),
-            bg=self.COLORS["user_bubble"],
-            fg="white",
+            style="body",
+            bg=self.CHAT_COLORS["user_bubble"],
+            fg="#FFFFFF",  # White text on blue (like iMessage)
             wraplength=450,
             justify="left",
             padx=15,
             pady=10
         )
         msg_label.pack()
+        
+        # Animate bubble entrance
+        AnimationEngine.fade_in(msg_frame, duration=300)
         
         # Bind scrolling to new widgets
         self._bind_mousewheel(msg_frame)
@@ -403,23 +450,31 @@ class ChatbotGUI:
         self.scroll_to_bottom()
     
     def add_typing_indicator(self) -> tk.Frame:
-        """Add typing indicator animation."""
-        typing_frame = tk.Frame(self.chat_frame, bg=self.COLORS["bg"])
-        typing_frame.pack(fill="x", padx=10, pady=5, anchor="w")
+        """Add typing indicator animation with smooth appearance."""
+        typing_frame = tk.Frame(self.chat_frame, bg=self.COLORS["window_bg"])
+        typing_frame.pack(fill="x", padx=MacOSTheme.SPACING["md"], pady=MacOSTheme.SPACING["sm"], anchor="w")
         
-        bubble = tk.Frame(typing_frame, bg=self.COLORS["ai_bubble"], bd=0)
-        bubble.pack(anchor="w", padx=20)
+        bubble = tk.Frame(
+            typing_frame, 
+            bg=self.CHAT_COLORS["ai_bubble"],
+            highlightbackground=self.COLORS["separator"],
+            highlightthickness=1
+        )
+        bubble.pack(anchor="w", padx=MacOSTheme.SPACING["xl"])
         
         typing_label = tk.Label(
             bubble,
             text="typing",
-            font=("SF Pro", 11, "italic"),
-            bg=self.COLORS["ai_bubble"],
-            fg="#9ca3af",
+            font=("SF Pro", 13, "italic"),
+            bg=self.CHAT_COLORS["ai_bubble"],
+            fg=self.COLORS["text_secondary"],  # Gray text on light gray bubble
             padx=15,
             pady=10
         )
         typing_label.pack()
+        
+        # Animate typing indicator entrance
+        AnimationEngine.fade_in(typing_frame, duration=200)
         
         # Animate typing dots
         self._animate_typing_dots(typing_label, 0)
@@ -440,26 +495,34 @@ class ChatbotGUI:
             label.after(400, lambda: self._animate_typing_dots(label, dot_count + 1))
     
     def show_ai_response(self, result: dict, typing_indicator: tk.Frame):
-        """Show AI response with sources."""
+        """Show AI response with sources and smooth animation."""
         self.is_generating = False
         
-        # Remove typing indicator
+        # Remove typing indicator with fade out
         typing_indicator.destroy()
         
         # Add AI message bubble
-        msg_frame = tk.Frame(self.chat_frame, bg=self.COLORS["bg"])
-        msg_frame.pack(fill="x", padx=10, pady=5, anchor="w")
+        msg_frame = tk.Frame(self.chat_frame, bg=self.COLORS["window_bg"])
+        msg_frame.pack(fill="x", padx=MacOSTheme.SPACING["md"], pady=MacOSTheme.SPACING["sm"], anchor="w")
         
-        bubble = tk.Frame(msg_frame, bg=self.COLORS["ai_bubble"], bd=0)
-        bubble.pack(anchor="w", padx=20)
+        bubble = tk.Frame(
+            msg_frame, 
+            bg=self.CHAT_COLORS["ai_bubble"],
+            highlightbackground=self.COLORS["separator"],
+            highlightthickness=1
+        )
+        bubble.pack(anchor="w", padx=MacOSTheme.SPACING["xl"])
+        
+        # Animate bubble entrance
+        AnimationEngine.fade_in(msg_frame, duration=400)
         
         # AI answer
-        answer_label = tk.Label(
+        answer_label = MacOSTheme.create_label(
             bubble,
             text=result["answer"],
-            font=("SF Pro", 11),
-            bg=self.COLORS["ai_bubble"],
-            fg="white",
+            style="body",
+            bg=self.CHAT_COLORS["ai_bubble"],
+            fg=self.COLORS["text_primary"],  # Dark text on light gray
             wraplength=450,
             justify="left",
             padx=15,
@@ -474,35 +537,54 @@ class ChatbotGUI:
         
         # Sources (if any)
         if result.get("sources"):
-            sources_frame = tk.Frame(bubble, bg=self.COLORS["ai_bubble"])
-            sources_frame.pack(fill="x", padx=15, pady=(0, 10))
+            # Rounded sources container
+            sources_container = tk.Frame(
+                bubble,
+                bg="#F5F5F7",  # Slightly different background
+                highlightbackground=self.COLORS["separator"],
+                highlightthickness=1
+            )
+            sources_container.pack(fill="x", padx=10, pady=(5, 10))
             
-            sources_title = tk.Label(
+            sources_frame = tk.Frame(sources_container, bg="#F5F5F7")
+            sources_frame.pack(fill="x", padx=8, pady=6)
+            
+            sources_title = MacOSTheme.create_label(
                 sources_frame,
                 text="📚 Sources:",
-                font=("SF Pro", 9, "bold"),
-                bg=self.COLORS["ai_bubble"],
-                fg="#60a5fa",
-                anchor="w"
+                style="caption",
+                bg="#F5F5F7",
+                fg=self.COLORS["accent"],
+                anchor="w",
+                font=("SF Pro", 9, "bold")
             )
-            sources_title.pack(anchor="w", pady=(5, 2))
+            sources_title.pack(anchor="w", pady=(0, 2))
             
             # Bind scrolling to sources
             self._bind_mousewheel(sources_frame)
             self._bind_mousewheel(sources_title)
             
             for source in result["sources"]:
-                source_text = f"• {source['path']}, page {source['page']}"
-                source_label = tk.Label(
+                # Handle both old format (page) and new format (location)
+                if 'location' in source:
+                    source_text = f"• {source['path']}, {source['location']}"
+                elif 'page' in source:
+                    source_text = f"• {source['path']}, page {source['page']}"
+                else:
+                    source_text = f"• {source['path']}"
+                
+                source_label = MacOSTheme.create_label(
                     sources_frame,
                     text=source_text,
-                    font=("SF Pro", 8),
-                    bg=self.COLORS["ai_bubble"],
-                    fg="#9ca3af",
-                    anchor="w"
+                    style="caption",
+                    bg="#F5F5F7",
+                    fg=self.COLORS["text_tertiary"],
+                    anchor="w",
+                    font=("SF Pro", 9, "normal")
                 )
                 source_label.pack(anchor="w", pady=1)
                 self._bind_mousewheel(source_label)
+                self._bind_mousewheel(sources_container)
         
         self.scroll_to_bottom()
     
@@ -512,16 +594,18 @@ class ChatbotGUI:
         self.canvas.yview_moveto(1.0)
     
     def clear_chat(self):
-        """Clear chat history."""
-        # Clear all messages except welcome
-        for widget in self.chat_frame.winfo_children():
-            widget.destroy()
+        """Clear chat history with smooth animation."""
+        # Fade out all messages
+        children = self.chat_frame.winfo_children()
+        for i, widget in enumerate(children):
+            # Stagger the fade out
+            self.window.after(i * 30, lambda w=widget: w.destroy())
         
         # Clear chatbot history
         self.chatbot.clear_history()
         
-        # Show welcome again
-        self.show_welcome_message()
+        # Show welcome again after clearing
+        self.window.after(len(children) * 30 + 100, self.show_welcome_message)
     
     def close_window(self):
         """Close the chatbot window."""

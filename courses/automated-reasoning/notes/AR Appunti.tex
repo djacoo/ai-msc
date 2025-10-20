@@ -5,7 +5,7 @@
 % ========================================
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[italian]{babel}  % Change to your language
+\usepackage[english]{babel}  % Change to your language
 \usepackage[margin=2.5cm]{geometry}
 
 % Mathematics
@@ -40,19 +40,19 @@
 % THEOREM ENVIRONMENTS
 % ========================================
 \theoremstyle{definition}
-\newtheorem{definition}{Definizione}[section]
-\newtheorem{example}{Esempio}[section]
-\newtheorem{exercise}{Esercizio}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
 
 \theoremstyle{plain}
-\newtheorem{theorem}{Teorema}[section]
+\newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposizione}
-\newtheorem{corollary}[theorem]{Corollario}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
 
 \theoremstyle{remark}
-\newtheorem*{remark}{Nota}
-\newtheorem*{observation}{Osservazione}
+\newtheorem*{remark}{Note}
+\newtheorem*{observation}{Observation}
 
 % ========================================
 % CUSTOM COMMANDS
@@ -1660,26 +1660,292 @@ Both terms are in the same equivalence class, so $(f(x, g(g(x))), g(x)) \in \tex
 
 
 
+\newpage
 
+\section{Implementation of Congruence Closure on a DAG}
 
+\subsection{DAG Representation}
 
+The congruence closure algorithm can be implemented efficiently using a \textbf{Directed Acyclic Graph (DAG)} representation of the terms.
 
+Consider the formula:
+\[
+F = \{x = g(x), \, f(x, x) = g(g(x))\} \cup \{f(x, g(g(x))) \neq g(x)\}
+\]
 
+The set of terms is:
+\[
+S_F = \{x, \, g(x), \, g(g(x)), \, f(x, x), \, f(x, g(g(x)))\}
+\]
 
+We represent these terms as a graph where:
+\begin{itemize}
+    \item Each term is a node
+    \item Edges connect function symbols to their arguments
+    \item We use $g$ and $g'$ to distinguish the two applications of function $g$
+    \item We use $f$ and $f'$ to distinguish the two applications of function $f$
+\end{itemize}
 
+\begin{center}
+\begin{tikzpicture}[
+    node/.style={circle, draw, minimum size=1cm, thick},
+    func/.style={rectangle, draw, minimum size=1cm, thick},
+    >=stealth,
+    every edge/.style={draw, ->, thick}
+]
+    % Variable node (center)
+    \node[node] (x) at (0, 0) {$x$};
+    
+    % First g application: g(x)
+    \node[func] (g) at (-3, 2) {$g$};
+    \draw[->] (g) -- (x);
+    
+    % Second g application: g(g(x))
+    \node[func] (g2) at (-3, 4) {$g'$};
+    \draw[->] (g2) -- (g);
+    
+    % First f application: f(x, x)
+    \node[func] (f) at (3, 2) {$f$};
+    \draw[->] (f) to[bend left=15] (x);
+    \draw[->] (f) to[bend right=15] (x);
+    
+    % Second f application: f(x, g(g(x)))
+    \node[func] (f2) at (0, 4) {$f'$};
+    \draw[->] (f2) to[bend right=20] (x);
+    \draw[->] (f2) to[bend left=10] (g2);
+    
+    % Labels
+    \node[font=\small] at (0, -0.8) {$x$};
+    \node[font=\small] at (-1.5, 2) {$g(x)$};
+    \node[font=\small] at (-1.5, 4) {$g(g(x))$};
+    \node[font=\small] at (4.5, 2) {$f(x,x)$};
+    \node[font=\small] at (1.5, 4.5) {$f(x,g(g(x)))$};
+\end{tikzpicture}
+\end{center}
 
+The graph shows the structure of the terms:
+\begin{itemize}
+    \item Node $g$ has an edge to $x$ (representing $g(x)$)
+    \item Node $f$ has two edges to $x$ (representing $f(x,x)$)
+    \item Node $g'$ has an edge to $g$ (representing $g(g(x))$)
+    \item Node $f'$ has edges to $x$ and $g'$ (representing $f(x, g(g(x)))$)
+\end{itemize}
 
+This is a graph representation of the term structure, which allows efficient implementation of the congruence closure algorithm using union-find data structures to track equivalence classes of nodes.
 
+\subsection{Node Data Structure}
 
+Each node in the DAG is represented by a data structure with the following fields:
 
+\begin{verbatim}
+type node = { 
+    id: Id;
+    fn: String;
+    args: Id list; 
+    mutable find: Id;
+    mutable ccpar: Id set;
+}
+\end{verbatim}
 
+For a node $n$ of type \texttt{node}, the fields have the following meaning:
 
+\begin{itemize}
+    \item \textbf{n.id}: The unique identifier of node $n$
+    
+    \item \textbf{n.fn}: The function symbol (or variable name) represented by this node
+    
+    \item \textbf{n.args}: The list of identifiers of the argument nodes (empty for variables and constants)
+    
+    \item \textbf{n.find}: The identifier of the representative node of the equivalence class to which $n$ belongs
+    \begin{itemize}
+        \item \textit{Initialization}: \texttt{n.find = n.id} (each node starts in its own equivalence class)
+    \end{itemize}
+    
+    \item \textbf{n.ccpar}: The set of identifiers of the parent nodes of $n$ (nodes that have $n$ as an argument) and all nodes congruent to $n$
+\end{itemize}
 
+This data structure supports the union-find operations needed for the congruence closure algorithm, where \texttt{find} implements the path to the representative of each equivalence class, and \texttt{ccpar} tracks congruence relationships for efficient propagation.
 
+\subsection{Basic Operations}
 
+We now define the basic operations on the DAG structure.
 
+\subsubsection{The NODE Function}
 
+The function \texttt{NODE} retrieves a node given its identifier:
 
+\[
+\texttt{NODE} : \texttt{Id} \rightarrow \texttt{Node}
+\]
 
+\[
+\texttt{NODE}(i) = n \quad \text{such that} \quad n.\texttt{id} = i
+\]
+
+\subsubsection{The FIND Operation}
+
+The \texttt{FIND} function takes an identifier and returns the identifier of the representative of the equivalence class to which the node belongs:
+
+\[
+\texttt{FIND} : \texttt{Id} \rightarrow \texttt{Id}
+\]
+
+\begin{verbatim}
+let rec FIND i = 
+    let n = NODE i in 
+        if n.find = i then i 
+        else FIND n.find
+\end{verbatim}
+
+This recursive function follows the \texttt{find} pointers until it reaches a node that is its own representative (i.e., $n.\texttt{find} = n.\texttt{id}$).
+
+\subsubsection{The UNION Operation}
+
+The \texttt{UNION} function merges two equivalence classes:
+
+\[
+\texttt{UNION} : \texttt{Id} \times \texttt{Id} \rightarrow \texttt{void}
+\]
+
+\begin{verbatim}
+let UNION i_1 i_2 = 
+    let n_1 = NODE (FIND i_1) in 
+    let n_2 = NODE (FIND i_2) in 
+    n_1.find <- n_2.find;
+    n_2.ccpar <- n_2.ccpar U n_1.ccpar;
+    n_1.ccpar <- empty_set
+\end{verbatim}
+
+The \texttt{UNION} operation performs the following steps:
+\begin{enumerate}
+    \item Find the representatives $n_1$ and $n_2$ of the two equivalence classes
+    \item Make $n_1$ point to $n_2$ (merging the classes)
+    \item Transfer the \texttt{ccpar} set from $n_1$ to $n_2$
+    \item Clear the \texttt{ccpar} set of $n_1$
+\end{enumerate}
+
+\begin{remark}
+During execution, $n.\texttt{ccpar} \neq \emptyset$ if and only if $n$ is a representative (i.e., $n.\texttt{find} = n.\texttt{id}$). This invariant ensures that only representative nodes maintain the parent and congruence information.
+\end{remark}
+
+\subsubsection{The CCPAR Function}
+
+The \texttt{CCPAR} function returns the \texttt{ccpar} set of the representative of a given node:
+
+\[
+\texttt{CCPAR} : \texttt{Id} \rightarrow \texttt{Id set}
+\]
+
+\begin{verbatim}
+let CCPAR i = (NODE (FIND i)).ccpar
+\end{verbatim}
+
+This function first finds the representative of node $i$, then returns its \texttt{ccpar} set.
+
+\subsubsection{The CONGRUENT Function}
+
+The \texttt{CONGRUENT} function checks whether two nodes are congruent (i.e., they have the same function symbol and their corresponding arguments are in the same equivalence classes):
+
+\[
+\texttt{CONGRUENT} : \texttt{Id} \times \texttt{Id} \rightarrow \texttt{bool}
+\]
+
+\begin{verbatim}
+let CONGRUENT i_1 i_2 = 
+    let n_1 = NODE i_1 in
+    let n_2 = NODE i_2 in
+    n_1.fn = n_2.fn && 
+    |n_1.args| = |n_2.args| && 
+    forall i in {1, ..., |n_1.args|} 
+        FIND n_1.args[i] = FIND n_2.args[i]
+\end{verbatim}
+
+Two nodes are congruent if:
+\begin{enumerate}
+    \item They have the same function symbol ($n_1.\texttt{fn} = n_2.\texttt{fn}$)
+    \item They have the same number of arguments ($|n_1.\texttt{args}| = |n_2.\texttt{args}|$)
+    \item Their corresponding arguments are in the same equivalence classes
+\end{enumerate}
+
+\subsubsection{The MERGE Function}
+
+The \texttt{MERGE} function merges two equivalence classes and recursively propagates congruence:
+
+\[
+\texttt{MERGE} : \texttt{Id} \times \texttt{Id} \rightarrow \texttt{void}
+\]
+
+\begin{verbatim}
+let rec MERGE i_1 i_2 = 
+    if FIND i_1 =/= FIND i_2 then
+        begin 
+            let P_1 = CCPAR i_1 in 
+            let P_2 = CCPAR i_2 in 
+            UNION i_1 i_2;
+            foreach (t_1, t_2) in P_1 x P_2 do 
+                if FIND t_1 =/= FIND t_2 && CONGRUENT t_1 t_2 
+                then MERGE t_1 t_2
+            done 
+        end
+\end{verbatim}
+
+The \texttt{MERGE} operation works as follows:
+\begin{enumerate}
+    \item Check if $i_1$ and $i_2$ are already in the same equivalence class; if so, do nothing
+    \item Save the \texttt{ccpar} sets $P_1$ and $P_2$ of both nodes
+    \item Perform \texttt{UNION} to merge the equivalence classes
+    \item For each pair $(t_1, t_2)$ in the Cartesian product $P_1 \times P_2$:
+    \begin{itemize}
+        \item If $t_1$ and $t_2$ are not already equivalent and are congruent
+        \item Recursively merge them with \texttt{MERGE}
+    \end{itemize}
+\end{enumerate}
+
+This recursive propagation ensures that when two nodes become equivalent, all pairs of congruent parent nodes are also merged, maintaining the congruence closure property.
+
+\subsection{The Complete Congruence Closure Algorithm}
+
+We can now describe the complete congruence closure algorithm using the DAG-based implementation.
+
+\subsubsection{Algorithm}
+
+Given a formula:
+\[
+F = \{s_1 = t_1, \dots, s_n = t_n\} \cup \{s_{n+1} \neq t_{n+1}, \dots, s_{n+m} \neq t_{n+m}\}
+\]
+
+The algorithm proceeds as follows:
+
+\begin{algorithm}[H]
+\caption{Congruence Closure Algorithm (DAG-based)}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Formula $F = F^+ \cup F^-$ where $F^+ = \{s_1 = t_1, \dots, s_n = t_n\}$ and $F^- = \{s_{n+1} \neq t_{n+1}, \dots, s_{n+m} \neq t_{n+m}\}$
+\STATE Construct the DAG for $F$
+\STATE \textbf{for} $i = 1$ to $n$ \textbf{do}
+\STATE \quad \texttt{MERGE}($s_i$, $t_i$)
+\STATE \textbf{end for}
+\STATE \textbf{for} $i = n+1$ to $n+m$ \textbf{do}
+\STATE \quad \textbf{if} \texttt{FIND}($s_i$) $=$ \texttt{FIND}($t_i$) \textbf{then}
+\STATE \quad \quad \textbf{return} UNSATISFIABLE
+\STATE \quad \textbf{end if}
+\STATE \textbf{end for}
+\STATE \textbf{return} SATISFIABLE
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Steps}:
+\begin{enumerate}
+    \item \textbf{Construct the DAG}: Build the DAG representation of all terms in $F$
+    \item \textbf{Process equalities}: For each equality $s_i = t_i$ in $F^+$, call \texttt{MERGE}($s_i$, $t_i$) to merge the equivalence classes and propagate congruence
+    \item \textbf{Check disequalities}: For each disequality $s_i \neq t_i$ in $F^-$, check if $s_i$ and $t_i$ are in the same equivalence class (i.e., \texttt{FIND}($s_i$) $=$ \texttt{FIND}($t_i$))
+    \begin{itemize}
+        \item If yes, return UNSATISFIABLE
+    \end{itemize}
+    \item \textbf{Return result}: If no conflicts found, return SATISFIABLE
+\end{enumerate}
+
+\subsubsection{Complexity}
+
+Let $n$ be the number of nodes in the DAG. The complexity of the congruence closure algorithm is $O(n^2)$ in the worst case, where the quadratic factor comes from the potential number of congruence propagations that may occur during the \texttt{MERGE} operations.
 
 \end{document}

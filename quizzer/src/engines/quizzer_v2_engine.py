@@ -7,12 +7,12 @@ Main engine coordinating question generation and grading
 import json
 from typing import Dict, List, Optional
 from pathlib import Path
-from ..utils.pdf_grounding import PDFGroundingEngine
+from ..utils.enhanced_grounding import EnhancedGroundingEngine
 from .question_generator import QuestionGenerator
 from .grading_engine import GradingEngine
 from ..utils.user_manager import UserManager
 from .rating_generator import RatingGenerator
-from .chatbot_engine import ChatbotEngine
+from .enhanced_chatbot import EnhancedChatbotEngine
 
 
 class QuizzerV2:
@@ -55,13 +55,13 @@ class QuizzerV2:
         self.repo_root = Path(repo_root)
         self.ai = ai_engine
         
-        # Initialize components
-        self.grounding = PDFGroundingEngine(repo_root)
+        # Initialize enhanced components for better accuracy
+        self.grounding = EnhancedGroundingEngine(repo_root)
         self.question_gen = QuestionGenerator(repo_root, ai_engine)
         self.grader = GradingEngine(repo_root, ai_engine)
         self.user_manager = UserManager(str(Path(repo_root) / "user_data" / "users.db"))
         self.rating_gen = RatingGenerator(ai_engine)
-        self.chatbot = ChatbotEngine(repo_root, ai_engine, self.grounding)
+        self.chatbot = EnhancedChatbotEngine(repo_root, ai_engine, self.grounding)
         
         # Session state
         self.current_quiz = None
@@ -98,11 +98,8 @@ class QuizzerV2:
         if "note_files" not in request or not request["note_files"]:
             request["note_files"] = self.COURSES[course]["default_notes"]
         
-        # Validate note files exist
-        missing_files = []
-        for note_file in request["note_files"]:
-            if not self.grounding.validate_note_file(note_file):
-                missing_files.append(note_file)
+        # Validate note files exist using enhanced validation
+        valid_files, missing_files = self.grounding.validate_note_files(request["note_files"])
         
         if missing_files:
             return {

@@ -1107,11 +1107,323 @@ Since we don't know the optimal plan length in advance, we use \textbf{iterative
 
 
 
+\newpage
+
+\part{SAT Solvers and Planning}
+
+\section{The Boolean Satisfiability Problem}
+
+\subsection{Definition and Scope}
+
+The \textbf{Boolean Satisfiability Problem (SAT)} is one of the most fundamental problems in computer science and forms the foundation for many automated reasoning techniques, including planning.
+
+\begin{definition}[SAT Problem]
+The SAT problem asks: Given a propositional formula, does there exist an interpretation (truth assignment) that makes the formula true?
+
+Formally, given a set of clauses $S$ in propositional logic, determine whether $S$ is satisfiable.
+\end{definition}
+
+\subsection{Propositional Logic Basics}
+
+To understand SAT, we must first establish the basic elements of propositional logic:
+
+\begin{itemize}
+    \item \textbf{Propositional variables}: Let $X$ be a finite set of propositional variables, where each variable can assume one of two values: \texttt{true} (1) or \texttt{false} (0)
+    
+    \item \textbf{Atom (Atomic formula)}: A single propositional variable $x \in X$
+    
+    \item \textbf{Literal}: Either an atom $x$ or its negation $\neg x$
+    
+    \item \textbf{Clause}: A disjunction of literals: $L_1 \lor L_2 \lor \cdots \lor L_n$ where each $L_i$ is a literal
+\end{itemize}
+
+\subsection{Interpretations and Truth Assignments}
+
+\begin{definition}[Interpretation]
+An \textbf{interpretation} (or \textbf{truth assignment}) is a function:
+\[
+v: X \rightarrow \{0, 1\}
+\]
+that assigns a Boolean value to each propositional variable.
+\end{definition}
+
+\textbf{Number of interpretations}: If $|X| = n$ (i.e., we have $n$ propositional variables), then there are exactly $2^n$ possible interpretations.
+
+\subsubsection{Satisfiability of Clauses}
+
+\begin{definition}[Clause Satisfaction]
+A clause $C = L_1 \lor L_2 \lor \cdots \lor L_n$ is \textbf{satisfied} by an interpretation $v$ if there exists at least one literal $L_i$ such that $v(L_i) = \text{true}$ for some $i \in \{1, 2, \dots, n\}$.
+
+We write: $v \models C$
+\end{definition}
+
+\begin{definition}[Formula Satisfaction]
+A set of clauses $S = \{C_1, C_2, \dots, C_m\}$ is \textbf{satisfiable} if there exists an interpretation $v$ that satisfies all clauses in $S$:
+\[
+v \models S \quad \Leftrightarrow \quad v \models C_i \text{ for all } i \in \{1, 2, \dots, m\}
+\]
+\end{definition}
+
+\subsection{SAT Decision Procedure}
+
+The SAT problem can be viewed as a decision procedure with the following input-output specification:
+
+\[
+\boxed{
+\begin{array}{ccc}
+S \text{ (set of clauses)} & \xrightarrow{\text{SAT Solver}} & 
+\begin{cases}
+\text{\textbf{YES (Satisfiable)}} \\
+\exists v: v \models S \\
+\\
+\text{\textbf{NO (Unsatisfiable)}} \\
+\text{Proof: } S \vdash \Box
+\end{cases}
+\end{array}
+}
+\]
+
+\textbf{Output cases}:
+\begin{enumerate}
+    \item \textbf{YES (Satisfiable)}: There exists an interpretation $v$ such that $v \models S$. The SAT solver typically returns this satisfying assignment.
+    
+    \item \textbf{NO (Unsatisfiable)}: No interpretation satisfies $S$. The solver may provide a proof of unsatisfiability, showing that $S$ derives a contradiction (denoted $S \vdash \Box$, where $\Box$ represents the empty clause).
+\end{enumerate}
+
+\subsection{The Empty Clause}
+
+\begin{definition}[Empty Clause]
+The \textbf{empty clause}, denoted $\Box$ (or $\square$), is a clause with no literals. It is \textbf{false in all interpretations} and therefore represents a contradiction.
+\end{definition}
+
+\textbf{Significance}: If a SAT solver derives the empty clause from the input formula $S$, this constitutes a proof that $S$ is unsatisfiable, since deriving a contradiction means no interpretation can satisfy all clauses.
+
+
+
+
+\section{Planning Problem Formalization}
+
+We formalized the planning problem with:
+\[
+P = \langle \Sigma, s_0, S_g \rangle
+\]
+where $\Sigma = \langle S, A, \gamma \rangle$.
+
+\begin{itemize}
+    \item $s_0$ is the initial state
+    \item $S_g$ is the set of goal states: $S_g = \{s \mid s \models G\}$
+    \item $G$ is the goal formula (a conjunction of atoms)
+\end{itemize}
+
+\subsection{States as Interpretations}
+
+States correspond to interpretations in propositional logic:
+
+\begin{itemize}
+    \item $\texttt{at}(r_1, l_1)$: ground positive literal
+    \item $\neg \texttt{loaded}(r_1)$: ground negative literal
+\end{itemize}
+
+\textbf{Abstraction}: From ground first-order literals to propositional literals. With finitely many ground atoms (literals) in the planning problem, we obtain finitely many variables $|X| = n$.
+
+\section{Bounded Planning Problem}
+
+\begin{definition}[Bounded Planning Problem]
+Does there exist a plan $\pi$ that solves planning problem $P$ and has length $k$ (i.e., $|\pi| = k$, where $\pi$ is a sequence of $k$ actions)?
+\end{definition}
+
+\subsection{Iterative Deepening on Plan Length}
+
+We use iterative deepening to find the shortest plan by increasing the bound $k$:
+
+\[
+\boxed{
+\begin{array}{c}
+P \xrightarrow{\text{translation}} \Phi \xrightarrow{\text{SAT}} 
+\begin{cases}
+\text{\textbf{YES}}: \text{interpretation } v \models \Phi \\
+\text{encodes plan } \pi \text{ of length } k \\
+\text{\textbf{NO}}: \text{no plan of length } k \text{ solves } P
+\end{cases}
+\end{array}
+}
+\]
+
+The process iterates: $k := k + 1$ until a solution is found.
+
+\textbf{Key insight}: The SAT encoding $\Phi$ includes:
+\begin{itemize}
+    \item Initial state constraints at time 0
+    \item Goal constraints at time $k$
+    \item Action preconditions and effects for each time step
+    \item Frame axioms ensuring persistence of unchanged literals
+\end{itemize}
 
 
 
 
 
+\subsection{Temporal Encoding of Literals}
+
+A key aspect of the SAT encoding for planning is the \textbf{temporal instantiation} of literals. Since a plan of length $k$ requires tracking state changes over time, each literal is indexed by time steps.
+
+\begin{itemize}
+    \item \textbf{Plan length $k$} means we have $0 \leq i \leq k-1$ time steps (transitions)
+    \item Each literal $f$ becomes $f@t$ where $t$ ranges from $0$ to $k$
+    \item State $i$ is the state after executing $i$ actions (before the $i$-th action)
+\end{itemize}
+
+\subsubsection{Example: Temporal Instantiation}
+
+Consider the literal $\texttt{at}(r_1, l_1)$ ("robot $r_1$ is at location $l_1$"):
+
+\[
+\texttt{at}(r_1, l_1) \quad \xrightarrow{\text{temporal encoding}} \quad \texttt{at}(r_1, l_1, i)
+\]
+
+Similarly, the negative literal $\neg \texttt{loaded}(r_1)$ becomes $\neg \texttt{loaded}(r_1, i)$, meaning "robot $r_1$ is not loaded at stage $i$".
+
+\begin{definition}[State Transition]
+Step $i$ (where $0 \leq i \leq k-1$) takes us from state $i$ to state $i+1$ by executing one action.
+\end{definition}
+
+\subsection{Encoding the Initial State}
+
+The initial state $s_0$ is encoded as a conjunction of constraints at time $t = 0$:
+
+\[
+\Phi_{s_0} = \bigwedge_{f \in s_0} f@0 \quad \land \quad \bigwedge_{f \notin s_0} \neg f@0
+\]
+
+Where $f$ represents ground literals.
+
+\subsubsection{From Literals to Propositional Variables}
+
+Each temporally indexed literal corresponds to a propositional variable:
+
+\begin{itemize}
+    \item $\texttt{at}(r_1, l_1, 0)$ corresponds to variable $x_{\texttt{at}(r_1, l_1)}@0$
+    \item $\neg \texttt{loaded}(r_1, 0)$ corresponds to $\neg x_{\texttt{loaded}(r_1)}@0$
+\end{itemize}
+
+\subsubsection{Example: Complete Initial State Encoding}
+
+Consider an initial state containing $\texttt{at}(r_1, l_1)$ but not $\texttt{loaded}(r_1)$:
+
+\[
+\begin{array}{lcl}
+\text{Literals in } s_0: & \texttt{at}(r_1, l_1) & \land \neg \texttt{loaded}(r_1) \land \cdots \\
+\text{Temporal encoding:} & \texttt{at}(r_1, l_1, 0) & \land \neg \texttt{loaded}(r_1, 0) \land \cdots \\
+\text{SAT variables:} & x_{\texttt{at}(r_1, l_1)}@0 & \land \neg x_{\texttt{loaded}(r_1)}@0 \land \cdots
+\end{array}
+\]
+
+For literals not in the initial state (e.g., $\texttt{at}(r_1, l_2)$, $\texttt{at}(r_1, l_3)$), these are assigned false:
+
+\[
+\neg \texttt{at}(r_1, l_2, 0), \quad \neg \texttt{at}(r_1, l_3, 0)
+\]
+
+\textbf{Alternative notation}: The initial state encoding can also be written using set notation:
+\[
+\Phi_{s_0} = \bigwedge_{x \in S_0^+} x_0 \land \bigwedge_{x \in S_0^-} \neg x_0
+\]
+where $S_0^+$ is the set of positive literals in $s_0$ and $S_0^-$ is the set of negative literals in $s_0$.
+
+\subsection{Encoding the Goal States}
+
+The goal conditions must be satisfied at the final time step $k$.
+
+\begin{definition}[Goal Encoding]
+The goal states are encoded at time $k$ as:
+\[
+\Phi_G = \bigwedge_{x \in G^+} x_k \land \bigwedge_{x \in G^-} \neg x_k
+\]
+where $G^+$ is the set of positive literals in the goal $G$ and $G^-$ is the set of negative literals in $G$.
+\end{definition}
+
+\textbf{Interpretation}: This formula ensures that all positive goal conditions are true and all negative goal conditions are false in the final state after executing $k$ actions.
+
+\subsection{Encoding Actions}
+
+The planning problem is defined as $\Sigma = \langle S, A, \gamma \rangle$, where $A$ is the set of all ground instances of the action schemas.
+
+\subsubsection{Action Preconditions}
+
+For each action $a \in A$ at each time step $i$ (where $0 \leq i \leq k-1$), we encode the constraint that if the action is executed, its preconditions must hold:
+
+\begin{definition}[Action Precondition Encoding]
+\[
+\forall a \in A, \forall i \in \{0, \dots, k-1\}: \quad a_i \rightarrow \bigwedge_{p \in \text{prec}(a)} p_i
+\]
+where $\text{prec}(a)$ denotes the set of preconditions of action $a$.
+\end{definition}
+
+\textbf{Interpretation}: This formula states that if action $a$ is executed at time $i$, then all of its preconditions must be satisfied at time $i$. The implication can be rewritten in CNF as:
+\[
+\neg a_i \lor \bigwedge_{p \in \text{prec}(a)} p_i
+\]
+
+\subsubsection{Mutual Exclusion of Actions}
+
+At each time step, at most one action can be executed. This constraint is encoded as follows:
+
+\begin{definition}[Action Mutual Exclusion]
+For all pairs of distinct actions \( (a, b) \in A \times A \) where \( a \neq b \), and for all time steps \( i \) where \( 0 \leq i \leq k-1 \):
+\[
+\neg a_i \lor \neg b_i
+\]
+\end{definition}
+
+This formula ensures that actions \( a \) and \( b \) cannot both be executed at the same time step \( i \).
+
+\textbf{Equivalent formulations}:
+\begin{itemize}
+    \item \( a_i \rightarrow \neg b_i \): If action \( a \) is executed at time \( i \), then action \( b \) is not executed
+    \item \( b_i \rightarrow \neg a_i \): If action \( b \) is executed at time \( i \), then action \( a \) is not executed
+\end{itemize}
+
+\subsection{Complete SAT Encoding}
+
+The complete SAT encoding \( \Phi \) for a bounded planning problem with plan length \( k \) is the conjunction of the following sets of propositional formulas:
+
+\[
+\Phi = \Phi_{s_0} \land \Phi_G \land \Phi_{\text{actions}} \land \Phi_{\text{mutex}} \land \Phi_{\text{frame}}
+\]
+
+where:
+\begin{itemize}
+    \item \( \Phi_{s_0} \): Initial state constraints
+    \item \( \Phi_G \): Goal state constraints
+    \item \( \Phi_{\text{actions}} \): Action precondition and effect constraints
+    \item \( \Phi_{\text{mutex}} \): Mutual exclusion constraints between actions
+    \item \( \Phi_{\text{frame}} \): Frame axioms (persistence of unchanged literals)
+\end{itemize}
+
+\subsection{Plan Extraction from SAT Model}
+
+Once the SAT solver returns a satisfying assignment, we can extract the corresponding plan.
+
+\begin{definition}[Plan Extraction]
+Let \( v \) be a satisfying interpretation (model) returned by the SAT solver, represented as a set of literals. The plan \( \pi \) is extracted as follows:
+
+\[
+\pi = \langle a_0, a_1, \dots, a_{k-1} \rangle
+\]
+
+where \( a_i \) is the unique action such that \( v \models a_i \) (i.e., \( a_i \) is assigned \texttt{true} in the model \( v \)) for each time step \( i \in \{0, 1, \dots, k-1\} \).
+\end{definition}
+
+\textbf{Extraction procedure}:
+\begin{enumerate}
+    \item Filter the model \( v \) to obtain only the action literals: \( \{a_i \mid a \in A, 0 \leq i \leq k-1, v \models a_i\} \)
+    \item For each time step \( i \), identify the action \( a \) such that \( a_i \) is true in \( v \)
+    \item Construct the sequence \( \pi = \langle a_0, a_1, \dots, a_{k-1} \rangle \)
+\end{enumerate}
+
+\begin{remark}
+Due to the mutual exclusion constraints, at most one action is true at each time step. If no action is true at some time step \( i \), this corresponds to a "no-op" (no operation) action.
+\end{remark}
 
 
 

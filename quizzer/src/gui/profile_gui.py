@@ -7,22 +7,14 @@ User profile page with statistics and account management
 import tkinter as tk
 from tkinter import ttk, messagebox
 from ..utils.animations import ProgressBar
+from .macos_theme import MacOSTheme
 
 
 class ProfileGUI:
     """User profile interface."""
     
-    # Color scheme
-    COLORS = {
-        "bg": "#1a1a2e",
-        "fg": "#eee",
-        "primary": "#0f3460",
-        "secondary": "#16213e",
-        "accent": "#e94560",
-        "success": "#2ecc71",
-        "card_bg": "#2c2c44",
-        "stat_label": "#888"
-    }
+    # Use native macOS color scheme
+    COLORS = MacOSTheme.COLORS
     
     def __init__(self, parent, engine, username, on_close_callback):
         """Initialize profile GUI.
@@ -42,8 +34,11 @@ class ProfileGUI:
         self.window = tk.Toplevel(parent)
         self.window.title(f"Profile - {username}")
         self.window.geometry("700x800")
-        self.window.configure(bg=self.COLORS["bg"])
+        self.window.configure(bg=self.COLORS["window_bg"])
         self.window.resizable(False, False)
+        
+        # Apply macOS window styling
+        MacOSTheme.configure_window(self.window)
         
         # Center window
         self.center_window()
@@ -62,7 +57,7 @@ class ProfileGUI:
     
     def show_loading_screen(self):
         """Show loading screen with progress bar."""
-        loading_frame = tk.Frame(self.window, bg=self.COLORS["bg"])
+        loading_frame = tk.Frame(self.window, bg=self.COLORS["window_bg"])
         loading_frame.pack(expand=True, fill="both")
         
         # Profile icon
@@ -70,18 +65,18 @@ class ProfileGUI:
             loading_frame,
             text="👤",
             font=("SF Pro", 60),
-            bg=self.COLORS["bg"],
+            bg=self.COLORS["window_bg"],
             fg=self.COLORS["accent"]
         )
         icon.pack(pady=(200, 20))
         
         # Title
-        title = tk.Label(
+        title = MacOSTheme.create_label(
             loading_frame,
             text=f"Loading {self.username}'s Profile",
-            font=("SF Pro", 18, "bold"),
-            bg=self.COLORS["bg"],
-            fg=self.COLORS["fg"]
+            style="title_large",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["text_primary"]
         )
         title.pack(pady=10)
         
@@ -90,18 +85,18 @@ class ProfileGUI:
             loading_frame,
             width=350,
             height=6,
-            color="#2563eb",
-            bg="#374151"
+            color=self.COLORS["accent"],
+            bg=self.COLORS["control_bg"]
         )
         self.profile_progress.pack(pady=30)
         
         # Loading text
-        self.profile_load_label = tk.Label(
+        self.profile_load_label = MacOSTheme.create_label(
             loading_frame,
             text="Fetching user statistics...",
-            font=("SF Pro", 11),
-            bg=self.COLORS["bg"],
-            fg="#9ca3af"
+            style="callout",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["text_secondary"]
         )
         self.profile_load_label.pack(pady=10)
         
@@ -158,59 +153,59 @@ class ProfileGUI:
             rating: Rating information
         """
         # Main container - no scrollbar, everything fits in view
-        content = tk.Frame(self.window, bg=self.COLORS["bg"])
+        content = tk.Frame(self.window, bg=self.COLORS["window_bg"])
         content.pack(padx=25, pady=15, fill="both", expand=True)
         
         # Header - more compact
         header_frame = tk.Frame(content, bg=self.COLORS["card_bg"], padx=15, pady=12)
         header_frame.pack(fill="x", pady=(0, 10))
         
-        tk.Label(
+        MacOSTheme.create_label(
             header_frame,
             text=f"👤 {stats['username']}",
-            font=("SF Pro", 20, "bold"),
-            fg=self.COLORS["fg"],
-            bg=self.COLORS["card_bg"]
+            style="title",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_primary"]
         ).pack(anchor="w")
         
-        tk.Label(
+        MacOSTheme.create_label(
             header_frame,
             text=f"Member since {stats['member_since'][:10]}",
-            font=("SF Pro", 9),
-            fg=self.COLORS["stat_label"],
-            bg=self.COLORS["card_bg"]
+            style="footnote",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_tertiary"]
         ).pack(anchor="w", pady=(3, 0))
         
         # Rating Card - more compact
         rating_frame = tk.Frame(content, bg=self.COLORS["card_bg"], padx=15, pady=12)
         rating_frame.pack(fill="x", pady=(0, 10))
         
-        tk.Label(
+        MacOSTheme.create_label(
             rating_frame,
             text=rating['title'],
-            font=("SF Pro", 18, "bold"),
-            fg=self.COLORS["accent"],
-            bg=self.COLORS["card_bg"]
+            style="headline",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["accent"]
         ).pack(anchor="w")
         
         # Show condensed description
         desc_text = rating['description'][:120] + "..." if len(rating['description']) > 120 else rating['description']
-        tk.Label(
+        MacOSTheme.create_label(
             rating_frame,
             text=desc_text,
-            font=("SF Pro", 10),
-            fg=self.COLORS["fg"],
+            style="footnote",
             bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_secondary"],
             wraplength=600,
             justify="left"
         ).pack(anchor="w", pady=(5, 0))
         
         # Statistics Grid - compact
-        stats_frame = tk.Frame(content, bg=self.COLORS["bg"])
+        stats_frame = tk.Frame(content, bg=self.COLORS["window_bg"])
         stats_frame.pack(fill="x", pady=(0, 10))
         
         # Row 1
-        row1 = tk.Frame(stats_frame, bg=self.COLORS["bg"])
+        row1 = tk.Frame(stats_frame, bg=self.COLORS["window_bg"])
         row1.pack(fill="x", pady=(0, 8))
         
         self.create_stat_card(
@@ -228,7 +223,7 @@ class ProfileGUI:
         )
         
         # Row 2
-        row2 = tk.Frame(stats_frame, bg=self.COLORS["bg"])
+        row2 = tk.Frame(stats_frame, bg=self.COLORS["window_bg"])
         row2.pack(fill="x", pady=(0, 8))
         
         self.create_stat_card(
@@ -246,7 +241,7 @@ class ProfileGUI:
         )
         
         # Row 3
-        row3 = tk.Frame(stats_frame, bg=self.COLORS["bg"])
+        row3 = tk.Frame(stats_frame, bg=self.COLORS["window_bg"])
         row3.pack(fill="x", pady=(0, 8))
         
         self.create_stat_card(
@@ -264,7 +259,7 @@ class ProfileGUI:
         )
         
         # Row 4
-        row4 = tk.Frame(stats_frame, bg=self.COLORS["bg"])
+        row4 = tk.Frame(stats_frame, bg=self.COLORS["window_bg"])
         row4.pack(fill="x")
         
         self.create_stat_card(
@@ -282,60 +277,36 @@ class ProfileGUI:
         )
         
         # Action Buttons - compact
-        actions_frame = tk.Frame(content, bg=self.COLORS["bg"])
+        actions_frame = tk.Frame(content, bg=self.COLORS["window_bg"])
         actions_frame.pack(fill="x", pady=(10, 0))
         
-        # Close button - more compact
-        close_btn = tk.Button(
+        # Close button
+        close_btn = MacOSTheme.create_button(
             actions_frame,
             text="Close",
-            font=("SF Pro", 11, "bold"),
-            bg="#e5e7eb",  # Light gray
-            fg="#000000",  # Black text
-            activebackground="#d1d5db",
-            activeforeground="#000000",
-            relief="flat",
-            padx=25,
-            pady=10,
-            cursor="hand2",
-            borderwidth=0,
-            command=self.close_profile
+            command=self.close_profile,
+            style="secondary",
+            size="regular"
         )
         close_btn.pack(side="left", padx=(0, 8))
         
-        # Change Password button - more compact
-        password_btn = tk.Button(
+        # Change Password button
+        password_btn = MacOSTheme.create_button(
             actions_frame,
             text="🔑 Change Password",
-            font=("SF Pro", 11, "bold"),
-            bg="#e5e7eb",  # Light gray
-            fg="#000000",  # Black text
-            activebackground="#d1d5db",
-            activeforeground="#000000",
-            relief="flat",
-            padx=25,
-            pady=10,
-            cursor="hand2",
-            borderwidth=0,
-            command=self.show_change_password_dialog
+            command=self.show_change_password_dialog,
+            style="primary",
+            size="regular"
         )
         password_btn.pack(side="left", padx=(0, 8))
         
-        # Delete account button - more compact
-        delete_btn = tk.Button(
+        # Delete account button
+        delete_btn = MacOSTheme.create_button(
             actions_frame,
             text="Delete Account",
-            font=("SF Pro", 11, "bold"),
-            bg="#e5e7eb",  # Light gray
-            fg="#000000",  # Black text
-            activebackground="#d1d5db",
-            activeforeground="#000000",
-            relief="flat",
-            padx=25,
-            pady=10,
-            cursor="hand2",
-            borderwidth=0,
-            command=self.confirm_delete_account
+            command=self.confirm_delete_account,
+            style="destructive",
+            size="regular"
         )
         delete_btn.pack(side="left")
     
@@ -353,20 +324,20 @@ class ProfileGUI:
         card.grid(row=row, column=col, sticky="ew", padx=(0, 10) if col == 0 else (0, 0))
         parent.grid_columnconfigure(col, weight=1)
         
-        tk.Label(
+        MacOSTheme.create_label(
             card,
             text=label,
-            font=("SF Pro", 9),
-            fg=self.COLORS["stat_label"],
-            bg=self.COLORS["card_bg"]
+            style="footnote",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_tertiary"]
         ).pack(anchor="w")
         
-        tk.Label(
+        MacOSTheme.create_label(
             card,
             text=value,
-            font=("SF Pro", 18, "bold"),
-            fg=self.COLORS["fg"],
-            bg=self.COLORS["card_bg"]
+            style="headline",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_primary"]
         ).pack(anchor="w", pady=(3, 0))
     
     def show_change_password_dialog(self):
@@ -375,7 +346,7 @@ class ProfileGUI:
         dialog = tk.Toplevel(self.window)
         dialog.title("Change Password")
         dialog.geometry("450x400")
-        dialog.configure(bg=self.COLORS["bg"])
+        dialog.configure(bg=self.COLORS["window_bg"])
         dialog.resizable(False, False)
         dialog.transient(self.window)
         dialog.grab_set()
@@ -387,37 +358,37 @@ class ProfileGUI:
         dialog.geometry(f"+{x}+{y}")
         
         # Content frame
-        content = tk.Frame(dialog, bg=self.COLORS["bg"])
+        content = tk.Frame(dialog, bg=self.COLORS["window_bg"])
         content.pack(expand=True, fill="both", padx=30, pady=30)
         
         # Title
-        tk.Label(
+        MacOSTheme.create_label(
             content,
             text="🔑 Change Password",
-            font=("SF Pro", 22, "bold"),
-            fg=self.COLORS["accent"],
-            bg=self.COLORS["bg"]
+            style="title_large",
+            bg=self.COLORS["window_bg"],
+            fg=self.COLORS["accent"]
         ).pack(pady=(0, 20))
         
         # Form frame
-        form_frame = tk.Frame(content, bg=self.COLORS["secondary"], padx=20, pady=20)
+        form_frame = tk.Frame(content, bg=self.COLORS["card_bg"], padx=20, pady=20)
         form_frame.pack(fill="x")
         
         # Current password
-        tk.Label(
+        MacOSTheme.create_label(
             form_frame,
             text="Current Password",
-            font=("SF Pro", 11, "bold"),
-            fg=self.COLORS["fg"],
-            bg=self.COLORS["secondary"]
+            style="callout",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_primary"]
         ).pack(anchor="w", pady=(0, 5))
         
         old_password_entry = tk.Entry(
             form_frame,
             font=("SF Pro", 12),
-            bg=self.COLORS["card_bg"],
-            fg=self.COLORS["fg"],
-            insertbackground=self.COLORS["fg"],
+            bg=self.COLORS["content_bg"],
+            fg=self.COLORS["text_primary"],
+            insertbackground=self.COLORS["accent"],
             relief="flat",
             show="●",
             bd=2
@@ -425,28 +396,28 @@ class ProfileGUI:
         old_password_entry.pack(fill="x", ipady=8, pady=(0, 15))
         
         # New password
-        tk.Label(
+        MacOSTheme.create_label(
             form_frame,
             text="New Password",
-            font=("SF Pro", 11, "bold"),
-            fg=self.COLORS["fg"],
-            bg=self.COLORS["secondary"]
+            style="callout",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_primary"]
         ).pack(anchor="w", pady=(0, 5))
         
-        tk.Label(
+        MacOSTheme.create_label(
             form_frame,
             text="At least 6 characters, can include symbols",
-            font=("SF Pro", 9),
-            fg="#888",
-            bg=self.COLORS["secondary"]
+            style="footnote",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_tertiary"]
         ).pack(anchor="w", pady=(0, 5))
         
         new_password_entry = tk.Entry(
             form_frame,
             font=("SF Pro", 12),
-            bg=self.COLORS["card_bg"],
-            fg=self.COLORS["fg"],
-            insertbackground=self.COLORS["fg"],
+            bg=self.COLORS["content_bg"],
+            fg=self.COLORS["text_primary"],
+            insertbackground=self.COLORS["accent"],
             relief="flat",
             show="●",
             bd=2
@@ -454,20 +425,20 @@ class ProfileGUI:
         new_password_entry.pack(fill="x", ipady=8, pady=(0, 15))
         
         # Confirm new password
-        tk.Label(
+        MacOSTheme.create_label(
             form_frame,
             text="Confirm New Password",
-            font=("SF Pro", 11, "bold"),
-            fg=self.COLORS["fg"],
-            bg=self.COLORS["secondary"]
+            style="callout",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_primary"]
         ).pack(anchor="w", pady=(0, 5))
         
         confirm_password_entry = tk.Entry(
             form_frame,
             font=("SF Pro", 12),
-            bg=self.COLORS["card_bg"],
-            fg=self.COLORS["fg"],
-            insertbackground=self.COLORS["fg"],
+            bg=self.COLORS["content_bg"],
+            fg=self.COLORS["text_primary"],
+            insertbackground=self.COLORS["accent"],
             relief="flat",
             show="●",
             bd=2
@@ -475,7 +446,7 @@ class ProfileGUI:
         confirm_password_entry.pack(fill="x", ipady=8, pady=(0, 0))
         
         # Buttons frame
-        buttons_frame = tk.Frame(content, bg=self.COLORS["bg"])
+        buttons_frame = tk.Frame(content, bg=self.COLORS["window_bg"])
         buttons_frame.pack(fill="x", pady=(20, 0))
         
         def handle_change_password():
@@ -507,38 +478,22 @@ class ProfileGUI:
                 old_password_entry.focus()
         
         # Change button
-        change_btn = tk.Button(
+        change_btn = MacOSTheme.create_button(
             buttons_frame,
             text="Change Password",
-            font=("SF Pro", 12, "bold"),
-            bg=self.COLORS["accent"],
-            fg="white",
-            activebackground="#d63851",
-            activeforeground="white",
-            relief="flat",
-            padx=25,
-            pady=12,
-            cursor="hand2",
-            borderwidth=0,
-            command=handle_change_password
+            command=handle_change_password,
+            style="primary",
+            size="regular"
         )
         change_btn.pack(side="left", padx=(0, 10))
         
         # Cancel button
-        cancel_btn = tk.Button(
+        cancel_btn = MacOSTheme.create_button(
             buttons_frame,
             text="Cancel",
-            font=("SF Pro", 12, "bold"),
-            bg="#4b5563",
-            fg="white",
-            activebackground="#374151",
-            activeforeground="white",
-            relief="flat",
-            padx=25,
-            pady=12,
-            cursor="hand2",
-            borderwidth=0,
-            command=dialog.destroy
+            command=dialog.destroy,
+            style="secondary",
+            size="regular"
         )
         cancel_btn.pack(side="left")
         

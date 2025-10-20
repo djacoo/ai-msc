@@ -9,7 +9,7 @@ import random
 import uuid
 from typing import List, Dict, Optional
 from pathlib import Path
-from ..utils.pdf_grounding import PDFGroundingEngine
+from ..utils.enhanced_grounding import EnhancedGroundingEngine
 
 
 class QuestionGenerator:
@@ -22,7 +22,7 @@ class QuestionGenerator:
             repo_root: Root directory of repository
             ai_engine: AI engine for question generation (LocalAI or similar)
         """
-        self.grounding = PDFGroundingEngine(repo_root)
+        self.grounding = EnhancedGroundingEngine(repo_root)
         self.ai = ai_engine
         self.repo_root = Path(repo_root)
     
@@ -72,14 +72,23 @@ class QuestionGenerator:
         for i, topic in enumerate(topics):
             # Find relevant content in PDFs
             for note_path in note_paths:
-                sections = self.grounding.search_content(note_path, topic, max_results=3)
+                # Use enhanced semantic search for better content
+                sections = self.grounding.semantic_search(topic, course, max_results=5, include_tex=True)
                 
                 if sections:
                     # Track which notes we used
+                    # Handle both PDF (has 'page') and TeX (has 'section') results
+                    pages_or_sections = []
+                    for s in sections[:2]:
+                        if "page" in s:
+                            pages_or_sections.append(s["page"])
+                        elif "section" in s:
+                            pages_or_sections.append(s["section"])
+                    
                     note_info = {
                         "path": str(note_path.relative_to(self.repo_root)),
                         "sections": [topic],
-                        "pages": [s["page"] for s in sections[:2]]
+                        "pages": pages_or_sections
                     }
                     if note_info not in notes_used:
                         notes_used.append(note_info)
@@ -98,11 +107,14 @@ class QuestionGenerator:
                         max_retries = 3
                         for attempt in range(max_retries):
                             # Generate question
+                            # Handle both PDF and TeX sources
+                            page_or_section = section.get("page") or section.get("section", "unknown")
+                            
                             question = self._generate_single_question(
                                 qtype=qtype,
                                 topic=topic,
                                 content=section["text"],
-                                page=section["page"],
+                                page=page_or_section,
                                 pdf_path=note_path,
                                 difficulty=difficulty,
                                 max_points=max_points,
@@ -131,8 +143,14 @@ class QuestionGenerator:
             pages = self.grounding.extract_pdf_text(note_path)
             
             if pages:
+                # Use enhanced extraction for better content
                 page_num = random.choice(list(pages.keys()))
-                content = pages[page_num]
+                page_data = pages[page_num]
+                # Extract text based on structure if available
+                if isinstance(page_data, dict):
+                    content = page_data.get('text', '')
+                else:
+                    content = page_data
                 
                 qtype = random.choice(question_types)
                 topic = topics[0] if topics else "general"
@@ -342,20 +360,20 @@ class QuestionGenerator:
         return False
     
     def _build_batch_extraction_prompt(self, topic: str, content: str, difficulty: str, qtype: str = "short_answer") -> str:
-        """Build streamlined question extraction prompt for faster generation.
+        """Build enhanced question extraction prompt for university-level accuracy.
         
         Args:
             qtype: Question type to generate (strictly enforced)
         """
         difficulty_map = {
             "intro": "easy",
-            "standard": "medium",
+            "standard": "medium", 
             "advanced": "hard",
             "exam": "hard"
         }
         mapped_difficulty = difficulty_map.get(difficulty, "medium")
         
-        # Make prompt super clear with concrete example
+        # Enhanced prompts with university-level requirements
         if qtype in ['mcq_single', 'mcq_multi']:
             example_json = '''{
   "topic": "''' + topic + '''",
@@ -363,11 +381,11 @@ class QuestionGenerator:
   "items": [{
     "id": "q1",
     "type": "mcq",
-    "question": "What is the main concept discussed?",
-    "choices": ["A: Option 1", "B: Option 2", "C: Option 3", "D: Option 4"],
+    "question": "Precise, unambiguous question that tests deep understanding, not memorization",
+    "choices": ["A: Correct option with technical accuracy", "B: Plausible distractor addressing common misconception", "C: Another plausible distractor", "D: Distractor that seems right but has subtle error"],
     "answer": "A",
-    "explanation": "Brief explanation",
-    "tags": ["concept"]
+    "explanation": "Detailed explanation of why A is correct and why others are wrong",
+    "tags": ["specific_concept", "related_concept"]
   }]
 }'''
         else:
@@ -377,10 +395,10 @@ class QuestionGenerator:
   "items": [{
     "id": "q1",
     "type": "short",
-    "question": "What is the main concept?",
-    "answer": "Brief answer here",
-    "explanation": "Why this is correct",
-    "tags": ["concept"]
+    "question": "University-level question requiring critical thinking and precise explanation",
+    "answer": "Comprehensive answer with technical terminology, key points, and examples",
+    "explanation": "Why this answer demonstrates mastery of the concept",
+    "tags": ["core_concept", "application"]
   }]
 }'''
         
