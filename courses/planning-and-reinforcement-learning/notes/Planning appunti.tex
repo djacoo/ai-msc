@@ -1427,7 +1427,565 @@ Due to the mutual exclusion constraints, at most one action is true at each time
 
 
 
+\newpage
 
+\part{SAT Encoding Examples}
+
+\section{Detailed SAT Encoding Example}
+
+\subsection{Simple Robot Navigation Domain}
+
+To illustrate the complete SAT encoding process, we present a simple example with a single robot and two locations.
+
+\begin{example}[Robot Navigation]
+Consider a minimal planning domain with the following components:
+
+\textbf{Objects}:
+\begin{itemize}
+    \item One robot: $r_1$
+    \item Two locations: $l_1$, $l_2$
+\end{itemize}
+
+\textbf{Action schema}: $\texttt{move}(r, l, l')$
+
+\[
+\begin{array}{ll}
+\text{Parameters:} & r \text{ (robot)}, l \text{ (source location)}, l' \text{ (destination location)} \\
+\text{Precondition:} & \texttt{at}(r, l) \\
+\text{Effect:} & \texttt{at}(r, l') \land \neg \texttt{at}(r, l)
+\end{array}
+\]
+\end{example}
+
+\subsubsection{Ground Actions}
+
+With one robot and two locations, we obtain two ground actions:
+
+\begin{enumerate}
+    \item $a_1 = \texttt{move}(r_1, l_1, l_2)$: Move robot $r_1$ from location $l_1$ to location $l_2$
+    \item $a_2 = \texttt{move}(r_1, l_2, l_1)$: Move robot $r_1$ from location $l_2$ to location $l_1$
+\end{enumerate}
+
+\subsubsection{Problem Instance}
+
+\textbf{Initial state} (at time step $t = 0$):
+\[
+s_0 = \{\texttt{at}(r_1, l_1)\}
+\]
+
+The robot starts at location $l_1$. This is encoded temporally as:
+\[
+\texttt{at}(r_1, l_1)@0
+\]
+
+\textbf{Goal state} (at time step $t = 1$):
+\[
+G = \{\texttt{at}(r_1, l_2)\}
+\]
+
+The goal is for the robot to be at location $l_2$ after one action. This is encoded as:
+\[
+\texttt{at}(r_1, l_2)@1
+\]
+
+\subsection{Complete SAT Encoding}
+
+For this problem with plan length $k = 1$, we construct the following propositional formulas:
+
+\subsubsection{Initial State Constraints}
+
+\[
+\Phi_{s_0} = \texttt{at}(r_1, l_1)@0 \land \neg \texttt{at}(r_1, l_2)@0
+\]
+
+\subsubsection{Goal State Constraints}
+
+\[
+\Phi_G = \texttt{at}(r_1, l_2)@1
+\]
+
+\subsubsection{Action Preconditions and Effects}
+
+For action $a_1 = \texttt{move}(r_1, l_1, l_2)$ at time step $0$:
+\[
+\texttt{move}(r_1, l_1, l_2)@0 \rightarrow \big(\texttt{at}(r_1, l_1)@0 \land \texttt{at}(r_1, l_2)@1 \land \neg \texttt{at}(r_1, l_1)@1\big)
+\]
+
+For action $a_2 = \texttt{move}(r_1, l_2, l_1)$ at time step $0$:
+\[
+\texttt{move}(r_1, l_2, l_1)@0 \rightarrow \big(\texttt{at}(r_1, l_2)@0 \land \texttt{at}(r_1, l_1)@1 \land \neg \texttt{at}(r_1, l_2)@1\big)
+\]
+
+\subsubsection{Explanatory Frame Axioms}
+
+The \textbf{explanatory frame axioms} (also called \textbf{explanation axioms}) state that if a literal changes its truth value between time steps, then some action causing that change must have been executed.
+
+\textbf{If $\texttt{at}(r_1, l_1)$ becomes false}:
+\[
+\texttt{at}(r_1, l_1)@0 \land \neg \texttt{at}(r_1, l_1)@1 \rightarrow \texttt{move}(r_1, l_1, l_2)@0
+\]
+
+\textbf{If $\texttt{at}(r_1, l_2)$ becomes false}:
+\[
+\texttt{at}(r_1, l_2)@0 \land \neg \texttt{at}(r_1, l_2)@1 \rightarrow \texttt{move}(r_1, l_2, l_1)@0
+\]
+
+\textbf{If $\texttt{at}(r_1, l_1)$ becomes true}:
+\[
+\neg \texttt{at}(r_1, l_1)@0 \land \texttt{at}(r_1, l_1)@1 \rightarrow \texttt{move}(r_1, l_2, l_1)@0
+\]
+
+\textbf{If $\texttt{at}(r_1, l_2)$ becomes true}:
+\[
+\neg \texttt{at}(r_1, l_2)@0 \land \texttt{at}(r_1, l_2)@1 \rightarrow \texttt{move}(r_1, l_1, l_2)@0
+\]
+
+\subsection{Solution Extraction}
+
+Given the constraints, the SAT solver will find a satisfying assignment that includes:
+
+\[
+\texttt{move}(r_1, l_1, l_2)@0 = \text{true}
+\]
+
+The extracted plan is:
+\[
+\pi = \langle \texttt{move}(r_1, l_1, l_2) \rangle
+\]
+
+This plan has length $1$ and achieves the goal of moving the robot from $l_1$ to $l_2$.
+
+\section{Conversion to Conjunctive Normal Form}
+
+\subsection{CNF Definition and Structure}
+
+To use a SAT solver, we must convert all formulas to \textbf{Conjunctive Normal Form (CNF)}.
+
+\begin{definition}[Clause]
+A \textbf{clause} is a disjunction of literals: $L_1 \lor L_2 \lor \cdots \lor L_k$ where each $L_i$ is a literal (an atom or its negation).
+\end{definition}
+
+\begin{definition}[Conjunctive Normal Form (CNF)]
+A formula is in \textbf{Conjunctive Normal Form} if it is a conjunction of clauses:
+\[
+\text{CNF} = (L_1^1 \lor L_2^1 \lor \cdots \lor L_k^1) \land (L_1^2 \lor L_2^2 \lor \cdots \lor L_k^2) \land \cdots \land (L_1^m \lor L_2^m \lor \cdots \lor L_k^m)
+\]
+\end{definition}
+
+A set of clauses is logically equivalent to a conjunction of those clauses, which is precisely the CNF representation required by SAT solvers.
+
+\subsection{Standard CNF Transformation}
+
+The standard transformation to CNF involves applying logical equivalences to eliminate implications and biconditionals, push negations inward, and distribute disjunctions over conjunctions.
+
+\subsubsection{Logical Equivalences}
+
+The following logical equivalences are used in the transformation:
+
+\textbf{Biconditional elimination}:
+\[
+F \leftrightarrow G \equiv (F \rightarrow G) \land (G \rightarrow F)
+\]
+
+\textbf{Implication elimination}:
+\[
+F \rightarrow G \equiv \neg F \lor G
+\]
+
+\textbf{De Morgan's laws}:
+\[
+\begin{array}{lcl}
+\neg(F \lor G) &\equiv& \neg F \land \neg G \\
+\neg(F \land G) &\equiv& \neg F \lor \neg G
+\end{array}
+\]
+
+\subsubsection{Negation Normal Form (NNF)}
+
+After applying the above equivalences, we obtain a formula in \textbf{Negation Normal Form (NNF)}, where negations appear only directly in front of atoms (not in front of complex formulas).
+
+\subsubsection{Distribution to Obtain CNF}
+
+To convert from NNF to CNF, we apply the \textbf{distributive law}:
+
+\[
+F \lor (G \land H) \equiv (F \lor G) \land (F \lor H)
+\]
+
+This distributes disjunctions over conjunctions, eventually producing a conjunction of disjunctions (CNF).
+
+\subsection{The Exponential Blowup Problem}
+
+\textbf{Critical issue}: The standard CNF transformation can cause a \textbf{combinatorial explosion} in formula size.
+
+\begin{observation}[Exponential Blowup]
+In the worst case, the standard transformation into CNF produces a formula whose size is \textbf{exponential} in the size of the original formula: $O(2^n)$ where $n$ is the size of the input formula.
+\end{observation}
+
+This exponential blowup makes the standard transformation \textbf{impractical} for large planning problems, as the resulting CNF formula becomes too large to handle efficiently.
+
+\subsection{Equisatisfiable CNF (ECNF)}
+
+To avoid the exponential blowup, we use a different approach that produces an \textbf{Equisatisfiable CNF (ECNF)}.
+
+\begin{definition}[Equisatisfiable CNF]
+An \textbf{Equisatisfiable CNF (ECNF)} is a CNF formula that is not logically equivalent to the original formula, but is \textbf{equisatisfiable}—it has the same satisfiability status:
+\begin{itemize}
+    \item The original formula is satisfiable if and only if the ECNF is satisfiable
+    \item The ECNF may contain additional auxiliary variables not present in the original formula
+\end{itemize}
+\end{definition}
+
+\subsubsection{Tseitin Encoding}
+
+The standard technique for producing ECNF is the \textbf{Tseitin encoding} (also called \textbf{Tseitin transformation}), named after Grigori Tseitin.
+
+\textbf{Key idea}: Introduce auxiliary variables to represent subformulas, avoiding the need for distribution.
+
+\begin{theorem}[Tseitin Encoding Complexity]
+The Tseitin encoding produces an ECNF formula whose size is \textbf{linear} in the size of the original formula: $O(n)$ where $n$ is the size of the input formula.
+\end{theorem}
+
+\textbf{Advantages of ECNF}:
+\begin{itemize}
+    \item \textbf{Linear size}: Avoids exponential blowup
+    \item \textbf{Preserves satisfiability}: The ECNF is satisfiable if and only if the original formula is satisfiable
+    \item \textbf{Efficient encoding}: Can be computed in polynomial time
+    \item \textbf{Practical for planning}: Makes SAT-based planning feasible for large problems
+\end{itemize}
+
+\textbf{Trade-off}:
+\begin{itemize}
+    \item The ECNF introduces additional variables (one for each subformula)
+    \item The ECNF is not logically equivalent to the original formula (only equisatisfiable)
+    \item However, the satisfying assignments to the original variables correspond to solutions of the original formula
+\end{itemize}
+
+\subsection{Tseitin Encoding: Formal Construction}
+
+The Tseitin encoding is based on two key functions that work together to produce the ECNF.
+
+\subsubsection{The Representative Function}
+
+\begin{definition}[Representative Function]
+Let $\text{PL}$ denote the language of propositional formulas over a set of propositional variables $X$, and let $V$ be a set of fresh (new) propositional variables. The \textbf{representative function} is defined as:
+\[
+\text{Rep}: \text{PL} \rightarrow V \cup \{\bot, \top\}
+\]
+\end{definition}
+
+The function $\text{Rep}$ assigns to each formula a representative variable (or constant). It is defined inductively:
+
+\textbf{Base case} (atomic formulas):
+\[
+\begin{array}{lcl}
+\text{Rep}(x) &=& x \quad \text{for all } x \in X \\
+\text{Rep}(\bot) &=& \bot \\
+\text{Rep}(\top) &=& \top
+\end{array}
+\]
+
+\textbf{Inductive case} (complex formulas):
+\[
+\text{Rep}(F) = v_F
+\]
+where $F \in \text{PL}$ is a non-atomic formula (i.e., $F$ is neither a propositional variable nor $\bot$ nor $\top$), and $v_F \in V$ is a fresh propositional variable uniquely associated with $F$.
+
+\textbf{Intuition}: Each complex subformula is represented by a new auxiliary variable. This avoids the need to duplicate subformulas during the transformation.
+
+\subsubsection{The Encoding Function}
+
+\begin{definition}[Encoding Function]
+The \textbf{encoding function} is defined as:
+\[
+\text{En}: \text{PL} \rightarrow \text{PL}
+\]
+\[
+\text{En}(F) = F \leftrightarrow \text{Rep}(F)
+\]
+\end{definition}
+
+The encoding function creates a biconditional formula stating that formula $F$ is logically equivalent to its representative.
+
+\textbf{Interpretation}: $\text{En}(F)$ encodes the constraint that the auxiliary variable $\text{Rep}(F)$ must have the same truth value as the formula $F$ itself.
+
+\subsubsection{Complete ECNF Construction}
+
+\begin{definition}[ECNF via Tseitin Encoding]
+Given an input formula $F$, let $S_F$ denote the set of all subformulas of $F$ (including $F$ itself). The \textbf{Equisatisfiable CNF} of $F$ is:
+\[
+\text{ECNF}(F) = \text{Rep}(F) \land \bigwedge_{G \in S_F} \text{En}(G)
+\]
+\end{definition}
+
+\textbf{Components}:
+\begin{itemize}
+    \item $\text{Rep}(F)$: The representative variable for the entire formula (must be true)
+    \item $\bigwedge_{G \in S_F} \text{En}(G)$: Conjunction of encoding constraints for all subformulas
+\end{itemize}
+
+\textbf{Why "Equisatisfiable"?}
+
+The transformation from $F$ to $\text{ECNF}(F)$ does \textbf{not} preserve logical equivalence, but it \textbf{does} preserve satisfiability:
+
+\begin{theorem}[Equisatisfiability]
+Formula $F$ is satisfiable if and only if $\text{ECNF}(F)$ is satisfiable.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+\textbf{Forward direction} ($F$ satisfiable $\Rightarrow$ $\text{ECNF}(F)$ satisfiable):
+If $F$ is satisfiable, we can extend the satisfying assignment to include the auxiliary variables by setting each $v_G = \text{value}(G)$ under the original assignment. This satisfies all encoding constraints.
+
+\textbf{Backward direction} ($\text{ECNF}(F)$ satisfiable $\Rightarrow$ $F$ satisfiable):
+If $\text{ECNF}(F)$ is satisfiable, the encoding constraints ensure that $\text{Rep}(F)$ has the same truth value as $F$. Since $\text{Rep}(F)$ must be true (it appears as a conjunct), $F$ must also be true under the restriction of the assignment to the original variables.
+\end{proof}
+
+\textbf{Key insight}: The ECNF introduces auxiliary variables but maintains the same satisfiability status as the original formula, while keeping the formula size linear.
+
+\subsection{Example: Equisatisfiability vs. Logical Equivalence}
+
+To illustrate the difference between equisatisfiability and logical equivalence, consider a concrete example.
+
+\begin{example}[Tseitin Encoding of Disjunction]
+Consider the formula:
+\[
+F = A \lor (B \land C)
+\]
+where $A$, $B$, and $C$ are propositional variables.
+
+Using the standard CNF transformation (distribution), we would obtain:
+\[
+F_{\text{CNF}} = (A \lor B) \land (A \lor C)
+\]
+
+This is \textbf{logically equivalent} to $F$, but for larger formulas, this approach leads to exponential blowup.
+\end{example}
+
+\subsubsection{Tseitin Encoding Approach}
+
+Instead, we apply the Tseitin encoding by introducing an auxiliary variable $v$ to represent the subformula $B \land C$:
+
+\textbf{Step 1}: Define the encoding constraint:
+\[
+v \leftrightarrow (B \land C)
+\]
+
+\textbf{Step 2}: Replace the subformula in the original formula:
+\[
+A \lor v
+\]
+
+\textbf{Step 3}: Convert the biconditional to CNF. The biconditional $v \leftrightarrow (B \land C)$ expands to:
+\[
+(v \rightarrow (B \land C)) \land ((B \land C) \rightarrow v)
+\]
+
+Converting each implication:
+\begin{align*}
+v \rightarrow (B \land C) &\equiv \neg v \lor (B \land C) \equiv (\neg v \lor B) \land (\neg v \lor C) \\
+(B \land C) \rightarrow v &\equiv \neg(B \land C) \lor v \equiv \neg B \lor \neg C \lor v
+\end{align*}
+
+\textbf{Final ECNF}: The complete set of clauses is:
+\[
+S = \{(A \lor v), \, (\neg v \lor B), \, (\neg v \lor C), \, (\neg B \lor \neg C \lor v)\}
+\]
+
+Numbering the clauses:
+\begin{align*}
+(1) &\quad A \lor v \\
+(2) &\quad \neg v \lor B \\
+(3) &\quad \neg v \lor C \\
+(4) &\quad \neg B \lor \neg C \lor v
+\end{align*}
+
+\subsubsection{Demonstrating Equisatisfiability}
+
+Consider the interpretation:
+\[
+I = \{A \mapsto \text{true}, \, B \mapsto \text{false}, \, C \mapsto \text{false}\}
+\]
+
+\textbf{Evaluating $F$ under $I$}:
+\[
+F = A \lor (B \land C) = \text{true} \lor (\text{false} \land \text{false}) = \text{true} \lor \text{false} = \text{true}
+\]
+
+Therefore, $I \models F$ (interpretation $I$ satisfies $F$).
+
+\textbf{Evaluating $S$ under $I$}:
+
+We need to extend $I$ to assign a value to the auxiliary variable $v$. Let's first try without extending:
+
+\begin{itemize}
+    \item Clause (1): $A \lor v = \text{true} \lor v = \text{true}$ \quad (satisfied regardless of $v$)
+    \item Clause (2): $\neg v \lor B = \neg v \lor \text{false} = \neg v$ \quad (satisfied only if $v = \text{false}$)
+    \item Clause (3): $\neg v \lor C = \neg v \lor \text{false} = \neg v$ \quad (satisfied only if $v = \text{false}$)
+    \item Clause (4): $\neg B \lor \neg C \lor v = \text{true} \lor \text{true} \lor v = \text{true}$ \quad (satisfied regardless of $v$)
+\end{itemize}
+
+For $I$ to satisfy $S$, we must set $v = \text{false}$ (to satisfy clauses (2) and (3)). With this extension:
+\[
+I' = \{A \mapsto \text{true}, \, B \mapsto \text{false}, \, C \mapsto \text{false}, \, v \mapsto \text{false}\}
+\]
+
+Now $I' \models S$ (all clauses are satisfied).
+
+\begin{observation}[Not Logically Equivalent]
+The original interpretation $I$ (without the auxiliary variable) satisfies $F$ but does \textbf{not} satisfy all clauses in $S$ unless extended with the appropriate value for $v$. This demonstrates that $F$ and $S$ are \textbf{not logically equivalent}.
+
+However, $F$ is satisfiable if and only if $S$ is satisfiable (by appropriately choosing the value of $v$). Therefore, $F$ and $S$ are \textbf{equisatisfiable}.
+\end{observation}
+
+\textbf{Conclusion}: The Tseitin encoding produces a formula that is equisatisfiable with the original but not logically equivalent. This is acceptable for SAT-based planning because we only care about whether a solution exists, not about preserving all logical properties.
+
+\subsection{Detailed Definition of the Encoding Function}
+
+We now provide the complete formal definition of the encoding function $\text{En}$ for all cases.
+
+\begin{definition}[Encoding Function - Complete Definition]
+The encoding function $\text{En}: \text{PL} \rightarrow \text{PL}$ is defined inductively as follows:
+
+\textbf{Base cases} (atomic formulas):
+\[
+\begin{array}{lcl}
+\text{En}(\bot) &=& \top \\
+\text{En}(\top) &=& \top \\
+\text{En}(x) &=& \top \quad \text{for all } x \in X
+\end{array}
+\]
+
+\textbf{Inductive case for negation}:
+\begin{align*}
+\text{En}(\neg F) &= \text{let } v = \text{Rep}(\neg F) \text{ in } v \leftrightarrow \neg \text{Rep}(F) \\
+&= (v \rightarrow \neg \text{Rep}(F)) \land (\neg \text{Rep}(F) \rightarrow v) \\
+&= (\neg v \lor \neg \text{Rep}(F)) \land (\text{Rep}(F) \lor v)
+\end{align*}
+
+\textbf{Inductive case for binary connectives}:
+
+For all binary connectives $\circ \in \{\land, \lor, \rightarrow, \leftrightarrow\}$:
+\[
+\text{En}(F_1 \circ F_2) = \text{let } v = \text{Rep}(F_1 \circ F_2) \text{ in } v \leftrightarrow (\text{Rep}(F_1) \circ \text{Rep}(F_2))
+\]
+\end{definition}
+
+\subsubsection{Example: Conjunction Encoding}
+
+\begin{example}[Encoding Conjunction]
+Consider the encoding of $F_1 \land F_2$:
+
+\begin{align*}
+\text{En}(F_1 \land F_2) &= \text{let } v = \text{Rep}(F_1 \land F_2) \text{ in } v \leftrightarrow (\text{Rep}(F_1) \land \text{Rep}(F_2)) \\
+&= (v \rightarrow (\text{Rep}(F_1) \land \text{Rep}(F_2))) \land ((\text{Rep}(F_1) \land \text{Rep}(F_2)) \rightarrow v) \\
+&= (\neg v \lor (\text{Rep}(F_1) \land \text{Rep}(F_2))) \land ((\text{Rep}(F_1) \land \text{Rep}(F_2)) \lor v)
+\end{align*}
+
+Distributing to obtain CNF:
+\[
+(\neg v \lor \text{Rep}(F_1)) \land (\neg v \lor \text{Rep}(F_2)) \land (\text{Rep}(F_1) \lor v) \land (\text{Rep}(F_2) \lor v)
+\]
+
+This produces \textbf{4 clauses} in CNF.
+\end{example}
+
+\subsection{Complexity Analysis of Tseitin Encoding}
+
+We now analyze the size of the resulting ECNF formula to prove linear complexity.
+
+\begin{theorem}[Linear Size of ECNF]
+Let $F$ be a propositional formula with size $|F| = n$. The Tseitin encoding produces an ECNF formula:
+\[
+F' = \text{Rep}(F) \land \bigwedge_{G \in S_F} \text{En}(G)
+\]
+where $S_F$ is the set of all subformulas of $F$ (including $F$ itself). The size of $F'$ is $|F'| = O(n)$.
+\end{theorem}
+
+\subsubsection{Worst Case Analysis: Biconditional}
+
+The worst case for the encoding function occurs with the biconditional connective. Let us analyze:
+
+\begin{example}[Biconditional Encoding - Complete Derivation]
+We show the complete step-by-step conversion of the biconditional encoding to CNF:
+
+\textbf{Step 1}: Start with the encoding
+\begin{align*}
+\text{En}(F_1 \leftrightarrow F_2) &= \text{let } v = \text{Rep}(F_1 \leftrightarrow F_2) \text{ in } v \leftrightarrow (\text{Rep}(F_1) \leftrightarrow \text{Rep}(F_2))
+\end{align*}
+
+\textbf{Step 2}: Expand the inner biconditional
+\begin{align*}
+&= v \leftrightarrow [(\text{Rep}(F_1) \rightarrow \text{Rep}(F_2)) \land (\text{Rep}(F_2) \rightarrow \text{Rep}(F_1))]
+\end{align*}
+
+\textbf{Step 3}: Expand the outer biconditional
+\begin{align*}
+&= \big(v \rightarrow [(\text{Rep}(F_1) \rightarrow \text{Rep}(F_2)) \land (\text{Rep}(F_2) \rightarrow \text{Rep}(F_1))]\big) \\
+&\quad \land \big([(\text{Rep}(F_1) \rightarrow \text{Rep}(F_2)) \land (\text{Rep}(F_2) \rightarrow \text{Rep}(F_1))] \rightarrow v\big)
+\end{align*}
+
+\textbf{Step 4}: Convert implications to disjunctions
+\begin{align*}
+&= \big(\neg v \lor [(\text{Rep}(F_1) \rightarrow \text{Rep}(F_2)) \land (\text{Rep}(F_2) \rightarrow \text{Rep}(F_1))]\big) \\
+&\quad \land \big(\neg[(\text{Rep}(F_1) \rightarrow \text{Rep}(F_2)) \land (\text{Rep}(F_2) \rightarrow \text{Rep}(F_1))] \lor v\big)
+\end{align*}
+
+\textbf{Step 5}: Expand inner implications
+\begin{align*}
+&= \big(\neg v \lor [(\neg \text{Rep}(F_1) \lor \text{Rep}(F_2)) \land (\neg \text{Rep}(F_2) \lor \text{Rep}(F_1))]\big) \\
+&\quad \land \big(\neg[(\neg \text{Rep}(F_1) \lor \text{Rep}(F_2)) \land (\neg \text{Rep}(F_2) \lor \text{Rep}(F_1))] \lor v\big)
+\end{align*}
+
+\textbf{Step 6}: Distribute $\neg v$ over the conjunction (first part)
+\begin{align*}
+&= (\neg v \lor \neg \text{Rep}(F_1) \lor \text{Rep}(F_2)) \land (\neg v \lor \neg \text{Rep}(F_2) \lor \text{Rep}(F_1))
+\end{align*}
+
+\textbf{Step 7}: Apply De Morgan's law to the second part
+\begin{align*}
+&\quad \land \big(\neg(\neg \text{Rep}(F_1) \lor \text{Rep}(F_2)) \lor \neg(\neg \text{Rep}(F_2) \lor \text{Rep}(F_1)) \lor v\big)
+\end{align*}
+
+\textbf{Step 8}: Apply De Morgan's law again
+\begin{align*}
+&\quad \land \big((\text{Rep}(F_1) \land \neg \text{Rep}(F_2)) \lor (\text{Rep}(F_2) \land \neg \text{Rep}(F_1)) \lor v\big)
+\end{align*}
+
+\textbf{Step 9}: Distribute disjunction over conjunction
+\begin{align*}
+&\quad \land (\text{Rep}(F_1) \lor \text{Rep}(F_2) \lor v) \land (\text{Rep}(F_1) \lor \neg \text{Rep}(F_1) \lor v) \\
+&\quad \land (\neg \text{Rep}(F_2) \lor \text{Rep}(F_2) \lor v) \land (\neg \text{Rep}(F_2) \lor \neg \text{Rep}(F_1) \lor v)
+\end{align*}
+
+\textbf{Step 10}: Simplify (remove tautologies)
+
+The clauses $(\text{Rep}(F_1) \lor \neg \text{Rep}(F_1) \lor v)$ and $(\neg \text{Rep}(F_2) \lor \text{Rep}(F_2) \lor v)$ are tautologies and can be removed.
+
+\textbf{Final CNF}: The encoding produces the following clauses:
+\begin{align*}
+&(\neg v \lor \neg \text{Rep}(F_1) \lor \text{Rep}(F_2)) \\
+&(\neg v \lor \neg \text{Rep}(F_2) \lor \text{Rep}(F_1)) \\
+&(\text{Rep}(F_1) \lor \text{Rep}(F_2) \lor v) \\
+&(\neg \text{Rep}(F_2) \lor \neg \text{Rep}(F_1) \lor v)
+\end{align*}
+
+This produces \textbf{4 clauses} after simplification (or up to 8 clauses before removing tautologies).
+\end{example}
+
+\begin{proof}[Proof of Linear Complexity]
+\textbf{Key observations}:
+\begin{enumerate}
+    \item The number of subformulas $|S_F|$ is at most $n$ (the size of $F$)
+    \item Each subformula $G \in S_F$ contributes at most a constant number of clauses (at most 8 for biconditional)
+    \item Therefore, the total number of clauses is at most $8n$
+    \item Each clause has at most 3 literals
+    \item Total size: $|F'| \leq 8n \times 3 = 24n = O(n)$
+\end{enumerate}
+
+More precisely, we can bound the size as $|F'| = O(30n + 2)$, which is still linear in $n$.
+\end{proof}
+
+\textbf{Conclusion}: The Tseitin encoding achieves linear size $O(n)$ instead of the exponential size $O(2^n)$ of the standard CNF transformation, making it practical for large planning problems.
 
 
 
