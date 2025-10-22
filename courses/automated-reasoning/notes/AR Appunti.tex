@@ -848,9 +848,11 @@ Let $\beta(y) = d'$ for some $d' \in D$. Then we require $(d, d') \in \Phi(R)$ f
 
 The key observation is that the satisfiability of a formula with free variables is intimately connected to its \textbf{existential closure}.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Existential Closure}]
 \begin{definition}[Existential Closure]
 The existential closure of a formula $F$, denoted $\exists^* F$, is obtained by adding an existential quantifier for every free variable in $F$.
 \end{definition}
+\end{tcolorbox}
 
 For example, if $F$ contains free variables $y_1, y_2, \dots, y_n$, then:
 \[
@@ -872,6 +874,7 @@ which means $(d, d') \in \Phi(R)$ for all $d \in D$.
 
 We now provide the complete definition of satisfiability that handles both closed and open formulas.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Satisfiability - Complete Definition}]
 \begin{definition}[Satisfiability - Complete Definition]
 A formula $F$ is \textbf{satisfiable} if:
 \begin{itemize}
@@ -880,6 +883,7 @@ A formula $F$ is \textbf{satisfiable} if:
     \item \textbf{Case 2 (Open formula)}: If $F$ contains free variables, then $F$ is satisfiable if there exists an interpretation $\mathcal{I}$ and a variable assignment $\beta$ such that $\mathcal{I} \models_\beta F$.
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 \begin{theorem}[Satisfiability and Existential Closure]
 A formula $F$ with free variables is satisfiable if and only if its existential closure $\exists^* F$ is satisfiable.
@@ -913,10 +917,12 @@ The intuition is straightforward: if $F$ contains free variables, then $F$ is va
 
 While certain restricted fragments of first-order logic admit decision procedures, the general case presents fundamental computational limitations:
 
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Decidability in First-Order Logic}]
 \begin{itemize}
     \item \textbf{Unsatisfiability} in first-order logic is \textbf{semidecidable} (recursively enumerable)
     \item \textbf{Satisfiability} in first-order logic is \textbf{not even semidecidable}
 \end{itemize}
+\end{tcolorbox}
 
 \begin{remark}
 Recall that if a decision problem $A$ is semidecidable and its complement $\neg A$ is also semidecidable, then $A$ is decidable. The decision procedure can be obtained by running both semidecision procedures in parallel: if the instance belongs to $A$, the first procedure will eventually terminate with "yes"; if the instance belongs to $\neg A$, the second procedure will eventually terminate with "yes".
@@ -964,6 +970,7 @@ To obtain decision procedures, we must restrict our attention to \textbf{decidab
 
 \subsection{Definition of a First-Order Theory}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{First-Order Theory}]
 \begin{definition}[First-Order Theory]
 A \textbf{first-order theory} is a pair $\mathcal{T} = \langle \Sigma, \mathcal{A} \rangle$ where:
 \begin{itemize}
@@ -971,6 +978,7 @@ A \textbf{first-order theory} is a pair $\mathcal{T} = \langle \Sigma, \mathcal{
     \item $\mathcal{A}$ is a set of \textbf{axioms}---closed formulas (sentences) that we assume to hold in all models of the theory
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 The axioms define properties of specific symbols in the signature, giving them fixed interpretations across all models of the theory.
 
@@ -1081,6 +1089,7 @@ To handle arbitrary quantifier-free formulas, we introduce two important normal 
 
 \subsubsection{Negation Normal Form (NNF)}
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Negation Normal Form (NNF)}]
 \begin{definition}[Negation Normal Form]
 A formula is in \textbf{Negation Normal Form (NNF)} if:
 \begin{itemize}
@@ -1088,6 +1097,7 @@ A formula is in \textbf{Negation Normal Form (NNF)} if:
     \item Negation ($\neg$) applies only to atomic formulas (atoms)
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 Any quantifier-free formula can be converted to NNF by applying the following equivalence-preserving transformations:
 
@@ -1101,6 +1111,7 @@ H \rightarrow G &\equiv \neg H \vee G && \text{(Eliminate implication)} \\
 
 \subsubsection{Disjunctive Normal Form (DNF)}
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Disjunctive Normal Form (DNF)}]
 \begin{definition}[Disjunctive Normal Form]
 A formula is in \textbf{Disjunctive Normal Form (DNF)} if it is a disjunction of conjunctions of literals:
 \[
@@ -1108,6 +1119,7 @@ A formula is in \textbf{Disjunctive Normal Form (DNF)} if it is a disjunction of
 \]
 where each $L_{i,j}$ is a literal (an atomic formula or its negation).
 \end{definition}
+\end{tcolorbox}
 
 Equivalently, a DNF formula has the structure:
 \[
@@ -1175,6 +1187,7 @@ The decision procedure for quantifier-free $\mathcal{T}_E$ assumes that the only
 
 \subsubsection{The Transformation}
 
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Predicate Elimination}]
 \begin{definition}[Predicate Elimination]
 Given an occurrence of a predicate symbol $P$ of arity $n$ applied to terms $t_1, \dots, t_n$, we eliminate $P$ by introducing:
 \begin{itemize}
@@ -1188,6 +1201,7 @@ P(t_1, \dots, t_n) &\mapsto f_P(t_1, \dots, t_n) = \bullet \\
 \neg P(t_1, \dots, t_n) &\mapsto f_P(t_1, \dots, t_n) \neq \bullet
 \end{align*}
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Intuition}: The predicate $P(t_1, \dots, t_n)$ is true if and only if the term $f_P(t_1, \dots, t_n)$ evaluates to the distinguished constant $\bullet$.
 
@@ -1255,6 +1269,7 @@ x = g(x) \wedge f(x, g(g(x))) \neq g(x) \wedge f(x, x) = g(g(x))
 
 \subsection{The Congruence Closure Decision Procedure}
 
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Congruence Closure Algorithm}]
 The \textbf{congruence closure algorithm} is a decision procedure for satisfiability in the quantifier-free fragment of the theory of equality. The algorithm operates as follows:
 
 \begin{enumerate}
@@ -1266,6 +1281,7 @@ The \textbf{congruence closure algorithm} is a decision procedure for satisfiabi
         \item Otherwise, the congruence provides a model, and the formula is \textbf{satisfiable}
     \end{itemize}
 \end{enumerate}
+\end{tcolorbox}
 
 The key insight is that the smallest congruence containing all positive equalities is included in every congruence that satisfies those equalities. Therefore, if a negative equality is violated in the smallest congruence, it must be violated in every model.
 
@@ -1273,6 +1289,7 @@ The key insight is that the smallest congruence containing all positive equaliti
 
 Before describing the algorithm in detail, we recall fundamental properties of equivalence relations.
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Equivalence Relation}]
 \begin{definition}[Equivalence Relation]
 An \textbf{equivalence relation} $R$ on a set $S$ is a binary relation that is:
 \begin{itemize}
@@ -1281,6 +1298,7 @@ An \textbf{equivalence relation} $R$ on a set $S$ is a binary relation that is:
     \item \textbf{Transitive}: $\forall s, t, u \in S, \, (s \, R \, t \wedge t \, R \, u) \implies s \, R \, u$
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 \begin{definition}[Equivalence Class]
 Given an equivalence relation $R$ on set $S$, the \textbf{equivalence class} of an element $s \in S$ is:
@@ -1404,6 +1422,7 @@ The quotient set is:
 S/R^* = \{\{a, b, c\}, \{d\}\}
 \]
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Equivalence Closure}]
 \begin{definition}[Equivalence Closure]
 Given a binary relation $R$ on set $S$, the \textbf{equivalence closure} of $R$, denoted $R^*$, is the $\subseteq$-smallest equivalence relation such that:
 \begin{enumerate}
@@ -1413,6 +1432,7 @@ Given a binary relation $R$ on set $S$, the \textbf{equivalence closure} of $R$,
 
 Equivalently, $R^*$ is the intersection of all equivalence relations containing $R$.
 \end{definition}
+\end{tcolorbox}
 
 The equivalence closure can be computed by iteratively applying reflexivity, symmetry, and transitivity rules until a fixed point is reached.
 
@@ -1424,6 +1444,7 @@ Let $R$ be a binary relation and $R^*$ be its equivalence closure. For any equiv
 
 This means that $R^*$ is the \textbf{smallest} equivalence relation containing $R$ with respect to the subset ordering $\subseteq$.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Congruence Closure}]
 \begin{definition}[Congruence Closure]
 Given a binary relation $R$, the \textbf{congruence closure} of $R$, denoted $R^*_{\text{cong}}$, is the $\subseteq$-smallest relation such that:
 \begin{enumerate}
@@ -1431,6 +1452,7 @@ Given a binary relation $R$, the \textbf{congruence closure} of $R$, denoted $R^
     \item $R \subseteq R^*_{\text{cong}}$
 \end{enumerate}
 \end{definition}
+\end{tcolorbox}
 
 A congruence relation is an equivalence relation that is preserved under function application: if $s_1 \sim t_1, \dots, s_n \sim t_n$, then $f(s_1, \dots, s_n) \sim f(t_1, \dots, t_n)$ for all function symbols $f$.
 
@@ -1773,6 +1795,7 @@ This is a graph representation of the term structure, which allows efficient imp
 
 \subsection{Node Data Structure}
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Node Data Structure}]
 Each node in the DAG is represented by a data structure with the following fields:
 
 \begin{verbatim}
@@ -1801,6 +1824,7 @@ For a node $n$ of type \texttt{node}, the fields have the following meaning:
     
     \item \textbf{n.ccpar}: The set of identifiers of the parent nodes of $n$ (nodes that have $n$ as an argument) and all nodes congruent to $n$
 \end{itemize}
+\end{tcolorbox}
 
 This data structure supports the union-find operations needed for the congruence closure algorithm, where \texttt{find} implements the path to the representative of each equivalence class, and \texttt{ccpar} tracks congruence relationships for efficient propagation.
 
@@ -1907,6 +1931,7 @@ Two nodes are congruent if:
 
 \subsubsection{The MERGE Function}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{MERGE Operation}]
 The \texttt{MERGE} function merges two equivalence classes and recursively propagates congruence:
 
 \[
@@ -1938,6 +1963,7 @@ The \texttt{MERGE} operation works as follows:
         \item Recursively merge them with \texttt{MERGE}
     \end{itemize}
 \end{enumerate}
+\end{tcolorbox}
 
 This recursive propagation ensures that when two nodes become equivalent, all pairs of congruent parent nodes are also merged, maintaining the congruence closure property.
 
@@ -1947,6 +1973,7 @@ We can now describe the complete congruence closure algorithm using the DAG-base
 
 \subsubsection{Algorithm}
 
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Complete Congruence Closure Algorithm (DAG-based)}]
 Given a formula:
 \[
 F = \{s_1 = t_1, \dots, s_n = t_n\} \cup \{s_{n+1} \neq t_{n+1}, \dots, s_{n+m} \neq t_{n+m}\}
@@ -1970,6 +1997,7 @@ The algorithm proceeds as follows:
 \STATE \textbf{return} SATISFIABLE
 \end{algorithmic}
 \end{algorithm}
+\end{tcolorbox}
 
 \textbf{Steps}:
 \begin{enumerate}
@@ -1984,6 +2012,8 @@ The algorithm proceeds as follows:
 
 \subsubsection{Complexity}
 
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Complexity Analysis}]
 Let $n$ be the number of nodes in the DAG. The complexity of the congruence closure algorithm is $O(n^2)$ in the worst case, where the quadratic factor comes from the potential number of congruence propagations that may occur during the \texttt{MERGE} operations.
+\end{tcolorbox}
 
 \end{document}

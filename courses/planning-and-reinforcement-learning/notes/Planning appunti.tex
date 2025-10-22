@@ -777,6 +777,7 @@ Whether we use propositional atoms or state variables, we are ultimately assigni
 
 An \textbf{action schema} $\alpha$ is a template for generating ground actions. It consists of:
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Action Schema Components}]
 \begin{definition}[Action Schema]
 An action schema $\alpha$ has the following components:
 \begin{itemize}
@@ -786,6 +787,7 @@ An action schema $\alpha$ has the following components:
     \item \textbf{Cost}: $c(\alpha) \in \mathbb{N}_0$ (typically a non-negative integer)
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Important constraint}: The parameters $z_i$ of $\alpha$ can appear in the precondition literals $p_j$ and effect literals $q_j$. The arguments in these literals can be either:
 \begin{itemize}
@@ -795,9 +797,11 @@ An action schema $\alpha$ has the following components:
 
 No arbitrary free variables are allowed—all variables must be parameters of the action schema.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Ground Action}]
 \begin{definition}[Ground Action]
 A \textbf{ground action} $a$ is obtained by substituting all parameters $z_i$ in action schema $\alpha$ with specific constants from the domain. The action $a$ is an \textbf{instance} of $\alpha$.
 \end{definition}
+\end{tcolorbox}
 
 \subsection{Example: Take/Load Action}
 
@@ -877,12 +881,14 @@ When the \texttt{take} action is executed, the following changes occur:
 
 \subsection{Action Applicability}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Action Applicability}]
 \begin{definition}[Action Applicability]
 A ground action $a$ is \textbf{applicable} (or \textbf{executable}) in state $s$ if all preconditions of $a$ are satisfied in $s$:
 \[
 a \text{ applicable in } s \quad \Leftrightarrow \quad s \models \text{Pre}(a)
 \]
 \end{definition}
+\end{tcolorbox}
 
 \subsubsection{Examples}
 
@@ -951,6 +957,7 @@ s' = \{q \mid q \in \text{Eff}(a)\} \cup \{q \mid s \models q, \, \neg q \notin 
 
 While the initial state is a specific assignment, goals are typically specified more flexibly.
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Goal Specification}]
 \begin{definition}[Goal Formula]
 A \textbf{goal formula} $G$ is a conjunction of literals specifying desired properties of goal states.
 \end{definition}
@@ -962,6 +969,7 @@ S_g = \{ s \mid s \models G \}
 \]
 That is, all state assignments that satisfy the goal formula $G$.
 \end{definition}
+\end{tcolorbox}
 
 
 
@@ -1058,6 +1066,7 @@ Before introducing the SAT encoding, let us recap the fundamental concepts:
 
 To encode planning problems as SAT, we introduce a temporal dimension to our propositional variables.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Temporal Instantiation}]
 \begin{definition}[Temporal Instantiation]
 Let $X$ be the set of propositional variables describing the domain. The \textbf{temporal instantiation} of $X$ at time $t$ is:
 \[
@@ -1065,16 +1074,19 @@ X@t = \{x@t \mid x \in X\} \quad \text{for } t \geq 0
 \]
 where $x@t$ is a propositional variable representing the truth value of $x$ at time step $t$.
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Intuition}: Since a plan is a sequence of actions $(a_0, a_1, a_2, \dots, a_{n-1})$ of length $n$, we need to track the truth value of each proposition at each time step from $0$ to $n$.
 
 \subsection{The Bounded Planning Problem}
 
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Bounded Planning Problem}]
 \begin{definition}[Bounded Planning Problem]
 Given a planning problem $P = \langle \Sigma, I, G \rangle$, the \textbf{bounded planning problem} asks:
 
 \textit{Does there exist a plan solving $P$ with length exactly $n$?}
 \end{definition}
+\end{tcolorbox}
 
 This is a decision problem parameterized by the plan length $n$.
 
@@ -1082,12 +1094,14 @@ This is a decision problem parameterized by the plan length $n$.
 
 The bounded planning problem can be encoded as a propositional satisfiability problem.
 
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Planning as SAT}]
 \begin{theorem}[Planning as SAT]
 For a planning problem $P$ and bound $n$, there exists a propositional formula $\Phi_n$ such that:
 \[
 \Phi_n \text{ is satisfiable} \quad \Leftrightarrow \quad \text{there exists a plan of length } n \text{ for } P
 \]
 \end{theorem}
+\end{tcolorbox}
 
 The formula $\Phi_n$ encodes:
 \begin{enumerate}
@@ -1101,6 +1115,7 @@ The formula $\Phi_n$ encodes:
 
 Since we don't know the optimal plan length in advance, we use \textbf{iterative deepening}:
 
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Iterative Deepening SAT Planning}]
 \begin{algorithm}[H]
 \caption{Planning via SAT with Iterative Deepening}
 \begin{algorithmic}[1]
@@ -1115,6 +1130,7 @@ Since we don't know the optimal plan length in advance, we use \textbf{iterative
 \ENDWHILE
 \end{algorithmic}
 \end{algorithm}
+\end{tcolorbox}
 
 \textbf{Process}:
 \begin{enumerate}
@@ -1150,11 +1166,13 @@ Since we don't know the optimal plan length in advance, we use \textbf{iterative
 
 The \textbf{Boolean Satisfiability Problem (SAT)} is one of the most fundamental problems in computer science and forms the foundation for many automated reasoning techniques, including planning.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{SAT Problem}]
 \begin{definition}[SAT Problem]
 The SAT problem asks: Given a propositional formula, does there exist an interpretation (truth assignment) that makes the formula true?
 
 Formally, given a set of clauses $S$ in propositional logic, determine whether $S$ is satisfiable.
 \end{definition}
+\end{tcolorbox}
 
 \subsection{Propositional Logic Basics}
 
@@ -1172,6 +1190,7 @@ To understand SAT, we must first establish the basic elements of propositional l
 
 \subsection{Interpretations and Truth Assignments}
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Interpretation}]
 \begin{definition}[Interpretation]
 An \textbf{interpretation} (or \textbf{truth assignment}) is a function:
 \[
@@ -1179,11 +1198,13 @@ v: X \rightarrow \{0, 1\}
 \]
 that assigns a Boolean value to each propositional variable.
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Number of interpretations}: If $|X| = n$ (i.e., we have $n$ propositional variables), then there are exactly $2^n$ possible interpretations.
 
 \subsubsection{Satisfiability of Clauses}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Satisfaction}]
 \begin{definition}[Clause Satisfaction]
 A clause $C = L_1 \lor L_2 \lor \cdots \lor L_n$ is \textbf{satisfied} by an interpretation $v$ if there exists at least one literal $L_i$ such that $v(L_i) = \text{true}$ for some $i \in \{1, 2, \dots, n\}$.
 
@@ -1196,6 +1217,7 @@ A set of clauses $S = \{C_1, C_2, \dots, C_m\}$ is \textbf{satisfiable} if there
 v \models S \quad \Leftrightarrow \quad v \models C_i \text{ for all } i \in \{1, 2, \dots, m\}
 \]
 \end{definition}
+\end{tcolorbox}
 
 \subsection{SAT Decision Procedure}
 
@@ -1225,9 +1247,11 @@ S \text{ (set of clauses)} & \xrightarrow{\text{SAT Solver}} &
 
 \subsection{The Empty Clause}
 
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Empty Clause}]
 \begin{definition}[Empty Clause]
 The \textbf{empty clause}, denoted $\Box$ (or $\square$), is a clause with no literals. It is \textbf{false in all interpretations} and therefore represents a contradiction.
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Significance}: If a SAT solver derives the empty clause from the input formula $S$, this constitutes a proof that $S$ is unsatisfiable, since deriving a contradiction means no interpretation can satisfy all clauses.
 
@@ -1316,9 +1340,11 @@ Consider the literal $\texttt{at}(r_1, l_1)$ ("robot $r_1$ is at location $l_1$"
 
 Similarly, the negative literal $\neg \texttt{loaded}(r_1)$ becomes $\neg \texttt{loaded}(r_1, i)$, meaning "robot $r_1$ is not loaded at stage $i$".
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{State Transition}]
 \begin{definition}[State Transition]
 Step $i$ (where $0 \leq i \leq k-1$) takes us from state $i$ to state $i+1$ by executing one action.
 \end{definition}
+\end{tcolorbox}
 
 \subsection{Encoding the Initial State}
 
@@ -1367,6 +1393,7 @@ where $S_0^+$ is the set of positive literals in $s_0$ and $S_0^-$ is the set of
 
 The goal conditions must be satisfied at the final time step $k$.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Goal Encoding}]
 \begin{definition}[Goal Encoding]
 The goal states are encoded at time $k$ as:
 \[
@@ -1374,6 +1401,7 @@ The goal states are encoded at time $k$ as:
 \]
 where $G^+$ is the set of positive literals in the goal $G$ and $G^-$ is the set of negative literals in $G$.
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Interpretation}: This formula ensures that all positive goal conditions are true and all negative goal conditions are false in the final state after executing $k$ actions.
 
@@ -1385,12 +1413,14 @@ The planning problem is defined as $\Sigma = \langle S, A, \gamma \rangle$, wher
 
 For each action $a \in A$ at each time step $i$ (where $0 \leq i \leq k-1$), we encode the constraint that if the action is executed, its preconditions must hold:
 
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Action Precondition Encoding}]
 \begin{definition}[Action Precondition Encoding]
 \[
 \forall a \in A, \forall i \in \{0, \dots, k-1\}: \quad a_i \rightarrow \bigwedge_{p \in \text{prec}(a)} p_i
 \]
 where $\text{prec}(a)$ denotes the set of preconditions of action $a$.
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Interpretation}: This formula states that if action $a$ is executed at time $i$, then all of its preconditions must be satisfied at time $i$. The implication can be rewritten in CNF as:
 \[
@@ -1401,12 +1431,14 @@ where $\text{prec}(a)$ denotes the set of preconditions of action $a$.
 
 At each time step, at most one action can be executed. This constraint is encoded as follows:
 
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Action Mutual Exclusion}]
 \begin{definition}[Action Mutual Exclusion]
 For all pairs of distinct actions \( (a, b) \in A \times A \) where \( a \neq b \), and for all time steps \( i \) where \( 0 \leq i \leq k-1 \):
 \[
 \neg a_i \lor \neg b_i
 \]
 \end{definition}
+\end{tcolorbox}
 
 This formula ensures that actions \( a \) and \( b \) cannot both be executed at the same time step \( i \).
 
@@ -1437,6 +1469,7 @@ where:
 
 Once the SAT solver returns a satisfying assignment, we can extract the corresponding plan.
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Plan Extraction}]
 \begin{definition}[Plan Extraction]
 Let \( v \) be a satisfying interpretation (model) returned by the SAT solver, represented as a set of literals. The plan \( \pi \) is extracted as follows:
 
@@ -1446,6 +1479,7 @@ Let \( v \) be a satisfying interpretation (model) returned by the SAT solver, r
 
 where \( a_i \) is the unique action such that \( v \models a_i \) (i.e., \( a_i \) is assigned \texttt{true} in the model \( v \)) for each time step \( i \in \{0, 1, \dots, k-1\} \).
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Extraction procedure}:
 \begin{enumerate}
@@ -1594,6 +1628,7 @@ This plan has length $1$ and achieves the goal of moving the robot from $l_1$ to
 
 To use a SAT solver, we must convert all formulas to \textbf{Conjunctive Normal Form (CNF)}.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Conjunctive Normal Form (CNF)}]
 \begin{definition}[Clause]
 A \textbf{clause} is a disjunction of literals: $L_1 \lor L_2 \lor \cdots \lor L_k$ where each $L_i$ is a literal (an atom or its negation).
 \end{definition}
@@ -1604,6 +1639,7 @@ A formula is in \textbf{Conjunctive Normal Form} if it is a conjunction of claus
 \text{CNF} = (L_1^1 \lor L_2^1 \lor \cdots \lor L_k^1) \land (L_1^2 \lor L_2^2 \lor \cdots \lor L_k^2) \land \cdots \land (L_1^m \lor L_2^m \lor \cdots \lor L_k^m)
 \]
 \end{definition}
+\end{tcolorbox}
 
 A set of clauses is logically equivalent to a conjunction of those clauses, which is precisely the CNF representation required by SAT solvers.
 
@@ -1651,9 +1687,11 @@ This distributes disjunctions over conjunctions, eventually producing a conjunct
 
 \textbf{Critical issue}: The standard CNF transformation can cause a \textbf{combinatorial explosion} in formula size.
 
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Exponential Blowup Problem}]
 \begin{observation}[Exponential Blowup]
 In the worst case, the standard transformation into CNF produces a formula whose size is \textbf{exponential} in the size of the original formula: $O(2^n)$ where $n$ is the size of the input formula.
 \end{observation}
+\end{tcolorbox}
 
 This exponential blowup makes the standard transformation \textbf{impractical} for large planning problems, as the resulting CNF formula becomes too large to handle efficiently.
 
@@ -1661,6 +1699,7 @@ This exponential blowup makes the standard transformation \textbf{impractical} f
 
 To avoid the exponential blowup, we use a different approach that produces an \textbf{Equisatisfiable CNF (ECNF)}.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Equisatisfiable CNF (ECNF)}]
 \begin{definition}[Equisatisfiable CNF]
 An \textbf{Equisatisfiable CNF (ECNF)} is a CNF formula that is not logically equivalent to the original formula, but is \textbf{equisatisfiable}—it has the same satisfiability status:
 \begin{itemize}
@@ -1668,6 +1707,7 @@ An \textbf{Equisatisfiable CNF (ECNF)} is a CNF formula that is not logically eq
     \item The ECNF may contain additional auxiliary variables not present in the original formula
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 \subsubsection{Tseitin Encoding}
 
@@ -1675,9 +1715,11 @@ The standard technique for producing ECNF is the \textbf{Tseitin encoding} (also
 
 \textbf{Key idea}: Introduce auxiliary variables to represent subformulas, avoiding the need for distribution.
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Tseitin Encoding Complexity}]
 \begin{theorem}[Tseitin Encoding Complexity]
 The Tseitin encoding produces an ECNF formula whose size is \textbf{linear} in the size of the original formula: $O(n)$ where $n$ is the size of the input formula.
 \end{theorem}
+\end{tcolorbox}
 
 \textbf{Advantages of ECNF}:
 \begin{itemize}
@@ -1700,12 +1742,14 @@ The Tseitin encoding is based on two key functions that work together to produce
 
 \subsubsection{The Representative Function}
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Representative Function}]
 \begin{definition}[Representative Function]
 Let $\text{PL}$ denote the language of propositional formulas over a set of propositional variables $X$, and let $V$ be a set of fresh (new) propositional variables. The \textbf{representative function} is defined as:
 \[
 \text{Rep}: \text{PL} \rightarrow V \cup \{\bot, \top\}
 \]
 \end{definition}
+\end{tcolorbox}
 
 The function $\text{Rep}$ assigns to each formula a representative variable (or constant). It is defined inductively:
 
@@ -1728,6 +1772,7 @@ where $F \in \text{PL}$ is a non-atomic formula (i.e., $F$ is neither a proposit
 
 \subsubsection{The Encoding Function}
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Encoding Function}]
 \begin{definition}[Encoding Function]
 The \textbf{encoding function} is defined as:
 \[
@@ -1737,6 +1782,7 @@ The \textbf{encoding function} is defined as:
 \text{En}(F) = F \leftrightarrow \text{Rep}(F)
 \]
 \end{definition}
+\end{tcolorbox}
 
 The encoding function creates a biconditional formula stating that formula $F$ is logically equivalent to its representative.
 
@@ -1744,12 +1790,14 @@ The encoding function creates a biconditional formula stating that formula $F$ i
 
 \subsubsection{Complete ECNF Construction}
 
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{ECNF via Tseitin Encoding}]
 \begin{definition}[ECNF via Tseitin Encoding]
 Given an input formula $F$, let $S_F$ denote the set of all subformulas of $F$ (including $F$ itself). The \textbf{Equisatisfiable CNF} of $F$ is:
 \[
 \text{ECNF}(F) = \text{Rep}(F) \land \bigwedge_{G \in S_F} \text{En}(G)
 \]
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Components}:
 \begin{itemize}
@@ -1761,9 +1809,11 @@ Given an input formula $F$, let $S_F$ denote the set of all subformulas of $F$ (
 
 The transformation from $F$ to $\text{ECNF}(F)$ does \textbf{not} preserve logical equivalence, but it \textbf{does} preserve satisfiability:
 
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Equisatisfiability Theorem}]
 \begin{theorem}[Equisatisfiability]
 Formula $F$ is satisfiable if and only if $\text{ECNF}(F)$ is satisfiable.
 \end{theorem}
+\end{tcolorbox}
 
 \begin{proof}[Proof sketch]
 \textbf{Forward direction} ($F$ satisfiable $\Rightarrow$ $\text{ECNF}(F)$ satisfiable):
@@ -1864,11 +1914,13 @@ I' = \{A \mapsto \text{true}, \, B \mapsto \text{false}, \, C \mapsto \text{fals
 
 Now $I' \models S$ (all clauses are satisfied).
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Equisatisfiability vs Logical Equivalence}]
 \begin{observation}[Not Logically Equivalent]
 The original interpretation $I$ (without the auxiliary variable) satisfies $F$ but does \textbf{not} satisfy all clauses in $S$ unless extended with the appropriate value for $v$. This demonstrates that $F$ and $S$ are \textbf{not logically equivalent}.
 
 However, $F$ is satisfiable if and only if $S$ is satisfiable (by appropriately choosing the value of $v$). Therefore, $F$ and $S$ are \textbf{equisatisfiable}.
 \end{observation}
+\end{tcolorbox}
 
 \textbf{Conclusion}: The Tseitin encoding produces a formula that is equisatisfiable with the original but not logically equivalent. This is acceptable for SAT-based planning because we only care about whether a solution exists, not about preserving all logical properties.
 
@@ -1926,6 +1978,7 @@ This produces \textbf{4 clauses} in CNF.
 
 We now analyze the size of the resulting ECNF formula to prove linear complexity.
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Linear Size of ECNF}]
 \begin{theorem}[Linear Size of ECNF]
 Let $F$ be a propositional formula with size $|F| = n$. The Tseitin encoding produces an ECNF formula:
 \[
@@ -1933,6 +1986,7 @@ F' = \text{Rep}(F) \land \bigwedge_{G \in S_F} \text{En}(G)
 \]
 where $S_F$ is the set of all subformulas of $F$ (including $F$ itself). The size of $F'$ is $|F'| = O(n)$.
 \end{theorem}
+\end{tcolorbox}
 
 \subsubsection{Worst Case Analysis: Biconditional}
 

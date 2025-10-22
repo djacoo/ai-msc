@@ -5,7 +5,7 @@
 % ========================================
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[italian]{babel}  % Change to your language
+\usepackage[english]{babel}  % Change to your language
 \usepackage[margin=2.5cm]{geometry}
 
 % Mathematics
@@ -16,7 +16,7 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, shapes.misc, calc}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage[most]{tcolorbox}
@@ -43,23 +43,26 @@
     citecolor=blue
 }
 
+% Set table of contents depth to show only parts and sections
+\setcounter{tocdepth}{0}
+
 % ========================================
 % THEOREM ENVIRONMENTS
 % ========================================
 \theoremstyle{definition}
-\newtheorem{definition}{Definizione}[section]
-\newtheorem{example}{Esempio}[section]
-\newtheorem{exercise}{Esercizio}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
 
 \theoremstyle{plain}
-\newtheorem{theorem}{Teorema}[section]
+\newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposizione}
-\newtheorem{corollary}[theorem]{Corollario}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
 
 \theoremstyle{remark}
-\newtheorem*{remark}{Nota}
-\newtheorem*{observation}{Osservazione}
+\newtheorem*{remark}{Note}
+\newtheorem*{observation}{Observation}
 
 % ========================================
 % CUSTOM COMMANDS
@@ -2641,5 +2644,2090 @@ where $\bar{y}$ is the mean of the observed values. $R^2$ represents the proport
 \begin{remark}
 In practice, it's often beneficial to report multiple metrics to get a comprehensive view of model performance. For example, reporting both MSE (or RMSE) and MAE can provide insights into both the typical error magnitude and the presence of outliers.
 \end{remark}
+
+
+\newpage
+
+\part{Bayes Classifier and Nonparametric Classifiers}
+
+\section{Bayes Classifier}
+
+\subsection{Introduction}
+
+The Bayes Classifier represents a fundamental \textbf{statistical approach} for classification problems. It provides an optimal decision-making framework when all relevant probabilities are known.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Core Hypothesis}]
+The decision problem is cast in \textbf{probabilistic terms}, where all relevant \textbf{probabilities are known}.
+\end{tcolorbox}
+
+\subsubsection{Goal of Bayes Classifier}
+
+The primary objectives are:
+
+\begin{itemize}
+    \item \textbf{Discriminate} between different decision rules using the probabilities and their associated costs
+    \item \textbf{Estimate} the \textbf{joint probability} $p(\mathbf{x}, y)$ from the training data set
+\end{itemize}
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Concept}\\[0.2cm]
+The Bayes Classifier aims to estimate the joint probability distribution $p(\mathbf{x}, y)$ to make optimal classification decisions.
+}}
+\end{center}
+
+\subsection{An Easy Example}
+
+Let's start with a simple example to understand the basic principles.
+
+\begin{example}[Two-Class Classification]
+Let $y$ be what we want to classify, and it is to be probabilistically described.
+
+There are \textbf{two classes} $y_1$ and $y_2$ which correspond to two possible states:
+\begin{itemize}
+    \item[a)] $P(y = y_1) = 0.7$
+    \item[b)] $P(y = y_2) = 0.3$
+\end{itemize}
+
+These are called \textbf{a-priori} or \textbf{prior probabilities}.
+
+\textbf{Scenario}: There are no measurements or observations available to help make a decision about which class $y$ belongs to.
+\end{example}
+
+\subsubsection{Decision Rule}
+
+Given only the prior probabilities, the optimal decision rule is straightforward:
+
+\begin{center}
+\colorbox{cyan!15}{\parbox{0.85\textwidth}{
+\textbf{Decision Rule:}\\[0.2cm]
+Decide $y_1$ if $P(y_1) > P(y_2)$; otherwise decide $y_2$
+}}
+\end{center}
+
+\begin{observation}
+Given the probabilities (70\% for $y_1$ and 30\% for $y_2$), the decision rule would lead to classifying $y$ as $y_1$ since 0.7 is greater than 0.3.
+
+This makes intuitive sense: without any additional information, we should choose the more probable class.
+\end{observation}
+
+\subsection{Another Example: Adding Measurements}
+
+Now let's consider a more realistic scenario where we have measurements to help us decide.
+
+\begin{example}[Classification with Measurements]
+Having the previous hypothesis and additionally \textbf{a single measurement} $\mathbf{x}$, which is a random variable that depends on the class $y_j$, we can get:
+
+\[
+p(\mathbf{x}|y_j)_{j=1,2} = \text{\textbf{Likelihood}} \text{ or } \text{\textbf{class-conditional probability density function}}
+\]
+
+i.e., \textit{the probability of having the measurement $\mathbf{x}$ knowing that $y$ is $y_j$}.
+\end{example}
+
+\begin{observation}
+When we fix the measurement $\mathbf{x}$, the higher $p(\mathbf{x}|y_j)$ is, the more likely $y_j$ is the correct state.
+
+This is the key insight: measurements provide evidence that can shift our belief from the prior probabilities toward the class that better explains the observed data.
+\end{observation}
+
+\subsubsection{Visual Interpretation}
+
+The class-conditional probability density functions can be visualized as distributions over the measurement space. For two classes:
+
+\begin{itemize}
+    \item Each class has its own probability distribution $p(\mathbf{x}|y_j)$
+    \item These distributions may overlap in the measurement space
+    \item Where they overlap, we need a decision rule to determine which class is more likely
+    \item The shape and position of these distributions reflect how the measurement $\mathbf{x}$ is distributed for each class
+\end{itemize}
+
+\subsection{Bayes Formula}
+
+The Bayes formula provides the mathematical framework for combining prior knowledge with observed evidence.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Bayes Formula}]
+Assuming known $P(y_j)$ and $p(\mathbf{x}|y_j)$, the decision of $\omega$ becomes, for Bayes:
+
+\[
+p(y_j, \mathbf{x}) = P(y_j|\mathbf{x})p(\mathbf{x}) = p(\mathbf{x}|y_j)P(y_j)
+\]
+
+that is:
+
+\[
+P(y_j|\mathbf{x}) = \frac{p(\mathbf{x}|y_j)P(y_j)}{p(\mathbf{x})} \propto p(\mathbf{x}|y_j)P(y_j)
+\]
+
+where:
+\begin{itemize}
+    \item $P(y_j)$ = \textbf{Prior}
+    \item $p(\mathbf{x}|y_j)$ = \textbf{Likelihood}
+    \item $P(y_j|\mathbf{x})$ = \textbf{Posterior}
+    \item $p(\mathbf{x}) = \sum_{j=1}^{J} p(\mathbf{x}|y_j)P(y_j)$ = \textbf{Evidence}
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Understanding the Components}
+
+\begin{definition}[Bayes Formula Components]
+\begin{itemize}
+    \item \textbf{Prior} $P(y_j)$: Our initial belief about the probability of class $y_j$ before seeing any data
+    
+    \item \textbf{Likelihood} $p(\mathbf{x}|y_j)$: The probability of observing measurement $\mathbf{x}$ given that the true class is $y_j$
+    
+    \item \textbf{Posterior} $P(y_j|\mathbf{x})$: Our updated belief about the probability of class $y_j$ after observing measurement $\mathbf{x}$
+    
+    \item \textbf{Evidence} $p(\mathbf{x})$: The total probability of observing measurement $\mathbf{x}$ across all classes (acts as a normalization constant)
+\end{itemize}
+\end{definition}
+
+\begin{observation}
+The evidence $p(\mathbf{x})$ is the same for all classes, which is why we can use the proportionality:
+\[
+P(y_j|\mathbf{x}) \propto p(\mathbf{x}|y_j)P(y_j)
+\]
+
+This means for classification, we only need to compare $p(\mathbf{x}|y_j)P(y_j)$ across different classes without computing the evidence explicitly.
+\end{observation}
+
+\subsubsection{Bayes Decision Rule}
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Optimal Bayes Decision Rule}\\[0.2cm]
+Choose class $y_j$ that maximizes the posterior probability:
+\[
+\hat{y} = \arg\max_{j} P(y_j|\mathbf{x}) = \arg\max_{j} p(\mathbf{x}|y_j)P(y_j)
+\]
+}}
+\end{center}
+
+\begin{remark}
+The Bayes Classifier is optimal in the sense that it minimizes the probability of misclassification when all probabilities are known exactly. However, in practice, we must estimate these probabilities from data, which introduces approximation errors.
+\end{remark}
+
+\subsection{Bayes Decision Rule: Detailed Analysis}
+
+\begin{center}
+\colorbox{yellow!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Bayes Formula Relationship}\\[0.3cm]
+\begin{equation*}
+P(y_j|\mathbf{x}) = \frac{p(\mathbf{x}|y_j)P(y_j)}{p(\mathbf{x})} \quad \Longleftrightarrow \quad \text{posterior} = \frac{\text{likelihood} \times \text{prior}}{\text{evidence}}
+\end{equation*}
+}}
+\end{center}
+
+\subsubsection{Understanding the Posterior}
+
+\begin{itemize}
+    \item The posterior or \textbf{a-posteriori probability} is the probability that $y$ is $y_j$ given the observation $\mathbf{x}$
+    
+    \item The most important factor is the product $\text{likelihood} \times \text{prior}$
+    
+    \item The evidence $p(\mathbf{x})$ is simply a scale factor, which ensures that:
+    \[
+    \sum_{j} P(y_j|\mathbf{x}) = 1
+    \]
+\end{itemize}
+
+\begin{observation}
+Since $p(\mathbf{x})$ is the same for all classes, it acts as a normalization constant. For classification purposes, we can ignore it and simply compare the numerators $p(\mathbf{x}|y_j)P(y_j)$ across different classes.
+\end{observation}
+
+\subsubsection{The Decision Rule}
+
+From the formula of Bayes derives the \textbf{Bayes' decision rule}:
+
+\begin{center}
+\colorbox{orange!20}{\parbox{0.85\textwidth}{
+\centering
+\textbf{Bayes Decision Rule}\\[0.2cm]
+Decide $y_1$ if $P(y_1|\mathbf{x}) > P(y_2|\mathbf{x})$, and $y_2$ otherwise
+}}
+\end{center}
+
+Equivalently, since we can ignore the evidence:
+
+\begin{center}
+\colorbox{cyan!20}{\parbox{0.85\textwidth}{
+\centering
+Decide $y_1$ if $p(\mathbf{x}|y_1)P(y_1) > p(\mathbf{x}|y_2)P(y_2)$, and $y_2$ otherwise
+}}
+\end{center}
+
+\section{Naïve Bayes Classifier}
+
+The Naïve Bayes Classifier is a practical implementation of Bayes' theorem that makes a simplifying assumption about feature independence.
+
+\subsection{Core Principles}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Naïve Bayes Classifier}]
+A probabilistic classification algorithm based on \textbf{Bayes' theorem} that:
+\begin{itemize}
+    \item Assumes \textbf{independence} among features
+    \item Calculates the \textbf{posterior probability} using:
+    \[
+    P(y_j|\mathbf{x}) = \frac{p(\mathbf{x}|y_j)P(y_j)}{p(\mathbf{x})}
+    \]
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{The Naïve Independence Assumption}
+
+The key assumption is that features $x_1, x_2, \ldots, x_n$ are \textbf{independent} given the class label $\omega$:
+
+\begin{equation}
+P(\mathbf{x} | y) = P(x_1 | y) \cdot P(x_2 | y) \cdots P(x_n | y) = \prod_{i=1}^{n} P(x_i | y)
+\end{equation}
+
+\begin{observation}
+This is called "naïve" because in reality, features are often correlated. However, despite this simplification, Naïve Bayes often performs surprisingly well in practice, especially for text classification tasks.
+\end{observation}
+
+\subsubsection{Training the Classifier}
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.9\textwidth}{
+\textbf{Key Point:} Probability of each class is determined from training data.
+}}
+\end{center}
+
+The training process involves:
+\begin{enumerate}
+    \item Estimating the prior probabilities $P(y_j)$ from the class frequencies in the training data
+    \item Estimating the conditional probabilities $P(x_i|y_j)$ for each feature given each class
+\end{enumerate}
+
+\subsection{Example: Email Spam Classification}
+
+Let's work through a complete example to understand how Naïve Bayes works in practice.
+
+\begin{example}[Spam Detection]
+We want to classify an email as either:
+\begin{itemize}
+    \item \textbf{Class 1}: Spam
+    \item \textbf{Class 2}: Not spam (Ham)
+\end{itemize}
+
+We'll use a few features (words) that appear in the email.
+\end{example}
+
+\subsubsection{Training Data}
+
+Consider the following training dataset:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Email} & \textbf{Contains "Free"?} & \textbf{Contains "Win"?} & \textbf{Class} \\
+\hline
+E1 & Yes & Yes & Spam \\
+E2 & Yes & No & Spam \\
+E3 & No & Yes & Spam \\
+E4 & No & No & Ham \\
+E5 & No & No & Ham \\
+\hline
+\end{tabular}
+\caption{Training data for spam classification}
+\end{table}
+
+\subsubsection{Step 1: Compute Class Priors}
+
+From the training data:
+
+\begin{align}
+P(\text{Spam}) &= \frac{3}{5} \\
+P(\text{Ham}) &= \frac{2}{5}
+\end{align}
+
+\begin{observation}
+The prior probabilities reflect the class distribution in our training set: 3 out of 5 emails are spam, and 2 out of 5 are ham.
+\end{observation}
+
+\subsubsection{Step 2: Estimate Conditional Probabilities}
+
+For each feature (word) and class, we estimate how often the word appears when the email belongs to that class:
+
+\textbf{For "Free":}
+\begin{align}
+P(\text{Free} = \text{Yes} | \text{Spam}) &= \frac{2}{3} \\
+P(\text{Free} = \text{Yes} | \text{Ham}) &= \frac{0}{2} = 0
+\end{align}
+
+\textbf{For "Win":}
+\begin{align}
+P(\text{Win} = \text{Yes} | \text{Spam}) &= \frac{2}{3} \\
+P(\text{Win} = \text{Yes} | \text{Ham}) &= \frac{0}{2} = 0
+\end{align}
+
+\begin{remark}
+Note that we also need the probabilities for the words \textit{not} appearing:
+\begin{align*}
+P(\text{Free} = \text{No} | \text{Spam}) &= 1 - \frac{2}{3} = \frac{1}{3} \\
+P(\text{Win} = \text{No} | \text{Spam}) &= 1 - \frac{2}{3} = \frac{1}{3} \\
+P(\text{Free} = \text{No} | \text{Ham}) &= 1 - 0 = 1 \\
+P(\text{Win} = \text{No} | \text{Ham}) &= 1 - 0 = 1
+\end{align*}
+\end{remark}
+
+\subsubsection{Step 3: Classify a New Email}
+
+\textbf{Validation/Testing}: Consider a new email that contains "Free" but does \textbf{not} contain "Win".
+
+We compute (ignoring the denominator (evidence) since it's the same for both classes):
+
+\begin{align}
+P(\text{Spam} | \text{Free, no Win}) &\propto P(\text{Spam}) \cdot P(\text{Free}|\text{Spam}) \cdot P(\text{no Win}|\text{Spam}) \\
+&= \frac{3}{5} \times \frac{2}{3} \times \left(1 - \frac{2}{3}\right) \\
+&= \frac{3}{5} \times \frac{2}{3} \times \frac{1}{3} = \frac{2}{15}
+\end{align}
+
+\begin{align}
+P(\text{Ham} | \text{Free, no Win}) &\propto P(\text{Ham}) \cdot P(\text{Free}|\text{Ham}) \cdot P(\text{no Win}|\text{Ham}) \\
+&= \frac{2}{5} \times 0 \times 1 = 0
+\end{align}
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Prediction:} The model predicts \textbf{Spam}, because its probability is greater.\\[0.2cm]
+$P(\text{Spam} | \text{Free, no Win}) = \frac{2}{15} > P(\text{Ham} | \text{Free, no Win}) = 0$
+}}
+\end{center}
+
+\subsection{The Zero Probability Problem}
+
+\begin{observation}
+Notice that $P(\text{Free}|\text{Ham}) = 0$ caused the entire probability for Ham to become zero. This is a common problem in Naïve Bayes called the \textbf{zero probability problem}.
+\end{observation}
+
+\subsubsection{Solution: Laplace Smoothing}
+
+To avoid zero probabilities, we use \textbf{Laplace smoothing} (also called additive smoothing):
+
+\begin{equation}
+P(x_i | y_j) = \frac{\text{count}(x_i, y_j) + \alpha}{\text{count}(y_j) + \alpha \cdot n}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $\alpha$ is the smoothing parameter (typically $\alpha = 1$)
+    \item $n$ is the number of possible values for feature $x_i$
+\end{itemize}
+
+\begin{remark}
+Laplace smoothing ensures that no probability is exactly zero, which prevents the entire product from becoming zero when a feature value hasn't been observed in the training data for a particular class.
+\end{remark}
+
+\subsection{Advantages and Disadvantages}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\textbf{Advantages} & \textbf{Disadvantages} \\
+\hline
+$\bullet$ Simple and fast to train and predict & $\bullet$ Independence assumption is often violated \\
+$\bullet$ Works well with high-dimensional data & $\bullet$ Can be outperformed by more sophisticated models \\
+$\bullet$ Requires relatively small training data & $\bullet$ Zero probability problem requires smoothing \\
+$\bullet$ Performs well for text classification & $\bullet$ Cannot learn feature interactions \\
+$\bullet$ Provides probabilistic predictions & $\bullet$ Sensitive to irrelevant features \\
+\hline
+\end{tabular}
+\caption{Advantages and disadvantages of Naïve Bayes}
+\end{table}
+
+\subsection{Classification Rule Summary}
+
+\begin{center}
+\colorbox{blue!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Naïve Bayes Classification Rule}\\[0.3cm]
+Classify an observation $\mathbf{x}$ to class $y_j$ if:
+\[
+P(y_j|\mathbf{x}) = \frac{p(\mathbf{x}|y_j)P(y_j)}{p(\mathbf{x})} \text{ is maximized}
+\]
+}}
+\end{center}
+
+\subsubsection{Key Points}
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item Fast to train and predict, suitable for large datasets
+    \item Works well with high-dimensional data
+\end{itemize}
+
+\textbf{Limitations:}
+\begin{itemize}
+    \item Independence assumption may not hold in real-world scenarios, leading to suboptimal performance
+    \item Zero probability problem: requires techniques (like Laplace smoothing) for unseen feature-class combinations
+\end{itemize}
+
+\subsection{Problems with Bayesian Classifiers}
+
+To create an optimal classifier that uses the Bayesian decision rule, you need to know:
+
+\begin{enumerate}
+    \item \textbf{Prior probabilities} $P(y_j)$
+    \item \textbf{Class-conditional densities (likelihood)} $p(\mathbf{x}|y_j)$
+\end{enumerate}
+
+\begin{observation}
+The performance of a classifier \textbf{strongly} depends on the \textbf{goodness} of these components.
+\end{observation}
+
+\begin{center}
+\colorbox{red!20}{\parbox{0.9\textwidth}{
+\centering
+\textbf{The Fundamental Problem}\\[0.2cm]
+\textit{BUT PRACTICALLY ALL THIS INFORMATION IS NEVER AVAILABLE!!}
+}}
+\end{center}
+
+\subsubsection{What We Actually Have}
+
+More often we only have:
+
+\begin{itemize}
+    \item A vague knowledge of the problem, from which to extract vague \textbf{a-priori probabilities}
+    
+    \item Some particularly representative patterns, training data, used to train the classifier (\textbf{often too few or sparse!})
+\end{itemize}
+
+\begin{observation}
+\begin{itemize}
+    \item Estimating a-priori probabilities is usually not particularly difficult
+    
+    \item Estimating conditional densities (likelihood) is \textbf{more complex} $\rightarrow$ needs approximations
+\end{itemize}
+\end{observation}
+
+\subsection{Challenges in Estimating Conditional Densities}
+
+Estimating conditional densities (likelihood) is more complex and needs approximations due to several challenges:
+
+\begin{enumerate}
+    \item \textbf{High-dimensional problem}: Data can have many features $\rightarrow$ exponential combinations
+    \begin{itemize}
+        \item With $d$ features, each with $k$ possible values, there are $k^d$ possible feature combinations
+        \item This leads to the \textbf{curse of dimensionality}
+    \end{itemize}
+    
+    \item \textbf{Zero probabilities}: Some feature combinations may never appear in training data $\rightarrow$ zero probabilities
+    \begin{itemize}
+        \item This can cause the entire posterior probability to become zero
+        \item Requires smoothing techniques
+    \end{itemize}
+    
+    \item \textbf{Continuous features}: Features may be continuous, requiring parametric assumptions (e.g., Gaussian)
+    \begin{itemize}
+        \item We need to assume a probability distribution family
+        \item Then estimate the parameters of that distribution
+    \end{itemize}
+\end{enumerate}
+
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\textbf{Key Challenge:}\\[0.2cm]
+The complexity of estimating $p(\mathbf{x}|y_j)$ grows exponentially with the number of features, making it impractical to estimate directly from data without making simplifying assumptions.
+}}
+\end{center}
+
+\subsection{Solution: Parametric Models}
+
+One solution (out of many) is to approximate the conditional densities by \textbf{fitting a parametric model}.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Parametric Approach}]
+We approximate the likelihood by fitting a \textbf{parametric model} (e.g., Gaussian) to the training data and estimate its parameters using, for example, \textbf{Maximum Likelihood Estimation (MLE)}.
+
+\begin{itemize}
+    \item It is a standard way to estimate parameters associated to the likelihood from training data
+    
+    \item For a Gaussian model, the parameters are:
+    \[
+    \boldsymbol{\theta}_j = (\boldsymbol{\mu}_j, \boldsymbol{\Sigma}_j)
+    \]
+    where $\boldsymbol{\mu}_j$ is the mean vector and $\boldsymbol{\Sigma}_j$ is the covariance matrix for class $y_j$
+    
+    \item The likelihood is then approximated as:
+    \[
+    P(\mathbf{x} | y_j) \approx \mathcal{N}(\boldsymbol{\mu}_j, \boldsymbol{\Sigma}_j)
+    \]
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Maximum Likelihood Estimation (MLE)}
+
+\begin{definition}[Maximum Likelihood Estimation]
+MLE chooses the parameter values that make the observed data \textbf{most probable}.
+
+For a dataset $\mathcal{D} = \{(\mathbf{x}_1, y_1), (\mathbf{x}_2, y_2), \ldots, (\mathbf{x}_N, y_N)\}$, the likelihood function is:
+
+\[
+L(\boldsymbol{\theta}_j) = \prod_{i: y_i = y_j} p(\mathbf{x}_i | y_j, \boldsymbol{\theta}_j)
+\]
+
+MLE finds:
+\[
+\hat{\boldsymbol{\theta}}_j = \arg\max_{\boldsymbol{\theta}_j} L(\boldsymbol{\theta}_j)
+\]
+\end{definition}
+
+\begin{observation}
+In practice, we often maximize the \textbf{log-likelihood} instead:
+\[
+\log L(\boldsymbol{\theta}_j) = \sum_{i: y_i = y_j} \log p(\mathbf{x}_i | y_j, \boldsymbol{\theta}_j)
+\]
+
+This is mathematically equivalent but numerically more stable and easier to optimize.
+\end{observation}
+
+\subsubsection{Gaussian Naïve Bayes}
+
+When features are continuous and we assume they follow a Gaussian distribution:
+
+\begin{itemize}
+    \item For each class $y_j$ and feature $x_i$, we estimate:
+    \begin{align}
+    \mu_{ij} &= \frac{1}{N_j} \sum_{k: y_k = y_j} x_{ki} \\
+    \sigma_{ij}^2 &= \frac{1}{N_j} \sum_{k: y_k = y_j} (x_{ki} - \mu_{ij})^2
+    \end{align}
+    where $N_j$ is the number of training samples in class $y_j$
+    
+    \item The likelihood for feature $x_i$ given class $y_j$ is:
+    \[
+    p(x_i | y_j) = \frac{1}{\sqrt{2\pi\sigma_{ij}^2}} \exp\left(-\frac{(x_i - \mu_{ij})^2}{2\sigma_{ij}^2}\right)
+    \]
+    
+    \item Under the independence assumption:
+    \[
+    p(\mathbf{x} | y_j) = \prod_{i=1}^{d} p(x_i | y_j)
+    \]
+\end{itemize}
+
+\begin{remark}
+The Gaussian assumption is reasonable for many real-world problems, but it's important to verify whether your data actually follows this distribution. For non-Gaussian data, other parametric models (e.g., multinomial for discrete features) or non-parametric methods may be more appropriate.
+\end{remark}
+
+\subsection{Summary: From Theory to Practice}
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\textbf{Bayesian Classification Pipeline:}
+\begin{enumerate}
+    \item \textbf{Theoretical Foundation}: Bayes' theorem provides the optimal decision rule
+    \item \textbf{Practical Challenge}: We don't have access to true probability distributions
+    \item \textbf{Naïve Assumption}: Assume feature independence to simplify computation
+    \item \textbf{Parametric Modeling}: Fit parametric models (e.g., Gaussian) to estimate likelihoods
+    \item \textbf{Parameter Estimation}: Use MLE to learn model parameters from training data
+    \item \textbf{Smoothing}: Apply techniques like Laplace smoothing to handle zero probabilities
+\end{enumerate}
+}}
+\end{center}
+
+\section{MLE in Naïve Bayes: Practical Implementation}
+
+\subsection{MLE for Discrete (Categorical) Features}
+
+Suppose you're training a Naïve Bayes classifier with \textbf{categorical features}. For each class $y$, you estimate:
+\begin{itemize}
+    \item the \textbf{prior} $P(y)$ and the \textbf{likelihoods} $P(x_i | y)$
+\end{itemize}
+
+\subsubsection{(a) Prior via MLE}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Prior Estimation}]
+\[
+P(y) = \frac{\text{number of samples with class } y}{\text{total number of samples}}
+\]
+\end{tcolorbox}
+
+\begin{observation}
+This is simply the relative frequency of class $y$ in the training data. If we have 100 samples and 60 belong to class $y_1$, then $P(y_1) = 0.6$.
+\end{observation}
+
+\subsubsection{(b) Likelihood via MLE}
+
+For categorical features (e.g., words in text classification):
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Likelihood Estimation for Categorical Features}]
+If $x_i$ is a categorical feature (e.g., word):
+\[
+P(x_i = v_k | y) = \frac{\text{count of } (x_i = v_k, y)}{\text{count of } y}
+\]
+
+where $v_k$ is a specific value (category) that feature $x_i$ can take.
+\end{tcolorbox}
+
+\begin{observation}
+This is the \textbf{maximum likelihood estimate} of the conditional probability $P(x_i = v_k | y)$. You're simply estimating probabilities by \textbf{relative frequencies}: the parameter values that \textbf{maximise} the likelihood of your training data.
+\end{observation}
+
+\begin{example}[Word Frequency in Spam Detection]
+If we're classifying emails as spam or ham, and the word "free" appears in 40 out of 60 spam emails, then:
+\[
+P(\text{free} = \text{Yes} | \text{Spam}) = \frac{40}{60} = 0.667
+\]
+\end{example}
+
+\subsection{MLE for Continuous Features: Gaussian Model}
+
+If features are continuous and you assume a Gaussian likelihood:
+
+\begin{equation}
+P(x_i | y) = \mathcal{N}(x_i; \mu_{iy}, \sigma_{iy}^2) \quad \Rightarrow \quad P(x_i | y) = \frac{1}{\sqrt{2\pi\sigma_{iy}^2}} \exp\left(-\frac{(x_i - \mu_{iy})^2}{2\sigma_{iy}^2}\right)
+\end{equation}
+
+Then MLE gives:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Gaussian MLE Parameters}]
+\begin{align}
+\hat{\mu}_{iy} &= \frac{1}{N_y} \sum_{j: y_j = y} x_{ij} \\
+\hat{\sigma}_{iy}^2 &= \frac{1}{N_y} \sum_{j: y_j = y} (x_{ij} - \hat{\mu}_{iy})^2
+\end{align}
+
+where $N_y$ is the number of samples in class $y$.
+\end{tcolorbox}
+
+\begin{center}
+\colorbox{cyan!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Insight}\\[0.2cm]
+These are just the \textbf{sample mean and variance} of that feature within each class.
+}}
+\end{center}
+
+\subsection{Complete Example: Fruit Classification}
+
+Let's work through a complete example of Gaussian Naïve Bayes with continuous features.
+
+\begin{example}[Classifying Fruits by Weight]
+We have a dataset of fruits with their weights (in grams):
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Fruit} & \textbf{Weight (g)} \\
+\hline
+Apple & 150 \\
+Apple & 160 \\
+Apple & 155 \\
+Orange & 180 \\
+Orange & 190 \\
+Orange & 185 \\
+\hline
+\end{tabular}
+\caption{Training data for fruit classification}
+\end{table}
+
+We want to classify a new fruit with weight $x = 158$ g.
+\end{example}
+
+\subsubsection{Step 1: Estimate Gaussian Parameters (MLE)}
+
+\textbf{For Apples:}
+
+\begin{align}
+\mu_{\text{Apple}} &= \frac{150 + 160 + 155}{3} = \frac{465}{3} = 155 \\
+\sigma_{\text{Apple}}^2 &= \frac{(150-155)^2 + (160-155)^2 + (155-155)^2}{3} \\
+&= \frac{25 + 25 + 0}{3} = \frac{50}{3} \approx 16.67
+\end{align}
+
+\textbf{For Oranges:}
+
+\begin{align}
+\mu_{\text{Orange}} &= \frac{180 + 190 + 185}{3} = \frac{555}{3} = 185 \\
+\sigma_{\text{Orange}}^2 &= \frac{(180-185)^2 + (190-185)^2 + (185-185)^2}{3} \\
+&= \frac{25 + 25 + 0}{3} = \frac{50}{3} \approx 16.67
+\end{align}
+
+\begin{observation}
+Notice that both classes have the same variance in this example. This is coincidental and won't always be the case in real data.
+\end{observation}
+
+\subsubsection{Step 2: Compute the Likelihood for a New Sample}
+
+New fruit weight: $x = 158$ g.
+
+Using the Gaussian likelihood formula:
+\[
+P(x | y) = \frac{1}{\sqrt{2\pi\sigma_y^2}} \exp\left(-\frac{(x - \mu_y)^2}{2\sigma_y^2}\right)
+\]
+
+\textbf{For Apple:}
+
+\begin{align}
+P(158 | \text{Apple}) &= \frac{1}{\sqrt{2\pi \cdot 16.67}} \exp\left(-\frac{(158-155)^2}{2 \cdot 16.67}\right) \\
+&= \frac{1}{\sqrt{104.67}} \exp\left(-\frac{9}{33.34}\right) \\
+&\approx 0.097 \cdot \exp(-0.27) \\
+&\approx 0.097 \cdot 0.763 \\
+&\approx 0.072
+\end{align}
+
+\textbf{For Orange:}
+
+\begin{align}
+P(158 | \text{Orange}) &= \frac{1}{\sqrt{2\pi \cdot 16.67}} \exp\left(-\frac{(158-185)^2}{2 \cdot 16.67}\right) \\
+&= \frac{1}{\sqrt{104.67}} \exp\left(-\frac{729}{33.34}\right) \\
+&\approx 0.097 \cdot \exp(-21.87) \\
+&\approx 0.097 \cdot 3.0 \times 10^{-10} \\
+&\approx 1.6 \times 10^{-11}
+\end{align}
+
+\begin{observation}
+The likelihood for Apple is much higher than for Orange. This makes intuitive sense: 158g is much closer to the Apple mean (155g) than to the Orange mean (185g).
+\end{observation}
+
+\subsubsection{Step 3: Multiply by Class Prior}
+
+Assume equal priors (we have 3 apples and 3 oranges):
+
+\[
+P(\text{Apple}) = P(\text{Orange}) = 0.5
+\]
+
+Computing the posterior (proportional to likelihood × prior):
+
+\begin{align}
+P(\text{Apple} | 158) &\propto P(158 | \text{Apple}) \cdot P(\text{Apple}) \\
+&= 0.072 \cdot 0.5 \\
+&\approx 0.036
+\end{align}
+
+\begin{align}
+P(\text{Orange} | 158) &\propto P(158 | \text{Orange}) \cdot P(\text{Orange}) \\
+&= 1.6 \times 10^{-11} \cdot 0.5 \\
+&\approx 8 \times 10^{-12}
+\end{align}
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Prediction: Apple}, because posterior probability is much higher.\\[0.2cm]
+$P(\text{Apple} | 158) \approx 0.036 \gg P(\text{Orange} | 158) \approx 8 \times 10^{-12}$
+}}
+\end{center}
+
+\subsection{Key Takeaways from the Example}
+
+\begin{enumerate}
+    \item \textbf{Parameter Estimation}: We used MLE to estimate $\mu$ and $\sigma^2$ from the training data
+    
+    \item \textbf{Likelihood Computation}: We computed $P(x|y)$ using the Gaussian formula with the estimated parameters
+    
+    \item \textbf{Prior Incorporation}: We multiplied by the class priors (which were equal in this case)
+    
+    \item \textbf{Decision}: We chose the class with the higher posterior probability
+    
+    \item \textbf{Distance Matters}: The prediction makes intuitive sense—158g is much closer to the Apple distribution than the Orange distribution
+\end{enumerate}
+
+\begin{remark}
+In practice, when computing posteriors for multiple classes, we often work with log-probabilities to avoid numerical underflow:
+\[
+\log P(y | \mathbf{x}) = \log P(y) + \sum_{i=1}^{d} \log P(x_i | y) - \log P(\mathbf{x})
+\]
+
+Since we're comparing classes, we can ignore the $\log P(\mathbf{x})$ term (it's the same for all classes).
+\end{remark}
+
+\section{Nonparametric Classifiers}
+
+\subsection{Introduction to Nonparametric Methods}
+
+So far, we've discussed parametric approaches (like Gaussian Naïve Bayes) that assume a specific form for the probability distribution. Now we turn to \textbf{nonparametric methods}.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Nonparametric Methods}]
+Given a set of examples, model the density function of the data \textbf{without making any assumptions about the form of the distribution} (e.g., Gaussian distribution).
+
+\begin{itemize}
+    \item Estimate the probability density function \textbf{directly from the samples}
+    \item No predetermined functional form (e.g., no assumption of Gaussian, exponential, etc.)
+\end{itemize}
+\end{tcolorbox}
+
+\begin{observation}
+The term "nonparametric" is somewhat misleading—these methods often have parameters (like bin width in histograms or bandwidth in kernel density estimation), but they don't assume a specific parametric form for the underlying distribution.
+\end{observation}
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Idea}\\[0.2cm]
+The simplest form of nonparametric density estimation is the \textbf{histogram}.
+}}
+\end{center}
+
+\subsection{Histogram-Based Density Estimation}
+
+The histogram is the most intuitive nonparametric density estimator.
+
+\subsubsection{How Histograms Work}
+
+\begin{definition}[Histogram Density Estimator]
+Dividing the sample space into a number of bins and approximate the density at the \textbf{center of each bin} by the \textbf{fraction} of points in the training data that fall into the corresponding bin:
+
+\[
+p_H(x) = \frac{1}{N} \cdot \frac{\# \text{ of } x^{(k)} \text{ in same bin as } x}{\text{width of bin}}
+\]
+
+where $N$ is the total number of training samples.
+\end{definition}
+
+\begin{observation}
+The histogram essentially counts how many data points fall into each bin and normalizes by the bin width and total number of samples to create a probability density estimate.
+\end{observation}
+
+\subsubsection{Histogram Parameters}
+
+The histogram requires two "parameters" to be defined:
+
+\begin{enumerate}
+    \item \textbf{Bin width}: Determines the resolution of the density estimate
+    \item \textbf{Starting position} of the first bin: Determines where the bins are anchored
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    width=12cm,
+    height=6cm,
+    ybar interval,
+    xmin=2, xmax=16,
+    ymin=0, ymax=0.16,
+    xlabel={$x$},
+    ylabel={$p(x)$},
+    xtick={2,4,6,8,10,12,14,16},
+    ytick={0,0.02,0.04,0.06,0.08,0.10,0.12,0.14,0.16},
+    ymajorgrids=true,
+    grid style=dashed,
+]
+\addplot+[ybar interval, fill=blue!50, draw=black] coordinates {
+    (2,0.02) (4,0.08) (6,0.13) (8,0.14) (10,0.15) (12,0.12) (14,0.06) (16,0.02)
+};
+\addplot[red, thick, smooth, domain=2:16, samples=100] {0.08*exp(-((x-8)^2)/8) + 0.06*exp(-((x-11)^2)/6)};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\subsection{Drawbacks of Histograms}
+
+Despite their simplicity, histograms have several significant limitations:
+
+\begin{enumerate}
+    \item \textbf{Dependence on starting position}: The density estimate depends on the starting position of the bins
+    \begin{itemize}
+        \item Different starting positions can produce different density estimates
+        \item For multivariate data, the density estimate is also affected by the \textbf{orientation of the bins}
+    \end{itemize}
+    
+    \item \textbf{Discontinuities}: The discontinuities of the estimate are not due to the underlying density; they are only an artifact of the chosen bin locations
+    \begin{itemize}
+        \item These discontinuities make it very difficult to grasp the \textbf{structure} of the data
+        \item The true underlying distribution is typically smooth, but histograms create artificial jumps
+    \end{itemize}
+    
+    \item \textbf{Curse of dimensionality}: A much more serious problem is the \textbf{curse of dimensionality}, since the number of bins grows exponentially with the number of dimensions
+    \begin{itemize}
+        \item In high dimensions we would require a very large number of examples or else most of the bins would be empty
+        \item With $d$ dimensions and $k$ bins per dimension, we need $k^d$ total bins
+    \end{itemize}
+\end{enumerate}
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\textbf{The Curse of Dimensionality}\\[0.2cm]
+As the number of features or dimensions increases, the amount of data required to effectively cover the feature space increases \textbf{exponentially}.
+}}
+\end{center}
+
+\subsection{The Curse of Dimensionality}
+
+\begin{definition}[Curse of Dimensionality]
+The curse of dimensionality refers to the challenges and issues that arise when working with high-dimensional data in machine learning.
+
+As the number of features or dimensions in a dataset increases, the amount of data required to effectively cover the feature space also increases exponentially.
+\end{definition}
+
+\subsubsection{Why It Matters}
+
+\begin{itemize}
+    \item \textbf{Exponential growth}: With $d$ dimensions, if each dimension is divided into $k$ bins, we need $k^d$ bins total
+    
+    \item \textbf{Data sparsity}: In high dimensions, data points become increasingly sparse
+    \begin{itemize}
+        \item Most bins will be empty unless we have an enormous amount of data
+        \item The distance between points increases, making it harder to find meaningful patterns
+    \end{itemize}
+    
+    \item \textbf{Sample size requirements}: To maintain the same density of samples, we need exponentially more data as dimensions increase
+\end{itemize}
+
+\begin{example}[Exponential Growth of Bins]
+\begin{itemize}
+    \item 1D: 10 bins per dimension $\rightarrow$ 10 bins total
+    \item 2D: 10 bins per dimension $\rightarrow$ 100 bins total
+    \item 3D: 10 bins per dimension $\rightarrow$ 1,000 bins total
+    \item 10D: 10 bins per dimension $\rightarrow$ 10,000,000,000 bins total!
+\end{itemize}
+\end{example}
+
+\subsubsection{Mitigating the Curse of Dimensionality}
+
+To mitigate the curse of dimensionality, various techniques are employed:
+
+\begin{itemize}
+    \item \textbf{Feature selection}: Choose only the most relevant features
+    
+    \item \textbf{Dimensionality reduction}: Techniques like Principal Component Analysis (PCA) reduce the number of dimensions while preserving important characteristics
+    
+    \item \textbf{Regularization methods}: Add constraints to prevent overfitting in high dimensions
+    
+    \item \textbf{Domain knowledge}: Use expert knowledge to identify which features are truly important
+\end{itemize}
+
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\textbf{Practical Implication}\\[0.2cm]
+In practice, nonparametric methods like histograms work well for 1D or 2D data, but become impractical for high-dimensional data. This motivates the development of more sophisticated techniques.
+}}
+\end{center}
+
+\subsection{Probability Density: Mathematical Foundation}
+
+Before we proceed with more advanced nonparametric techniques, let's return to the basic definition of probability to get a solid idea of what we are trying to accomplish.
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Probability in a Region}]
+The probability that a vector $\mathbf{x}$, drawn from a distribution $P(\mathbf{x})$, will fall in a region $\mathcal{R}$ of the sample space is:
+
+\[
+P = \int_{\mathbf{x}' \in \mathcal{R}} P(\mathbf{x}') \, d\mathbf{x}'
+\]
+
+where:
+\begin{itemize}
+    \item $\mathbf{x}$ is a particular vector we are asking about ("drawn from the distribution")
+    \item $\mathbf{x}'$ is a dummy variable used to sum/integrate over all vectors in $\mathcal{R}$
+    \item $\mathcal{R}$ is a region in the feature space
+\end{itemize}
+\end{tcolorbox}
+
+\begin{observation}
+This integral formulation is the foundation for all density estimation methods. The key insight is that if we can estimate the probability in small regions around each point, we can reconstruct the entire probability density function.
+\end{observation}
+
+\subsubsection{Key Concepts}
+
+\begin{itemize}
+    \item \textbf{Probability density function} $P(\mathbf{x})$: Describes how probability is distributed over the feature space
+    
+    \item \textbf{Integration over a region}: The probability of falling in region $\mathcal{R}$ is the integral of the density over that region
+    
+    \item \textbf{Dummy variable} $\mathbf{x}'$: Used for integration; represents all possible points in the region
+    
+    \item \textbf{Normalization}: The integral over the entire space must equal 1:
+    \[
+    \int_{\text{all space}} P(\mathbf{x}') \, d\mathbf{x}' = 1
+    \]
+\end{itemize}
+
+\begin{remark}
+For discrete distributions, the integral becomes a sum:
+\[
+P = \sum_{\mathbf{x}' \in \mathcal{R}} P(\mathbf{x}')
+\]
+
+This is the discrete analog of the continuous case and is what we use when working with categorical data.
+\end{remark}
+
+\subsection{Binomial Distribution Approach}
+
+Now let's develop a more rigorous approach to nonparametric density estimation based on probability theory.
+
+\subsubsection{Setup}
+
+Suppose now that $N$ vectors $\{\mathbf{x}(1), \mathbf{x}(2), \ldots, \mathbf{x}(N)\}$ are drawn \textbf{independently and identically distributed (i.i.d.)} from the distribution. The probability that $k$ of these $N$ vectors fall in $\mathcal{R}$ is given by the binomial distribution:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Binomial Distribution}]
+\[
+P(k) = \binom{N}{k} P^k (1-P)^{N-k}
+\]
+
+where:
+\[
+\binom{N}{k} = \frac{N!}{k!(N-k)!}
+\]
+
+and the expected value for $k$ is:
+\[
+\mathbb{E}[k] = NP
+\]
+\end{tcolorbox}
+
+\begin{observation}
+\textbf{Recall}: The expectation is the average value we would get if we repeated drawing samples many times.
+
+The binomial distribution tells us how likely it is to observe exactly $k$ points in region $\mathcal{R}$ when we draw $N$ samples, given that each point has probability $P$ of falling in $\mathcal{R}$.
+\end{observation}
+
+\subsubsection{Mean and Variance of the Ratio}
+
+The mean and variance of the ratio $k/N$ are:
+
+\begin{align}
+\mathbb{E}\left[\frac{k}{N}\right] &= P \\
+\text{Var}\left[\frac{k}{N}\right] &= \mathbb{E}\left[\left(\frac{k}{N} - P\right)^2\right] = \frac{P(1-P)}{N}
+\end{align}
+
+\begin{observation}
+Therefore, as $N \to \infty$, the distribution becomes \textbf{sharper}, the variance gets \textbf{smaller}, thus we can obtain a \textbf{better estimate} of the probability $P$ from the mean fraction of the points that fall within $\mathcal{R}$:
+
+\[
+P \cong \frac{k}{N}
+\]
+
+This is the law of large numbers in action: with more samples, our estimate becomes more accurate.
+\end{observation}
+
+\subsection{Density Estimation Formula}
+
+\subsubsection{Small Region Assumption}
+
+On the other hand, if we assume that $\mathcal{R}$ is \textbf{so small} that $P(\mathbf{x})$ \textbf{does not vary} appreciably within it, then:
+
+\[
+\int_{\mathcal{R}} P(\mathbf{x}') \, d\mathbf{x}' \cong P(\mathbf{x}) V
+\]
+
+where $V$ is the \textbf{volume enclosed} by region $\mathcal{R}$.
+
+\begin{observation}
+This approximation assumes that the probability density is approximately constant within the small region $\mathcal{R}$, so we can pull $P(\mathbf{x})$ out of the integral, leaving just the volume $V$.
+\end{observation}
+
+\subsubsection{Combining the Results}
+
+Merging with the previous result, we obtain:
+
+\begin{align}
+P &= \int_{\mathcal{R}} p(\mathbf{x}') \, d\mathbf{x}' \cong p(\mathbf{x}) V \\
+P &\cong \frac{k}{N}
+\end{align}
+
+Therefore:
+\[
+p(\mathbf{x}) \cong \frac{k}{NV}
+\]
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Key Result}\\[0.2cm]
+This estimate becomes more accurate as we \textbf{increase the number of sample points} $N$ and \textbf{shrink the volume} $V$.
+}}
+\end{center}
+
+\subsection{The Trade-off Problem}
+
+In practice, the value of $N$ (the total number of examples) is fixed.
+
+\subsubsection{The Dilemma}
+
+\begin{itemize}
+    \item In order to improve the accuracy of the estimate $P(\mathbf{x})$ we could let $V$ to approach zero, but then the region $\mathcal{R}$ would become so small that it would enclose no examples
+    
+    \item This means that in practice, we will have to find a \textbf{compromise value of the volume} $V$:
+    \begin{itemize}
+        \item \textbf{Large enough} to include enough examples within $\mathcal{R}$
+        \item \textbf{Small enough} to support the assumption that $P(\mathbf{x})$ is constant within $\mathcal{R}$
+    \end{itemize}
+\end{itemize}
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\textbf{The Fundamental Trade-off}\\[0.2cm]
+\begin{itemize}
+    \item Too large $V$ $\rightarrow$ Poor approximation (density varies within region)
+    \item Too small $V$ $\rightarrow$ Too few samples (high variance in estimate)
+\end{itemize}
+}}
+\end{center}
+
+\subsection{General Nonparametric Density Estimation Formula}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{General Expression for Nonparametric Density Estimation}]
+\[
+P(\mathbf{x}) \cong \frac{k}{NV}
+\]
+
+where:
+\begin{itemize}
+    \item $V$ is the volume surrounding $\mathbf{x}$
+    \item $N$ is the total number of examples
+    \item $k$ is the number of examples inside $V$
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Two Approaches to Nonparametric Density Estimation}
+
+When applying this result to practical density estimation problems, two basic approaches can be adopted:
+
+\begin{enumerate}
+    \item \textbf{Fix $V$ and determine $k$ from the data}
+    \begin{itemize}
+        \item This leads to \textbf{kernel density estimation (KDE)}, e.g., Parzen window
+        \item We define a fixed-size region around each point and count how many samples fall within it
+    \end{itemize}
+    
+    \item \textbf{Fix $k$ and determine $V$ from the data}
+    \begin{itemize}
+        \item This gives rise to the \textbf{$k$-nearest-neighbor ($k$-NN) approach}
+        \item We find the $k$ nearest neighbors and measure the volume needed to enclose them
+    \end{itemize}
+\end{enumerate}
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\textbf{Convergence Property}\\[0.2cm]
+Both $k$-NN and KDE converge to the true probability density as $N \to \infty$, provided that:
+\begin{itemize}
+    \item $V$ shrinks with $N$
+    \item $k$ grows with $N$ appropriately
+\end{itemize}
+}}
+\end{center}
+
+\subsubsection{Comparison of Approaches}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{6cm}|p{6cm}|}
+\hline
+\textbf{Kernel Density Estimation (KDE)} & \textbf{$k$-Nearest Neighbor ($k$-NN)} \\
+\hline
+Fix volume $V$ & Fix number of neighbors $k$ \\
+Count samples $k$ in fixed region & Adjust volume $V$ to include $k$ samples \\
+Smooth density estimate & Adaptive to local density \\
+Can be zero in sparse regions & Always uses $k$ neighbors \\
+Examples: Parzen window, Gaussian kernel & Examples: $k$-NN classifier, $k$-NN regressor \\
+\hline
+\end{tabular}
+\caption{Comparison of KDE and $k$-NN approaches}
+\end{table}
+
+\begin{observation}
+\textbf{KDE} produces smoother estimates but may miss structure in sparse regions, while \textbf{$k$-NN} adapts to local density but can produce less smooth estimates. The choice depends on the specific application and data characteristics.
+\end{observation}
+
+\subsubsection{Choosing Parameters}
+
+\begin{itemize}
+    \item \textbf{For KDE}: Choose bandwidth (related to $V$)
+    \begin{itemize}
+        \item Too small: noisy, overfitting
+        \item Too large: oversmoothing, missing details
+    \end{itemize}
+    
+    \item \textbf{For $k$-NN}: Choose $k$
+    \begin{itemize}
+        \item Too small: sensitive to noise, high variance
+        \item Too large: oversmoothing, high bias
+    \end{itemize}
+\end{itemize}
+
+\begin{remark}
+Both methods require careful tuning of their parameters (bandwidth for KDE, $k$ for $k$-NN). Cross-validation is commonly used to select these parameters in practice.
+\end{remark}
+
+\section{k-Nearest Neighbors (k-NN)}
+
+\subsection{Visual Comparison: k-NN vs. Parzen Windows}
+
+\begin{center}
+\colorbox{blue!15}{\parbox{0.9\textwidth}{
+\textbf{Key Difference:}
+\begin{itemize}
+    \item \textbf{Parzen Window}: Fixed volume $V$ (radius $R$), variable $k$
+    \item \textbf{k-NN}: Fixed $k$ (number of neighbors), variable volume $V$ (radius $R$)
+\end{itemize}
+}}
+\end{center}
+
+\begin{observation}
+In the visual comparison:
+\begin{itemize}
+    \item \textbf{Parzen Window}: Uses a fixed-size circle (radius $R$) around the query point (yellow cross). The number of points inside varies depending on local density.
+    
+    \item \textbf{k-NN (e.g., 3-NN)}: The circle grows or shrinks to always include exactly $k=3$ nearest neighbors. In dense regions, the circle is small; in sparse regions, it's large.
+\end{itemize}
+\end{observation}
+
+\subsection{Parzen Window: Practical Considerations}
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+\textbf{When to Use Parzen Windows}\\[0.2cm]
+Parzen window is great for \textbf{low-dimensional data} (2–3 features, maybe up to 5).
+}}
+\end{center}
+
+\begin{itemize}
+    \item In higher dimensions, the method becomes \textbf{computationally expensive}, and the density estimates are \textbf{unreliable} because of the curse of dimensionality
+    
+    \item For this reason, in A.A. 2025–2026, we focus on other methods better suited for high-dimensional data
+\end{itemize}
+
+\begin{remark}
+While Parzen windows provide smooth density estimates, they suffer from the curse of dimensionality. As dimensions increase, the fixed window size becomes either too large (oversmoothing) or too small (too few samples), making the method impractical for modern high-dimensional datasets.
+\end{remark}
+
+\subsection{k-Nearest Neighbors Algorithm}
+
+The k-NN algorithm is one of the simplest and most intuitive machine learning algorithms.
+
+\subsubsection{Basic Principle}
+
+The volume is grown surrounding the estimation point $\mathbf{x}$, until it encloses a total of $k$ data points.
+
+\begin{center}
+\begin{tikzpicture}[scale=1.2]
+% Draw boundary
+\draw[thick] (0,0) rectangle (5,5);
+
+% Draw scattered points
+\foreach \x/\y in {0.5/1.2, 1.0/0.8, 1.5/2.0, 2.0/1.5, 2.5/3.0, 3.0/2.5, 3.5/4.0, 4.0/3.5, 4.5/1.0, 1.0/4.0, 2.0/4.5, 3.0/0.5, 4.0/1.5, 1.5/3.5, 3.5/1.5, 2.5/0.8, 0.8/3.0, 4.2/2.8, 1.8/1.0, 3.2/3.8}
+{
+    \fill (\x,\y) circle (2pt);
+}
+
+% Query point
+\node[cross out, draw=red, thick, minimum size=8pt] at (2.5,2.5) {};
+
+% Circle around query point
+\draw[dashed, thick, blue] (2.5,2.5) circle (0.8);
+
+% Label
+\node[right] at (3.5,2.5) {$R$};
+\node[below] at (2.5,1.5) {$\mathbf{x}$};
+
+% Formula
+\node[align=left, draw, fill=white] at (4.2,4.5) {$V = \pi R^2$\\[0.1cm]$P(\mathbf{x}) \cong \frac{k}{N \pi R^2}$};
+\end{tikzpicture}
+\end{center}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{k-NN Density Estimation}]
+\[
+P(\mathbf{x}) \cong \frac{k}{NV}
+\]
+
+where:
+\begin{itemize}
+    \item $V$ is the volume surrounding $\mathbf{x}$
+    \item $N$ is the total number of examples
+    \item $k$ is the number of examples inside $V$ (fixed)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{k-NN for Classification}
+
+\subsubsection{1-Nearest Neighbor (1-NN)}
+
+Given an unknown point $\mathbf{x}^*$, we consider $s_i \in \{s_1, \ldots, s_N\} = S$ the nearest point (NN) of the point $\mathbf{x}^*$ if:
+
+\[
+d(\mathbf{x}^*, s_i) = \min_l d(\mathbf{x}^*, s_l), \quad l = 1 \ldots N
+\]
+
+where $d(\cdot)$ is a \textbf{distance measure} defined on the feature space.
+
+\begin{observation}
+If you interpret each point of set $S$ as a prototype of a class, you can then see the equation above as a rule of classification \textbf{1-NN} associating the sample $\mathbf{x}$ to the class $j$ to which the point $s_i$ belongs.
+\end{observation}
+
+\begin{example}[Common Distance Measures]
+
+    
+\begin{itemize}
+    \item \textbf{Euclidean distance}: $d(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{d} (x_i - y_i)^2}$
+    
+    \item \textbf{Manhattan distance}: $d(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{d} |x_i - y_i|$
+    
+    \item \textbf{Minkowski distance}: $d(\mathbf{x}, \mathbf{y}) = \left(\sum_{i=1}^{d} |x_i - y_i|^p\right)^{1/p}$
+\end{itemize}
+\end{example}
+
+\subsubsection{Generalizing to k-NN}
+
+Rule 1-NN can be generalised to define a \textbf{$k$-NN rule}, which consists of determining the $k$ points belonging to the set $S$ closest to the observation $\mathbf{x}$.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{k-NN Classification Rule}]
+The classification rule $k$-NN associates observation $\mathbf{x}$ with class $i$ having the \textbf{largest number of elements} among the nearest $k$.
+
+We call $U(\mathbf{x})$ the set of $k$ points closer to $\mathbf{x}$.
+\end{tcolorbox}
+
+\subsubsection{Majority Voting}
+
+For example, with odd $k$ and two classes, $y_1$ and $y_2$, the decision rule can choose the class with the most samples in $U(\mathbf{x})$. This is called \textbf{majority voting}.
+
+\begin{center}
+\colorbox{cyan!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Majority Voting}\\[0.2cm]
+Choose the class that appears most frequently among the $k$ nearest neighbors.
+}}
+\end{center}
+
+\begin{example}[3-NN Classification]
+Suppose we have $k=3$ and two classes (red and blue):
+\begin{itemize}
+    \item Query point $\mathbf{x}^*$ has 3 nearest neighbors: 2 red, 1 blue
+    \item Majority voting: $\mathbf{x}^*$ is classified as \textbf{red}
+\end{itemize}
+\end{example}
+
+\subsection{Choosing k}
+
+The choice of $k$ is critical for k-NN performance:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{3cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Value of k} & \textbf{Advantages} & \textbf{Disadvantages} \\
+\hline
+Small $k$ (e.g., 1-3) & 
+- Captures local structure\\
+- More flexible decision boundaries & 
+- Sensitive to noise\\
+- High variance\\
+- Overfitting \\
+\hline
+Large $k$ & 
+- More robust to noise\\
+- Smoother decision boundaries\\
+- Lower variance & 
+- May miss local patterns\\
+- High bias\\
+- Underfitting \\
+\hline
+Odd $k$ & 
+- Avoids ties in binary classification & 
+- \\
+\hline
+\end{tabular}
+\caption{Trade-offs in choosing $k$}
+\end{table}
+
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\textbf{Rule of Thumb}\\[0.2cm]
+\begin{itemize}
+    \item Start with $k = \sqrt{N}$ where $N$ is the number of training samples
+    \item Use cross-validation to find the optimal $k$
+    \item For binary classification, use odd $k$ to avoid ties
+\end{itemize}
+}}
+\end{center}
+
+\subsection{Advantages and Disadvantages of k-NN}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\textbf{Advantages} & \textbf{Disadvantages} \\
+\hline
+$\bullet$ Simple and intuitive & $\bullet$ Computationally expensive at prediction time \\
+$\bullet$ No training phase (lazy learning) & $\bullet$ Requires storing all training data \\
+$\bullet$ Naturally handles multi-class problems & $\bullet$ Sensitive to irrelevant features \\
+$\bullet$ Non-parametric (no assumptions about data distribution) & $\bullet$ Sensitive to the scale of features \\
+$\bullet$ Can capture complex decision boundaries & $\bullet$ Curse of dimensionality \\
+$\bullet$ Easy to update with new data & $\bullet$ Choosing optimal $k$ can be difficult \\
+\hline
+\end{tabular}
+\caption{Advantages and disadvantages of k-NN}
+\end{table}
+
+\subsection{Practical Considerations}
+
+\subsubsection{Feature Scaling}
+
+\begin{observation}
+k-NN is \textbf{highly sensitive to feature scaling} because it relies on distance calculations. Features with larger ranges will dominate the distance metric.
+\end{observation}
+
+\textbf{Solution}: Always normalize or standardize features before applying k-NN:
+\begin{itemize}
+    \item \textbf{Min-Max Normalization}: Scale to $[0, 1]$: $x' = \frac{x - \min(x)}{\max(x) - \min(x)}$
+    
+    \item \textbf{Standardization}: Scale to mean 0, std 1: $x' = \frac{x - \mu}{\sigma}$
+\end{itemize}
+
+\subsubsection{Computational Complexity}
+
+\begin{itemize}
+    \item \textbf{Training time}: $O(1)$ (no training, just store data)
+    \item \textbf{Prediction time}: $O(Nd)$ where $N$ is training set size, $d$ is dimensionality
+    \item For large datasets, use approximate nearest neighbor algorithms (e.g., KD-trees, Ball trees, LSH)
+\end{itemize}
+
+\begin{remark}
+k-NN is called a \textbf{lazy learner} or \textbf{instance-based learner} because it doesn't learn a model during training. Instead, it memorizes the training data and performs all computation at prediction time. This makes training fast but prediction slow, especially for large datasets.
+\end{remark}
+
+\subsection{Distance Metrics in k-NN}
+
+\subsubsection{Euclidean Distance}
+
+To calculate the distance, we usually use \textbf{Euclidean distance}.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+% Three subfigures showing 1-NN, 2-NN, 3-NN
+\foreach \k/\xshift in {1/0, 2/5, 3/10} {
+    \begin{scope}[shift={(\xshift,0)}]
+        % Draw frame
+        \draw[thick] (0,0) rectangle (4,4);
+        
+        % Draw blue minus points
+        \foreach \x/\y in {0.5/0.5, 1.0/3.5, 0.8/2.0, 1.5/1.0, 3.5/0.8, 3.2/3.5, 2.8/1.5} {
+            \node[blue, scale=1.5] at (\x,\y) {$-$};
+        }
+        
+        % Draw red plus points
+        \foreach \x/\y in {3.0/0.5, 3.5/2.5, 2.5/3.0, 2.0/1.0, 3.8/1.8} {
+            \node[red, scale=1.5] at (\x,\y) {$+$};
+        }
+        
+        % Query point
+        \node[scale=0.8] at (2,2) {$\times$};
+        
+        % Draw circle
+        \pgfmathsetmacro{\radius}{0.5 + \k*0.3}
+        \draw[red, dashed, thick] (2,2) circle (\radius);
+        
+        % Label
+        \node[below] at (2,-0.3) {(\alph{figure}) \k-nearest neighbor};
+    \end{scope}
+}
+\end{tikzpicture}
+\end{center}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Euclidean Distance Formula}]
+Given two points $\mathbf{p} = (p_1, p_2, \ldots, p_n)$ and $\mathbf{q} = (q_1, q_2, \ldots, q_n)$:
+
+\[
+d(\mathbf{p}, \mathbf{q}) = \sqrt{(q_1 - p_1)^2 + (q_2 - p_2)^2 + \ldots + (q_n - p_n)^2} = \sqrt{\sum_{i=1}^{n} (q_i - p_i)^2}
+\]
+\end{tcolorbox}
+
+\begin{observation}
+The visual shows how the radius grows as $k$ increases:
+\begin{itemize}
+    \item \textbf{1-NN}: Small circle, includes only the closest neighbor
+    \item \textbf{2-NN}: Medium circle, includes 2 closest neighbors
+    \item \textbf{3-NN}: Larger circle, includes 3 closest neighbors
+\end{itemize}
+The decision boundary depends on which class dominates within the circle.
+\end{observation}
+
+\subsection{Weighted k-NN}
+
+\subsubsection{The Problem with Equal Weights}
+
+All the closest neighbors have the same weights, meaning that they are equally important to make a decision.
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\textbf{Issue:} Therefore, the algorithm is very sensitive to the number of $k$.
+}}
+\end{center}
+
+\subsubsection{Solution: Distance-Based Weighting}
+
+This can be reduced by \textbf{weighing the contribution of neighbors based on distance} $w = 1/d(\mathbf{x}^*, s_i)$, such that the \textbf{closest} neighbor would have more \textbf{importance}.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Weighted k-NN}]
+Instead of simple majority voting, each neighbor contributes with weight:
+\[
+w_i = \frac{1}{d(\mathbf{x}^*, s_i)}
+\]
+
+The class with the highest weighted sum is chosen:
+\[
+\text{class}(\mathbf{x}^*) = \arg\max_c \sum_{i \in U(\mathbf{x}^*)} w_i \cdot \mathbb{1}(y_i = c)
+\]
+
+where $\mathbb{1}(y_i = c)$ is 1 if neighbor $i$ belongs to class $c$, and 0 otherwise.
+\end{tcolorbox}
+
+\begin{example}[Weighted vs. Unweighted k-NN]
+Consider $k=3$ with neighbors at distances 1, 2, and 5:
+\begin{itemize}
+    \item \textbf{Unweighted}: Each neighbor gets weight 1
+    \item \textbf{Weighted}: Neighbors get weights $w_1 = 1/1 = 1.0$, $w_2 = 1/2 = 0.5$, $w_3 = 1/5 = 0.2$
+\end{itemize}
+The closest neighbor has much more influence in the weighted version.
+\end{example}
+
+\subsection{Importance of Feature Scaling (Revisited)}
+
+\subsubsection{Why k is Sensitive}
+
+The choice of $k$ is important because:
+\begin{itemize}
+    \item If $k$ is too \textbf{small}, the approach is \textbf{sensitive to noise}
+    \item If $k$ is too \textbf{large}, the neighborhood can include examples belonging to \textbf{other classes}
+\end{itemize}
+
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\textbf{Critical Requirement}\\[0.2cm]
+To operate correctly the attributes must have the \textbf{same value scale} and must therefore be \textbf{normalized} in the preprocessing phase.
+}}
+\end{center}
+
+\begin{observation}
+Without normalization, features with larger ranges will dominate the distance calculation, making features with smaller ranges essentially irrelevant to the classification decision.
+\end{observation}
+
+\subsection{Mahalanobis Distance}
+
+\subsubsection{When Euclidean Distance is Not Enough}
+
+Normalizing the scale may not be sufficient when there are different data distributions.
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+In such cases instead of using Euclidean distance, one can also try using \textbf{Mahalanobis distance}.
+}}
+\end{center}
+
+\subsubsection{Definition}
+
+The Mahalanobis distance is a measure of the distance between \textbf{a point and a distribution}. It's a generalized form of the Euclidean distance that accounts for \textbf{correlations between variables} and \textbf{different variances} along different axes.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Mahalanobis Distance Formula}]
+\[
+D = \sqrt{(\mathbf{x} - \boldsymbol{\mu})^T \boldsymbol{\Sigma}^{-1} (\mathbf{x} - \boldsymbol{\mu})}
+\]
+
+where:
+\begin{itemize}
+    \item $\mathbf{x}$ is the $n$-dimensional vector representing the point's coordinates
+    \item $\boldsymbol{\mu}$ is the $n$-dimensional vector representing the mean of the distribution
+    \item $\boldsymbol{\Sigma}$ is the $n \times n$ covariance matrix of the distribution
+    \item $\boldsymbol{\Sigma}^{-1}$ is the inverse of the covariance matrix
+\end{itemize}
+\end{tcolorbox}
+
+\begin{observation}
+When the covariance matrix is the identity matrix (i.e., features are uncorrelated and have unit variance), the Mahalanobis distance reduces to the Euclidean distance.
+\end{observation}
+
+\subsubsection{When to Use Mahalanobis Distance}
+
+\begin{enumerate}
+    \item \textbf{Correlated Features}: Changes in one feature are associated with changes in another.
+    
+    \item \textbf{Unequal Variances}: MD normalizes the distance based on the variances of the features, preventing features with larger variances from dominating the distance calculation.
+    
+    \item \textbf{Outlier Detection}: Outliers often have a large MD from the rest of the data points, especially if they deviate from the normal covariance pattern.
+    
+    \item \textbf{In high dimensional spaces}: ED can be problematic (\textit{curse of dimensionality}). Incorporating information about the covariance structure, can mitigate this issue to some extent.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\textbf{Euclidean Distance} & \textbf{Mahalanobis Distance} \\
+\hline
+Assumes features are independent & Accounts for correlations between features \\
+\hline
+Treats all directions equally & Accounts for different variances along different axes \\
+\hline
+Sensitive to feature scaling & Automatically accounts for different scales \\
+\hline
+Simple and fast to compute & More computationally expensive (requires covariance matrix) \\
+\hline
+Works well when features are uncorrelated and have similar variance & Better when features are correlated or have different variances \\
+\hline
+Distance from point to point & Distance from point to distribution \\
+\hline
+\end{tabular}
+\caption{Euclidean vs. Mahalanobis Distance}
+\end{table}
+
+\begin{example}[Mahalanobis Distance in Practice]
+Consider a 2D dataset where:
+\begin{itemize}
+    \item Feature 1 has variance 1
+    \item Feature 2 has variance 100
+    \item Features are positively correlated
+\end{itemize}
+
+\textbf{Euclidean distance} would be dominated by Feature 2 due to its large variance.
+
+\textbf{Mahalanobis distance} would:
+\begin{itemize}
+    \item Normalize for the different variances
+    \item Account for the correlation structure
+    \item Provide a more meaningful distance measure
+\end{itemize}
+\end{example}
+
+\begin{remark}
+Computing Mahalanobis distance requires estimating the covariance matrix $\boldsymbol{\Sigma}$, which can be challenging when:
+\begin{itemize}
+    \item The number of features is large relative to the number of samples
+    \item The covariance matrix is singular (not invertible)
+    \item There is insufficient data to reliably estimate correlations
+\end{itemize}
+In such cases, regularization techniques or dimensionality reduction may be needed before applying Mahalanobis distance.
+\end{remark}
+
+\subsubsection{Visual Example: Euclidean vs. Mahalanobis Distance}
+
+\begin{example}[Comparing Distance Metrics]
+Consider a dataset with a centroid at $(\bar{x}, \bar{y}) = (3.1, 3.0)$ and two data points:
+\begin{itemize}
+    \item \textbf{Data point 1}: $(5, 5)$ (yellow/orange point)
+    \item \textbf{Data point 2}: $(5, 1)$ (blue point)
+\end{itemize}
+
+\textbf{Using Euclidean Distance:}
+
+Distance from centroid to Data point 1:
+\[
+d_1 = \sqrt{(5-3.1)^2 + (5-3.0)^2} = \sqrt{1.9^2 + 2.0^2} = \sqrt{3.61 + 4.00} = 2.76
+\]
+
+Distance from centroid to Data point 2:
+\[
+d_2 = \sqrt{(5-3.1)^2 + (1-3.0)^2} = \sqrt{1.9^2 + (-2.0)^2} = \sqrt{3.61 + 4.00} = 2.76
+\]
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\centering
+\textbf{Based on Euclidean distance, both points have the same distance to the centroid!}
+}}
+\end{center}
+\end{example}
+
+\begin{observation}
+However, looking at the scatter plot, we can see that the green points (the cluster) are elongated along a diagonal direction. Data point 1 lies along this diagonal trend, while Data point 2 deviates significantly from it.
+
+Euclidean distance treats all directions equally and doesn't account for the correlation structure of the data.
+\end{observation}
+
+\begin{example}[Using Mahalanobis Distance]
+When we apply Mahalanobis distance to the same scenario:
+
+\begin{itemize}
+    \item \textbf{MD$_1$ = 2.26} (Data point 1 to centroid)
+    \item \textbf{MD$_2$ = 6.45} (Data point 2 to centroid)
+\end{itemize}
+
+\begin{center}
+\colorbox{orange!15}{\parbox{0.9\textwidth}{
+\textbf{Why is MD$_1$ so different from MD$_2$?}\\[0.2cm]
+Because MD takes into account the \textbf{correlation} in the data.
+}}
+\end{center}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item Data point 1 follows the natural diagonal trend of the cluster $\rightarrow$ smaller Mahalanobis distance
+    \item Data point 2 deviates from the correlation pattern $\rightarrow$ larger Mahalanobis distance
+\end{itemize}
+\end{example}
+
+\begin{remark}
+This example illustrates why Mahalanobis distance is superior when features are correlated:
+\begin{itemize}
+    \item \textbf{Euclidean distance}: Treats both points as equally distant (2.76)
+    \item \textbf{Mahalanobis distance}: Correctly identifies that point 2 is much farther from the distribution (6.45 vs 2.26)
+\end{itemize}
+Mahalanobis distance accounts for the shape and orientation of the data distribution, not just raw coordinate distances.
+\end{remark}
+
+\subsection{How to Select k in k-NN}
+
+Choosing the right value of $k$ is crucial for k-NN performance. Here are practical strategies:
+
+\subsubsection{Common Heuristics}
+
+\begin{itemize}
+    \item \textbf{Common values}: Often 3, 5, 7
+    
+    \item \textbf{Choose an odd number} to avoid ties (\textit{undetermined cases})
+    
+    \item \textbf{Use your training and validation data} to decide $k$:
+    \begin{itemize}
+        \item Change $k$ from $k=1$ until the validation performance decreases
+        \item Pay attention not to \textbf{underfit} and \textbf{overfit} the data
+        \item Finalize the decision of $k$ and use the same $k$ to classify the test data
+    \end{itemize}
+    
+    \item \textbf{A typical choice} is $k \approx \sqrt{N}$ where $N$ is the number of training samples
+\end{itemize}
+
+\begin{center}
+\colorbox{yellow!20}{\parbox{0.9\textwidth}{
+\textbf{Validation-Based Selection}\\[0.2cm]
+The most reliable method is to use cross-validation:
+\begin{enumerate}
+    \item Try different values of $k$ (e.g., 1, 3, 5, 7, 9, 11, ...)
+    \item Evaluate performance on validation set for each $k$
+    \item Select the $k$ that gives the best validation performance
+    \item Use this optimal $k$ on the test set
+\end{enumerate}
+}}
+\end{center}
+
+\subsubsection{Visual Understanding: k and Decision Boundaries}
+
+\begin{center}
+\begin{tikzpicture}[scale=1.0]
+% K=1
+\begin{scope}[shift={(0,0)}]
+    \node[above] at (1,2.2) {$K=1$};
+    \draw[thick] (0,0) rectangle (2,2);
+    \fill[blue!30] (0,0) rectangle (2,2);
+    \fill[green!30] (0.3,0.3) -- (1.5,0.3) -- (1.5,1.5) -- (0.3,1.5) -- cycle;
+    \fill[red!30] (0,1.8) rectangle (2,2);
+    
+    % Points
+    \foreach \x/\y in {0.2/1.9, 0.5/1.85, 0.8/1.92, 1.2/1.88, 1.5/1.9, 1.8/1.87} {
+        \fill[blue] (\x,\y) circle (1.5pt);
+    }
+    \foreach \x/\y in {0.5/0.5, 0.7/0.8, 0.9/0.6, 1.1/0.9, 1.3/0.7} {
+        \fill[red] (\x,\y) circle (1.5pt);
+    }
+    \foreach \x/\y in {0.3/0.2, 0.8/0.15, 1.3/0.25, 1.7/0.2} {
+        \fill[green] (\x,\y) circle (1.5pt);
+    }
+\end{scope}
+
+% K=3
+\begin{scope}[shift={(3,0)}]
+    \node[above] at (1,2.2) {$K=3$};
+    \draw[thick] (0,0) rectangle (2,2);
+    \fill[blue!30] (0,1.3) rectangle (2,2);
+    \fill[green!30] (0,0) rectangle (2,0.7);
+    \fill[red!30] (0,0.7) rectangle (2,1.3);
+    
+    % Points
+    \foreach \x/\y in {0.2/1.9, 0.5/1.85, 0.8/1.92, 1.2/1.88, 1.5/1.9, 1.8/1.87} {
+        \fill[blue] (\x,\y) circle (1.5pt);
+    }
+    \foreach \x/\y in {0.5/0.9, 0.7/1.1, 0.9/0.95, 1.1/1.15, 1.3/1.0} {
+        \fill[red] (\x,\y) circle (1.5pt);
+    }
+    \foreach \x/\y in {0.3/0.2, 0.8/0.15, 1.3/0.25, 1.7/0.2} {
+        \fill[green] (\x,\y) circle (1.5pt);
+    }
+\end{scope}
+
+% K=31
+\begin{scope}[shift={(6,0)}]
+    \node[above] at (1,2.2) {$K=31$};
+    \draw[thick] (0,0) rectangle (2,2);
+    \fill[blue!30] (0,1.5) rectangle (2,2);
+    \fill[green!30] (0,0) rectangle (2,1.0);
+    \fill[red!30] (0,1.0) rectangle (2,1.5);
+    
+    % Points
+    \foreach \x/\y in {0.2/1.9, 0.5/1.85, 0.8/1.92, 1.2/1.88, 1.5/1.9, 1.8/1.87} {
+        \fill[blue] (\x,\y) circle (1.5pt);
+    }
+    \foreach \x/\y in {0.5/1.2, 0.7/1.3, 0.9/1.15, 1.1/1.35, 1.3/1.25} {
+        \fill[red] (\x,\y) circle (1.5pt);
+    }
+    \foreach \x/\y in {0.3/0.3, 0.8/0.25, 1.3/0.35, 1.7/0.3} {
+        \fill[green] (\x,\y) circle (1.5pt);
+    }
+\end{scope}
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\colorbox{cyan!15}{\parbox{0.9\textwidth}{
+\textbf{What is the role of $k$? How does it relate to overfitting and underfitting?}
+}}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{$k=1$} (left): Very complex, jagged decision boundaries
+    \begin{itemize}
+        \item High variance, low bias
+        \item \textbf{Overfitting}: Captures noise in the training data
+        \item Sensitive to outliers
+    \end{itemize}
+    
+    \item \textbf{$k=3$} (middle): Moderate complexity, smoother boundaries
+    \begin{itemize}
+        \item Balanced bias-variance trade-off
+        \item Good generalization
+    \end{itemize}
+    
+    \item \textbf{$k=31$} (right): Very smooth, simple decision boundaries
+    \begin{itemize}
+        \item Low variance, high bias
+        \item \textbf{Underfitting}: May miss important patterns
+        \item Too much smoothing
+    \end{itemize}
+\end{itemize}
+
+\begin{observation}
+As $k$ increases:
+\begin{itemize}
+    \item Decision boundaries become smoother and simpler
+    \item The model becomes less sensitive to individual data points
+    \item Risk shifts from overfitting (small $k$) to underfitting (large $k$)
+\end{itemize}
+\end{observation}
+
+\subsubsection{Handling Ties (Undetermined Cases)}
+
+If there are undetermined cases (ties), there are some alternatives:
+
+\begin{enumerate}
+    \item \textbf{Arbitrary choice}: Randomly select one of the tied classes
+    
+    \item \textbf{Nearest average sample}: Assign $\mathbf{x}$ to the class (among those "tie") that has the nearest average sample (calculated between the $k_i$ samples)
+    
+    \item \textbf{Least distance}: Assign $\mathbf{x}$ to the class that has the $k_i$ samples with least distance from it
+\end{enumerate}
+
+\begin{example}[Handling a Tie]
+Suppose $k=4$ and we have:
+\begin{itemize}
+    \item 2 neighbors from class A at distances: 1.5, 2.0
+    \item 2 neighbors from class B at distances: 1.2, 3.5
+\end{itemize}
+
+\textbf{Solutions:}
+\begin{itemize}
+    \item \textbf{Arbitrary}: Randomly choose A or B
+    \item \textbf{Nearest average}: 
+    \begin{itemize}
+        \item Class A average: $(1.5 + 2.0)/2 = 1.75$
+        \item Class B average: $(1.2 + 3.5)/2 = 2.35$
+        \item Choose class A (smaller average distance)
+    \end{itemize}
+    \item \textbf{Least distance}: Choose class B (has the closest neighbor at 1.2)
+\end{itemize}
+\end{example}
+
+\begin{remark}
+The best strategy for handling ties depends on your specific problem:
+\begin{itemize}
+    \item \textbf{Nearest average}: Good when you want to consider all neighbors equally
+    \item \textbf{Least distance}: Good when you believe the closest neighbor is most important
+    \item \textbf{Best practice}: Use odd $k$ to avoid ties altogether in binary classification
+\end{itemize}
+\end{remark}
+
+\subsection{k-NN: Pros and Cons}
+
+\subsubsection{Advantages (Pros)}
+
+\begin{itemize}
+    \item \textbf{Almost no assumptions about the data}
+    \begin{itemize}
+        \item Non-parametric method
+        \item Doesn't assume any particular distribution
+        \item Works with any data structure
+    \end{itemize}
+    
+    \item \textbf{Non-parametric}
+    \begin{itemize}
+        \item No model parameters to learn
+        \item Flexible and adaptive to data
+    \end{itemize}
+    
+    \item \textbf{There is no training phase, cost is 0}
+    \begin{itemize}
+        \item Instant "training" - just store the data
+        \item Easy to update with new data
+        \item No convergence issues
+    \end{itemize}
+    
+    \item \textbf{Allow us to construct non-linear class boundaries and are therefore more flexible}
+    \begin{itemize}
+        \item Can capture complex decision boundaries
+        \item Not limited to linear separability
+        \item Adapts to local data structure
+    \end{itemize}
+\end{itemize}
+
+\begin{center}
+\colorbox{green!15}{\parbox{0.9\textwidth}{
+\textbf{k-NN gives locally defined decision boundaries between classes}\\[0.2cm]
+Unlike global methods (e.g., linear classifiers), k-NN creates decision boundaries that adapt to the local structure of the data, allowing for complex, non-linear separations.
+}}
+\end{center}
+
+\begin{observation}
+The figure shows how k-NN can create complex, non-linear decision boundaries (shown in red) that follow the natural clustering of the data. The decision boundary is not a simple line or hyperplane, but rather a complex curve that adapts to the local density and distribution of each class (label 1, 2, and 3).
+
+On the right, we see the resulting decision regions where each color represents the area classified as a particular label. The boundaries are highly non-linear and follow the intricate patterns in the data.
+\end{observation}
+
+\subsubsection{Disadvantages (Cons)}
+
+\begin{itemize}
+    \item \textbf{Need to handle missing data}
+    \begin{itemize}
+        \item Cannot compute distances with missing values
+        \item Requires imputation or special handling
+    \end{itemize}
+    
+    \item \textbf{The distance metric should be chosen carefully}
+    \begin{itemize}
+        \item Different metrics can give very different results
+        \item Must consider feature correlations and scales
+        \item May need domain knowledge
+    \end{itemize}
+    
+    \item \textbf{Sensitive to class outliers} (e.g., mislabeled training instances)
+    \begin{itemize}
+        \item Outliers can create incorrect local decision boundaries
+        \item No mechanism to detect or remove bad training examples
+    \end{itemize}
+    
+    \item \textbf{Sensitive to many irrelevant attributes} (which influence the distance)
+    \begin{itemize}
+        \item All features contribute equally to distance
+        \item Irrelevant features add noise
+        \item Feature selection is crucial
+    \end{itemize}
+    
+    \item \textbf{Computationally expensive:}
+    \begin{itemize}
+        \item \textbf{Poor scalability}: For each new example, we have to perform as many comparisons as there are labeled data
+        
+        \item \textbf{It is necessary to store all data points}: Therefore, the method is more appropriate when the number of samples $N$ is low
+        
+        \item Memory requirements grow linearly with dataset size
+        \item Prediction time is $O(Nd)$ where $N$ is training size, $d$ is dimensionality
+    \end{itemize}
+\end{itemize}
+
+\begin{center}
+\colorbox{red!15}{\parbox{0.9\textwidth}{
+\textbf{Scalability Issue}\\[0.2cm]
+k-NN does not scale well to large datasets. For a dataset with millions of samples, making a single prediction requires computing distances to all training points, which becomes prohibitively expensive.
+}}
+\end{center}
+
+\begin{remark}
+The main trade-off with k-NN is between flexibility and computational cost:
+\begin{itemize}
+    \item \textbf{Pros}: Simple, flexible, no training, handles non-linear boundaries
+    \item \textbf{Cons}: Slow predictions, high memory, sensitive to irrelevant features and outliers
+\end{itemize}
+
+k-NN works best for:
+\begin{itemize}
+    \item Small to medium-sized datasets
+    \item Problems where decision boundaries are complex and non-linear
+    \item Applications where training time is critical but prediction time is less important
+    \item Situations where new data arrives frequently (easy to update)
+\end{itemize}
+\end{remark}
+
+\subsection{How k-NN Was Born: PDF Estimation}
+
+k-NN has a theoretical foundation in probability density function (PDF) estimation. Let's explore this connection.
+
+\subsubsection{Going Back to PDF Estimation}
+
+Recall from our earlier discussion of density estimation:
+
+\begin{itemize}
+    \item Instead of fixing $V$ as in the case of kernels (Parzen windows), we \textbf{fix the value of $k$} and enlarge the radius of the sphere to include $k$ samples
+    
+    \item Let's see the \textbf{a-priori probability}:
+    \begin{itemize}
+        \item Given a class $y_j$, the frequency of occurrence of samples $N_j$ of class $j$ is generally simply measured in relation to the total number of samples $N$, i.e.,
+        
+        \[
+        P(y_j) \equiv \hat{p}(y_j) = \frac{N_j}{N}
+        \]
+    \end{itemize}
+\end{itemize}
+
+\begin{observation}
+This is the empirical estimate of the prior probability: the proportion of training samples that belong to class $j$.
+\end{observation}
+
+\subsubsection{Density Estimation and Nearest-Neighbor Rule}
+
+Consider 2 classes, $y_i$ and $y_j$, containing $N_i$ and $N_j$ samples, $N = N_i + N_j$.
+
+The local density estimation for $y_i$ is calculated as (and similarly for $y_j$):
+
+\[
+\hat{p}(\mathbf{x}|y_i) = \frac{1}{V} \frac{k_i}{N_i}
+\]
+
+such that the ratio of $k_i$ ($k_j$) points to the total $N_i$ ($N_j$) belonging to the class $y_i$ ($y_j$) contained in the volume $V$.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Deriving k-NN from Bayes Rule}]
+The Bayes rule says $p(\mathbf{x}|y_i)P(y_i) > p(\mathbf{x}|y_j)P(y_j)$, then
+
+\begin{align*}
+\hat{p}(\mathbf{x}|y_i)\hat{p}(y_i) &> \hat{p}(\mathbf{x}|y_j)\hat{p}(y_j) \\
+\Rightarrow \frac{1}{V} \frac{k_i}{N_i} \cdot \frac{N_i}{N} &> \frac{1}{V} \frac{k_j}{N_j} \cdot \frac{N_j}{N} \\
+\Rightarrow \frac{1}{V N_i} k_i N_i &> \frac{1}{V N_j} k_j N_j \\
+\Rightarrow k_i &> k_j
+\end{align*}
+\end{tcolorbox}
+
+\begin{center}
+\colorbox{purple!15}{\parbox{0.9\textwidth}{
+\textbf{The k-NN Rule}\\[0.2cm]
+Classify $\mathbf{x}$ to class $y_i$ if $k_i > k_j$, i.e., if there are more neighbors from class $i$ than from class $j$ in the volume $V$ around $\mathbf{x}$.
+}}
+\end{center}
+
+\begin{observation}
+This derivation shows that k-NN is actually implementing a Bayesian decision rule using local density estimates! The key insight is:
+\begin{itemize}
+    \item We estimate $p(\mathbf{x}|y_i)$ locally using the $k$ nearest neighbors
+    \item We estimate $P(y_i)$ using the proportion of class $i$ in the training set
+    \item The Bayes rule simplifies to: choose the class with the most neighbors in the local region
+\end{itemize}
+\end{observation}
+
+\begin{remark}
+This theoretical foundation explains why k-NN works:
+\begin{itemize}
+    \item It's approximating the optimal Bayes classifier
+    \item It uses local density information to make decisions
+    \item The quality of the approximation depends on:
+    \begin{itemize}
+        \item Choice of $k$ (too small = noisy estimates, too large = oversmoothing)
+        \item Density of training data (more data = better estimates)
+        \item Dimensionality (curse of dimensionality affects density estimation)
+    \end{itemize}
+\end{itemize}
+
+As the number of training samples $N \to \infty$ and $k \to \infty$ (but $k/N \to 0$), the k-NN classifier approaches the optimal Bayes classifier.
+\end{remark}
+
+
 
 \end{document}
