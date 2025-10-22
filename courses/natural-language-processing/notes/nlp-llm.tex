@@ -1,0 +1,939 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% CJK support for Chinese, Japanese, Korean characters
+\usepackage{CJKutf8}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[section]
+\newtheorem{example}{Esempio}[section]
+\newtheorem{exercise}{Esercizio}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposizione}
+\newtheorem{corollary}[theorem]{Corollario}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Nota}
+\newtheorem*{observation}{Osservazione}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{nlp llm}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Natural Language Processing - LLM Module}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+
+\part{Foundations of Neural Networks}
+
+\section{Introduction to Neural Networks}
+
+\subsection{The Concept of a Neuron}
+
+Neural networks are computational models inspired by biological neural systems. At their core, they consist of interconnected units called \textbf{neurons} (or \textbf{nodes}).
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Definition: Artificial Neuron}]
+An \textbf{artificial neuron} is a mathematical function that:
+\begin{enumerate}
+    \item Receives multiple inputs $(x_1, x_2, \dots, x_n)$
+    \item Computes a weighted sum of these inputs plus a bias term
+    \item Applies an activation function to produce an output
+\end{enumerate}
+\end{tcolorbox}
+
+\subsubsection{Mathematical Formulation}
+
+The computation performed by a single neuron can be expressed as:
+
+\[
+z = \sum_{i=1}^{n} w_i x_i + b = w_1 x_1 + w_2 x_2 + \cdots + w_n x_n + b
+\]
+
+where:
+\begin{itemize}
+    \item $x_i$ are the input values
+    \item $w_i$ are the \textbf{weights} associated with each input
+    \item $b$ is the \textbf{bias} term
+    \item $z$ is the weighted sum (also called the \textbf{pre-activation})
+\end{itemize}
+
+The final output of the neuron is obtained by applying an \textbf{activation function} $\sigma$ to the weighted sum:
+
+\[
+y = \sigma(z) = \sigma\left(\sum_{i=1}^{n} w_i x_i + b\right)
+\]
+
+\subsection{Activation Functions}
+
+Activation functions introduce non-linearity into the network, enabling it to learn complex patterns. Common activation functions include:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Common Activation Functions}]
+\textbf{1. Sigmoid:}
+\[
+\sigma(z) = \frac{1}{1 + e^{-z}}
+\]
+Outputs values in the range $(0, 1)$. Often used for binary classification.
+
+\textbf{2. ReLU (Rectified Linear Unit):}
+\[
+\text{ReLU}(z) = \max(0, z)
+\]
+Outputs $z$ if $z > 0$, otherwise $0$. Most commonly used in modern deep learning.
+
+\textbf{3. Tanh (Hyperbolic Tangent):}
+\[
+\tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}
+\]
+Outputs values in the range $(-1, 1)$. Centers data around zero.
+\end{tcolorbox}
+
+\subsection{Multi-Layer Neural Networks}
+
+The power of neural networks comes from connecting multiple neurons in \textbf{layers} to form deep architectures.
+
+\begin{definition}[Feedforward Neural Network]
+A \textbf{feedforward neural network} (also called a \textbf{multilayer perceptron}) consists of:
+\begin{itemize}
+    \item An \textbf{input layer}: receives the input features
+    \item One or more \textbf{hidden layers}: perform intermediate computations
+    \item An \textbf{output layer}: produces the final prediction
+\end{itemize}
+\end{definition}
+
+\subsubsection{Architecture Visualization}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,
+    neuron/.style={circle, draw, minimum size=0.8cm, fill=blue!20},
+    input/.style={circle, draw, minimum size=0.8cm, fill=green!20},
+    output/.style={circle, draw, minimum size=0.8cm, fill=red!20},
+    arrow/.style={-Stealth, thick}
+]
+
+% Input layer
+\node[input] (x1) at (0,3) {$x_1$};
+\node[input] (x2) at (0,1.5) {$x_2$};
+\node[input] (x3) at (0,0) {$x_3$};
+
+% Hidden layer 1
+\node[neuron] (h11) at (3,3.5) {};
+\node[neuron] (h12) at (3,2) {};
+\node[neuron] (h13) at (3,0.5) {};
+
+% Hidden layer 2
+\node[neuron] (h21) at (6,2.5) {};
+\node[neuron] (h22) at (6,1) {};
+
+% Output layer
+\node[output] (y) at (9,1.75) {$y$};
+
+% Connections from input to hidden layer 1
+\foreach \i in {1,2,3}
+    \foreach \j in {1,2,3}
+        \draw[arrow, opacity=0.3] (x\i) -- (h1\j);
+
+% Connections from hidden layer 1 to hidden layer 2
+\foreach \i in {1,2,3}
+    \foreach \j in {1,2}
+        \draw[arrow, opacity=0.3] (h1\i) -- (h2\j);
+
+% Connections from hidden layer 2 to output
+\foreach \i in {1,2}
+    \draw[arrow, opacity=0.3] (h2\i) -- (y);
+
+% Layer labels
+\node[above=0.3cm of x1] {\textbf{Input Layer}};
+\node[above=0.3cm of h11] {\textbf{Hidden Layer 1}};
+\node[above=0.3cm of h21] {\textbf{Hidden Layer 2}};
+\node[above=0.3cm of y] {\textbf{Output}};
+
+% Weight matrix labels
+\node at (1.5,4.5) {$\mathbf{W}^{(1)}$};
+\node at (4.5,3.5) {$\mathbf{W}^{(2)}$};
+\node at (7.5,2.5) {$\mathbf{W}^{(3)}$};
+
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Weight Matrices}
+
+Each layer in a neural network is associated with a \textbf{weight matrix} that defines the connections between neurons.
+
+\begin{itemize}
+    \item $\mathbf{W}^{(1)}$: Weight matrix connecting the input layer to the first hidden layer
+    \item $\mathbf{W}^{(2)}$: Weight matrix connecting the first hidden layer to the second hidden layer
+    \item $\mathbf{W}^{(3)}$: Weight matrix connecting the second hidden layer to the output layer
+\end{itemize}
+
+For a layer with $n$ input neurons and $m$ output neurons, the weight matrix $\mathbf{W}$ has dimensions $m \times n$.
+
+
+
+\section{Learning in Neural Networks}
+
+\subsection{The Learning Problem}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Objective: Learning the Weights}]
+The fundamental goal of training a neural network is to \textbf{learn the optimal values of the weight matrices} $\mathbf{W}^{(1)}, \mathbf{W}^{(2)}, \dots, \mathbf{W}^{(L)}$ that minimize the prediction error on the training data.
+\end{tcolorbox}
+
+This is analogous to learning the coefficients in a regression model:
+
+\[
+y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n
+\]
+
+where $\beta_0, \beta_1, \dots, \beta_n$ are the parameters to be learned.
+
+\subsection{Optimization Methods}
+
+Several optimization algorithms are used to learn neural network weights:
+
+\subsubsection{Gradient Descent}
+
+\begin{definition}[Gradient Descent]
+\textbf{Gradient descent} is an iterative optimization algorithm that updates the weights in the direction opposite to the gradient of the loss function:
+
+\[
+\mathbf{W} \leftarrow \mathbf{W} - \eta \nabla_{\mathbf{W}} \mathcal{L}
+\]
+
+where:
+\begin{itemize}
+    \item $\eta$ is the \textbf{learning rate} (step size)
+    \item $\nabla_{\mathbf{W}} \mathcal{L}$ is the gradient of the loss function with respect to the weights
+\end{itemize}
+\end{definition}
+
+\subsubsection{ADAM Optimizer}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{ADAM (Adaptive Moment Estimation)}]
+\textbf{ADAM} is an advanced optimization algorithm that combines ideas from momentum and adaptive learning rates. It is one of the most popular optimizers in modern deep learning.
+
+\textbf{Key features}:
+\begin{itemize}
+    \item Adapts learning rates for each parameter individually
+    \item Uses moving averages of gradients (momentum)
+    \item Computationally efficient and requires little memory
+    \item Works well in practice with default hyperparameters
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{From Numbers to Text}
+
+\begin{observation}
+While neural networks fundamentally operate on \textbf{numerical data}, they can be adapted to work with various data types, including:
+\begin{itemize}
+    \item \textbf{Images}: Represented as matrices of pixel values
+    \item \textbf{Audio}: Represented as waveforms or spectrograms
+    \item \textbf{Text}: Represented through embeddings (numerical vectors)
+\end{itemize}
+
+This versatility enables neural networks to perform tasks such as \textbf{text generation}, \textbf{machine translation}, and \textbf{image captioning}.
+\end{observation}
+
+\section{Introduction to Transformers}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Key Concept: Transformers}]
+All of the preceding discussion serves as foundation for understanding a specific and revolutionary type of neural network architecture: \textbf{Transformers}.
+
+Transformers are the backbone of modern large language models (LLMs) such as GPT, BERT, and many others. They have revolutionized natural language processing and are now being applied to various domains beyond text.
+\end{tcolorbox}
+
+\subsection{Why Transformers?}
+
+Transformers represent one of the most important developments in deep learning. First introduced in the field of natural language processing, they have greatly surpassed previous architectures such as \textbf{Recurrent Neural Networks (RNNs)} in both performance and efficiency.
+
+\subsubsection{Core Concept: Attention Mechanism}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{The Attention Mechanism}]
+Transformers are based on a processing concept called \textbf{attention}. The attention mechanism allows the model to focus on different parts of the input when producing each part of the output, weighing the importance of different input elements dynamically.
+\end{tcolorbox}
+
+\textbf{Why "Transformers"?}
+
+The name comes from their ability to \textbf{transform input vectors} from one representation space to another, creating richer internal representations suitable for downstream tasks.
+
+\subsubsection{Input Flexibility}
+
+Transformers can process various types of inputs:
+\begin{itemize}
+    \item \textbf{Unstructured sets of vectors}: No inherent ordering required
+    \item \textbf{Ordered sequences}: Natural for text and time series
+    \item \textbf{General representations}: Broad applicability across domains
+\end{itemize}
+
+
+\subsection{Transfer Learning and Foundation Models}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Transfer Learning with Transformers}]
+Transfer learning is particularly effective with Transformers. The typical workflow involves:
+\begin{enumerate}
+    \item \textbf{Pre-training}: Train a large model on a massive corpus of data
+    \item \textbf{Fine-tuning}: Adapt the pre-trained model to specific downstream tasks with smaller, task-specific datasets
+\end{enumerate}
+
+This approach has led to the concept of \textbf{foundation models}—large-scale models trained on broad data that serve as a foundation for various applications.
+\end{tcolorbox}
+
+\subsection{Self-Supervised Learning}
+
+\begin{observation}
+Transformers can be trained in a \textbf{self-supervised} manner using unlabeled data. This is crucial because:
+\begin{itemize}
+    \item Labeled data is expensive and time-consuming to obtain
+    \item Unlabeled text data is abundant (e.g., web pages, books, articles)
+    \item Self-supervised objectives (e.g., predicting masked words) provide strong learning signals
+\end{itemize}
+\end{observation}
+
+\subsection{The Scaling Hypothesis}
+
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Scaling Hypothesis}]
+The \textbf{scaling hypothesis} states that by increasing both:
+\begin{itemize}
+    \item The \textbf{scale of the model} (number of learnable parameters)
+    \item The \textbf{size of the training dataset}
+\end{itemize}
+significant improvements in model performance can be achieved.
+
+This hypothesis has been empirically validated across numerous experiments, leading to increasingly large models.
+\end{tcolorbox}
+
+\subsubsection{Massive Scale and Parallel Processing}
+
+Transformers are particularly well-suited to \textbf{massively parallel processing}, which enables:
+
+\begin{itemize}
+    \item Training of very large models with parameters on the order of \textbf{trillions} ($10^{12}$)
+    \item Reasonable training times despite model size (using distributed computing and specialized hardware like GPUs and TPUs)
+    \item Efficient inference for real-world applications
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    xlabel={Model Size (Parameters)},
+    ylabel={Performance},
+    xmode=log,
+    log basis x=10,
+    grid=major,
+    width=10cm,
+    height=6cm,
+    legend pos=south east,
+    xlabel style={font=\small},
+    ylabel style={font=\small}
+]
+\addplot[
+    color=blue,
+    mark=*,
+    thick
+] coordinates {
+    (1e6, 60)
+    (1e7, 68)
+    (1e8, 75)
+    (1e9, 82)
+    (1e10, 87)
+    (1e11, 91)
+    (1e12, 94)
+};
+\legend{Performance vs Scale}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\textit{Illustration: As model size increases (log scale), performance improves following the scaling hypothesis.}
+\end{center}
+
+\section{The Attention Mechanism}
+
+\subsection{Motivation: Context-Dependent Representations}
+
+\begin{example}[Word Ambiguity]
+Consider the following two sentences containing the word "bank":
+\begin{itemize}
+    \item \textit{I swam across the river to get to the other \textbf{bank}}
+    \item \textit{I walked across the road to get cash from the \textbf{bank}}
+\end{itemize}
+
+To determine the exact interpretation of the word \textit{bank}, an artificial neural network should \textbf{rely more heavily on} (i.e., \textbf{attend to}) specific words from the rest of the sentence (\textbf{context}).
+
+In the first sentence, "bank" should attend more to words like "river" and "swam" (indicating a riverbank). In the second sentence, "bank" should attend more to words like "cash" and "road" (indicating a financial institution).
+\end{example}
+
+\subsection{Attention vs. Standard Neural Networks}
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Key Difference}]
+\textbf{Standard neural networks}: When the network is trained, weights are \textbf{fixed}.
+
+\textbf{Attention mechanism}: Uses \textbf{weighting factors} whose values \textbf{depend on the specific input data}.
+\end{tcolorbox}
+
+\begin{observation}
+A Transformer can be seen as a \textbf{rich form of embedding} in which a given vector (e.g., representing a word) is mapped to a location that \textbf{depends on the other vectors} (i.e., words) of the sentence.
+
+\textbf{Example}: The embedding of the word "bank" will be:
+\begin{itemize}
+    \item Close to "water" in the first sentence
+    \item Close to "money" in the second sentence
+\end{itemize}
+
+This context-dependent representation is what makes Transformers so powerful for natural language understanding.
+\end{observation}
+
+\section{Transformer Processing: Mathematical Framework}
+
+\subsection{Notation and Terminology}
+
+\begin{definition}[Input Representation]
+The input to a Transformer consists of:
+\begin{itemize}
+    \item \textbf{Set of vectors}: $\{x_n\}$ of dimensionality $D$ where $n = 1, \ldots, N$
+    \item Each vector is called a \textbf{token}
+\end{itemize}
+\end{definition}
+
+\subsubsection{What is a Token?}
+
+A \textbf{token} is a fundamental unit of input data. Examples include:
+\begin{itemize}
+    \item A \textbf{word} in a sentence
+    \item A \textbf{patch} in an image
+    \item An \textbf{amino acid} in a protein sequence
+    \item A \textbf{number or set of numbers} in a time series
+\end{itemize}
+
+\subsubsection{Features}
+
+The elements $x_{ni}$ of a token are called \textbf{features}, where $i = 1, \ldots, D$.
+
+\subsubsection{Data Matrix}
+
+\begin{definition}[Data Matrix]
+The \textbf{data matrix} (set of tokens) is denoted by $\mathbf{X}$ with dimension $N \times D$:
+\begin{itemize}
+    \item Each \textbf{row} is a token vector $\mathbf{x}_n^T$
+    \item $N$ is the number of tokens
+    \item $D$ is the number of features (dimensionality)
+\end{itemize}
+
+A \textbf{training set} contains many sets of tokens (i.e., many matrices).
+\end{definition}
+
+\begin{center}
+\begin{tikzpicture}
+\draw[fill=blue!20, draw=black, thick] (0,0) rectangle (3,4);
+\draw[fill=red!30, draw=black, thick] (0,3.5) rectangle (3,4);
+\node at (1.5,3.75) {$\mathbf{x}_1^T$};
+\node at (1.5,2) {$\mathbf{X}$};
+\node[left] at (-0.2,2) {$N$ (tokens)};
+\node[below] at (1.5,-0.3) {$D$ (features)};
+\draw[<->] (-0.5,0) -- (-0.5,4);
+\draw[<->] (0,-0.5) -- (3,-0.5);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Transformer Layer: The Main Building Block}
+
+\begin{tcolorbox}[colback=blue!10!white,colframe=blue!75!black,title=\textbf{Transformer Layer}]
+A \textbf{Transformer layer} is the fundamental building block of a Transformer that:
+\begin{itemize}
+    \item Takes a \textbf{data matrix} $\mathbf{X}$ as input
+    \item Returns a \textbf{transformed matrix} $\tilde{\mathbf{X}}$ of the same dimension as output
+\end{itemize}
+
+\[
+\tilde{\mathbf{X}} = \text{TransformerLayer}[\mathbf{X}]
+\]
+\end{tcolorbox}
+
+\subsubsection{Key Properties}
+
+\begin{enumerate}
+    \item \textbf{Multiple layers}: Multiple Transformer layers can be applied in succession to learn \textbf{rich internal representations}
+    
+    \item \textbf{Learnable weights}: Each Transformer layer contains weights that can be learned by \textbf{gradient descent} using an appropriate \textbf{cost function}
+    
+    \item \textbf{Two-stage processing}: Each Transformer layer performs two stages:
+    \begin{enumerate}
+        \item \textbf{Stage 1 (Attention)}: Mixes features from different tokens across the \textbf{columns} of $\mathbf{X}$ (attention mechanism)
+        \item \textbf{Stage 2 (Feed-forward)}: Transforms the values of each token acting on the \textbf{rows} of $\mathbf{X}$ independently
+    \end{enumerate}
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm]
+\node[draw, rectangle, fill=green!20, minimum width=4cm, minimum height=1cm] (input) {Input Matrix $\mathbf{X}$};
+\node[draw, rectangle, fill=orange!30, minimum width=4cm, minimum height=1cm, below=of input] (stage1) {Stage 1: Attention (mix across columns)};
+\node[draw, rectangle, fill=purple!20, minimum width=4cm, minimum height=1cm, below=of stage1] (stage2) {Stage 2: Feed-Forward (transform rows)};
+\node[draw, rectangle, fill=green!20, minimum width=4cm, minimum height=1cm, below=of stage2] (output) {Output Matrix $\tilde{\mathbf{X}}$};
+
+\draw[-Stealth, thick] (input) -- (stage1);
+\draw[-Stealth, thick] (stage1) -- (stage2);
+\draw[-Stealth, thick] (stage2) -- (output);
+\end{tikzpicture}
+\end{center}
+
+\section{Attention Coefficients}
+
+\subsection{The Goal of Attention}
+
+\begin{tcolorbox}[colback=cyan!10!white,colframe=cyan!75!black,title=\textbf{Attention Objective}]
+Given a set of tokens in an embedding space: $\mathbf{x}_1, \ldots, \mathbf{x}_N$
+
+\textbf{Goal}: Map them into another set $\mathbf{y}_1, \ldots, \mathbf{y}_N$ with richer semantic structure.
+
+\textbf{Key principle}: The value of a generic output token $\mathbf{y}_n$ should \textbf{depend on all input tokens}.
+
+\textbf{Attention}: The dependence should be \textbf{stronger} for inputs $\mathbf{x}_m$ particularly important for determining the new representation of $\mathbf{y}_n$.
+\end{tcolorbox}
+
+\subsection{Linear Combination Case}
+
+In the simplest case, we can express the output as a \textbf{linear combination} of the input tokens:
+
+\[
+\mathbf{y}_n = \sum_{m=1}^{N} a_{nm} \mathbf{x}_m
+\]
+
+where:
+\begin{itemize}
+    \item $a_{nm}$ are called \textbf{attention weights}
+    \item Constraint: $a_{nm} \geq 0$ and $\sum_{m=1}^{N} a_{nm} = 1$ (partition of unity to avoid compensation)
+\end{itemize}
+
+\begin{definition}[Attention Weights]
+The coefficients $a_{nm}$ represent how much the $n$-th output token should "attend to" the $m$-th input token. They form a probability distribution over the input tokens for each output position.
+\end{definition}
+
+\textbf{Interpretation}:
+\begin{itemize}
+    \item If $a_{nm}$ is large, token $\mathbf{x}_m$ has a strong influence on $\mathbf{y}_n$
+    \item If $a_{nm}$ is small, token $\mathbf{x}_m$ has little influence on $\mathbf{y}_n$
+    \item The sum constraint ensures that the total attention is normalized
+\end{itemize}
+
+\section{Self-Attention Mechanism}
+
+\subsection{How to Compute Attention Coefficients}
+
+\subsubsection{Example: Movie Selection (Hard Attention)}
+
+To understand how attention coefficients work, consider a simplified example of movie selection based on user preferences.
+
+\begin{example}[Movie Recommendation with Hard Attention]
+Given:
+\begin{itemize}
+    \item \textbf{Preference (query)}: A user's preference vector representing their interests
+    \item \textbf{Movies database}: A collection of movies, each with:
+    \begin{itemize}
+        \item \textbf{Keys}: Feature vectors describing movie properties
+        \item \textbf{Values}: The actual movie content/representation
+    \end{itemize}
+\end{itemize}
+
+The system computes a \textbf{similarity score} $Q^TK$ between the user's query and each movie's key. In \textbf{hard attention}, only the movie with the highest similarity score is selected.
+\end{example}
+
+\subsection{Self-Attention in Transformers}
+
+In Transformers, the attention mechanism is more sophisticated than the hard attention example above. Here's how it works:
+
+\begin{tcolorbox}[colback=purple!10!white,colframe=purple!75!black,title=\textbf{Self-Attention: Key Concepts}]
+\begin{itemize}
+    \item Each input token $\mathbf{x}_n$ serves \textbf{both} as a \textbf{key} and a \textbf{value} (i.e., the token itself summarizes its features)
+    
+    \item The token $\mathbf{x}_m$ is used as a \textbf{query} for the output $\mathbf{y}_m$ (then $\mathbf{x}_m$ is compared to all the key tokens)
+    
+    \item The dot product $\mathbf{x}_n^T \mathbf{x}_m$ is used to compute the \textbf{query-key similarity}, which determines how much the token represented by $\mathbf{x}_n$ should \textbf{attend to} the token represented by $\mathbf{x}_m$ (i.e., how $\mathbf{x}_n$ is important to generate $\mathbf{y}_m$)
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Computing Attention Weights with Softmax}
+
+Constraints are imposed using the \textbf{softmax function}:
+
+\[
+a_{nm} = \frac{\exp(\mathbf{x}_n^T \mathbf{x}_m)}{\sum_{m'=1}^{N} \exp(\mathbf{x}_n^T \mathbf{x}_{m'})}
+\]
+
+This formula ensures:
+\begin{itemize}
+    \item All attention weights are positive: $a_{nm} > 0$
+    \item They sum to one: $\sum_{m=1}^{N} a_{nm} = 1$
+    \item Higher dot products yield higher attention weights (exponential scaling)
+\end{itemize}
+
+\subsection{Summary: Self-Attention Transformation}
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{Self-Attention Formula}]
+Each \textbf{input vector} $\mathbf{x}_n$ is transformed to a corresponding \textbf{output vector} $\mathbf{y}_n$ by taking a \textbf{linear combination} of input vectors:
+
+\[
+\mathbf{y}_n = \sum_{m=1}^{N} a_{nm} \mathbf{x}_m
+\]
+
+where the weight $a_{nm}$ applied to vector $\mathbf{x}_m$ is computed by the softmax of the dot-product between the \textbf{query} $\mathbf{x}_n$ and the \textbf{key} $\mathbf{x}_m$.
+\end{tcolorbox}
+
+\subsubsection{Matrix Notation}
+
+In matrix form, the self-attention operation can be written as:
+
+\[
+\mathbf{Y} = \text{Softmax}[\mathbf{X}\mathbf{X}^T]\mathbf{X}
+\]
+
+where:
+\begin{itemize}
+    \item $\mathbf{X}$ is the $N \times D$ input matrix (N tokens, D features)
+    \item $\mathbf{X}^T$ is the $D \times N$ transpose
+    \item $\mathbf{X}\mathbf{X}^T$ is an $N \times N$ similarity matrix
+    \item Softmax is applied row-wise to normalize each row
+    \item $\mathbf{Y}$ is the $N \times D$ output matrix
+\end{itemize}
+
+\textbf{Interpretation of $\mathbf{X}\mathbf{X}^T$}:
+\begin{itemize}
+    \item This is an $N \times N$ matrix where element $(n,m)$ contains $\mathbf{x}_n^T \mathbf{x}_m$
+    \item Each row represents how similar token $n$ is to all other tokens
+    \item After softmax, each row becomes the attention weights for that token
+\end{itemize}
+
+\section{Learnable Parameters in Self-Attention}
+
+\subsection{The Problem with Simple Self-Attention}
+
+\begin{observation}
+The basic self-attention transformation $\mathbf{Y} = \text{Softmax}[\mathbf{X}\mathbf{X}^T]\mathbf{X}$ has \textbf{no learnable parameters}.
+
+Additionally, each feature value within a token vector $\mathbf{x}_n$ plays an \textbf{equal role} in determining the attention coefficients. This limits the expressiveness of the model.
+\end{observation}
+
+\subsection{Solution: Query, Key, and Value Transformations}
+
+\begin{tcolorbox}[colback=green!10!white,colframe=green!75!black,title=\textbf{Modified Feature Vectors}]
+Define \textbf{modified feature vectors} as linear transformations of the original vectors:
+
+\begin{align*}
+\mathbf{Q} &= \mathbf{X}\mathbf{W}^{(q)} && \text{(Queries)} \\
+\mathbf{K} &= \mathbf{X}\mathbf{W}^{(k)} && \text{(Keys)} \\
+\mathbf{V} &= \mathbf{X}\mathbf{W}^{(v)} && \text{(Values)}
+\end{align*}
+
+where $\mathbf{W}^{(q)}$, $\mathbf{W}^{(k)}$, and $\mathbf{W}^{(v)}$ are \textbf{learnable parameter matrices}.
+\end{tcolorbox}
+
+\subsubsection{Dimensions}
+
+The weight matrices have the following dimensions:
+\begin{itemize}
+    \item $\mathbf{W}^{(q)}$: $D \times D_q$ (not necessarily $D_q = D$)
+    \item $\mathbf{W}^{(k)}$: $D \times D_k$
+    \item $\mathbf{W}^{(v)}$: $D \times D_v$
+\end{itemize}
+
+Usually, $D_k = D_v = D$, so:
+\begin{itemize}
+    \item Dimension of output = dimension of input
+    \item \textbf{Multiple Transformer layers can be stacked} sequentially
+\end{itemize}
+
+\subsubsection{Resulting Matrices}
+
+After transformation:
+\begin{itemize}
+    \item $\mathbf{Q}$: $N \times D_q$ matrix of query vectors
+    \item $\mathbf{K}$: $N \times D_k$ matrix of key vectors  
+    \item $\mathbf{V}$: $N \times D_v$ matrix of value vectors
+\end{itemize}
+
+\subsection{Modified Self-Attention Formula}
+
+With the learnable transformations, the self-attention mechanism becomes:
+
+\[
+\mathbf{Y} = \text{Softmax}\left[\mathbf{Q}\mathbf{K}^T\right]\mathbf{V}
+\]
+
+or equivalently:
+
+\[
+\mathbf{Y} = \text{Softmax}\left[\mathbf{X}\mathbf{W}^{(q)}\left(\mathbf{X}\mathbf{W}^{(k)}\right)^T\right]\mathbf{X}\mathbf{W}^{(v)}
+\]
+
+\textbf{Key benefits}:
+\begin{itemize}
+    \item The model can \textbf{learn} which features are important for queries, keys, and values
+    \item Different features can play different roles in computing attention
+    \item The weight matrices $\mathbf{W}^{(q)}$, $\mathbf{W}^{(k)}$, $\mathbf{W}^{(v)}$ are trained via gradient descent
+\end{itemize}
+
+\subsection{General Formula and Dimensions}
+
+\begin{tcolorbox}[colback=blue!10!white,colframe=blue!75!black,title=\textbf{General Self-Attention Formula}]
+The general formula for computing the self-attention transformation is:
+
+\[
+\mathbf{Y} = \text{Softmax}[\mathbf{Q}\mathbf{K}^T]\mathbf{V}
+\]
+
+where:
+\begin{itemize}
+    \item $\mathbf{Q}\mathbf{K}^T$ has dimension $N \times N$ (attention weight matrix)
+    \item $\mathbf{Y}$ has dimension $N \times D_v$ (output matrix)
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Dimensional Analysis}
+
+Let's trace through the dimensions step by step:
+
+\begin{enumerate}
+    \item \textbf{Input}: $\mathbf{X}$ has dimension $N \times D$
+    
+    \item \textbf{Query transformation}: 
+    \[
+    \mathbf{Q} = \mathbf{X}\mathbf{W}^{(q)}
+    \]
+    \begin{itemize}
+        \item $\mathbf{X}$: $N \times D$
+        \item $\mathbf{W}^{(q)}$: $D \times D$
+        \item $\mathbf{Q}$: $N \times D$
+    \end{itemize}
+    
+    \item \textbf{Key transformation}:
+    \[
+    \mathbf{K} = \mathbf{X}\mathbf{W}^{(k)}
+    \]
+    \begin{itemize}
+        \item $\mathbf{X}$: $N \times D$
+        \item $\mathbf{W}^{(k)}$: $D \times D$
+        \item $\mathbf{K}$: $N \times D$
+    \end{itemize}
+    
+    \item \textbf{Attention scores}:
+    \[
+    \mathbf{Q}\mathbf{K}^T
+    \]
+    \begin{itemize}
+        \item $\mathbf{Q}$: $N \times D$
+        \item $\mathbf{K}^T$: $D \times N$
+        \item $\mathbf{Q}\mathbf{K}^T$: $N \times N$
+    \end{itemize}
+    
+    \item \textbf{Value transformation}:
+    \[
+    \mathbf{V} = \mathbf{X}\mathbf{W}^{(v)}
+    \]
+    \begin{itemize}
+        \item $\mathbf{X}$: $N \times D$
+        \item $\mathbf{W}^{(v)}$: $D \times D_v$
+        \item $\mathbf{V}$: $N \times D_v$
+    \end{itemize}
+    
+    \item \textbf{Final output}:
+    \[
+    \mathbf{Y} = \text{Softmax}[\mathbf{Q}\mathbf{K}^T]\mathbf{V}
+    \]
+    \begin{itemize}
+        \item $\text{Softmax}[\mathbf{Q}\mathbf{K}^T]$: $N \times N$
+        \item $\mathbf{V}$: $N \times D_v$
+        \item $\mathbf{Y}$: $N \times D_v$
+    \end{itemize}
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}[scale=1.0,
+    box/.style={rectangle, draw=black, thick, minimum width=1.2cm, minimum height=1.2cm},
+    smallbox/.style={rectangle, draw=black, thick, minimum width=1cm, minimum height=1cm}
+]
+
+% X matrix (left)
+\node[box, fill=blue!30] (X) at (0,0) {\Large $\mathbf{X}$};
+\node[below=0.1cm of X] {$N \times D$};
+
+% W^(q) and Q (top branch)
+\node[smallbox, fill=pink!40, right=1.5cm of X, yshift=2cm] (Wq) {\large $\mathbf{W}^{(q)}$};
+\node[below=0.05cm of Wq, font=\small] {$D \times D$};
+
+\node[box, fill=pink!20, right=1.2cm of Wq] (Q) {\Large $\mathbf{Q}$};
+\node[below=0.1cm of Q] {$N \times D$};
+
+% W^(k) and K (middle branch)
+\node[smallbox, fill=orange!40, right=1.5cm of X] (Wk) {\large $\mathbf{W}^{(k)}$};
+\node[below=0.05cm of Wk, font=\small] {$D \times D$};
+
+\node[box, fill=orange!20, right=1.2cm of Wk] (K) {\Large $\mathbf{K}$};
+\node[below=0.1cm of K] {$N \times D$};
+
+% W^(v) and V (bottom branch)
+\node[smallbox, fill=green!40, right=1.5cm of X, yshift=-2cm] (Wv) {\large $\mathbf{W}^{(v)}$};
+\node[below=0.05cm of Wv, font=\small] {$D \times D_v$};
+
+\node[box, fill=green!20, right=1.2cm of Wv] (V) {\Large $\mathbf{V}$};
+\node[below=0.1cm of V] {$N \times D_v$};
+
+% QK^T (attention scores)
+\node[box, fill=red!20, minimum width=1.8cm, minimum height=1.8cm, right=2cm of K] (QKT) {\Large $\mathbf{QK}^T$};
+\node[below=0.1cm of QKT] {$N \times N$};
+
+% Y (output)
+\node[box, fill=blue!40, right=2.5cm of QKT] (Y) {\Large $\mathbf{Y}$};
+\node[below=0.1cm of Y] {$N \times D_v$};
+
+% Arrows from X
+\draw[-Stealth, very thick] (X.east) -- ++(0.5,0) |- (Wq.west) node[pos=0.25, above] {$\times$};
+\draw[-Stealth, very thick] (X.east) -- (Wk.west) node[midway, above] {$\times$};
+\draw[-Stealth, very thick] (X.east) -- ++(0.5,0) |- (Wv.west) node[pos=0.25, above] {$\times$};
+
+% Arrows from W to Q, K, V
+\draw[-Stealth, very thick] (Wq.east) -- (Q.west) node[midway, above] {$=$};
+\draw[-Stealth, very thick] (Wk.east) -- (K.west) node[midway, above] {$=$};
+\draw[-Stealth, very thick] (Wv.east) -- (V.west) node[midway, above] {$=$};
+
+% Arrows from Q and K to QK^T
+\draw[-Stealth, very thick] (Q.east) -| (QKT.north);
+\draw[-Stealth, very thick] (K.east) -- (QKT.west);
+
+% Arrows from QK^T and V to Y
+\draw[-Stealth, very thick] (QKT.east) -- (Y.west);
+\draw[-Stealth, very thick] (V.east) -| (Y.south);
+
+\end{tikzpicture}
+\end{center}
+
+\subsection{Key Distinction: Data-Dependent Attention}
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{Important Notice}]
+\textbf{Standard neural networks} multiply activations by \textbf{fixed weights}.
+
+\textbf{Transformers} multiply activations by \textbf{data-dependent attention coefficients}.
+
+This is a fundamental difference that gives Transformers their power and flexibility.
+\end{tcolorbox}
+
+\subsubsection{Example: Input-Specific Attention}
+
+\begin{example}[Selective Attention]
+Consider two different input vectors $\mathbf{x}'$ and $\mathbf{x}''$:
+
+\begin{itemize}
+    \item An attention coefficient could be \textbf{close to zero} for input vector $\mathbf{x}'$
+    \begin{itemize}
+        \item This means the incoming signal is \textbf{ignored} in the signal path
+    \end{itemize}
+    
+    \item The same attention coefficient could be \textbf{very large} for another input vector $\mathbf{x}''$
+    \begin{itemize}
+        \item This means the incoming signal is \textbf{strongly considered}
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key insight}: By contrast, if a standard neural network learns to ignore an input, it does so \textbf{for all input vectors}. The network cannot selectively attend based on context.
+\end{example}
+
+\begin{observation}
+This data-dependent weighting allows Transformers to:
+\begin{itemize}
+    \item \textbf{Dynamically route information} based on input content
+    \item \textbf{Context-sensitive processing}: The same token can be processed differently depending on surrounding tokens
+    \item \textbf{Flexible feature selection}: Different features become important for different inputs
+    \item \textbf{Adaptive computation}: The network's effective structure changes with each input
+\end{itemize}
+
+This is why Transformers excel at tasks requiring understanding of context and relationships between elements, such as natural language processing and sequence modeling.
+\end{observation}
+
+
+
+
+
+
+
+
+
+
+\end{document}

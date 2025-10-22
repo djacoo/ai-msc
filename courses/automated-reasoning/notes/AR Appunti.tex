@@ -16,6 +16,10 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -64,14 +68,20 @@
 \newcommand{\C}{\mathbb{C}}
 
 % ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
 % HEADER AND FOOTER
 % ========================================
-\pagestyle{fancy}
 \setlength{\headheight}{14pt}
+\pagestyle{fancy}
 \fancyhf{}
 \lhead{\leftmark}
 \rhead{AR}
 \cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
 
 % ========================================
 % DOCUMENT INFORMATION
@@ -143,6 +153,14 @@ These applications demonstrate the practical utility of automated reasoning in s
 
 Automated reasoning fundamentally addresses three interconnected classes of decision problems in mathematical logic, each representing a distinct challenge in determining the truth properties of logical formulas.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Three Core Problems}]
+\textbf{1. Satisfiability (SAT)}: Does there exist a model?
+
+\textbf{2. Validity}: Is the formula true in all models?
+
+\textbf{3. Logical Consequence}: Does the conclusion follow from premises?
+\end{tcolorbox}
+
 \subsection{Satisfiability Problems}
 
 A satisfiability problem (SAT) concerns determining whether a given logical formula has a truth assignment that makes it true. Formally, for a formula $\phi$ with free variables, we seek to determine if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models \phi$. This represents the existence problem---does there exist a model making the formula true?
@@ -162,14 +180,17 @@ These three problems form the foundation of automated reasoning systems, with sa
 
 \subsection{Logical Language: First-Order Logic}
 
-The formal language employed in automated reasoning is first-order logic (FOL), a substantial extension of propositional logic that incorporates quantification over individual elements. First-order logic achieves greater expressive power by introducing:
+The formal language employed in automated reasoning is first-order logic (FOL), a substantial extension of propositional logic that incorporates quantification over individual elements.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{First-Order Logic Components}]
+First-order logic achieves greater expressive power by introducing:
 \begin{itemize}
     \item \textbf{Individual variables} ranging over domain elements
     \item \textbf{Function symbols} for constructing complex terms
     \item \textbf{Predicate symbols} for expressing relations between elements
     \item \textbf{Quantifiers} ($\forall$, $\exists$) enabling statements about all or some elements
 \end{itemize}
+\end{tcolorbox}
 
 This enhanced expressiveness allows first-order logic to formalize mathematical structures, relationships, and properties in a manner impossible in propositional logic, which can only express truth-functional combinations of atomic propositions.
 
@@ -353,6 +374,7 @@ Formulas may contain both free and bound occurrences of variables. For proper se
 
 To assign meaning to syntactic formulas in first-order logic, we require a formal notion of \textbf{interpretation}. An interpretation $\mathcal{I}$ provides a semantic mapping from the syntactic elements of a signature to concrete mathematical objects.
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Interpretation Components}]
 In the unsorted case, an interpretation consists of:
 \begin{itemize}
     \item A non-empty set $D$ called the \textbf{domain} (or universe of discourse)
@@ -363,6 +385,7 @@ In the unsorted case, an interpretation consists of:
         \item Each constant symbol $c \in C$ to a specific element $\Phi(c) \in D$
     \end{itemize}
 \end{itemize}
+\end{tcolorbox}
 
 The interpretation function $\Phi$ bridges the gap between syntax and semantics, transforming abstract symbols into concrete mathematical entities.
 
@@ -563,39 +586,47 @@ This statement is \textbf{false} in $\N$ because there is no natural number grea
 
 Having established the satisfaction relation, we now define fundamental semantic properties that classify formulas according to their truth behavior across different interpretations.
 
-\subsection{Satisfiability}
-
-A formula $F$ is \textbf{satisfiable} if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$. In this case, we say that $\mathcal{I}$ is a \textbf{model} of $F$.
-
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Semantic Properties of Formulas}]
+\subsection*{Satisfiability}
+A formula $F$ is \textbf{satisfiable} if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$.
 \[
 F \text{ is satisfiable} \quad \Leftrightarrow \quad \exists \mathcal{I} : \mathcal{I} \models F
 \]
 
-\subsection{Validity}
-
-A formula $F$ is \textbf{valid} (or a \textbf{tautology}) if for all interpretations $\mathcal{I}$, we have $\mathcal{I} \models F$. Valid formulas are true in every possible interpretation.
-
+\subsection*{Validity}
+A formula $F$ is \textbf{valid} (or a \textbf{tautology}) if for all interpretations $\mathcal{I}$, we have $\mathcal{I} \models F$.
 \[
 F \text{ is valid} \quad \Leftrightarrow \quad \forall \mathcal{I} : \mathcal{I} \models F
 \]
+
+\subsection*{Unsatisfiability}
+A formula $F$ is \textbf{unsatisfiable} if there exists no interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$.
+\[
+F \text{ is unsatisfiable} \quad \Leftrightarrow \quad \nexists \mathcal{I} : \mathcal{I} \models F
+\]
+
+\subsection*{Invalidity}
+A formula $F$ is \textbf{invalid} if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \not\models F$.
+\[
+F \text{ is invalid} \quad \Leftrightarrow \quad \exists \mathcal{I} : \mathcal{I} \not\models F
+\]
+\end{tcolorbox}
+
+\subsection{Satisfiability}
+
+A formula $F$ is \textbf{satisfiable} if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$. In this case, we say that $\mathcal{I}$ is a \textbf{model} of $F$.
+
+\subsection{Validity}
 
 We denote validity by $\models F$.
 
 \subsection{Unsatisfiability}
 
-A formula $F$ is \textbf{unsatisfiable} (or \textbf{contradictory}) if there exists no interpretation $\mathcal{I}$ such that $\mathcal{I} \models F$. Unsatisfiable formulas are false in every interpretation.
-
-\[
-F \text{ is unsatisfiable} \quad \Leftrightarrow \quad \nexists \mathcal{I} : \mathcal{I} \models F \quad \Leftrightarrow \quad \forall \mathcal{I} : \mathcal{I} \not\models F
-\]
+Unsatisfiable formulas are false in every interpretation.
 
 \subsection{Invalidity}
 
-A formula $F$ is \textbf{invalid} (or \textbf{falsifiable}) if there exists an interpretation $\mathcal{I}$ such that $\mathcal{I} \not\models F$. In this case, we say that $\mathcal{I}$ is a \textbf{countermodel} (or \textbf{counterexample}) for $F$.
-
-\[
-F \text{ is invalid} \quad \Leftrightarrow \quad \exists \mathcal{I} : \mathcal{I} \not\models F
-\]
+In this case, we say that $\mathcal{I}$ is a \textbf{countermodel} (or \textbf{counterexample}) for $F$.
 
 \subsection{Relationships Between Semantic Properties}
 
@@ -634,11 +665,12 @@ Automated reasoning systems must be capable of resolving three fundamental types
 
 \subsection{Definition of Logical Consequence}
 
-Let $H = \{\phi_1, \phi_2, \dots, \phi_n\}$ be a set of formulas (the \textbf{hypotheses} or \textbf{premises}) and let $F$ be a formula (the \textbf{conclusion}). We say that $F$ is a \textbf{logical consequence} of $H$, written $H \models F$, and read as "$H$ entails $F$" or "$F$ follows logically from $H$", if:
-
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Logical Consequence}]
+Let $H = \{\phi_1, \phi_2, \dots, \phi_n\}$ be a set of formulas (the \textbf{hypotheses} or \textbf{premises}) and let $F$ be a formula (the \textbf{conclusion}). We say that $F$ is a \textbf{logical consequence} of $H$, written $H \models F$, if:
 \[
 H \models F \quad \Leftrightarrow \quad \text{for all interpretations } \mathcal{I}, \text{ if } \mathcal{I} \models H \text{ then } \mathcal{I} \models F
 \]
+\end{tcolorbox}
 
 In other words, $F$ is a logical consequence of $H$ if every model of $H$ is also a model of $F$. Here, $\mathcal{I} \models H$ means that $\mathcal{I}$ satisfies all formulas in $H$.
 
@@ -646,6 +678,7 @@ In other words, $F$ is a logical consequence of $H$ if every model of $H$ is als
 
 The deduction theorem establishes a fundamental connection between logical consequence and validity, reducing the problem of checking entailment to the problem of checking validity.
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Deduction Theorem}]
 \begin{theorem}[Deduction Theorem]
 Let $H$ be a set of formulas and $F$ be a formula. Then:
 \[
@@ -653,6 +686,7 @@ H \models F \quad \text{iff} \quad \models (H \rightarrow F)
 \]
 where $H \rightarrow F$ denotes the implication from the conjunction of all formulas in $H$ to $F$.
 \end{theorem}
+\end{tcolorbox}
 
 \begin{proof}
 We prove both directions:
@@ -686,12 +720,14 @@ While this overloading may initially seem confusing, these three uses are semant
 
 A fundamental result connects logical consequence to unsatisfiability, providing another characterization of entailment.
 
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Key Theorem: Reduction to Unsatisfiability}]
 \begin{theorem}[Logical Consequence via Unsatisfiability]
 Let $H$ be a set of formulas and $F$ be a formula. Then:
 \[
 H \models F \quad \text{iff} \quad H \cup \{\neg F\} \text{ is unsatisfiable}
 \]
 \end{theorem}
+\end{tcolorbox}
 
 \begin{proof}
 We prove both directions:
@@ -709,6 +745,7 @@ Let $\mathcal{I}$ be any interpretation such that $\mathcal{I} \models H$. Since
 
 \subsection{Proof by Contradiction}
 
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Refutational Reasoning (Proof by Contradiction)}]
 \textbf{Refutational reasoning} (or \textbf{proof by refutation}) is a fundamental technique in automated reasoning based on the principle of \textit{reductio ad absurdum}. To prove that a conclusion $F$ follows from hypotheses $H$, we assume the negation of the conclusion and derive a contradiction.
 
 The method proceeds as follows:
@@ -717,6 +754,7 @@ The method proceeds as follows:
     \item \textbf{Method}: Show that $H \cup \{\neg F\}$ is unsatisfiable
     \item \textbf{Conclusion}: If $H \cup \{\neg F\}$ is unsatisfiable, then $H \models F$ by the previous theorem
 \end{enumerate}
+\end{tcolorbox}
 
 \subsection{The Refutational Framework}
 

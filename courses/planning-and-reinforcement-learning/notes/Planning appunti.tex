@@ -16,6 +16,10 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -64,14 +68,20 @@
 \newcommand{\C}{\mathbb{C}}
 
 % ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
 % HEADER AND FOOTER
 % ========================================
-\pagestyle{fancy}
 \setlength{\headheight}{14pt}
+\pagestyle{fancy}
 \fancyhf{}
-\lhead{PL \& RL}
+\lhead{\leftmark}
 \rhead{PL \& RL}
 \cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
 
 % ========================================
 % DOCUMENT INFORMATION
@@ -189,7 +199,19 @@ State transition systems can be characterized by several important properties:
 
 \subsection{Classical Planning: Fundamental Assumptions}
 
-Classical planning makes several simplifying assumptions that restrict the class of problems considered but enable efficient algorithmic solutions. These assumptions define the \textbf{classical planning framework}:
+Classical planning makes several simplifying assumptions that restrict the class of problems considered but enable efficient algorithmic solutions.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Classical Planning Framework}]
+The classical planning framework relies on six key assumptions:
+\begin{enumerate}
+    \item Finitely many states
+    \item Finitely many actions
+    \item Deterministic transition function
+    \item Full observability
+    \item Instantaneous actions
+    \item No exogenous events
+\end{enumerate}
+\end{tcolorbox}
 
 \begin{enumerate}
     \item \textbf{Finitely many states}: The state space $S$ is finite, allowing exhaustive search techniques. This assumption ensures that the planning problem is decidable and that search algorithms will terminate.
@@ -237,6 +259,7 @@ Modern planning research has developed extensions that relax these assumptions:
 
 Given a state transition system $\Sigma = \langle S, A, \gamma \rangle$, we can now formally define the planning problem.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Planning Problem}]
 \begin{definition}[Planning Problem]
 A planning problem is a tuple $P = \langle \Sigma, s_0, G \rangle$ where:
 \begin{itemize}
@@ -245,6 +268,7 @@ A planning problem is a tuple $P = \langle \Sigma, s_0, G \rangle$ where:
     \item $G \subseteq S$ is a set of \textbf{goal states}
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 Alternatively, goals can be specified as a \textbf{goal formula} $g$, a logical expression that is satisfied by exactly those states in $G$. This allows more compact and expressive goal specifications.
 
@@ -262,6 +286,7 @@ Goals can be specified in several ways:
     \item \textbf{Utility functions}: In optimization settings, goals may be specified as utility functions to maximize or cost functions to minimize.
 \end{itemize}
 
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Solution Plan}]
 \begin{definition}[Solution Plan]
 A \textbf{solution} to a planning problem $P = \langle \Sigma, s_0, G \rangle$ is a sequence of actions $\pi = \langle a_1, a_2, \dots, a_n \rangle$ such that:
 \[
@@ -269,6 +294,7 @@ s_n = \gamma(\gamma(\cdots \gamma(\gamma(s_0, a_1), a_2) \cdots, a_{n-1}), a_n) 
 \]
 That is, executing the sequence of actions starting from the initial state $s_0$ results in a goal state.
 \end{definition}
+\end{tcolorbox}
 
 We can also write this more compactly using the notation $\gamma^*(s, \pi)$ to denote the state reached by executing plan $\pi$ from state $s$:
 \[
@@ -312,6 +338,7 @@ This motivates the need for \textbf{compact, structured representations} that ex
 
 The classical approach to compact representation uses \textbf{action schemas} (also called action templates or operators). An action schema is a parameterized description of a family of related actions.
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Action Schema}]
 \begin{definition}[Action Schema]
 An action schema consists of:
 \begin{itemize}
@@ -320,6 +347,7 @@ An action schema consists of:
     \item \textbf{Effects}: A logical formula $\text{Eff}$ specifying how the state changes when the action is executed
 \end{itemize}
 \end{definition}
+\end{tcolorbox}
 
 \textbf{Actions} are \textbf{ground instances} of action schemas, obtained by binding the parameters to specific objects in the domain. For example, the schema $\texttt{Move}(x, y)$ might generate ground actions $\texttt{Move}(\text{RoomA}, \text{RoomB})$, $\texttt{Move}(\text{RoomB}, \text{RoomC})$, etc.
 
@@ -353,8 +381,8 @@ This representation allows:
 
 \subsubsection{State Update Semantics}
 
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{STRIPS Assumption}]
 When an action is executed, the state is updated according to the action's effects:
-
 \begin{itemize}
     \item \textbf{Add list}: Atoms that become true after the action
     \item \textbf{Delete list}: Atoms that become false after the action
@@ -362,6 +390,7 @@ When an action is executed, the state is updated according to the action's effec
 \end{itemize}
 
 The \textbf{STRIPS assumption} (named after the Stanford Research Institute Problem Solver) states that only atoms explicitly mentioned in the effects change; all other atoms persist unchanged. This simplifies reasoning about action effects.
+\end{tcolorbox}
 
 \newpage
 
@@ -378,7 +407,8 @@ The Blocks World consists of:
     \item A robot arm that can pick up and put down blocks
 \end{itemize}
 
-\textbf{State representation}:
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Blocks World State Representation}]
+\textbf{State predicates}:
 \begin{itemize}
     \item $\texttt{On}(x, y)$: Block $x$ is directly on top of block $y$
     \item $\texttt{OnTable}(x)$: Block $x$ is on the table
@@ -386,6 +416,7 @@ The Blocks World consists of:
     \item $\texttt{Holding}(x)$: The robot arm is holding block $x$
     \item $\texttt{ArmEmpty}$: The robot arm is not holding anything
 \end{itemize}
+\end{tcolorbox}
 
 \subsubsection{Action Schemas}
 
@@ -458,6 +489,7 @@ This plan has length 4 and achieves the goal from the initial state.
 
 We continue our discussion of the formalization and representation of planning problems. A fundamental technique in automated planning is to \textbf{reduce the planning problem to the satisfiability problem of propositional logic}. This reduction allows us to leverage powerful SAT solvers to find plans efficiently.
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Reduction to SAT}]
 The key idea is to encode:
 \begin{itemize}
     \item The initial state as a propositional formula
@@ -467,6 +499,7 @@ The key idea is to encode:
 \end{itemize}
 
 If the resulting formula is satisfiable, the satisfying assignment corresponds to a valid plan.
+\end{tcolorbox}
 
 \subsection{Example Domain: Dock Worker Robots (DWR)}
 

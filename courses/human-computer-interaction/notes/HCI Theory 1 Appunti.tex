@@ -16,9 +16,10 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-\usetikzlibrary{arrows.meta, positioning, shapes}
+\usepackage[most]{tcolorbox}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -128,13 +129,11 @@ The main topics we will discuss include:
 
 The most traditional, consolidated, commonly used, and widespread interfaces are \textbf{graphical user interfaces} (GUIs). These interfaces adopt the so-called \textbf{WIMP paradigm}, which stands for:
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{WIMP Paradigm}]
 \begin{center}
-\colorbox{blue!15}{\parbox{0.85\textwidth}{
-\centering
-\textbf{WIMP Paradigm}\\[0.2cm]
 \textbf{W}indows • \textbf{I}cons • \textbf{M}enus • \textbf{P}ointing devices
-}}
 \end{center}
+\end{tcolorbox}
 
 \begin{definition}[WIMP Paradigm]
 The WIMP paradigm is a user interface design approach that uses windows to organize content, icons to represent objects and actions, menus to provide options, and pointing devices (such as a mouse) for interaction.
@@ -190,14 +189,12 @@ Post-WIMP interfaces consist of \textbf{widgetless user interfaces}, including:
 
 Post-WIMP interfaces have two fundamental characteristics:
 
-\begin{center}
-\colorbox{green!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Key Characteristics of Post-WIMP}\\[0.2cm]
-1. Multiple sensory channels (input)\\
-2. Multimedia output (engaging multiple senses)
-}}
-\end{center}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Key Characteristics of Post-WIMP}]
+\begin{enumerate}
+    \item Multiple sensory channels (input)
+    \item Multimedia output (engaging multiple senses)
+\end{enumerate}
+\end{tcolorbox}
 
 \begin{enumerate}
     \item \textbf{Multiple sensory channels}: They integrate input from \textbf{several sensory channels}, allowing for richer interaction
@@ -237,15 +234,13 @@ The evolution from WIMP to Post-WIMP interfaces reflects the changing needs of u
 
 Post-WIMP interfaces encompass various reality technologies that blend the physical and digital worlds in different ways:
 
-\begin{center}
-\colorbox{magenta!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Reality Technologies}\\[0.2cm]
-VR: Fully artificial environment\\
-AR: Virtual objects overlaid on real world\\
-MR: Virtual + real world combined
-}}
-\end{center}
+\begin{tcolorbox}[colback=magenta!5!white,colframe=magenta!75!black,title=\textbf{Reality Technologies}]
+\begin{itemize}
+    \item \textbf{VR}: Fully artificial environment
+    \item \textbf{AR}: Virtual objects overlaid on real world
+    \item \textbf{MR}: Virtual + real world combined
+\end{itemize}
+\end{tcolorbox}
 
 \begin{definition}[Virtual Reality (VR)]
 \textbf{Virtual Reality} provides a fully artificial environment where users are completely immersed in a virtual world. Users experience full immersion in a virtual environment, typically through head-mounted displays (HMDs) and controllers.
@@ -372,14 +367,11 @@ Post-WIMP interfaces are grounded on models and theories from multiple disciplin
 
 Post-WIMP interfaces leverage several fundamental human capabilities:
 
-\begin{center}
-\colorbox{yellow!20}{\parbox{0.9\textwidth}{
-\centering
-\textbf{7 Key Principles}\\[0.2cm]
-Human sensory system • Multiple sensory channels • Sensory interconnections\\
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{7 Key Principles}]
+Human sensory system • Multiple sensory channels • Sensory interconnections
+
 Non-verbal communication • Affect \& emotion • Social signals • Art \& human sciences
-}}
-\end{center}
+\end{tcolorbox}
 
 \begin{enumerate}
     \item \textbf{Exploit the human sensory system}: Utilizing vision, hearing, touch, and other senses
@@ -411,13 +403,9 @@ By integrating knowledge from diverse fields, Post-WIMP interfaces create more n
 
 Post-WIMP interfaces are often \textbf{multimodal interfaces}, meaning they exploit multiple \textbf{sensory modalities}.
 
-\begin{center}
-\colorbox{purple!15}{\parbox{0.85\textwidth}{
-\centering
-\textbf{Multimodal = Multiple Sensory Channels}\\[0.2cm]
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Multimodal = Multiple Sensory Channels}]
 Integration of information from several different sensory modalities
-}}
-\end{center}
+\end{tcolorbox}
 
 \begin{definition}[Sensory Modality]
 A \textbf{sensory modality} is the sensory channel through which information is perceived. It refers to the type of communication channel used for transferring or acquiring information.
@@ -504,13 +492,11 @@ Consider processing visual information:
 \end{itemize}
 \end{definition}
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{The Five Human Senses}]
 \begin{center}
-\colorbox{cyan!15}{\parbox{0.85\textwidth}{
-\centering
-\textbf{The Five Human Senses}\\[0.2cm]
 Vision • Hearing • Touch • Taste • Smell
-}}
 \end{center}
+\end{tcolorbox}
 
 The five primary human senses form the basis of multimodal interaction:
 
@@ -618,13 +604,11 @@ This bidirectional communication allows for rich, natural interaction patterns t
 
 Input in multimodal systems may be classified into three categories:
 
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Three Types of Input}]
 \begin{center}
-\colorbox{orange!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Three Types of Input}\\[0.2cm]
 Sequential • Simultaneous • Composite
-}}
 \end{center}
+\end{tcolorbox}
 
 \begin{definition}[Sequential Input]
 \textbf{Sequential} input is received on a single modality, though that modality can change over time.
@@ -774,16 +758,14 @@ The power of multimodal systems lies in their ability to combine information fro
 
 Understanding why multimodal interfaces are important helps us design better human-computer interaction systems. There are several key motivations for adopting multimodality in interface design.
 
-\begin{center}
-\colorbox{red!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Four Key Motivations}\\[0.2cm]
-1. Human-human communication is multimodal\\
-2. Input/output by the most effective means\\
-3. Adapting to the environment\\
-4. Task performance and user preference
-}}
-\end{center}
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Four Key Motivations}]
+\begin{enumerate}
+    \item Human-human communication is multimodal
+    \item Input/output by the most effective means
+    \item Adapting to the environment
+    \item Task performance and user preference
+\end{enumerate}
+\end{tcolorbox}
 
 \subsection{Human-Human Communication is Multimodal}
 

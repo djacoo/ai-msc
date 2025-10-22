@@ -16,6 +16,10 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -64,14 +68,20 @@
 \newcommand{\C}{\mathbb{C}}
 
 % ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
 % HEADER AND FOOTER
 % ========================================
-\pagestyle{fancy}
 \setlength{\headheight}{14pt}
+\pagestyle{fancy}
 \fancyhf{}
-\lhead{HCI}
+\lhead{\leftmark}
 \rhead{HCI}
 \cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
 
 % ========================================
 % DOCUMENT INFORMATION
@@ -116,6 +126,7 @@ Students will develop computer interfaces with a focus on both methodological an
 
 \subsubsection{Multimodal Interaction}
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Multimodal Input and Output Modalities}]
 Special attention is devoted to \textbf{multimodal solutions} that integrate multiple input and output modalities:
 \begin{itemize}
     \item \textbf{Touch}: Tactile and haptic interaction
@@ -123,6 +134,7 @@ Special attention is devoted to \textbf{multimodal solutions} that integrate mul
     \item \textbf{Natural Language}: Speech and text-based communication
     \item \textbf{Audio}: Sound-based interaction and auditory feedback
 \end{itemize}
+\end{tcolorbox}
 
 \subsubsection{Intelligent Systems}
 
@@ -198,34 +210,36 @@ The field of HCI has undergone several paradigm shifts, each bringing the intera
 
 \subsubsection{Command-Line Interfaces (Pre-1980s)}
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Command-Line Interfaces (CLI)}]
 Early human-computer interaction relied on \textbf{command-line interfaces (CLI)}, which required users to communicate with machines through text-based commands. This paradigm represented an interaction model heavily biased toward the machine:
-
 \begin{itemize}
     \item \textbf{Expert-oriented}: CLIs assume users possess detailed knowledge of the system's internal organization and command syntax
     \item \textbf{Machine-centric}: The interface reflects the machine's architecture rather than human cognitive models
     \item \textbf{High learning curve}: Users must memorize commands, parameters, and system-specific conventions
     \item \textbf{Limited accessibility}: Generic users cannot interact effectively without substantial training
 \end{itemize}
+\end{tcolorbox}
 
 While command-line interfaces persist today (particularly among expert users who value direct system control and automation capabilities), they exemplify an interaction paradigm positioned closer to the machine than to the human.
 
 \subsubsection{Graphical User Interfaces (1980s–2000s)}
 
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Graphical User Interfaces (GUIs)}]
 The introduction of \textbf{Graphical User Interfaces (GUIs)} in the early 1980s marked a fundamental shift in interaction design:
-
 \begin{itemize}
     \item \textbf{Direct manipulation}: Users interact with visual representations of objects through pointing devices (mouse) and keyboards
     \item \textbf{Visual metaphors}: Desktop metaphors, windows, icons, and menus provide intuitive representations of system functionality
     \item \textbf{Reduced cognitive load}: Users no longer need to memorize complex command syntax
     \item \textbf{Increased accessibility}: Non-expert users can accomplish tasks through exploration and recognition rather than recall
 \end{itemize}
+\end{tcolorbox}
 
 This paradigm shift moved interaction significantly closer to human cognitive models, making computing accessible to a broader population.
 
 \subsubsection{Pervasive and Ubiquitous Interaction (2000s–Present)}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Pervasive and Ubiquitous Computing}]
 Over the past 15–20 years, a new paradigm has emerged: \textbf{pervasive interaction} (also known as ubiquitous computing). This paradigm is characterized by:
-
 \begin{itemize}
     \item \textbf{Distributed computing}: Intelligence is distributed across multiple interconnected devices (smartphones, wearables, IoT sensors, smart home devices)
     \item \textbf{Invisible interfaces}: The traditional notion of "the machine" becomes diffuse—computation is embedded in the environment
@@ -233,6 +247,7 @@ Over the past 15–20 years, a new paradigm has emerged: \textbf{pervasive inter
     \item \textbf{Natural interaction}: Voice, gesture, and multimodal input replace traditional keyboard and mouse
     \item \textbf{Smart environments}: Individual devices collaborate to create intelligent, responsive spaces
 \end{itemize}
+\end{tcolorbox}
 
 In contrast to earlier paradigms where "the machine" was a discrete entity contained in a single case, pervasive computing dissolves the boundaries between user, environment, and computational infrastructure. This represents the closest approximation yet to natural human interaction patterns.
 

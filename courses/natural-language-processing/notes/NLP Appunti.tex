@@ -16,6 +16,10 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -159,8 +163,9 @@ String similarity and edit distance algorithms are fundamental tools in many NLP
 The \textbf{minimum edit distance} between two strings is defined as the minimum number of editing operations needed to transform one string into the other.
 
 \subsubsection{Edit Operations}
-There are three basic editing operations:
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Three Basic Edit Operations}]
+There are three basic editing operations:
 \begin{itemize}
     \item \textbf{Insertion}: Add a character at any position in the string
     \begin{itemize}
@@ -177,6 +182,7 @@ There are three basic editing operations:
         \item Example: $\text{cat} \rightarrow \text{bat}$ (substitute 'c' with 'b')
     \end{itemize}
 \end{itemize}
+\end{tcolorbox}
 
 \subsubsection{Key Concept}
 The edit distance measures the \textit{minimum} number of these operations required to transform one string into another. This metric provides a quantitative measure of string similarity: the smaller the edit distance, the more similar the strings are.
@@ -223,14 +229,15 @@ This gives us a total edit distance of \textbf{5 operations} (1 deletion + 3 sub
 
 The total distance depends on how we assign costs to each operation:
 
-\textbf{Standard Edit Distance (uniform costs):}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Standard Edit Distance (uniform costs)}]
 \begin{itemize}
     \item Each operation (insertion, deletion, substitution) costs 1
     \item Total distance for INTENTION $\rightarrow$ EXECUTION: \textbf{5}
     \item Calculation: $1 \text{ (deletion)} + 3 \times 1 \text{ (substitutions)} + 1 \text{ (insertion)} = 5$
 \end{itemize}
+\end{tcolorbox}
 
-\textbf{Levenshtein Distance (weighted substitution):}
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Levenshtein Distance (weighted substitution)}]
 \begin{itemize}
     \item Insertion costs 1
     \item Deletion costs 1
@@ -238,6 +245,7 @@ The total distance depends on how we assign costs to each operation:
     \item Total distance for INTENTION $\rightarrow$ EXECUTION: \textbf{8}
     \item Calculation: $1 \text{ (deletion)} + 3 \times 2 \text{ (substitutions)} + 1 \text{ (insertion)} = 8$
 \end{itemize}
+\end{tcolorbox}
 
 \textbf{Why the difference?} In the Levenshtein variant, a substitution is viewed as conceptually equivalent to deleting a character and then inserting a different one, thus costing twice as much. This distinction is important when choosing which distance metric to use for a particular application.
 
@@ -338,8 +346,8 @@ Finding the minimum edit distance is a search problem: we need to find the optim
 
 \subsubsection{Search Problem Formulation}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Edit Distance as Search Problem}]
 The problem can be formulated as a search through a space of possible edit sequences:
-
 \begin{itemize}
     \item \textbf{Initial state}: The word we're transforming (source string)
     \item \textbf{Operators}: The three edit operations available:
@@ -351,6 +359,7 @@ The problem can be formulated as a search through a space of possible edit seque
     \item \textbf{Goal state}: The word we're trying to get to (target string)
     \item \textbf{Path cost}: What we want to minimize — the number of edits (or weighted sum of edit costs)
 \end{itemize}
+\end{tcolorbox}
 
 \subsubsection{Search Space Example}
 
@@ -418,9 +427,8 @@ Both paths arrive at "dot" with cost 2. From "dot" onward, the remaining edits a
 
 Now we formalize the definition of minimum edit distance using mathematical notation.
 
-\subsubsection{Formal Definition}
-
-\textbf{For two strings:}
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Formal Definition of Edit Distance}]
+\subsubsection*{For two strings:}
 \begin{itemize}
     \item $X$ of length $n$
     \item $Y$ of length $m$
@@ -432,6 +440,9 @@ Now we formalize the definition of minimum edit distance using mathematical nota
     \item i.e., the first $i$ characters of $X$ and the first $j$ characters of $Y$
     \item The edit distance between $X$ and $Y$ is thus $D(n,m)$
 \end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Formal Definition}
 
 \subsubsection{Notation Explanation}
 
@@ -465,9 +476,11 @@ Dynamic programming is an algorithmic technique that solves complex problems by 
 
 \subsection{What is Dynamic Programming?}
 
+\begin{tcolorbox}[colback=cyan!10!white,colframe=cyan!75!black,title=\textbf{Dynamic Programming}]
 \textbf{Dynamic programming}: A tabular computation of $D(n,m)$
 
 The key idea is to solve problems by combining solutions to subproblems, rather than solving the same subproblems repeatedly.
+\end{tcolorbox}
 
 \subsection{Bottom-Up Approach}
 
@@ -522,8 +535,8 @@ These represent:
 
 \subsubsection{Recurrence Relation}
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Levenshtein Edit Distance Recurrence}]
 For each $i = 1 \ldots M$ and $j = 1 \ldots N$:
-
 \[
 D(i,j) = \min \begin{cases}
 D(i-1,j) + 1 & \text{(deletion)} \\
@@ -534,6 +547,7 @@ D(i-1,j-1) + \begin{cases}
 \end{cases}
 \end{cases}
 \]
+\end{tcolorbox}
 
 \textbf{Explanation of each case:}
 
@@ -4086,6 +4100,16 @@ P(\text{i} \mid \langle s \rangle) &= 0.25 \quad \text{(25\% of sentences start 
     \item \textbf{Zero probabilities}: Indicate unseen bigrams — a major problem we'll address later
 \end{itemize}
 
+<-- slide 22 di L3 
+
+
+
+
+\newpage
+
+\part{}
+
+\section{}
 
 
 

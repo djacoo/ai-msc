@@ -16,9 +16,10 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-\usetikzlibrary{arrows.meta, positioning, shapes}
+\usepackage[most]{tcolorbox}
 
 % Lists and formatting
 \usepackage{enumitem}
@@ -145,13 +146,11 @@ The fundamental difference between conventional programming and machine learning
 
 \subsection{The Machine Learning Recipe}
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{The 4 Fundamental Steps of ML}]
 \begin{center}
-\colorbox{blue!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{The 4 Fundamental Steps of ML}\\[0.2cm]
 Collect data $\rightarrow$ Define models $\rightarrow$ Define objective function $\rightarrow$ Minimize error
-}}
 \end{center}
+\end{tcolorbox}
 
 The ML recipe consists of 4 fundamental steps:
 \begin{enumerate}
@@ -163,13 +162,11 @@ The ML recipe consists of 4 fundamental steps:
 
 \subsubsection{The Key Ingredients}
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{5 Essential Ingredients}]
 \begin{center}
-\colorbox{green!15}{\parbox{0.85\textwidth}{
-\centering
-\textbf{5 Essential Ingredients}\\[0.2cm]
 Task • Data • Model • Objective Function • Learning Algorithm
-}}
 \end{center}
+\end{tcolorbox}
 
 Every machine learning problem requires five essential ingredients:
 \begin{itemize}
@@ -335,13 +332,9 @@ A dataset is typically divided into three subsets:
 \end{itemize}
 \end{definition}
 
-\begin{center}
-\colorbox{yellow!20}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Critical Requirement}\\[0.2cm]
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Critical Requirement}]
 All three sets (training, validation, test) must be sampled from the \textbf{same probability distribution}
-}}
-\end{center}
+\end{tcolorbox}
 
 \subsection{How to Use the Three Sets}
 
@@ -390,14 +383,13 @@ When training/validation and test sets come from \textbf{different distributions
 
 \textbf{Example}: Training on apples and bananas, but testing on oranges and limes. The model cannot classify fruits it has never seen during training.
 
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Key Principle}]
 \begin{center}
-\colorbox{orange!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Key Principle}\\[0.2cm]
-Training and test data must come from the \textbf{same distribution}\\[0.1cm]
+Training and test data must come from the \textbf{same distribution}
+
 Violating this leads to poor generalization
-}}
 \end{center}
+\end{tcolorbox}
 
 \section{Training and Testing: The Role of Features}
 
@@ -421,14 +413,13 @@ Once trained, the model can classify new examples based on the same features it 
 
 \textbf{Example}: Given a new fruit with features \textit{red, round, no leaf, 4oz, ...}, the model uses the learned patterns to predict whether it is an apple or a banana.
 
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Critical Assumption}]
 \begin{center}
-\colorbox{red!15}{\parbox{0.9\textwidth}{
-\centering
-\textbf{Critical Assumption}\\[0.2cm]
-The features of training and testing data \textbf{must be the same!}\\[0.1cm]
+The features of training and testing data \textbf{must be the same!}
+
 The model can only make predictions based on features it was trained on
-}}
 \end{center}
+\end{tcolorbox}
 
 \subsection{Learning and Generalization}
 
@@ -438,13 +429,13 @@ However, the failure of a machine learning algorithm is often caused by a \textb
 
 \textbf{Example}: Consider a model trained to recognize objects in images. If all training images were captured on sunny days, the model might learn to associate sunny weather conditions with the objects. When tested on images taken on cloudy days, the model might fail to recognize the same objects because it never encountered cloudy conditions during training. The model incorrectly learned that sunny weather is a relevant feature for object recognition.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
 \begin{center}
-\colorbox{blue!10}{\parbox{0.85\textwidth}{
-\centering
-\textit{Quality and diversity of training data are crucial}\\[0.1cm]
+\textit{Quality and diversity of training data are crucial}
+
 Training data should be representative of all real-world conditions
-}}
 \end{center}
+\end{tcolorbox}
 
 \section{The Complete Machine Learning Recipe}
 
@@ -501,24 +492,32 @@ The choice of hypothesis space is crucial:
 
 \subsection{Types of Learning Paradigms}
 
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Three Learning Paradigms}]
 Machine learning can be categorized into different paradigms based on the type and availability of labeled data:
 
-\subsubsection{Supervised Learning}
-
+\subsubsection*{Supervised Learning}
 In supervised learning, we have labeled data where each input is paired with its corresponding output. This includes:
 \begin{itemize}
     \item \textbf{Classification}: Predicting discrete labels
     \item \textbf{Regression}: Predicting continuous values
 \end{itemize}
 
-\subsubsection{Unsupervised Learning}
-
+\subsubsection*{Unsupervised Learning}
 In unsupervised learning, we only have input data without labels. The goal is to discover structure in the data. This includes:
 \begin{itemize}
     \item \textbf{Clustering}: Grouping similar data points
     \item \textbf{Density Estimation}: Modeling the probability distribution of data
     \item \textbf{Dimensionality Reduction}: Finding lower-dimensional representations
 \end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Supervised Learning}
+
+In supervised learning, we have labeled data where each input is paired with its corresponding output.
+
+\subsubsection{Unsupervised Learning}
+
+In unsupervised learning, we only have input data without labels.
 
 \subsubsection{Semi-Supervised Learning}
 
@@ -538,6 +537,7 @@ Machine learning algorithms can be further categorized based on how they make pr
 A learning model that summarizes data with a \textbf{set of parameters of fixed size} (independent of the number of training examples) is called a \textbf{parametric model}.
 \end{definition}
 
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Parametric Model Characteristics}]
 Key characteristics:
 \begin{itemize}
     \item The model learns a fixed set of parameters from the training data
@@ -547,6 +547,7 @@ Key characteristics:
 \end{itemize}
 
 \textbf{Examples}: Naive Bayes, Linear Regression, Logistic Regression, Neural Networks
+\end{tcolorbox}
 
 In a model-based approach, the algorithm learns a function (e.g., a decision boundary) described by parameters. For instance, a linear classifier might learn the curve $\alpha x_1 + \beta x_2 + \gamma$ that separates two classes, where $\alpha, \beta, \gamma$ are the parameters.
 
@@ -556,6 +557,7 @@ In a model-based approach, the algorithm learns a function (e.g., a decision bou
 These algorithms \textbf{do not learn parameters} but instead use the data itself to compare a new example through similarity metrics.
 \end{definition}
 
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Nonparametric Model Characteristics}]
 Key characteristics:
 \begin{itemize}
     \item The model stores (some or all of) the training data
@@ -565,6 +567,7 @@ Key characteristics:
 \end{itemize}
 
 \textbf{Examples}: K-Nearest Neighbors (KNN), Support Vector Machines (SVM), Random Forest
+\end{tcolorbox}
 
 In an instance-based approach, when a new example arrives, it is compared with nearby training examples and classified according to a similarity policy. For example, in KNN, a new point is classified based on the majority class of its $k$ nearest neighbors in the training data.
 
@@ -677,8 +680,8 @@ The correct solution should capture the underlying sinusoidal pattern while bein
 
 \subsection{Model: Polynomial Functions}
 
+\begin{tcolorbox}[colback=magenta!5!white,colframe=magenta!75!black,title=\textbf{Polynomial Model}]
 We choose to model the data using polynomial functions:
-
 \[
 f_w(x) = \sum_{j=0}^{M} w_j x^j
 \]
@@ -689,6 +692,7 @@ where:
     \item $w = \{w_0, \ldots, w_M\}$ are the \textbf{parameters} to be learned
     \item The \textbf{hypothesis space} for a fixed degree $M$ is: $\mathcal{H}_M = \{f_w : w \in \mathbb{R}^{M+1}\}$
 \end{itemize}
+\end{tcolorbox}
 
 Different values of $M$ give us different hypothesis spaces:
 \begin{itemize}
