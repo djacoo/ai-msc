@@ -2016,4 +2016,346 @@ The algorithm proceeds as follows:
 Let $n$ be the number of nodes in the DAG. The complexity of the congruence closure algorithm is $O(n^2)$ in the worst case, where the quadratic factor comes from the potential number of congruence propagations that may occur during the \texttt{MERGE} operations.
 \end{tcolorbox}
 
+
+\newpage
+
+\section{Worked Examples of Congruence Closure}
+
+In this section, we present detailed worked examples demonstrating the execution of the congruence closure algorithm on concrete formulas. These examples illustrate the DAG construction, the initialization of node fields, and the step-by-step execution of the \texttt{MERGE} operations.
+
+\subsection{Example 1: Simple Commutativity}
+
+\begin{example}[Congruence Closure with Commutativity]
+Consider the formula without quantifiers:
+\[
+F = \{f(x, y) = f(y, x)\} \cup \{f(a, y) = f(y, a)\}
+\]
+
+where $a$ is a constant symbol.
+
+\textbf{Step 1: Identify the set of subterms}
+
+The set of all subterms appearing in $F$ is:
+\[
+S_F = \{x, y, a, f(x, y), f(y, x), f(a, y), f(y, a)\}
+\]
+
+\textbf{Step 2: Construct the DAG}
+
+We construct a DAG where each node represents a unique subterm. Each node has the following fields:
+\begin{itemize}
+    \item \textbf{id}: A unique integer identifier
+    \item \textbf{fn}: The function symbol (or variable/constant name) as a string
+    \item \textbf{args}: List of identifiers of argument nodes (empty for variables/constants)
+    \item \textbf{find}: Initially set to the node's own id
+    \item \textbf{ccpar}: Set of parent node identifiers (initially contains all nodes that have this node as an argument)
+\end{itemize}
+
+The DAG structure can be visualized as:
+\[
+\begin{array}{cccc}
+f_3 & f_4 & f_5 & f_6 \\
+\downarrow & \downarrow & \downarrow & \downarrow \\
+(x_0, y_1) & (y_1, x_0) & (a_2, y_1) & (y_1, a_2)
+\end{array}
+\]
+
+\textbf{Step 3: Initialize node fields}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Initial DAG Node Configuration}]
+\begin{verbatim}
+Node f_3:  id = 3, fn = "f", args = [0, 1], find = 3, ccpar = {}
+
+Node x_0:  id = 0, fn = "x", args = [], find = 0, ccpar = {3, 4}
+
+Node f_4:  id = 4, fn = "f", args = [1, 0], find = 4, ccpar = {}
+
+Node y_1:  id = 1, fn = "y", args = [], find = 1, ccpar = {3, 4, 5, 6}
+
+Node f_5:  id = 5, fn = "f", args = [2, 1], find = 5, ccpar = {}
+
+Node a_2:  id = 2, fn = "a", args = [], find = 2, ccpar = {5, 6}
+
+Node f_6:  id = 6, fn = "f", args = [1, 2], find = 6, ccpar = {}
+\end{verbatim}
+\end{tcolorbox}
+
+\textbf{Key observations about initialization}:
+\begin{itemize}
+    \item Each node's \texttt{find} field initially points to itself
+    \item The \texttt{ccpar} field of each leaf node (variables/constants) contains the ids of all function nodes that have it as an argument
+    \item Function nodes initially have empty \texttt{ccpar} sets
+\end{itemize}
+
+\textbf{Step 4: Process the equality $f(x, y) = f(y, x)$}
+
+We execute \texttt{MERGE}$(3, 4)$ corresponding to the equality $f(x, y) = f(y, x)$:
+
+\begin{enumerate}
+    \item Check if \texttt{FIND}$(3) \neq$ \texttt{FIND}$(4)$: YES (they are $3$ and $4$ respectively)
+    \item Save parent sets: $P_1 = \texttt{CCPAR}(3) = \emptyset$, $P_2 = \texttt{CCPAR}(4) = \emptyset$
+    \item Execute \texttt{UNION}$(3, 4)$:
+    \begin{itemize}
+        \item Set node $4$'s \texttt{find} field to $3$
+        \item Merge \texttt{ccpar} sets (both empty in this case)
+    \end{itemize}
+    \item Check Cartesian product $P_1 \times P_2 = \emptyset \times \emptyset = \emptyset$
+    \item No further merges needed
+\end{enumerate}
+
+After this operation, nodes $f_3$ and $f_4$ are in the same equivalence class.
+
+\textbf{Step 5: Check the disequality (if any)}
+
+In this example, we only have equalities. The formula $f(a, y) = f(y, a)$ represents another equality that could be processed similarly. Since $f(a, y)$ and $f(y, a)$ (nodes $5$ and $6$) remain in distinct equivalence classes after processing the first equality, the formula is \textbf{SATISFIABLE}---there is no contradiction.
+\end{example}
+
+
+
+
+
+\subsection{Example 2: Cyclic Function Application with Disequality}
+
+\begin{example}[Detecting Unsatisfiability through Congruence Closure]
+Consider the formula:
+\[
+F = \{f^3(a) = f^5(a)\} \cup \{f(a) \neq a\}
+\]
+
+where we use the notation $f^n(a)$ to denote $n$ applications of function $f$ to constant $a$. Explicitly:
+\begin{itemize}
+    \item $f^3(a) = f(f(f(a)))$
+    \item $f^5(a) = f(f(f(f(f(a)))))$
+\end{itemize}
+
+\textbf{Step 1: Identify the set of subterms}
+
+The set of all subterms is:
+\[
+S_F = \{a, f(a), f^2(a), f^3(a), f^4(a), f^5(a)\}
+\]
+
+\textbf{Step 2: Construct the DAG}
+
+We build a chain-like DAG where each node represents successive applications of $f$:
+\[
+f^5(a) \rightarrow f^4(a) \rightarrow f^3(a) \rightarrow f^2(a) \rightarrow f(a) \rightarrow a
+\]
+
+\textbf{Step 3: Initialize node fields}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Initial DAG Configuration}]
+\begin{verbatim}
+Node 5: id = 5, fn = "f", args = [4], find = 5, ccpar = {}
+Node 4: id = 4, fn = "f", args = [3], find = 4, ccpar = {5}
+Node 3: id = 3, fn = "f", args = [2], find = 3, ccpar = {4}
+Node 2: id = 2, fn = "f", args = [1], find = 2, ccpar = {3}
+Node 1: id = 1, fn = "f", args = [0], find = 1, ccpar = {2}
+Node 0: id = 0, fn = "a", args = [],  find = 0, ccpar = {1}
+\end{verbatim}
+\end{tcolorbox}
+
+\textbf{Step 4: Process the equality $f^3(a) = f^5(a)$}
+
+The equality $f^3(a) = f^5(a)$ implies that after three applications of $f$, we get the same result as after five applications. This creates a cycle in the equivalence structure.
+
+We execute \texttt{MERGE}$(3, 5)$. However, the congruence closure algorithm will propagate this equality through the structure, ultimately establishing relationships between multiple nodes.
+
+\textbf{Logical implications of the equality}:
+
+From $f^3(a) = f^5(a)$, by applying the congruence rule repeatedly, we can derive:
+\begin{align*}
+f^3(a) &= f^5(a) \\
+f^4(a) &= f^6(a) = f(f^5(a)) = f(f^3(a)) \\
+f^2(a) &= f^4(a) \quad \text{(by applying $f^{-1}$ conceptually)} \\
+f(a) &= f^3(a) \\
+a &= f^2(a)
+\end{align*}
+
+More precisely, the algorithm establishes these equivalences through congruence propagation.
+
+\textbf{Step 5: Detailed execution trace}
+
+We now trace the execution of \texttt{MERGE}$(3, 5)$ and observe how congruence propagates:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Execution Trace}]
+\textbf{Call: MERGE(3, 5)}
+
+Since $f^3(a) = f^5(a)$, we need to merge nodes 3 and 5.
+
+\begin{enumerate}
+    \item \texttt{FIND}$(3) = 3$, \texttt{FIND}$(5) = 5$ (different, so proceed)
+    \item $P_1 = \texttt{CCPAR}(3) = \{4\}$, $P_2 = \texttt{CCPAR}(5) = \emptyset$
+    \item \texttt{UNION}$(3, 5)$: merge the equivalence classes
+    \item Check $P_1 \times P_2 = \{4\} \times \emptyset = \emptyset$ (no propagation yet)
+\end{enumerate}
+
+However, the equality $f^3(a) = f^5(a)$ implies $f^2(a) = f^4(a)$ by the congruence property. This triggers further merges.
+
+\textbf{Call: MERGE(3, 0)} (establishing $f^3(a) = a$)
+
+\begin{enumerate}
+    \item $P_1 = \texttt{CCPAR}(3) = \{4\}$, $P_2 = \texttt{CCPAR}(0) = \{1\}$
+    \item \texttt{UNION}$(3, 0)$
+    \item Check $P_1 \times P_2 = \{4\} \times \{1\} = \{(4, 1)\}$
+    \item \texttt{CONGRUENT}$(4, 1)$? 
+    \begin{itemize}
+        \item Same symbol: YES ($f = f$)
+        \item Same arity: YES (both unary)
+        \item Arguments equivalent: \texttt{FIND}$(3) = $ \texttt{FIND}$(0)$ after union: YES
+    \end{itemize}
+    \item Result: TRUE $\Rightarrow$ call \texttt{MERGE}$(4, 1)$
+\end{enumerate}
+
+\textbf{Call: MERGE(4, 1)} (establishing $f^4(a) = f(a)$)
+
+\begin{enumerate}
+    \item $P_1 = \texttt{CCPAR}(4) = \{5\}$, $P_2 = \texttt{CCPAR}(1) = \{2\}$
+    \item \texttt{UNION}$(4, 1)$
+    \item Check $P_1 \times P_2 = \{5\} \times \{2\} = \{(5, 2)\}$
+    \item \texttt{CONGRUENT}$(5, 2)$?
+    \begin{itemize}
+        \item Same symbol: YES
+        \item Same arity: YES
+        \item Arguments equivalent: \texttt{FIND}$(4) = $ \texttt{FIND}$(1)$: YES
+    \end{itemize}
+    \item Result: TRUE $\Rightarrow$ call \texttt{MERGE}$(5, 2)$
+\end{enumerate}
+
+\textbf{Call: MERGE(5, 2)} (establishing $f^5(a) = f^2(a)$)
+
+\begin{enumerate}
+    \item $P_1 = \texttt{CCPAR}(5) = \emptyset$, $P_2 = \texttt{CCPAR}(2) = \{3\}$
+    \item \texttt{UNION}$(5, 2)$
+    \item Check $P_1 \times P_2 = \emptyset \times \{3\} = \emptyset$
+    \item No further propagation
+\end{enumerate}
+
+The congruence closure process continues, eventually establishing that all nodes $\{0, 1, 2, 3, 4, 5\}$ are in the same equivalence class, meaning:
+\[
+a = f(a) = f^2(a) = f^3(a) = f^4(a) = f^5(a)
+\]
+\end{tcolorbox}
+
+\textbf{Step 6: Check the disequality $f(a) \neq a$}
+
+After processing all equalities through congruence closure, we check the disequality constraint:
+\begin{itemize}
+    \item We have $f(a) \neq a$ in $F^-$
+    \item Check: \texttt{FIND}$(1) = $ \texttt{FIND}$(0)$?
+    \item After congruence closure: YES (they are in the same equivalence class)
+    \item \textbf{Conclusion}: The disequality is violated!
+\end{itemize}
+
+\textbf{Result}: The formula is \textbf{UNSATISFIABLE}. The equality $f^3(a) = f^5(a)$ forces a cycle that ultimately implies $f(a) = a$, which contradicts the disequality constraint $f(a) \neq a$.
+\end{example} 
+
+
+\section{Complexity Improvements and Optimizations}
+
+The basic congruence closure algorithm presented earlier has complexity $O(n^2)$ for $n$ nodes in the DAG. However, several optimizations have been developed to improve the practical and theoretical performance of the algorithm.
+
+\subsection{Historical Development}
+
+\subsubsection{Nelson-Oppen Algorithm (1980)}
+
+The original congruence closure algorithm by Nelson and Oppen (1980) operates on a graph $G = (V, E)$ where:
+\begin{itemize}
+    \item $|V| = n$ (number of nodes/vertices)
+    \item $|E| = e$ (number of edges)
+\end{itemize}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Nelson-Oppen Complexity}]
+The Nelson-Oppen algorithm has complexity $O(e^2)$ for $O(n)$ calls to \texttt{MERGE}.
+\end{tcolorbox}
+
+This quadratic complexity in the number of edges can be prohibitive for large formulas with many equalities.
+
+\subsubsection{Downey-Sethi-Tarjan Improvements (1980-1982)}
+
+Downey, Sethi, and Tarjan developed several optimizations that significantly improved the complexity of congruence closure algorithms.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Improved Complexity}]
+The Downey-Sethi-Tarjan optimizations reduce the complexity to $O(e \log e)$ for $O(n)$ calls to \texttt{MERGE}.
+\end{tcolorbox}
+
+This represents a substantial improvement, especially for sparse graphs where $e$ is much smaller than $n^2$.
+
+\subsection{Key Optimizations}
+
+The improvements introduced by Downey, Sethi, and Tarjan focus on two main aspects of the algorithm:
+
+\subsubsection{Optimization 1: Avoiding Recursion in FIND}
+
+\textbf{Original recursive implementation}:
+\begin{verbatim}
+let rec FIND i = 
+    let n = NODE i in 
+        if n.find = i then i 
+        else FIND n.find
+\end{verbatim}
+
+\textbf{Optimized non-recursive implementation}:
+\begin{verbatim}
+let FIND i = (NODE i).find
+\end{verbatim}
+
+\begin{remark}
+This optimization is correct only if the \texttt{UNION} operation is modified appropriately. When node $i_1$ becomes the representative of the merged equivalence class, the \texttt{find} field of \textbf{all nodes} in $i_2$'s class must be updated to point directly to $i_1$.
+
+This eliminates the need for path traversal during \texttt{FIND} operations, reducing the cost from $O(h)$ (where $h$ is the height of the union-find tree) to $O(1)$.
+\end{remark}
+
+\subsubsection{Optimization 2: Union by Size Heuristics}
+
+When merging two equivalence classes via \texttt{UNION}$(i_1, i_2)$, we must choose which representative becomes the representative of the merged class. Two effective heuristics are:
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Union Heuristics}]
+\textbf{Heuristic 1: Union by Equivalence Class Size}
+
+Choose as the representative of the new class the representative of the \textbf{larger equivalence class}:
+\begin{itemize}
+    \item Compare $|[i_1]|$ and $|[i_2]|$ (sizes of the equivalence classes)
+    \item Make the representative of the larger class the new representative
+\end{itemize}
+
+\textbf{Heuristic 2: Union by CCPAR Size}
+
+Choose as the representative the node whose \texttt{ccpar} field has \textbf{more members}:
+\begin{itemize}
+    \item Compare $|i_1.\texttt{ccpar}|$ and $|i_2.\texttt{ccpar}|$
+    \item Make the representative with the larger \texttt{ccpar} set the new representative
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Rationale}: These heuristics ensure that the union-find tree remains balanced, preventing degenerate cases where the tree becomes a long chain. By always attaching the smaller structure to the larger one, we maintain logarithmic depth in the union-find structure.
+
+\subsection{Implementation Note}
+
+The \texttt{CCPAR} function must retrieve the \texttt{ccpar} set of the representative node:
+
+\begin{verbatim}
+let CCPAR i = (NODE (FIND i)).ccpar
+\end{verbatim}
+
+This ensures that we always access the \texttt{ccpar} information from the current representative of the equivalence class, which is essential for correctness after multiple \texttt{UNION} operations.
+
+\subsection{Practical Impact}
+
+These optimizations have significant practical impact:
+\begin{itemize}
+    \item \textbf{Reduced time complexity}: From $O(e^2)$ to $O(e \log e)$
+    \item \textbf{Better cache locality}: Non-recursive \texttt{FIND} reduces function call overhead
+    \item \textbf{Balanced structures}: Union heuristics prevent worst-case tree depths
+    \item \textbf{Scalability}: Enables congruence closure on much larger formulas
+\end{itemize}
+
+These improvements make congruence closure practical for real-world applications in automated theorem proving, program verification, and satisfiability modulo theories (SMT) solvers. 
+
+
+
+
+
+
+
 \end{document}

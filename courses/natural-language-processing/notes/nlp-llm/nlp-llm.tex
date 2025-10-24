@@ -16,7 +16,7 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc, matrix}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage[most]{tcolorbox}
@@ -927,13 +927,672 @@ This data-dependent weighting allows Transformers to:
 This is why Transformers excel at tasks requiring understanding of context and relationships between elements, such as natural language processing and sequence modeling.
 \end{observation}
 
+\section{Multi-Head Attention}
+
+\subsection{Limitation of Single Attention Head}
+
+\begin{observation}
+While self-attention provides a powerful mechanism for capturing relationships between tokens, a single attention head may not capture all types of relationships effectively. Different aspects of the input may require different attention patterns.
+\end{observation}
+
+\subsection{The Multi-Head Solution}
+
+\begin{tcolorbox}[colback=green!10!white,colframe=green!75!black,title=\textbf{Multi-Head Attention}]
+\textbf{Multi-head attention} allows the model to attend to information from different representation subspaces simultaneously. Instead of computing a single attention function, we compute $h$ parallel attention functions (heads).
+\end{tcolorbox}
+
+\subsubsection{Mathematical Formulation}
+
+For each head $i = 1, \ldots, h$:
+
+\begin{align*}
+\mathbf{Q}^{(i)} &= \mathbf{X}\mathbf{W}^{(q,i)} \\
+\mathbf{K}^{(i)} &= \mathbf{X}\mathbf{W}^{(k,i)} \\
+\mathbf{V}^{(i)} &= \mathbf{X}\mathbf{W}^{(v,i)}
+\end{align*}
+
+Each head computes its own attention:
+
+\[
+\mathbf{Y}^{(i)} = \text{Softmax}\left[\frac{\mathbf{Q}^{(i)}\mathbf{K}^{(i)T}}{\sqrt{d_k}}\right]\mathbf{V}^{(i)}
+\]
+
+The outputs of all heads are concatenated and linearly transformed:
+
+\[
+\mathbf{Y} = \text{Concat}(\mathbf{Y}^{(1)}, \ldots, \mathbf{Y}^{(h)})\mathbf{W}^{(o)}
+\]
+
+\subsubsection{Why Multi-Head?}
+
+\begin{itemize}
+    \item \textbf{Different perspectives}: Each head can learn to focus on different types of relationships
+    \item \textbf{Parallel processing}: All heads process the input simultaneously
+    \item \textbf{Richer representations}: Multiple heads capture more complex patterns
+    \item \textbf{Stability}: The $\sqrt{d_k}$ scaling prevents gradients from becoming too small
+\end{itemize}
+
+\begin{example}[Multi-Head Attention in Action]
+Consider the sentence: "The bank by the river is beautiful"
+
+\begin{itemize}
+    \item \textbf{Head 1} might focus on syntactic relationships (subject-verb)
+    \item \textbf{Head 2} might focus on semantic relationships (bank-river)
+    \item \textbf{Head 3} might focus on positional relationships
+    \item \textbf{Head 4} might focus on morphological patterns
+\end{itemize}
+
+Each head learns different attention patterns, providing a comprehensive understanding of the input.
+\end{example}
+
+\section{Positional Encoding}
+
+\subsection{The Need for Position Information}
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Problem: Permutation Invariance}]
+Transformers are inherently \textbf{permutation invariant}—they treat input tokens as an unordered set. However, in sequences like text, \textbf{position matters}:
+
+\begin{itemize}
+    \item "The cat sat on the mat" $\neq$ "The mat sat on the cat"
+    \item "I love you" $\neq$ "You love I"
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Solution: Positional Encoding}
+
+\begin{definition}[Positional Encoding]
+\textbf{Positional encoding} adds position-specific information to token embeddings so that the transformer can distinguish between tokens based on their position in the sequence.
+\end{definition}
+
+\subsubsection{Sinusoidal Positional Encoding}
+
+The original Transformer paper uses sinusoidal functions:
+
+\[
+\text{PE}(pos, 2i) = \sin\left(\frac{pos}{10000^{2i/d_{model}}}\right)
+\]
+\[
+\text{PE}(pos, 2i+1) = \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)
+\]
+
+where:
+\begin{itemize}
+    \item $pos$ is the position in the sequence
+    \item $i$ is the dimension index
+    \item $d_{model}$ is the model dimension
+\end{itemize}
+
+\subsubsection{Learned Positional Embeddings}
+
+Modern approaches often use learned embeddings:
+
+\[
+\mathbf{x}_n = \mathbf{x}_n + \mathbf{p}_n
+\]
+
+where $\mathbf{p}_n$ is a learned vector specific to position $n$.
+
+\subsection{Properties of Good Positional Encoding}
+
+\begin{observation}
+Effective positional encoding should satisfy:
+\begin{itemize}
+    \item \textbf{Unique for each position}: Different positions should have different encodings
+    \item \textbf{Consistent for similar distances}: Positions $i$ and $j$ should have similar encodings if $|i-j|$ is small
+    \item \textbf{Generalizable}: Should work for sequences longer than seen during training
+    \item \textbf{Additive}: Should not interfere with the semantic meaning of tokens
+\end{itemize}
+\end{observation}
+
+\section{The Complete Transformer Architecture}
+
+\subsection{Encoder-Decoder Structure}
+
+\begin{tcolorbox}[colback=blue!10!white,colframe=blue!75!black,title=\textbf{Transformer Architecture}]
+The Transformer consists of an \textbf{encoder} and a \textbf{decoder}, both composed of stacked layers:
+
+\begin{itemize}
+    \item \textbf{Encoder}: Processes the input sequence and creates contextual representations
+    \item \textbf{Decoder}: Generates the output sequence using encoder outputs and previously generated tokens
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Encoder Stack}
+
+Each encoder layer contains:
+\begin{enumerate}
+    \item \textbf{Multi-head attention}: Self-attention over input tokens
+    \item \textbf{Feed-forward network}: Point-wise transformations
+    \item \textbf{Residual connections} and \textbf{layer normalization}
+\end{enumerate}
+
+\subsubsection{Decoder Stack}
+
+Each decoder layer contains:
+\begin{enumerate}
+    \item \textbf{Masked multi-head attention}: Self-attention over target tokens (masked to prevent peeking)
+    \item \textbf{Multi-head attention}: Attention over encoder outputs
+    \item \textbf{Feed-forward network}
+    \item \textbf{Residual connections} and \textbf{layer normalization}
+\end{enumerate}
+
+\subsection{Layer Normalization and Residual Connections}
+
+\begin{definition}[Residual Connection]
+A \textbf{residual connection} adds the input of a layer to its output:
+
+\[
+\mathbf{y} = \mathbf{x} + \text{Layer}(\mathbf{x})
+\]
+\end{definition}
+
+\begin{definition}[Layer Normalization]
+\textbf{Layer normalization} normalizes the features within each sample:
+
+\[
+\text{LayerNorm}(\mathbf{x}) = \gamma \cdot \frac{\mathbf{x} - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta
+\]
+\end{definition}
+
+\section{Transformer Layers}
+
+\subsection{Multi-Head Attention Algorithm}
+
+\begin{observation}
+Multi-head attention allows the model to simultaneously attend to information from different representation subspaces. Each head learns independent query, key, and value transformations, enabling diverse attention patterns.
+\end{observation}
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{Algorithm 12.2: Multi-head attention}]
+\textbf{Input:} Set of tokens $\mathbf{X} \in \mathbb{R}^{N \times D}$: $\{x_1, \ldots, x_N\}$
+
+Query weight matrices $\{\mathbf{W}_1^{(q)}, \ldots, \mathbf{W}_H^{(q)}\} \in \mathbb{R}^{D \times D}$ (one per head)
+
+Key weight matrices $\{\mathbf{W}_1^{(k)}, \ldots, \mathbf{W}_H^{(k)}\} \in \mathbb{R}^{D \times D}$ (one per head)
+
+Value weight matrices $\{\mathbf{W}_1^{(v)}, \ldots, \mathbf{W}_H^{(v)}\} \in \mathbb{R}^{D \times D_v}$ (one per head)
+
+Output weight matrix $\mathbf{W}^{(o)} \in \mathbb{R}^{HD_v \times D}$ (projects concatenated heads back to original dimension)
+
+\textbf{Output:} $\mathbf{Y} \in \mathbb{R}^{N \times D}$: $\{y_1, \ldots, x_N\}$
+
+\vspace{0.3cm}
+
+\textcolor{blue}{// compute self-attention for each head (Algorithm 12.1)}
+
+\textbf{for} $h = 1, \ldots, H$ \textbf{do}
+
+\quad $\mathbf{Q}_h = \mathbf{X}\mathbf{W}_h^{(q)}$, $\mathbf{K}_h = \mathbf{X}\mathbf{W}_h^{(k)}$, $\mathbf{V}_h = \mathbf{X}\mathbf{W}_h^{(v)}$ \textcolor{blue}{// project inputs for this head}
+
+\quad $\mathbf{H}_h = \text{Attention}(\mathbf{Q}_h, \mathbf{K}_h, \mathbf{V}_h)$ \textcolor{blue}{// $\mathbf{H}_h \in \mathbb{R}^{N \times D_v}$}
+
+\textbf{end for}
+
+$\mathbf{H} = \text{Concat}[\mathbf{H}_1, \ldots, \mathbf{H}_N]$ \textcolor{blue}{// concatenate all head outputs: $\mathbf{H} \in \mathbb{R}^{N \times HD_v}$}
+
+\textbf{return} $\mathbf{Y}(\mathbf{X}) = \mathbf{H}\mathbf{W}^{(o)}$ \textcolor{blue}{// project back to original dimension}
+\end{tcolorbox}
+
+\subsubsection{Key Insights}
+
+\begin{itemize}
+    \item Each head operates independently with its own learnable transformations, allowing different heads to capture different types of relationships
+    \item The concatenation of all heads produces a richer representation than a single attention head
+    \item The output projection $\mathbf{W}^{(o)}$ combines information from all heads and maps back to the original dimension $D$
+\end{itemize}
+
+\subsection{Transformer Layer Structure}
+
+\begin{definition}[Residual Connection]
+A residual connection (or skip connection) adds the input directly to the output of a layer: $\text{output} = \text{Layer}(\text{input}) + \text{input}$. This enables gradients to flow directly through the network during backpropagation.
+\end{definition}
+
+\begin{itemize}
+    \item \textbf{Multi-head self-attention is the core of transformer layers} - it enables the model to attend to different parts of the input simultaneously
+    
+    \item \textbf{To improve training efficiency we introduce residual connections} that bypass the multi-head structure - this helps with gradient flow and allows information to propagate directly through layers
+    
+    \item \textbf{Then, layer normalization} (Ba, Kiros, and Hinton, 2016) is performed, which also improves training efficiency - it stabilizes training by normalizing the distribution of layer inputs
+    
+    \item \textbf{Resulting transformation:}
+    \[
+    \mathbf{Z} = \text{LayerNorm}[\mathbf{Y}(\mathbf{X}) + \mathbf{X}]
+    \]
+    
+    This combines the attention output with the original input and normalizes the result.
+\end{itemize}
+
+\subsection{Nonlinearity and Feed-Forward Network}
+
+\begin{observation}
+The attention mechanism, while powerful, has a fundamental limitation: it produces outputs that are linear combinations of the input value vectors. This constrains the expressiveness of the layer.
+\end{observation}
+
+\begin{itemize}
+    \item \textbf{Problem:} the attention mechanism creates linear combinations of the value vectors, which are linearly combined to produce output vectors. So, \textcolor{red}{\textbf{outputs of attention layers are constrained to be linear combinations of the inputs}}.
+    
+    \item \textcolor{red}{\textbf{Nonlinearity enters only in the attention weights (softmax function) but the output vectors are constrained to lie in the subspace spanned by the input vectors, which limits the expressiveness of the attention layer}}
+    
+    \item \textbf{Solution:} We can enhance the flexibility by \textbf{post-processing the output of each layer using a standard nonlinear neural network with $D$ inputs and $D$ outputs (MLP[·])}. E.g., two-layer fully connected with ReLU hidden units
+    
+    \begin{itemize}
+        \item This feed-forward network introduces nonlinearity that allows the model to learn more complex transformations
+        \item The MLP typically has a hidden layer with more units than $D$ (e.g., $4D$) to increase model capacity
+    \end{itemize}
+    
+    \item \textbf{Notice:} the same shared network is applied to each of the output vectors (i.e., tokens, rows of $\mathbf{Z}$) - this is called a position-wise feed-forward network
+    
+    \item \textbf{Residual connections and layer normalization} are applied also to this stage, to improve training efficiency and enable deeper networks
+\end{itemize}
+
+\subsection{Complete Transformer Layer}
+
+\begin{tcolorbox}[colback=blue!10!white,colframe=blue!75!black,title=\textbf{Final output of the transformer layer}]
+\[
+\tilde{\mathbf{X}} = \text{LayerNorm}[\text{MLP}[\mathbf{Z}] + \mathbf{Z}]
+\]
+\end{tcolorbox}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm]
+\node[draw, rectangle, fill=red!20, minimum width=2.5cm, minimum height=0.8cm, align=center] (mha) {multi-head \\ self-attention};
+\node[draw, rectangle, fill=yellow!30, minimum width=2.5cm, minimum height=0.8cm, above=of mha] (norm1) {add \& norm};
+\node[draw, rectangle, fill=orange!30, minimum width=2.5cm, minimum height=0.8cm, above=of norm1] (mlp) {MLP};
+\node[draw, rectangle, fill=yellow!30, minimum width=2.5cm, minimum height=0.8cm, above=of mlp] (norm2) {add \& norm};
+
+\node[left=0.5cm of mha] (x) {$\mathbf{x}$};
+\node[right=0.5cm of norm2] (xbar) {$\tilde{\mathbf{x}}$};
+
+\draw[-Stealth, thick] (x) -- (mha);
+\draw[-Stealth, thick] (mha) -- (norm1);
+\draw[-Stealth, thick] (norm1) -- (mlp);
+\draw[-Stealth, thick] (mlp) -- (norm2);
+\draw[-Stealth, thick] (norm2) -- (xbar);
+
+\draw[-Stealth, thick] (mha.east) -- ++(0.8,0) |- (norm1.east);
+\draw[-Stealth, thick] (mlp.east) -- ++(0.8,0) |- (norm2.east);
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\textit{Courtesy of Bishop et al., 2024}
+\end{center}
+
+\subsection{Transformer Layer Algorithm}
+
+\begin{observation}
+A complete transformer layer combines multi-head attention with a feed-forward network, connected via residual connections and layer normalization. This design enables the model to learn both attention-based relationships and complex nonlinear transformations.
+\end{observation}
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{Algorithm 12.3: Transformer layer}]
+\textbf{Input:} Set of tokens $\mathbf{X} \in \mathbb{R}^{N \times D}$: $\{x_1, \ldots, x_N\}$
+
+Multi-head self-attention layer parameters (from Algorithm 12.2)
+
+Feed-forward network parameters (typically a 2-layer MLP with ReLU activation)
+
+\textbf{Output:} $\tilde{\mathbf{X}} \in \mathbb{R}^{N \times D}$: $\{\tilde{x}_1, \ldots, \tilde{x}_N\}$ (same dimension as input)
+
+\vspace{0.3cm}
+
+$\mathbf{Z} = \text{LayerNorm}[\mathbf{Y}(\mathbf{X}) + \mathbf{X}]$ \textcolor{blue}{// Apply attention, add residual, normalize}
+
+$\tilde{\mathbf{X}} = \text{LayerNorm}[\text{MLP}[\mathbf{Z}] + \mathbf{Z}]$ \textcolor{blue}{// Apply MLP, add residual, normalize}
+
+\textbf{return} $\tilde{\mathbf{X}}$
+\end{tcolorbox}
+
+\subsubsection{Design Rationale}
+
+\begin{itemize}
+    \item \textbf{Residual connections:} Enable gradients to flow directly through the network, facilitating training of deep models
+    \item \textbf{Layer normalization:} Stabilizes training by normalizing activations, reducing internal covariate shift
+    \item \textbf{Post-norm architecture:} Normalizing after each sub-layer (attention and MLP) has been shown to improve training stability
+    \item \textbf{Dimension preservation:} The output has the same dimension as the input, allowing layers to be stacked sequentially
+\end{itemize}
+
+\section{Computational Complexity of the Attention Layer}
+
+\subsection{Attention Layer Complexity}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!60!black,title=\textbf{Notation}]
+$N$ vectors (tokens), $D$ dimension
+\end{tcolorbox}
+
+\begin{itemize}
+    \item \textbf{Attention layer}
+    \begin{itemize}
+        \item Matrices $\mathbf{W}^{(q)}$, $\mathbf{W}^{(k)}$, and $\mathbf{W}^{(v)}$ have $\mathcal{O}(D^2)$ parameters and are shared across input tokens
+        \item Matrices $\mathbf{Q}$, $\mathbf{K}$, and $\mathbf{V}$ have $\mathcal{O}(ND)$ parameters
+        \item \textbf{Total computational cost for attention} $\big(\text{Softmax}[\frac{\mathbf{Q}\mathbf{K}^T}{\sqrt{D_k}}] \, \mathbf{V}\big)$: $\mathcal{O}(N^2 D)$
+    \end{itemize}
+    \item \textbf{MLP (after attention)}
+    \begin{itemize}
+        \item $D$ inputs, $D$ outputs
+        \item Computational cost of a forward pass (for \emph{1 token}): $\mathcal{O}(D^2)$
+        \item \textbf{Total computational cost (for $N$ tokens)}: $\mathcal{O}(ND^2)$
+    \end{itemize}
+    \item Depending on $N$ and $D$ the transformer layer or the MLP layer may dominate the computational cost
+\end{itemize}
+
+\subsection{Comparison with Fully Connected Network}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!60!black,title=\textbf{Notation}]
+$N$ vectors (tokens), $D$ dimension
+\end{tcolorbox}
+
+\begin{itemize}
+    \item \textbf{Standard fully connected network}
+    \begin{itemize}
+        \item Input/output size: $ND$
+        \item Number of independent parameters: $\mathcal{O}(N^2 D^2)$
+        \item Computational cost of a forward pass: $\mathcal{O}(N^2 D^2)$
+    \end{itemize}
+    \item \textbf{Conclusion:} Compared to a standard fully connected network (complexity $\mathcal{O}(N^2 D^2)$) a transformer layer (complexity $\max(\mathcal{O}(ND^2), \, \mathcal{O}(N^2 D))$) is computationally more efficient
+\end{itemize}
 
 
 
+\section{Tokenization: One-Hot Representation}
+
+\subsection{How to Compute Token Vectors for a Given Text?}
+
+\begin{itemize}
+    \item Example: \textit{"Hello, I'm a language model,"}
+\end{itemize}
+
+\subsection{One-Hot Representation}
+
+\begin{itemize}
+    \item Fixed dictionary of words
+    \item Vectors of length equal to the dictionary size
+    \item $k$-th word has 1 in position $k$, 0 elsewhere
+    \item \textbf{Problem:} Huge dimensionality of the dictionary and the tokens
+\end{itemize}
 
 
 
+\section{Tokenization: Byte Pair Encoding}
+
+\subsection{Motivation}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!75!black,title=\textbf{One-Hot Encoding Issues}]
+The \textbf{one-hot encoding} approach has a large dictionary size, which can become inefficient. To address this issue, we could use a dictionary of characters instead of words. However, this approach would discard the \textbf{semantically important word structure} of the language.
+\end{tcolorbox}
+
+\subsection{Byte Pair Encoding (BPE)}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Definition: Byte Pair Encoding}]
+Byte Pair Encoding (BPE) provides an intermediate solution, acting as a compromise between character-level and word-level tokenization. BPE is a compression method adapted for tokenization. The process works as follows:
+\begin{enumerate}
+    \item Start with individual characters.
+    \item Search a body of text for the most frequently occurring adjacent pairs of tokens.
+    \item Replace the adjacent pair with a new token and add the token to the dictionary (note: new tokens cannot contain spaces).
+    \item Repeat the process until a predefined number of tokens is reached.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+    font=\footnotesize,
+    token/.style={rectangle, draw, rounded corners=2pt, minimum height=0.55cm, inner xsep=3pt, fill=blue!8},
+    merged/.style={token, fill=orange!25, thick},
+    stage/.style={align=left, text width=5.5cm},
+    arrow/.style={-Stealth, thick, shorten >=2pt, shorten <=2pt}
+]
+\node[stage] (iter0) {\textbf{Iteration 0}\\Start with characters};
+\matrix (m0) [matrix of nodes, nodes=token, row sep=0mm, column sep=1mm, below=2mm of iter0] {
+p & e & t & e & r & <space> & p & i & p & e & r \\
+};
+
+\node[stage, below=13mm of m0] (iter1) {\textbf{Iteration 1}\\Merge most frequent pair $p+e$};
+\matrix (m1) [matrix of nodes, nodes=token, row sep=0mm, column sep=1mm, below=2mm of iter1] {
+|[merged]| pe & t & e & r & <space> & p & i & |[merged]| pe & r \\
+};
+
+\node[stage, below=13mm of m1] (iter2) {\textbf{Iteration 2}\\Merge new pair $pe+r$};
+\matrix (m2) [matrix of nodes, nodes=token, row sep=0mm, column sep=1mm, below=2mm of iter2] {
+pe & t & e & r & <space> & p & i & |[merged]| per \\
+};
+
+\draw[arrow] (m0.south) -- node[right=2mm, align=left]{Add token $pe$} (iter1.north);
+\draw[arrow] (m1.south) -- node[right=2mm, align=left]{Add token $per$} (iter2.north);
+\end{tikzpicture}
+\caption{Byte Pair Encoding iteratively merges the most frequent adjacent tokens, growing the vocabulary step by step.}
+\label{fig:bpe-process}
+\end{figure}
+
+\subsection{Dictionary Generation with Byte Pair Encoding}
+
+Consider the text: ``Peter Piper picked a peck of pickled peppers.''\\
+After applying Byte Pair Encoding, frequently occurring pairs of characters (e.g., ``pe'' and ``ck'') will be merged into tokens and added to the dictionary.\\
+This method enables more efficient tokenization while retaining semantic structure.
+
+\subsection{Text Tokenization}
+
+An example of tokenization using Byte Pair Encoding is the sentence: \textit{``Hello, I’m a language model.''}
+
+\[
+\text{Tokens: } [15496, 11, 314, 479, 257, 3306, 3560, 11]
+\]
+
+Where:
+\begin{itemize}
+    \item \textbf{Token ID 15496}: "Hello" (word without leading space)
+    \item \textbf{Token ID 11}: "," (comma)
+    \item \textbf{Token ID 314}: "GI" (leading-space marker $\rightarrow$ "I")
+    \item \textbf{Token ID 479}: "'m" (apostrophe + m)
+    \item \textbf{Token ID 257}: "a"
+    \item \textbf{Token ID 3306}: "language"
+    \item \textbf{Token ID 3560}: "model"
+    \item \textbf{Token ID 11}: "," (final comma)
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Token ID} & \textbf{BPE Piece} & \textbf{Meaning / Note} \\
+\hline
+15496 & Hello & Word without leading space \\
+11 & , & Comma \\
+314 & GI & Leading-space marker $\rightarrow$ ``I'' \\
+479 & 'm & Apostrophe + m \\
+257 & a & ``a'' \\
+3306 & language & ``language'' \\
+3560 & model & ``model'' \\
+11 & , & Final comma \\
+\hline
+\end{tabular}
+\caption{Byte Pair Encoding Tokenization Example}
+\end{table}
 
 
+
+\section{Transformer Architectures}
+
+\subsection{Introduction to Transformer Architectures}
+
+The flexibility of transformer processing layers has allowed the development of Large Language Models (LLMs). There are three main transformer-based architectures:
+\begin{itemize}
+    \item \textbf{Encoder:} Input: sequence of tokens (e.g., text); Output: sequence of tokens (embedding) usable for a downstream task (e.g., sentiment classification).
+    \item \textbf{Decoder:} Input: single vector (e.g., text prompt or image); Output: sequence of tokens (e.g., next text or image caption).
+    \item \textbf{Encoder+Decoder:} Input: sequence (e.g., sequence in Italian); Output: sequence (e.g., sequence in English).
+\end{itemize}
+
+These architectures are the foundation of many powerful transformer-based models like GPT, BERT, and other state-of-the-art models in natural language processing.
+
+\begin{figure}[h!]
+\centering
+\tikzset{
+    transBlock/.style={rectangle, draw, rounded corners=2pt, minimum width=1.9cm, minimum height=0.75cm, align=center, fill=blue!12},
+    transData/.style={transBlock, fill=green!18},
+    transArrow/.style={-Stealth, thick, shorten >=2pt, shorten <=2pt},
+    transFeedback/.style={transArrow, dashed}
+}
+\begin{minipage}{0.3\textwidth}
+\centering
+\textbf{Encoder-only}\\[2mm]
+\begin{tikzpicture}[font=\footnotesize]
+\node[transData] (encIn) {Tokenized\\Input};
+\node[transBlock, below=0.35cm of encIn] (encLayers) {Encoder\\Layers};
+\node[transData, below=0.35cm of encLayers] (encOut) {Contextual\\Embeddings};
+\draw[transArrow] (encIn) -- (encLayers);
+\draw[transArrow] (encLayers) -- (encOut);
+\end{tikzpicture}
+\end{minipage}
+\hfill
+\begin{minipage}{0.3\textwidth}
+\centering
+\textbf{Decoder-only}\\[2mm]
+\begin{tikzpicture}[font=\footnotesize]
+\node[transData] (decIn) {Prompt /\\Prefix Tokens};
+\node[transBlock, below=0.35cm of decIn] (decLayers) {Decoder\\Layers};
+\node[transData, below=0.35cm of decLayers] (decOut) {Next Token};
+\draw[transArrow] (decIn) -- (decLayers);
+\draw[transArrow] (decLayers) -- (decOut);
+\draw[transFeedback] (decOut.east) .. controls +(0.65,-0.45) and +(0.65,0.45) .. (decLayers.east);
+\end{tikzpicture}
+\end{minipage}
+\hfill
+\begin{minipage}{0.3\textwidth}
+\centering
+\textbf{Encoder-Decoder}\\[2mm]
+\begin{tikzpicture}[font=\footnotesize]
+\node[transData] (seqIn) {Source\\Tokens};
+\node[transBlock, below=0.35cm of seqIn] (seqEnc) {Encoder\\Layers};
+\node[transData, below=0.35cm of seqEnc] (seqLatent) {Latent\\Representation};
+\node[transBlock, below=0.35cm of seqLatent] (seqDec) {Decoder\\Layers};
+\node[transData, below=0.35cm of seqDec] (seqOut) {Target\\Tokens};
+\node[transData, left=0.7cm of seqDec] (seqPrefix) {Target\\Prefix};
+\draw[transArrow] (seqIn) -- (seqEnc);
+\draw[transArrow] (seqEnc) -- (seqLatent);
+\draw[transArrow] (seqPrefix) -- (seqDec);
+\draw[transArrow] (seqDec) -- (seqOut);
+\draw[transFeedback] (seqLatent.east) .. controls +(0.6,-0.3) and +(0.6,0.3) .. (seqDec.east);
+\end{tikzpicture}
+\end{minipage}
+\caption{Key transformer configurations: encoder models for understanding, decoder models for autoregressive generation, and encoder-decoder models for sequence transduction.}
+\label{fig:transformer-architectures}
+\end{figure}
+
+\subsection{Decoder Transformers}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Decoder Transformer: Key Idea}]
+\begin{itemize}
+    \item \textbf{Generative model}: produces an output sequence token by token, as in GPT-style language models.
+    \item \textbf{Autoregressive factorization}: models the joint distribution over tokens by multiplying conditional probabilities that depend only on previous tokens.
+    \item \textbf{Feedback loop}: each sampled token is appended to the prefix and fed back to predict the next token, enabling open-ended generation.
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Autoregressive Objective}
+
+A decoder transformer constructs a probabilistic model over a sequence $\mathbf{x}_{1:N} = (x_1, \ldots, x_N)$:
+\[
+p(\mathbf{x}_{1:N}) = \prod_{n=1}^{N} p\left(x_n \mid x_1, \ldots, x_{n-1}\right)
+\]
+Each conditional distribution $p\left(x_n \mid x_1, \ldots, x_{n-1}\right)$ is parameterized by the transformer and learned from data.
+
+\begin{itemize}
+    \item \textbf{Input to the network}: the prefix of $n-1$ tokens.
+    \item \textbf{Output}: a categorical distribution over the vocabulary for token $n$.
+    \item \textbf{Sampling}: drawing from this distribution yields the next token, which is appended to the sequence to predict $x_{n+1}$, and so on.
+\end{itemize}
+
+\subsubsection{Architecture Overview}
+
+The decoder is composed of a stack of $L$ identical transformer layers followed by a projection head:
+\begin{itemize}
+    \item \textbf{Token embeddings}: each input token (including a start-of-sequence symbol) is mapped to a $D$-dimensional vector, and a positional encoding is added to retain order information.
+    \item \textbf{Masked self-attention layers}: each layer mixes information across tokens while masking future positions, ensuring that predictions depend only on past tokens.
+    \item \textbf{Feed-forward sublayers}: position-wise networks refine each token representation after attention. Residual connections and layer normalization (not shown in the slides) stabilize deep stacks.
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!70!black,title=\textbf{Linear Softmax Module (LSM)}]
+Let $\tilde{\mathbf{X}} \in \mathbb{R}^{N \times D}$ be the output of the last transformer layer. A learned matrix $W^{(p)} \in \mathbb{R}^{D \times K}$ maps each token representation to the vocabulary of size $K$:
+\[
+\mathbf{Y} = \text{Softmax}\left(\tilde{\mathbf{X}} W^{(p)}\right)
+\]
+The softmax is applied row-wise, yielding a probability distribution over tokens for every position. Each position's prediction is trained with a cross-entropy loss comparing the predicted distribution with the true token.
+\end{tcolorbox}
+
+\subsubsection{Training Decoder Transformers}
+
+\begin{itemize}
+    \item \textbf{Self-supervised objective}: large corpora of raw text provide sequences where the model learns to predict the next token without manual labels.
+    \item \textbf{Training sample}: an input sequence $(x_1, \ldots, x_n)$ is paired with the target $x_{n+1}$ (often shifted versions of the same sequence).
+    \item \textbf{Loss function}: cross-entropy values are summed across tokens and mini-batches, encouraging high probability for the correct next token at every position.
+    \item \textbf{Batching strategy}: samples are treated as independent, yet efficiency improves by processing complete sequences in parallel on modern accelerators.
+\end{itemize}
+
+\paragraph{Constructing Training Pairs}
+
+Consider the sentence \textit{``I swam across the river to get to the other bank.''}. Two example training pairs are:
+\begin{align*}
+    (\text{``I swam across''},\; \text{``the''}) \\
+    (\text{``I swam across the''},\; \text{``river''})
+\end{align*}
+To prevent the model from copying the next token directly when trained in parallel, two precautions are required.
+
+\begin{tcolorbox}[colback=orange!7!white,colframe=orange!75!black,title=\textbf{Parallel Training Precautions}]
+\begin{enumerate}
+    \item \textbf{Input shift}: the sequence fed to the network is shifted by one position (input token $x_n$ predicts output $y_{n+1}$), and a special $\langle\text{start}\rangle$ token is prepended.
+    \item \textbf{Masked attention}: the attention mechanism is restricted so that a position can only attend to itself and earlier tokens, blocking any ``peek ahead'' behavior.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsubsection{Masked Attention}
+
+\begin{itemize}
+    \item All attention weights that would connect a token to \emph{future} positions are forced to zero before the softmax normalization.
+    \item In matrix form this corresponds to zeroing the entries above the main diagonal in the attention score matrix and then renormalizing each row so that it still sums to one.
+    \item The triangular mask ensures that, for every position, the prediction is conditioned only on the prefix observed so far.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\draw[step=1cm, gray!50, very thin] (0,0) grid (5,5);
+\foreach \x in {0,...,4} {
+    \foreach \y in {0,...,4} {
+        \ifnum\x>\y
+            \fill[red!40] (\x,\y) rectangle (\x+1,\y+1);
+        \fi
+    }
+}
+\draw[thick] (0,0) rectangle (5,5);
+\node[rotate=90] at (-0.9,2.5) {outputs};
+\node at (2.5,-0.7) {inputs};
+\node at (0.5,5.3) {$\langle\text{start}\rangle$};
+\node at (1.5,5.3) {I};
+\node at (2.5,5.3) {swam};
+\node at (3.5,5.3) {across};
+\node at (4.5,5.3) {the};
+\node[rotate=90] at (-0.7,0.5) {river};
+\node[rotate=90] at (-0.7,1.5) {the};
+\node[rotate=90] at (-0.7,2.5) {across};
+\node[rotate=90] at (-0.7,3.5) {swam};
+\node[rotate=90] at (-0.7,4.5) {I};
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Batching and Padding}
+
+\begin{itemize}
+    \item For efficient GPU utilization, multiple sequences are combined into an input tensor and processed in a single batch.
+    \item Batching requires each sequence to have the same length, so shorter sequences are padded with a special $\langle\text{pad}\rangle$ token.
+    \item A \textbf{padding mask} is added to the attention computation so that tokens representing real content never attend to padded positions.
+\end{itemize}
+
+\subsubsection{Using the Trained Decoder}
+
+\begin{itemize}
+    \item The model outputs a probability distribution over the vocabulary via the softmax layer, representing the likelihood of each possible next token given the current prefix.
+    \item After sampling or selecting the next token, the extended sequence is fed back through the decoder to generate the subsequent token; this loop continues until an end-of-sequence token is produced.
+    \item Thanks to masked attention, the representation of an existing token depends only on earlier tokens and therefore does not need to be recomputed when later tokens are generated, enabling reuse of intermediate activations.
+\end{itemize}
 
 \end{document}
+
+
+% fino a 49 compresa 
