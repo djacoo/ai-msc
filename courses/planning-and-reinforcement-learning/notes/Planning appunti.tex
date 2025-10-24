@@ -2251,23 +2251,21 @@ where each variable can be assigned either true or false.
 
 \subsubsection{Search Tree Structure}
 
-The search process forms a binary tree where each level corresponds to a variable assignment:
+The search process forms a binary tree where each level corresponds to a variable assignment. For two variables $p$ and $Q$, the search space has the following structure:
 
-\[
-\begin{array}{c}
-\texttt{Start} \\
-\begin{array}{c}
-p=1 \\
-Q=1 \quad Q=0
-\end{array}
-\begin{array}{c}
-p=0 \\
-Q=0 \quad Q=1
-\end{array}
-\end{array}
-\]
+\begin{itemize}
+    \item \textbf{Level 0}: Start state
+    \item \textbf{Level 1}: Variable $p$ can be assigned $1$ or $0$
+    \item \textbf{Level 2}: For each assignment of $p$, variable $Q$ can be assigned $1$ or $0$
+\end{itemize}
 
-Each path from the root to a leaf represents a complete assignment of all variables. For example, the path $\text{Start} \rightarrow p=1 \rightarrow Q=0$ represents the assignment $\{p=\text{true}, Q=\text{false}\}$.
+This creates four possible complete assignments:
+\begin{itemize}
+    \item $p=1, Q=1$
+    \item $p=1, Q=0$
+    \item $p=0, Q=0$
+    \item $p=0, Q=1$
+\end{itemize}
 
 For $n$ variables, this creates a complete binary tree of depth $n$ with $2^n$ leaves, representing all possible assignments.
 
