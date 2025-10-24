@@ -2075,18 +2075,398 @@ More precisely, we can bound the size as $|F'| = O(30n + 2)$, which is still lin
 \textbf{Conclusion}: The Tseitin encoding achieves linear size $O(n)$ instead of the exponential size $O(2^n)$ of the standard CNF transformation, making it practical for large planning problems.
 
 
+\newpage
+\part{SAT Decision Procedures}
 
+\section{Decision Procedures for Satisfiability}
 
+We now present a \textbf{decision procedure} for determining the satisfiability of a set of clauses. This procedure is fundamental to understanding how SAT solvers work and forms the algorithmic foundation for planning via SAT encoding.
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{SAT Decision Problem}]
+\begin{definition}[SAT Decision Problem]
+Given a set of clauses $S$ over a set of Boolean variables $X$, determine whether there exists a model (satisfying assignment) $v: X \rightarrow \{\text{true}, \text{false}\}$ such that $v \models S$.
+\end{definition}
+\end{tcolorbox}
 
+\subsection{Relation to Constraint Solving}
 
+The SAT problem is closely related to \textbf{Constraint Solving Problems (CSP)} with Boolean variables. It represents one of the most fundamental problems in algorithmic theory and was the first problem proven to be \textbf{NP-complete}.
 
+\[
+\boxed{
+\begin{array}{ccc}
+S \text{ (set of clauses)} & \xrightarrow{\text{SAT Decision Procedure}} &
+\begin{cases}
+\text{\textbf{YES (Satisfiable)}} \\
+\exists v: v \models S \\
+\\
+\text{\textbf{NO (Unsatisfiable)}} \\
+\text{with proof: } S \vdash \Box
+\end{cases}
+\end{array}
+}
+\]
 
+\section{State Representation and Search Modes}
 
+\subsection{Trail-Based State Representation}
 
+The state of the SAT decision procedure is represented using a \textbf{trail} of literals, which maintains the current partial assignment of truth values to variables.
 
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Trail Representation}]
+\begin{definition}[Trail]
+A \textbf{trail} $\varGamma$ is a sequence of literals representing the current partial assignment in the search process. The empty trail is denoted $\varepsilon$.
+\end{definition}
 
+\begin{definition}[Search State]
+A search state is represented as a pair $\langle S, \varGamma \rangle$ where:
+\begin{itemize}
+    \item $S$ is the current set of clauses
+    \item $\varGamma$ is the current trail (partial assignment)
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
 
+\subsection{Literal Status in Trails}
+
+Given a trail $\varGamma$ and a literal $L$, the status of $L$ is determined as follows:
+
+\begin{itemize}
+    \item $L$ is \textbf{true} if $L \in \varGamma$
+    \item $L$ is \textbf{false} if $\neg L \in \varGamma$
+    \item $L$ is \textbf{undefined} if neither $L$ nor $\neg L$ appears in $\varGamma$
+\end{itemize}
+
+\section{Transition Rules}
+
+The SAT decision procedure operates as a \textbf{transition system} with specific rules that transform the search state. There are two main types of transitions:
+
+\subsection{Decision Rule}
+
+The \textbf{decision rule} extends the trail by choosing an undefined literal and adding it to the current assignment.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Decision Rule}]
+\begin{definition}[Decision Transition]
+\[
+\langle S \parallel \varGamma \rangle \rightarrow \langle S \parallel \varGamma, L \rangle
+\]
+where the decision is applicable if:
+\begin{itemize}
+    \item $L \notin \varGamma$ (literal not already assigned)
+    \item $\neg L \notin \varGamma$ (negation not already assigned)
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+The decision rule represents a \textbf{choice point} in the search process where the algorithm guesses a truth value for an undefined variable.
+
+\subsection{Propagation Rule}
+
+The \textbf{propagation rule} (also called \textbf{unit propagation}) adds literals that are logically implied by the current assignment.
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Propagation Rule}]
+\begin{definition}[Propagation Transition]
+\[
+\langle S \parallel \varGamma \rangle \rightarrow \langle S \parallel \varGamma, L \rangle
+\]
+where the propagation is applicable if there exists a clause $C = L_1 \lor L_2 \lor \cdots \lor L_{k-1} \lor L_k \in S$ such that:
+\begin{itemize}
+    \item $D = L_1 \lor L_2 \lor \cdots \lor L_{k-1}$
+    \item $\varGamma \models \neg D$ (all literals in $D$ are false under current assignment)
+    \item $L = L_k$ (the remaining literal becomes implied)
+    \item $L \notin \varGamma$ and $\neg L \notin \varGamma$
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+\subsubsection{Justification for Implied Literals}
+
+When a literal $L_k$ is propagated with justification clause $C$, it means:
+
+\begin{itemize}
+    \item The clause $C = L_1 \lor L_2 \lor \cdots \lor L_{k-1} \lor L_k$ must be satisfied
+    \item All other literals $L_1, L_2, \dots, L_{k-1}$ are currently false under $\varGamma$
+    \item Therefore, $L_k$ must be true to satisfy the clause
+\end{itemize}
+
+This is called the \textbf{justification} for the propagation: the clause $C$ forces $L_k$ to be true.
+
+\subsubsection{Logical Foundation of Propagation}
+
+The propagation rule is based on the following logical principle:
+
+If we have a clause $D \lor L$ where $D = L_1 \lor L_2 \lor \cdots \lor L_{k-1}$, and we know that $\neg D$ (i.e., $\neg L_1 \land \neg L_2 \land \cdots \land \neg L_{k-1}$), then:
+
+\[
+\neg D \models L
+\]
+
+Because if all the alternative literals are false, the remaining literal must be true to satisfy the disjunction.
+
+\section{Solution States}
+
+The search process terminates when it reaches specific terminal states:
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Solution States}]
+\begin{itemize}
+    \item \textbf{Success}: The state $\langle S, \varGamma \rangle$ where all clauses in $S$ are satisfied by the assignment represented by $\varGamma$
+    \item \textbf{Failure}: The state where a conflict is detected (e.g., the empty clause $\Box$ is derived)
+\end{itemize}
+\end{tcolorbox}
+
+The decision procedure systematically explores the space of possible assignments using these transition rules until it either finds a satisfying assignment or proves that no such assignment exists.
+
+\section{Conflict Analysis and Learning}
+
+When the propagation rule leads to a conflict (derivation of the empty clause $\Box$), the SAT solver enters \textbf{conflict analysis mode} to learn from the conflict and guide future search.
+
+\subsection{Conflict-Solving Mode}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Conflict State Representation}]
+\begin{definition}[Conflict State]
+A state in conflict-solving mode is represented as a triple $\langle S \parallel \varGamma \parallel C \rangle$ where:
+\begin{itemize}
+    \item $S$ is the current set of clauses
+    \item $\varGamma$ is the current trail (partial assignment)
+    \item $C$ is the \textbf{conflict clause} that caused the conflict
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+The conflict clause $C$ represents a learned constraint that explains why the current partial assignment leads to a contradiction. This clause can be added to the formula to prevent the same conflict in future search branches.
+
+\subsection{Search Space Complexity}
+
+The SAT decision procedure explores a search space that grows exponentially with the number of variables.
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Search Space Size}]
+\begin{definition}[Search Space Complexity]
+Given a SAT problem with $n$ Boolean variables, the total number of possible assignments is:
+\[
+2^n
+\]
+where each variable can be assigned either true or false.
+\end{definition}
+\end{tcolorbox}
+
+\subsubsection{Search Tree Structure}
+
+The search process forms a binary tree where each level corresponds to a variable assignment:
+
+\[
+\begin{array}{c}
+\texttt{Start} \\
+\begin{array}{c}
+p=1 \\
+Q=1 \quad Q=0
+\end{array}
+\begin{array}{c}
+p=0 \\
+Q=0 \quad Q=1
+\end{array}
+\end{array}
+\]
+
+Each path from the root to a leaf represents a complete assignment of all variables. For example, the path $\text{Start} \rightarrow p=1 \rightarrow Q=0$ represents the assignment $\{p=\text{true}, Q=\text{false}\}$.
+
+For $n$ variables, this creates a complete binary tree of depth $n$ with $2^n$ leaves, representing all possible assignments.
+
+\section{Backtracking Mechanism}
+
+When a conflict is detected or a dead-end is reached, the solver uses \textbf{backtracking} to explore alternative assignments.
+
+\subsection{Backtracking Rule}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Backtracking Transition}]
+\begin{definition}[Backtracking]
+\[
+\langle S \parallel M \, L^d \, N \parallel C \rangle \rightarrow \langle S \parallel M \, \neg L^d \rangle
+\]
+where:
+\begin{itemize}
+    \item $M$ is the sequence of literals before the decision
+    \item $L^d$ is the most recent \textbf{decided literal} (marked with $d$)
+    \item $N$ is the sequence of literals after the decision
+    \item The transition is only applicable if $N$ contains no decided literals
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+Backtracking implements a \textbf{depth-first search strategy} that:
+\begin{itemize}
+    \item Explores one branch of the search tree completely before trying alternatives
+    \item When a conflict occurs, backtracks to the most recent decision point
+    \item Flips the decision (from $L^d$ to $\neg L^d$) and continues search from there
+\end{itemize}
+
+\subsection{Decision vs. Propagated Literals}
+
+The distinction between decided and propagated literals is crucial for backtracking:
+
+\begin{itemize}
+    \item \textbf{Decided literals} ($L^d$): Chosen by the decision rule, can be flipped during backtracking
+    \item \textbf{Propagated literals}: Forced by unit propagation, cannot be flipped (would immediately cause conflict)
+\end{itemize}
+
+The backtracking rule only flips decided literals, ensuring that propagated assignments remain consistent.
+
+\section{Termination and Results}
+
+The search process terminates when it reaches one of two possible outcomes:
+
+\subsection{Success State}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Success Condition}]
+\begin{definition}[Satisfiable Instance]
+\[
+\langle S \parallel \varGamma \rangle \quad \text{returns} \quad (\text{"sat"}, \varGamma)
+\]
+if and only if $\varGamma \models S$ (i.e., the assignment represented by trail $\varGamma$ satisfies all clauses in $S$).
+\end{definition}
+\end{tcolorbox}
+
+When a satisfying assignment is found, the solver returns:
+\begin{itemize}
+    \item Status: \texttt{"sat"} (satisfiable)
+    \item Model: The complete assignment $\varGamma$ that satisfies the formula
+\end{itemize}
+
+\subsection{Failure State}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Failure Condition}]
+\begin{definition}[Unsatisfiable Instance]
+\[
+\langle S \parallel \varGamma \parallel C \rangle \quad \text{returns} \quad \text{"unsat"}
+\]
+if and only if $\varGamma$ contains no decision literals (i.e., all literals in the trail were propagated, not decided).
+\end{definition}
+\end{tcolorbox}
+
+When the formula is proven unsatisfiable, the solver returns:
+\begin{itemize}
+    \item Status: \texttt{"unsat"} (unsatisfiable)
+    \item The empty clause $\Box$ serves as a certificate of unsatisfiability
+\end{itemize}
+
+This occurs when the solver has exhausted all possible assignments without finding a satisfying one, meaning the formula is logically inconsistent.
+
+\section{Conflict-Driven Clause Learning (CDCL)}
+
+Modern SAT solvers use \textbf{Conflict-Driven Clause Learning (CDCL)}, an advanced technique that combines depth-first search with intelligent learning from conflicts to efficiently solve large satisfiability problems.
+
+\subsection{CDCL Algorithm Overview}
+
+CDCL implements a \textbf{depth-first search strategy} with intelligent backjumping and clause learning:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{CDCL Components}]
+\textbf{CDCL} combines several key techniques:
+\begin{itemize}
+    \item \textbf{Unit propagation}: Efficient inference of forced assignments
+    \item \textbf{Conflict analysis}: Learning from failures to guide future search
+    \item \textbf{Backjumping}: Intelligent backtracking to earlier decision levels
+    \item \textbf{Clause learning}: Adding learned constraints to prevent repeated conflicts
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Backjumping: Generalized Backtracking}
+
+Backjumping is a generalization of the basic backtracking mechanism that allows the solver to jump back to earlier decision levels, not just the immediately preceding one.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Backjumping vs. Backtracking}]
+\begin{definition}[Backjumping]
+In \textbf{backjumping}, when a conflict occurs, the solver analyzes the conflict clause to determine the earliest decision level that contributed to the conflict. It then jumps back to that level, rather than just the immediately preceding decision.
+\end{definition}
+
+\textbf{Advantage}: Backjumping can skip over irrelevant decision levels, significantly reducing the search space compared to basic backtracking.
+\end{tcolorbox}
+
+\subsubsection{Conflict Analysis Example}
+
+Consider a conflict clause $C = L_1 \lor \cdots \lor L_k$ where all literals are currently false. The analysis determines:
+
+\begin{itemize}
+    \item Why each literal $L_i$ is false in the current trail $\varGamma$
+    \item The decision level at which each literal became false
+    \item The earliest decision level that contributed to the conflict
+\end{itemize}
+
+The solver then backjumps to that earliest relevant decision level, effectively skipping decision levels that did not contribute to the conflict.
+
+\section{Binary Resolution}
+
+The theoretical foundation of conflict analysis in CDCL relies on \textbf{binary resolution}, a fundamental inference rule in propositional logic.
+
+\subsection{Resolution Rule}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Binary Resolution}]
+\begin{definition}[Binary Resolution]
+Given two clauses containing complementary literals:
+\[
+\frac{C \lor L \quad D \lor \neg L}{(C \lor D)}
+\]
+where $C$ and $D$ are disjunctions of literals, and $L$ is a literal.
+\end{definition}
+\end{tcolorbox}
+
+The \textbf{resolvent} $C \lor D$ is logically entailed by the two premises. This rule allows deriving new clauses that preserve satisfiability.
+
+\subsection{Soundness of Resolution}
+
+Binary resolution is \textbf{sound}—the resolvent is logically entailed by the premises.
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Soundness Proof}]
+\begin{theorem}[Resolution Soundness]
+If $\{C \lor L, D \lor \neg L\} \models R$ where $R$ is any formula, then $\{C \lor L, D \lor \neg L\} \models (C \lor D)$.
+
+\begin{proof}
+Consider any interpretation $v$:
+\begin{itemize}
+    \item If $v \models L$, then since $v \models D \lor \neg L$, we must have $v \models D$. Since $v \models C \lor L$, we have $v \models C \lor D$.
+    \item If $v \models \neg L$, then since $v \models C \lor L$, we must have $v \models C$. Since $v \models D \lor \neg L$, we have $v \models C \lor D$.
+\end{itemize}
+In both cases, $v \models C \lor D$, so the resolvent is logically entailed by the premises.
+\end{proof}
+\end{theorem}
+\end{tcolorbox}
+
+\subsection{Application in Conflict Analysis}
+
+In conflict analysis, resolution is used to explain why conflicts occur and to determine which decision levels are responsible:
+
+\begin{itemize}
+    \item When a literal $L_k$ in the conflict clause is false due to propagation (not a decision)
+    \item The propagation was justified by a clause $D \lor \neg L_k$
+    \item By resolving the conflict clause with the justification clause, we can trace back the decision that ultimately caused the conflict
+\end{itemize}
+
+\section{Explanation Mechanism}
+
+The explanation mechanism in CDCL traces the implications that led to a conflict, allowing the solver to learn more general constraints.
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Explanation Transition}]
+\begin{definition}[Explanation Rule]
+\[
+\langle S \parallel \varGamma \parallel C \rangle \rightarrow \langle S \parallel \varGamma \parallel C \lor D \rangle
+\]
+if $\neg L \in \varGamma$ where $\neg L$ was propagated using the clause $D \lor \neg L$.
+\end{definition}
+\end{tcolorbox}
+
+\subsection{Explanation Process}
+
+The explanation mechanism works as follows:
+
+\begin{enumerate}
+    \item Start with a conflict clause $C = L_1 \lor \cdots \lor L_k$
+    \item For each literal $L_i$ that is false due to propagation (not a decision):
+    \begin{itemize}
+        \item Find the justification clause that forced $\neg L_i$ into the trail
+        \item Resolve the current conflict clause with the justification clause
+        \item Continue until all literals in the conflict clause are explained by decisions
+    \end{itemize}
+    \item The final resolved clause contains only literals that were decided (not propagated)
+    \item This clause can be learned and added to the formula to prevent similar conflicts
+\end{enumerate}
 
 
 \end{document}
