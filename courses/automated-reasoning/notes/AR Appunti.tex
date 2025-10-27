@@ -153,13 +153,15 @@ These applications demonstrate the practical utility of automated reasoning in s
 
 Automated reasoning fundamentally addresses three interconnected classes of decision problems in mathematical logic, each representing a distinct challenge in determining the truth properties of logical formulas.
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Three Core Problems}]
+\begin{center}
+\textbf{\underline{The Three Core Problems in Automated Reasoning}}
+\end{center}
+
 \textbf{1. Satisfiability (SAT)}: Does there exist a model?
 
 \textbf{2. Validity}: Is the formula true in all models?
 
 \textbf{3. Logical Consequence}: Does the conclusion follow from premises?
-\end{tcolorbox}
 
 \subsection{Satisfiability Problems}
 
@@ -182,15 +184,17 @@ These three problems form the foundation of automated reasoning systems, with sa
 
 The formal language employed in automated reasoning is first-order logic (FOL), a substantial extension of propositional logic that incorporates quantification over individual elements.
 
-\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{First-Order Logic Components}]
-First-order logic achieves greater expressive power by introducing:
+\begin{center}
+\textit{\underline{First-Order Logic Components}}
+\end{center}
+
+\textit{First-order logic achieves greater expressive power by introducing:}
 \begin{itemize}
-    \item \textbf{Individual variables} ranging over domain elements
-    \item \textbf{Function symbols} for constructing complex terms
-    \item \textbf{Predicate symbols} for expressing relations between elements
-    \item \textbf{Quantifiers} ($\forall$, $\exists$) enabling statements about all or some elements
+    \item \textit{Individual variables} ranging over domain elements
+    \item \textit{Function symbols} for constructing complex terms
+    \item \textit{Predicate symbols} for expressing relations between elements
+    \item \textit{Quantifiers} ($\forall$, $\exists$) enabling statements about all or some elements
 \end{itemize}
-\end{tcolorbox}
 
 This enhanced expressiveness allows first-order logic to formalize mathematical structures, relationships, and properties in a manner impossible in propositional logic, which can only express truth-functional combinations of atomic propositions.
 
@@ -2352,10 +2356,259 @@ These optimizations have significant practical impact:
 
 These improvements make congruence closure practical for real-world applications in automated theorem proving, program verification, and satisfiability modulo theories (SMT) solvers. 
 
+\newpage
+
+\part{Advanced Topics in Congruence Closure}
+
+\section{Congruence Closure Implementation}
+
+\subsection{DAG-Based Implementation}
+
+The congruence closure algorithm is implemented on a Directed Acyclic Graph (DAG) representation of the terms. We previously presented the pseudocode for this implementation.
+
+\subsection{Bradley-Miller Algorithm (2007)}
+
+We also studied the Bradley-Miller algorithm from 2007, which appears in a paper by Nelson and Oppen. This algorithm has complexity $O(e^2)$ assuming $O(n)$ calls to \texttt{MERGE}, where:
+\begin{itemize}
+    \item $n$ is the number of vertices (nodes) in the DAG
+    \item $e$ is the number of edges in the DAG
+\end{itemize}
+
+\subsection{Downey-Sethi-Tarjan Improvements (1980)}
+
+We also discussed the Downey-Sethi-Tarjan paper from 1980, which achieves improved complexity of $O(e \log e)$ under the same assumptions.
+
+The two key ingredients for achieving this improved complexity are:
+\begin{itemize}
+    \item A non-recursive version of the \texttt{FIND} operation
+    \item Selection of the representative of the new class in \texttt{UNION} based on the size of \texttt{n.ccpar}
+\end{itemize}
+
+\subsection{Forbidden Set Optimization}
+
+The forbidden set feature was implemented in 2005 by Oppen, Detlefs, and Saxe in the context of the ``Simplify'' theorem prover.
+
+\subsubsection{Problem Structure}
+
+During congruence closure, we solve problems of the form:
+\[
+F = \underbrace{\{s_i = t_i\}}_{F^+} \cup \underbrace{\{s_i \neq t_i\}}_{F^-}
+\]
+where $i$ ranges from $1$ to $n$ for positive equalities and from $n+1$ to $n+m$ for negative equalities.
+
+The process involves:
+\begin{enumerate}
+    \item Constructing the set of terms $S_F$
+    \item Building the DAG representation
+    \item Computing the congruence closure of $F^+$
+    \item For each disequality $s_i \neq t_i$ (where $n+1 \leq i \leq n+m$), checking if the nodes representing $s_i$ and $t_i$ are in the same equivalence class
+\end{enumerate}
+
+Let $u_i$ be the node representing $s_i$ and $v_i$ be the node representing $t_i$. If $\texttt{FIND}(u_i) = \texttt{FIND}(v_i)$, then return \textbf{UNSATISFIABLE}.
+
+\subsubsection{Forbidden Set Mechanism}
+
+The forbidden set mechanism enhances the basic algorithm by adding early detection of unsatisfiability:
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Forbidden Set Implementation}]
+\textbf{Algorithm enhancement}:
+
+\begin{enumerate}
+    \item Extend the node data structure with an additional field:
+    \begin{verbatim}
+    forbidden: Id set
+    \end{verbatim}
+
+    \item For each disequality $s_i \neq t_i$ (where $n+1 \leq i \leq n+m$):
+    \begin{itemize}
+        \item Add the node representing $s_i$ to the forbidden set of the node representing $t_i$
+        \item Add the node representing $t_i$ to the forbidden set of the node representing $s_i$
+    \end{itemize}
+
+    \item Modify the \texttt{MERGE} function:
+    \begin{verbatim}
+    MERGE i_1 i_2:
+        if FIND i_1 =/= FIND i_2 then
+            ... (standard merge operations)
+            if i_1 in n_1.forbidden or i_2 in n_2.forbidden then
+                return UNSATISFIABLE
+    \end{verbatim}
+    where $n_1$ is the node for $i_1$ and $n_2$ is the node for $i_2$.
+\end{enumerate}
+\end{tcolorbox}
+
+This optimization allows for early termination when a merge operation would violate a disequality constraint, potentially avoiding unnecessary computation.
+
+\subsection{Summary of Congruence Closure}
+
+The congruence closure algorithm provides a complete and sound decision procedure for the quantifier-free fragment of the theory of equality. The algorithm:
+\begin{itemize}
+    \item Constructs the smallest congruence relation containing all positive equalities
+    \item Checks whether any negative equality is violated by this congruence
+    \item Returns \textbf{SATISFIABLE} if no violations are found, \textbf{UNSATISFIABLE} otherwise
+\end{itemize}
+
+The various optimizations (Bradley-Miller, Downey-Sethi-Tarjan, forbidden sets) improve the practical efficiency while maintaining correctness.
 
 
+\section{The Theory of Lists}
 
+The theory of lists represents a special case of parametric theories of recursive data structures, providing a formal framework for reasoning about list structures and operations.
 
+\subsection{Signatures for List Theories}
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{List Theory Signatures}]
+The theory of lists can be formalized using two different signatures:
+
+\begin{itemize}
+    \item \textbf{Signature $\Sigma_{CONS}$} (non-empty lists):
+    \[
+    \Sigma_{CONS} = \{\textsf{cons}, \textsf{car}, \textsf{cdr}, \backsimeq, \textsf{atom}\}
+    \]
+
+    \item \textbf{Signature $\Sigma_{NIL}$} (possibly empty lists):
+    \[
+    \Sigma_{NIL} = \{\textsf{cons}, \textsf{car}, \textsf{cdr}, \backsimeq, \textsf{nil}\}
+    \]
+\end{itemize}
+
+Note: We will return to the $\Sigma_{NIL}$ signature later in our discussion.
+\end{tcolorbox}
+
+\subsection{Axioms of the List Theory}
+
+The axioms for the $\Sigma_{CONS}$ theory are denoted $A_{CONS}$ and consist of congruence axioms together with selector-over-constructor axioms.
+
+\subsubsection{Congruence Axioms}
+
+The congruence axioms establish that equality is preserved under list operations:
+
+\begin{center}
+\textbf{Equality Axioms}
+\end{center}
+
+\begin{align*}
+\forall x \, (x \backsimeq x) && \text{(Reflexivity)} \\
+\forall x \, \forall y \, (x \backsimeq y \rightarrow y \backsimeq x) && \text{(Symmetry)} \\
+\forall x \, \forall y \, \forall z \, ((x \backsimeq y \wedge y \backsimeq z) \rightarrow x \backsimeq z) && \text{(Transitivity)}
+\end{align*}
+
+\begin{center}
+\textbf{Function Congruence Axioms}
+\end{center}
+
+\begin{align*}
+\forall x \, \forall y \, (x \backsimeq y \rightarrow \textsf{car}(x) \backsimeq \textsf{car}(y)) \\
+\forall x \, \forall y \, (x \backsimeq y \rightarrow \textsf{cdr}(x) \backsimeq \textsf{cdr}(y)) \\
+\forall x_1 \, \forall x_2 \, \forall y_1 \, \forall y_2 \, ((x_1 \backsimeq x_2 \wedge y_1 \backsimeq y_2) \rightarrow \textsf{cons}(x_1, y_1) \backsimeq \textsf{cons}(x_2, y_2))
+\end{align*}
+
+\begin{center}
+\textbf{Predicate Congruence Axiom}
+\end{center}
+
+\[
+\forall x \, \forall y \, (x \backsimeq y \rightarrow (\textsf{atom}(x) \leftrightarrow \textsf{atom}(y)))
+\]
+
+\subsubsection{Selector-over-Constructor Axioms}
+
+These axioms define the fundamental properties of the list constructors and selectors:
+
+\begin{center}
+\textbf{Constructor-Selector Axioms}
+\end{center}
+
+\begin{align*}
+\forall x \, \forall y \, (\textsf{car}(\textsf{cons}(x, y)) = x) \\
+\forall x \, \forall y \, (\textsf{cdr}(\textsf{cons}(x, y)) = y) \\
+\forall x \, \forall y \, (\neg \textsf{atom}(\textsf{cons}(x, y))) \\
+\forall x \, (\textsf{cons}(\textsf{car}(x), \textsf{cdr}(x)) = x) \quad \text{(provided } \neg \textsf{atom}(x)\text{)}
+\end{align*}
+
+These axioms formalize the basic operations on lists:
+\begin{itemize}
+    \item $\textsf{cons}(x, y)$ constructs a new list with head $x$ and tail $y$
+    \item $\textsf{car}(x)$ returns the head (first element) of list $x$
+    \item $\textsf{cdr}(x)$ returns the tail (remaining elements) of list $x$
+    \item $\textsf{atom}(x)$ tests whether $x$ is an atomic element (not a list)
+\end{itemize}
+
+The final axiom states that applying $\textsf{car}$ and $\textsf{cdr}$ to a non-atomic list and then reconstructing with $\textsf{cons}$ recovers the original list, provided the list is not atomic.
+
+\subsection{Validity Examples in List Theory}
+
+Consider the following formula in the theory $\mathcal{T}_{CONS} = \langle \Sigma_{CONS}, A_{CONS} \rangle$:
+
+\begin{example}[Validity in List Theory]
+\textbf{Input formula}:
+\[
+F: \quad \textsf{car}(x) = y \wedge \textsf{cdr}(x) = z \rightarrow x = \textsf{cons}(y, z)
+\]
+
+\textbf{Question}: Is $F$ $\mathcal{T}_{CONS}$-valid?
+
+\textbf{Answer}: No, because $x$ could be interpreted as an atom.
+
+However, we can modify the formula to ensure validity:
+
+\[
+F': \quad \neg \textsf{atom}(x) \wedge \textsf{car}(x) = y \wedge \textsf{cdr}(x) = z \rightarrow x = \textsf{cons}(y, z)
+\]
+
+By the selector-over-constructor axioms, we have $\textsf{cons}(\textsf{car}(x), \textsf{cdr}(x)) = x$, which implies $\textsf{cons}(y, z) = x$. Therefore, $F'$ is $\mathcal{T}_{CONS}$-valid.
+\end{example}
+
+\subsection{The Theory of Possibly Empty Lists}
+
+We now consider the theory of possibly empty lists, which extends the previous theory to handle the empty list case.
+
+\begin{definition}[Theory of Possibly Empty Lists]
+\textbf{Signature}:
+\[
+\Sigma_{NIL} = \{\textsf{cons}, \textsf{car}, \textsf{cdr}, \backsimeq, \textsf{nil}\}
+\]
+
+\textbf{Axioms} $A_{NIL}$:
+
+The axiom set includes the congruence axioms from $A_{CONS}$ plus additional axioms for the empty list:
+
+\begin{align*}
+n_1: & \quad \forall x \, \forall y \, (\textsf{cons}(x, y) \neq \textsf{nil}) \\
+n_2: & \quad \forall x \, (x \neq \textsf{nil} \rightarrow \textsf{cons}(\textsf{car}(x), \textsf{cdr}(x)) = x)
+\end{align*}
+\end{definition}
+
+Axiom $n_1$ ensures that constructed lists are never empty, while axiom $n_2$ states that for non-empty lists, the reconstruction property holds.
+
+\subsection{Generalization to Recursive Data Structures}
+
+The theory of lists can be generalized to arbitrary recursive data structures.
+
+\begin{definition}[Recursive Data Structures (RDS)]
+Consider a signature $\Sigma_{CONS} = \textsf{RDS}_k$ for a recursive data structure with:
+
+\begin{itemize}
+    \item One \textbf{constructor} $C$ of arity $k$
+    \item $k$ \textbf{selectors} $s_1, \dots, s_k$
+\end{itemize}
+
+The corresponding axioms would be:
+
+\begin{align*}
+\forall x_1 \dots \forall x_k \, (s_i(C(x_1, \dots, x_k)) = x_i) && \text{for each } i = 1, \dots, k \\
+\forall x_1 \dots \forall x_k \, (\neg \textsf{atom}(C(x_1, \dots, x_k))) \\
+\forall x \, (\neg \textsf{atom}(x) \rightarrow x = C(s_1(x), \dots, s_k(x)))
+\end{align*}
+\end{definition}
+
+These axioms generalize the list theory to arbitrary tree-like recursive data structures where:
+\begin{itemize}
+    \item The constructor creates structured data from components
+    \item The selectors extract the components from structured data
+    \item The atom predicate distinguishes between atomic and structured data
+\end{itemize}
+
+This framework provides a foundation for reasoning about complex recursive data types in automated reasoning systems.
 
 \end{document}
