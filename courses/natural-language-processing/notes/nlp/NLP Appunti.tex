@@ -3811,87 +3811,308 @@ P(\text{its, water, is, so, transparent, that}) = \; & P(\text{its}) \\
     \item Even with the Chain Rule, long contexts like $P(\text{transparent} \mid \text{its, water, is, so})$ are still extremely rare
 \end{itemize}
 
-\textbf{Solution:} This is where \textbf{N-gram models} come in — they make a simplifying assumption about context length.
+\subsection{Neural Language Models}
 
-\subsection{Markov Assumption}
-
-The key idea: make a \textbf{simplifying assumption} about how much context we need.
-
-\textbf{Markov Assumption:} The probability of a word depends only on a \textbf{fixed, limited} window of previous words, not the entire history.
-
-In other words, we \textbf{approximate} each component in the product:
-\[
-P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-k}, \ldots, w_{i-1})
-\]
-
-where $k$ is a small fixed number (e.g., 1 or 2).
-
-\subsection{N-gram Models}
-
-\subsubsection{Unigram Model (Simplest Case)}
-
-The \textbf{unigram model} assumes each word is independent of all others:
-\[
-P(w_1, w_2, \ldots, w_n) \approx P(w_1) \cdot P(w_2) \cdot P(w_3) \cdots P(w_n) = \prod_{i=1}^{n} P(w_i)
-\]
-
-\textbf{Example of automatically generated sentences from a unigram model:}
-
-\begin{verbatim}
-fifth, an, of, futures, the, an, incorporated, a, a, the, 
-inflation, most, dollars, quarter, in, is, mass
-
-thrift, did, eighty, said, hard, 'm, july, bullish
-
-that, or, limited, the
-\end{verbatim}
-
-\textbf{Observation:} These sentences are nonsensical — no grammatical structure or coherence. The unigram model is too simple!
-
-\subsubsection{Bigram Model}
-
-The \textbf{bigram model} conditions on the \textbf{previous word}:
-\[
-P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-1})
-\]
-
-The joint probability becomes:
-\[
-P(w_1, w_2, \ldots, w_n) \approx P(w_1) \cdot P(w_2 \mid w_1) \cdot P(w_3 \mid w_2) \cdots P(w_n \mid w_{n-1})
-\]
-
-\textbf{Example of automatically generated sentences from a bigram model:}
-
-\begin{verbatim}
-texaco, rose, one, in, this, issue, is, pursuing, growth, in, 
-a, boiler, house, said, mr., gurria, mexico, 's, motion, 
-control, proposal, without, permission, from, five, hundred, 
-fifty, five, yen
-
-outside, new, car, parking, lot, of, the, agreement, reached
-
-this, would, be, a, record, november
-\end{verbatim}
-
-\textbf{Observation:} Better than unigrams! Some local coherence (e.g., "new car parking lot"), but still lacks long-range structure.
-
-\subsubsection{General N-gram Models}
-
-We can extend to \textbf{trigrams} (condition on 2 previous words), \textbf{4-grams}, \textbf{5-grams}, etc.
-
-\textbf{Trigram model:}
-\[
-P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-2}, w_{i-1})
-\]
-
-\textbf{N-gram model (general):}
-\[
-P(w_i \mid w_1, \ldots, w_{i-1}) \approx P(w_i \mid w_{i-n+1}, \ldots, w_{i-1})
-\]
+While N-gram models are simple and interpretable, they suffer from fundamental limitations. Neural language models address these issues using deep learning to capture complex patterns in language.
 
 \subsubsection{Limitations of N-gram Models}
 
-In general, N-gram models are an \textbf{insufficient model of language} because language has \textbf{long-distance dependencies}.
+N-gram models have several critical limitations:
+
+\begin{itemize}
+    \item \textbf{Curse of dimensionality}: The number of parameters grows exponentially with $n$
+    \item \textbf{Data sparsity}: Most N-grams never appear in training data
+    \item \textbf{Lack of generalization}: Cannot handle unseen combinations of words
+    \item \textbf{Fixed context}: Limited by the Markov assumption
+    \item \textbf{No semantic understanding}: Treats words as discrete symbols
+\end{itemize}
+
+\subsubsection{From N-grams to Neural Networks}
+
+Neural language models use continuous vector representations (embeddings) instead of discrete symbols:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Key Innovation: Word Embeddings}]
+\textbf{Dense vector representations} capture semantic and syntactic relationships between words.
+
+\textbf{Example:} Words like "cat", "dog", "kitten" have similar vector representations because they are semantically related.
+\end{tcolorbox}
+
+\subsubsection{Feedforward Neural Language Models}
+
+The first neural language models used feedforward networks to predict the next word.
+
+\textbf{Architecture:}
+\begin{enumerate}
+    \item \textbf{Input}: Concatenated embeddings of context words
+    \item \textbf{Hidden layers}: Learn complex transformations
+    \item \textbf{Output}: Probability distribution over vocabulary
+\end{enumerate}
+
+\textbf{Mathematical formulation:}
+\[
+P(w_i \mid w_{i-n+1}, \ldots, w_{i-1}) = \text{softmax}(W \cdot \tanh(U \cdot \mathbf{x} + b) + c)
+\]
+
+Where $\mathbf{x}$ is the concatenated embedding vector of the context words.
+
+\subsubsection{Recurrent Neural Language Models}
+
+Recurrent Neural Networks (RNNs) were the next major breakthrough for language modeling.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{RNN Language Models}]
+RNNs process sequences by maintaining a \textbf{hidden state} that captures information from previous timesteps:
+
+\[
+h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b)
+\]
+
+\[
+P(w_t \mid w_{1:t-1}) = \text{softmax}(W_{hy} h_t + c)
+\]
+\end{tcolorbox}
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item \textbf{Variable length}: Can handle sequences of any length
+    \item \textbf{Memory}: Hidden state captures long-range dependencies
+    \item \textbf{Shared parameters}: Same network processes entire sequence
+\end{itemize}
+
+\subsubsection{Long Short-Term Memory (LSTM)}
+
+Standard RNNs suffer from \textbf{vanishing gradients}, making it difficult to learn long-range dependencies. LSTMs solve this problem.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{LSTM Architecture}]
+LSTMs use \textbf{gates} to control information flow:
+
+\begin{itemize}
+    \item \textbf{Forget gate}: Decides what information to discard
+    \item \textbf{Input gate}: Decides what new information to store
+    \item \textbf{Output gate}: Decides what to output based on current state
+\end{itemize}
+
+\textbf{LSTM equations:}
+\[
+\mathbf{f}_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)
+\]
+\[
+\mathbf{i}_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)
+\]
+\[
+\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)
+\]
+\[
+C_t = \mathbf{f}_t \odot C_{t-1} + \mathbf{i}_t \odot \tilde{C}_t
+\]
+\[
+\mathbf{o}_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)
+\]
+\[
+h_t = \mathbf{o}_t \odot \tanh(C_t)
+\]
+\end{tcolorbox}
+
+\subsubsection{Transformers: The Modern Era}
+
+The Transformer architecture revolutionized NLP by eliminating recurrence entirely and using \textbf{self-attention} mechanisms.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Attention Mechanism}]
+\textbf{Self-attention} allows the model to weigh the importance of different words in the context when predicting the next word.
+
+\textbf{Key idea:} Instead of processing words sequentially, attend to all words simultaneously.
+\end{tcolorbox}
+
+\subsubsection{Self-Attention Details}
+
+The attention mechanism computes three vectors for each word:
+\begin{itemize}
+    \item \textbf{Query (Q)}: What we're looking for
+    \item \textbf{Key (K)}: What we can offer
+    \item \textbf{Value (V)}: The actual content
+\end{itemize}
+
+\textbf{Attention weights:}
+\[
+\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\]
+
+\subsubsection{Multi-Head Attention}
+
+Transformers use multiple attention heads to capture different types of relationships:
+
+\[
+\text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+\]
+
+\[
+\text{where } \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)
+\]
+
+\subsubsection{Transformer Architecture}
+
+The complete Transformer consists of:
+
+\begin{enumerate}
+    \item \textbf{Positional encoding}: Adds position information since attention is permutation-invariant
+    \item \textbf{Multi-head attention}: Captures relationships between all words
+    \item \textbf{Feedforward networks}: Processes each position independently
+    \item \textbf{Layer normalization and residual connections}: For stable training
+\end{enumerate}
+
+\subsubsection{BERT: Bidirectional Encoder Representations from Transformers}
+
+BERT revolutionized NLP by introducing bidirectional context understanding.
+
+\begin{tcolorbox}[colback=teal!5!white,colframe=teal!75!black,title=\textbf{BERT Key Innovations}]
+\begin{itemize}
+    \item \textbf{Bidirectional}: Unlike previous models, BERT sees both left and right context
+    \item \textbf{Masked Language Modeling}: Predicts randomly masked words in a sentence
+    \item \textbf{Next Sentence Prediction}: Learns relationships between sentences
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{GPT: Generative Pre-trained Transformer}
+
+The GPT series popularized autoregressive language modeling with transformers.
+
+\textbf{Key features:}
+\begin{itemize}
+    \item \textbf{Left-to-right generation}: Predicts next word given all previous words
+    \item \textbf{Scale}: GPT-3 has 175 billion parameters
+    \item \textbf{Few-shot learning}: Can perform tasks with minimal examples
+\end{itemize}
+
+\subsubsection{Language Model Evaluation}
+
+Modern language models are evaluated on:
+
+\begin{enumerate}
+    \item \textbf{Perplexity}: Measures how well the model predicts test data
+    \item \textbf{Downstream tasks}: Question answering, translation, summarization
+    \item \textbf{Zero-shot performance}: Performance on unseen tasks
+\end{enumerate}
+
+\subsubsection{Perplexity}
+
+Perplexity measures how "surprised" a language model is by new text:
+
+\[
+\text{Perplexity}(W) = 2^{-\frac{1}{N} \log_2 P(W)} = \left( \prod_{i=1}^N P(w_i \mid w_{1:i-1}) \right)^{-\frac{1}{N}}
+\]
+
+\textbf{Lower perplexity} indicates a better language model.
+
+\subsubsection{From Language Models to Applications}
+
+Neural language models power many modern NLP applications:
+
+\begin{itemize}
+    \item \textbf{Machine translation}: Neural machine translation systems
+    \item \textbf{Text generation}: Creative writing, code generation, chatbots
+    \item \textbf{Summarization}: Extractive and abstractive summarization
+    \item \textbf{Question answering}: Reading comprehension systems
+    \item \textbf{Sentiment analysis}: Understanding emotional content
+\end{itemize}
+
+\subsubsection{The Future of Language Models}
+
+Current research directions include:
+
+\begin{itemize}
+    \item \textbf{Larger models}: Scaling beyond GPT-3
+    \item \textbf{Efficiency}: Making models faster and more memory-efficient
+    \item \textbf{Multimodal}: Combining text with images, audio, video
+    \item \textbf{Interpretability}: Understanding what models learn
+    \item \textbf{Ethics}: Bias mitigation and responsible AI
+\end{itemize}
+
+\textbf{Key insight:} The field has moved from simple statistical models to sophisticated neural architectures that can understand and generate human-like language with remarkable fluency.
+
+\part{Advanced Topics in NLP}
+
+\section{Transformer Applications}
+
+Beyond language modeling, transformers have revolutionized many NLP tasks.
+
+\subsection{Machine Translation}
+
+Transformers excel at sequence-to-sequence tasks like translation:
+
+\begin{itemize}
+    \item \textbf{Encoder-decoder architecture}: Encoder processes source language, decoder generates target
+    \item \textbf{Attention mechanisms}: Help align source and target words
+    \item \textbf{Subword tokenization}: Handles rare words and morphological variations
+\end{itemize}
+
+\subsection{Question Answering}
+
+Modern QA systems use transformers in multiple ways:
+
+\begin{itemize}
+    \item \textbf{Extractive QA}: Find answer spans in context text
+    \item \textbf{Generative QA}: Generate answers from scratch
+    \item \textbf{Multilingual QA}: Answer questions in different languages
+\end{itemize}
+
+\subsection{Text Classification}
+
+Transformers can be fine-tuned for classification tasks:
+
+\begin{itemize}
+    \item \textbf{Sentiment analysis}: Classify text as positive/negative
+    \item \textbf{Topic classification}: Assign topics to documents
+    \item \textbf{Intent classification}: Understand user intentions in chatbots
+\end{itemize}
+
+\section{Ethical Considerations in NLP}
+
+As NLP systems become more powerful, ethical considerations become crucial.
+
+\subsection{Bias in Language Models}
+
+Language models can perpetuate and amplify societal biases:
+
+\begin{itemize}
+    \item \textbf{Training data bias}: Models learn from biased text corpora
+    \item \textbf{Amplification}: Biased patterns get reinforced during generation
+    \item \textbf{Stereotypes}: Models may generate stereotypical content
+\end{itemize}
+
+\subsection{Mitigation Strategies}
+
+Several approaches help reduce bias:
+
+\begin{itemize}
+    \item \textbf{Data curation}: Carefully select and filter training data
+    \item \textbf{Bias detection}: Measure and quantify different types of bias
+    \item \textbf{Debiasing techniques}: Modify models to reduce biased behavior
+    \item \textbf{Fairness constraints}: Add constraints during training
+\end{itemize}
+
+\subsection{Privacy Concerns}
+
+Large language models raise privacy issues:
+
+\begin{itemize}
+    \item \textbf{Memorization}: Models may memorize private information from training data
+    \item \textbf{Inference attacks}: Extract private data from model outputs
+    \item \textbf{Differential privacy}: Techniques to protect individual privacy
+\end{itemize}
+
+\section{Conclusion}
+
+Natural Language Processing has evolved from rule-based systems to sophisticated neural architectures. The transformer revolution has made it possible to build systems that can understand, generate, and manipulate human language with unprecedented accuracy.
+
+\textbf{Key takeaways:}
+\begin{itemize}
+    \item \textbf{String similarity} and edit distance are fundamental for measuring text similarity
+    \item \textbf{Language models} assign probabilities to text sequences
+    \item \textbf{N-gram models} are simple but limited statistical approaches
+    \item \textbf{Neural models}, especially transformers, have achieved state-of-the-art performance
+    \item \textbf{Ethical considerations} are increasingly important as NLP systems become more powerful
+\end{itemize}
+
+The field continues to advance rapidly, with new architectures, training techniques, and applications emerging constantly. Understanding both the theoretical foundations and practical implementations is essential for anyone working in NLP.
 
 \textbf{Example:}
 \begin{quote}
@@ -4100,31 +4321,590 @@ P(\text{i} \mid \langle s \rangle) &= 0.25 \quad \text{(25\% of sentences start 
     \item \textbf{Zero probabilities}: Indicate unseen bigrams — a major problem we'll address later
 \end{itemize}
 
-<-- slide 22 di L3 
+\section{Neural Language Models}
 
+While N-gram models are simple and interpretable, they suffer from fundamental limitations. Neural language models address these issues using deep learning to capture complex patterns in language.
 
+\subsection{Limitations of N-gram Models}
 
+N-gram models have several critical limitations:
+
+\begin{itemize}
+    \item \textbf{Curse of dimensionality}: The number of parameters grows exponentially with $n$
+    \item \textbf{Data sparsity}: Most N-grams never appear in training data
+    \item \textbf{Lack of generalization}: Cannot handle unseen combinations of words
+    \item \textbf{Fixed context}: Limited by the Markov assumption
+    \item \textbf{No semantic understanding}: Treats words as discrete symbols
+\end{itemize}
+
+\subsection{From N-grams to Neural Networks}
+
+Neural language models use continuous vector representations (embeddings) instead of discrete symbols:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Key Innovation: Word Embeddings}]
+\textbf{Dense vector representations} capture semantic and syntactic relationships between words.
+
+\textbf{Example:} Words like "cat", "dog", "kitten" have similar vector representations because they are semantically related.
+\end{tcolorbox}
+
+\subsection{Feedforward Neural Language Models}
+
+The first neural language models used feedforward networks to predict the next word.
+
+\textbf{Architecture:}
+\begin{enumerate}
+    \item \textbf{Input}: Concatenated embeddings of context words
+    \item \textbf{Hidden layers}: Learn complex transformations
+    \item \textbf{Output}: Probability distribution over vocabulary
+\end{enumerate}
+
+\textbf{Mathematical formulation:}
+\[
+P(w_i \mid w_{i-n+1}, \ldots, w_{i-1}) = \text{softmax}(W \cdot \tanh(U \cdot \mathbf{x} + b) + c)
+\]
+
+Where $\mathbf{x}$ is the concatenated embedding vector of the context words.
+
+\subsection{Recurrent Neural Language Models}
+
+Recurrent Neural Networks (RNNs) were the next major breakthrough for language modeling.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{RNN Language Models}]
+RNNs process sequences by maintaining a \textbf{hidden state} that captures information from previous timesteps:
+
+\[
+h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b)
+\]
+
+\[
+P(w_t \mid w_{1:t-1}) = \text{softmax}(W_{hy} h_t + c)
+\]
+\end{tcolorbox}
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item \textbf{Variable length}: Can handle sequences of any length
+    \item \textbf{Memory}: Hidden state captures long-range dependencies
+    \item \textbf{Shared parameters}: Same network processes entire sequence
+\end{itemize}
+
+\subsection{Long Short-Term Memory (LSTM)}
+
+Standard RNNs suffer from \textbf{vanishing gradients}, making it difficult to learn long-range dependencies. LSTMs solve this problem.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{LSTM Architecture}]
+LSTMs use \textbf{gates} to control information flow:
+
+\begin{itemize}
+    \item \textbf{Forget gate}: Decides what information to discard
+    \item \textbf{Input gate}: Decides what new information to store
+    \item \textbf{Output gate}: Decides what to output based on current state
+\end{itemize}
+
+\textbf{LSTM equations:}
+\[
+\mathbf{f}_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)
+\]
+\[
+\mathbf{i}_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)
+\]
+\[
+\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)
+\]
+\[
+C_t = \mathbf{f}_t \odot C_{t-1} + \mathbf{i}_t \odot \tilde{C}_t
+\]
+\[
+\mathbf{o}_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)
+\]
+\[
+h_t = \mathbf{o}_t \odot \tanh(C_t)
+\]
+\end{tcolorbox}
+
+\subsection{Transformers: The Modern Era}
+
+The Transformer architecture revolutionized NLP by eliminating recurrence entirely and using \textbf{self-attention} mechanisms.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Attention Mechanism}]
+\textbf{Self-attention} allows the model to weigh the importance of different words in the context when predicting the next word.
+
+\textbf{Key idea:} Instead of processing words sequentially, attend to all words simultaneously.
+\end{tcolorbox}
+
+\subsection{Self-Attention Details}
+
+The attention mechanism computes three vectors for each word:
+\begin{itemize}
+    \item \textbf{Query (Q)}: What we're looking for
+    \item \textbf{Key (K)}: What we can offer
+    \item \textbf{Value (V)}: The actual content
+\end{itemize}
+
+\textbf{Attention weights:}
+\[
+\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\]
+
+\subsection{Multi-Head Attention}
+
+Transformers use multiple attention heads to capture different types of relationships:
+
+\[
+\text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+\]
+
+\[
+\text{where } \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)
+\]
+
+\subsection{Transformer Architecture}
+
+The complete Transformer consists of:
+
+\begin{enumerate}
+    \item \textbf{Positional encoding}: Adds position information since attention is permutation-invariant
+    \item \textbf{Multi-head attention}: Captures relationships between all words
+    \item \textbf{Feedforward networks}: Processes each position independently
+    \item \textbf{Layer normalization and residual connections}: For stable training
+\end{enumerate}
+
+\subsection{BERT: Bidirectional Encoder Representations from Transformers}
+
+BERT revolutionized NLP by introducing bidirectional context understanding.
+
+\begin{tcolorbox}[colback=teal!5!white,colframe=teal!75!black,title=\textbf{BERT Key Innovations}]
+\begin{itemize}
+    \item \textbf{Bidirectional}: Unlike previous models, BERT sees both left and right context
+    \item \textbf{Masked Language Modeling}: Predicts randomly masked words in a sentence
+    \item \textbf{Next Sentence Prediction}: Learns relationships between sentences
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{GPT: Generative Pre-trained Transformer}
+
+The GPT series popularized autoregressive language modeling with transformers.
+
+\textbf{Key features:}
+\begin{itemize}
+    \item \textbf{Left-to-right generation}: Predicts next word given all previous words
+    \item \textbf{Scale}: GPT-3 has 175 billion parameters
+    \item \textbf{Few-shot learning}: Can perform tasks with minimal examples
+\end{itemize}
+
+\subsection{Language Model Evaluation}
+
+Modern language models are evaluated on:
+
+\begin{enumerate}
+    \item \textbf{Perplexity}: Measures how well the model predicts test data
+    \item \textbf{Downstream tasks}: Question answering, translation, summarization
+    \item \textbf{Zero-shot performance}: Performance on unseen tasks
+\end{enumerate}
+
+\subsection{Perplexity}
+
+Perplexity measures how "surprised" a language model is by new text:
+
+\[
+\text{Perplexity}(W) = 2^{-\frac{1}{N} \log_2 P(W)} = \left( \prod_{i=1}^N P(w_i \mid w_{1:i-1}) \right)^{-\frac{1}{N}}
+\]
+
+\textbf{Lower perplexity} indicates a better language model.
+
+\subsection{From Language Models to Applications}
+
+Neural language models power many modern NLP applications:
+
+\begin{itemize}
+    \item \textbf{Machine translation}: Neural machine translation systems
+    \item \textbf{Text generation}: Creative writing, code generation, chatbots
+    \item \textbf{Summarization}: Extractive and abstractive summarization
+    \item \textbf{Question answering}: Reading comprehension systems
+    \item \textbf{Sentiment analysis}: Understanding emotional content
+\end{itemize}
+
+\subsection{The Future of Language Models}
+
+Current research directions include:
+
+\begin{itemize}
+    \item \textbf{Larger models}: Scaling beyond GPT-3
+    \item \textbf{Efficiency}: Making models faster and more memory-efficient
+    \item \textbf{Multimodal}: Combining text with images, audio, video
+    \item \textbf{Interpretability}: Understanding what models learn
+    \item \textbf{Ethics}: Bias mitigation and responsible AI
+\end{itemize}
+
+\textbf{Key insight:} The field has moved from simple statistical models to sophisticated neural architectures that can understand and generate human-like language with remarkable fluency.
+
+\section{Transformer Applications}
+
+Beyond language modeling, transformers have revolutionized many NLP tasks.
+
+\subsection{Machine Translation}
+
+Transformers excel at sequence-to-sequence tasks like translation:
+
+\begin{itemize}
+    \item \textbf{Encoder-decoder architecture}: Encoder processes source language, decoder generates target
+    \item \textbf{Attention mechanisms}: Help align source and target words
+    \item \textbf{Subword tokenization}: Handles rare words and morphological variations
+\end{itemize}
+
+\subsection{Question Answering}
+
+Modern QA systems use transformers in multiple ways:
+
+\begin{itemize}
+    \item \textbf{Extractive QA}: Find answer spans in context text
+    \item \textbf{Generative QA}: Generate answers from scratch
+    \item \textbf{Multilingual QA}: Answer questions in different languages
+\end{itemize}
+
+\subsection{Text Classification}
+
+Transformers can be fine-tuned for classification tasks:
+
+\begin{itemize}
+    \item \textbf{Sentiment analysis}: Classify text as positive/negative
+    \item \textbf{Topic classification}: Assign topics to documents
+    \item \textbf{Intent classification}: Understand user intentions in chatbots
+\end{itemize}
+
+\section{Ethical Considerations in NLP}
+
+As NLP systems become more powerful, ethical considerations become crucial.
+
+\subsection{Bias in Language Models}
+
+Language models can perpetuate and amplify societal biases:
+
+\begin{itemize}
+    \item \textbf{Training data bias}: Models learn from biased text corpora
+    \item \textbf{Amplification}: Biased patterns get reinforced during generation
+    \item \textbf{Stereotypes}: Models may generate stereotypical content
+\end{itemize}
+
+\subsection{Mitigation Strategies}
+
+Several approaches help reduce bias:
+
+\begin{itemize}
+    \item \textbf{Data curation}: Carefully select and filter training data
+    \item \textbf{Bias detection}: Measure and quantify different types of bias
+    \item \textbf{Debiasing techniques}: Modify models to reduce biased behavior
+    \item \textbf{Fairness constraints}: Add constraints during training
+\end{itemize}
+
+  \subsection{Privacy Concerns}
+  
+  Large language models raise privacy issues:
+  
+  \begin{itemize}
+      \item \textbf{Memorization}: Models may memorize private information from training data
+      \item \textbf{Inference attacks}: Extract private data from model outputs
+      \item \textbf{Differential privacy}: Techniques to protect individual privacy
+  \end{itemize}
 
 \newpage
+\part{Evaluation of Language Models}
 
-\part{}
+\section{Estimating N-gram Probabilities}
 
-\section{}
+We estimate $n$-gram probabilities from data via Maximum Likelihood Estimation (MLE):
 
+\begin{align*}
+P(w_i \mid w_{i-1}) &= \frac{\text{Count}(w_{i-1}, w_i)}{\text{Count}(w_{i-1})} \\
+P(w_i \mid w_{i-n+1:i-1}) &= \frac{\text{Count}(w_{i-n+1:i})}{\text{Count}(w_{i-n+1:i-1})}
+\end{align*}
 
+Sentence probability under an $n$-gram model:
+\[
+P(W) = \prod_{i=1}^{N} P\big(w_i \mid w_{i-n+1:i-1}\big).
+\]
 
+\section{Evaluation and Perplexity}
 
+\subsection{Evaluation: How good is our model?}
 
+\begin{itemize}
+    \item A good LM assigns higher probability to \emph{real/frequently observed} sentences
+    \item ...than to \emph{ungrammatical/rare} sentences
+    \item Train on a \textbf{training set}; evaluate on a disjoint \textbf{test set}
+    \item Use a clear \textbf{evaluation metric}
+\end{itemize}
 
+\subsection{Extrinsic Evaluation of N-gram Models}
 
+\begin{itemize}
+    \item Put each model inside a downstream task
+    \item E.g., spelling correction, speech recognition, machine translation
+    \item Run the task and measure accuracy/quality (e.g., corrected misspellings, correct translations)
+    \item Compare metrics between models A and B
+\end{itemize}
 
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Difficulty of Extrinsic (in-vivo) Evaluation}]
+Extrinsic evaluation can be \textbf{time-consuming} (days or weeks). During development we often need a faster proxy.
+\end{tcolorbox}
 
+\subsection{Intrinsic Evaluation: Perplexity}
 
+\begin{itemize}
+    \item Quick proxy for next-token prediction on a held-out test set
+    \item \textbf{Caveat}: Poor approximation if test distribution differs from training
+    \item Generally most useful in \textbf{pilot experiments}
+\end{itemize}
 
+\subsubsection{Definition}
 
+Given test sequence $W=w_1,\ldots,w_N$ and model probabilities $P(w_i\mid w_{1:i-1})$:
 
+\[
+\text{Perplexity}(W) = 2^{-\tfrac{1}{N}\sum_{i=1}^{N} \log_2 P(w_i \mid w_{1:i-1})} = \left(\prod_{i=1}^{N} P(w_i \mid w_{1:i-1})\right)^{-\tfrac{1}{N}}.
+\]
 
+Lower perplexity indicates a better model.
+
+\subsubsection{Intuition: The Shannon Game}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Predict the next word}]
+How well can we predict the next word?
+\begin{itemize}
+    \item ``I always order pizza with cheese and \_\_\_''
+    \item ``The 33$^{rd}$ President of the US was \_\_\_''
+    \item ``I saw a \_\_\_''
+\end{itemize}
+A better model assigns higher probability to the word that actually occurs.
+\end{tcolorbox}
+
+Unigrams are terrible at this (no context). N-grams and neural LMs reduce uncertainty.
+
+\subsubsection{Perplexity as Branching Factor}
+
+Perplexity can be interpreted as the \textbf{weighted equivalent branching factor} of the prediction task.
+
+\begin{itemize}
+    \item If each next symbol is equally likely among $B$ options, then $\text{PP} = B$.
+    \item Example: random digits (0--9) with $P=\tfrac{1}{10}$ for each digit:
+\end{itemize}
+
+\[
+\text{PP}(W) = \left(\prod_{i=1}^{N} \tfrac{1}{10}\right)^{-\tfrac{1}{N}} = \left(10^{-N}\right)^{-\tfrac{1}{N}} = 10.
+\]
+
+\subsubsection{Shannon Game Example (Call Routing)}
+
+Consider 120K phone calls that must be routed to one of:
+\begin{itemize}
+    \item ``Operator'' (occurs in 1/4 of calls)
+    \item ``Sales'' (1/4)
+    \item ``Technical Support'' (1/4)
+    \item One of 30,000 different names (each appears once overall, probability $1/120\,000$)
+\end{itemize}
+
+The perplexity of this mixture can be simplified to $N=4$ outcomes with probabilities
+$\{\tfrac{1}{4},\tfrac{1}{4},\tfrac{1}{4},\tfrac{1}{120000}\}$, giving
+
+\[
+\text{PP} = \left(\tfrac{1}{4}\cdot \tfrac{1}{4}\cdot \tfrac{1}{4}\cdot \tfrac{1}{120000}\right)^{-\tfrac{1}{4}} \approx 52.6.
+\]
+
+Thus the task has an \emph{effective branching factor} of about 53 choices per decision.
+
+\section{Generalization and Zeros}
+
+\subsection{The Shannon Visualization Method}
+
+Generate a sentence by successively sampling according to bigram probabilities:
+\begin{enumerate}
+    \item Choose a random bigram $(\langle s \rangle, w)$ according to its probability
+    \item Then a random bigram $(w,x)$ according to its probability
+    \item Continue until choosing $\langle /s \rangle$
+    \item Concatenate tokens to form the sentence
+\end{enumerate}
+
+\subsection{Approximating Shakespeare}
+
+Increasing $n$ in $n$-grams improves local coherence:
+\begin{itemize}
+    \item \textbf{1-gram}: word salad
+    \item \textbf{2-gram}: some local phrases emerge
+    \item \textbf{3-gram/4-gram}: looks stylistically closer to Shakespeare, but still shallow
+\end{itemize}
+
+\subsection{Shakespeare as Corpus: Data Sparsity}
+
+\begin{itemize}
+    \item $N=884{,}647$ tokens, vocabulary $V=29{,}066$
+    \item Observed bigram types $\approx 300{,}000$ out of $V^2 \approx 844$ million possible
+    \item \textbf{99.96\%} of possible bigrams never seen (\textbf{zero} entries)
+    \item Higher $n$ (e.g., 4-grams) is even sparser
+\end{itemize}
+
+\subsection{The Wall Street Journal is not Shakespeare}
+
+N-grams trained on one domain (e.g., WSJ) do not generalize to another (e.g., Shakespeare):
+\begin{itemize}
+    \item Unigram/bigram/trigram samples differ markedly across domains
+    \item Highlights the need for smoothing and domain adaptation
+\end{itemize}
+
+\subsection{Whose Training Set Is It?}
+
+Random 3-gram generations often reveal the author/domain used for training:
+\begin{itemize}
+    \item Financial jargon and numbers $\Rightarrow$ likely WSJ
+    \item Archaic constructions and dramatic style $\Rightarrow$ likely Shakespeare
+\end{itemize}
+
+\subsection{The Perils of Overfitting}
+
+N-grams work well only if the test corpus resembles the training corpus.
+\begin{itemize}
+    \item In practice, distributions shift
+    \item We need robust models that \textbf{generalize}
+    \item One key challenge: \textbf{zeros}
+\end{itemize}
+
+\subsection{Zeros}
+
+\textbf{Example:}
+\begin{itemize}
+    \item Train set contains: ``denied the allegations/reports/claims/request''
+    \item Test set contains: ``denied the offer/loan''
+    \item Then $P(\text{offer} \mid \text{denied the}) = 0$ under MLE
+\end{itemize}
+
+\subsection{Zero-Probability Bigrams}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Why zeros are fatal}]
+If any factor in $P(W)=\prod_i P(w_i\mid \cdot)$ is 0, then $P(W)=0$ and perplexity is undefined (division by 0).
+\end{tcolorbox}
+
+\textbf{Motivation for smoothing}: assign some probability mass to unseen $n$-grams.
+
+\section{Smoothing: Add-one (Laplace) smoothing}
+
+\subsection{Intuition of smoothing}
+When we have sparse statistics like $P(w\mid \text{denied the})$, observed counts may assign zero to plausible events. Smoothing redistributes a small amount of probability mass from seen events to unseen ones to generalize better and avoid zeros.
+\begin{itemize}
+    \item Steal a little mass from frequent options (e.g., \textit{allegations}, \textit{reports}).
+    \item Give some mass to rare/unseen options (e.g., \textit{offer}, \textit{loan}).
+    \item Prevents zero probabilities and undefined perplexities.
+\end{itemize}
+
+\subsection{Add-one (Laplace) estimation}
+Add-one assumes we observed each outcome one extra time.
+\begin{align*}
+\hat P_{\text{MLE}}(w_i\mid h) 
+&= \frac{c(h,w_i)}{c(h)}\\
+\hat P_{+1}(w_i\mid h) 
+&= \frac{c(h,w_i)+1}{c(h)+V}
+\end{align*}
+where $h$ is the history, $c(\cdot)$ are counts, and $V$ is vocabulary size.
+
+\subsection{Maximum Likelihood Estimates}
+Suppose the word ``bagel'' occurs 400 times in a million-token corpus. The MLE for the unigram probability is
+\[
+\hat P_{\text{MLE}}(\text{bagel}) = \frac{400}{1{,}000{,}000} = 0.0004.
+\]
+This can be poor for a different domain; smoothing provides robustness.
+
+\subsection{Berkeley Restaurant Corpus: Laplace-smoothed bigram counts}
+The table below illustrates Laplace-smoothed bigram counts for a subset of vocabulary.
+
+\begin{center}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\scriptsize
+\begin{tabular}{|c|r|r|r|r|r|r|r|r|}
+\hline
+ & \textbf{i} & \textbf{want} & \textbf{to} & \textbf{eat} & \textbf{chinese} & \textbf{food} & \textbf{lunch} & \textbf{spend} \\ \hline
+\textbf{i}       & 6   & 828 & 1   & 10  & 1   & 1  & 1  & 3   \\ \hline
+\textbf{want}    & 3   & 1   & 609 & 2   & 7   & 7  & 6  & 2   \\ \hline
+\textbf{to}      & 3   & 1   & 5   & 687 & 3   & 1  & 7  & 212 \\ \hline
+\textbf{eat}     & 1   & 1   & 3   & 1   & 17  & 3  & 43 & 1   \\ \hline
+\textbf{chinese} & 2   & 1   & 1   & 1   & 1   & 83 & 2  & 1   \\ \hline
+\textbf{food}    & 16  & 1   & 16  & 1   & 2   & 5  & 1  & 1   \\ \hline
+\textbf{lunch}   & 3   & 1   & 1   & 1   & 1   & 2  & 1  & 1   \\ \hline
+\textbf{spend}   & 2   & 1   & 2   & 1   & 1   & 1  & 1  & 1   \\ \hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+Counts here include +1 smoothing; probabilities are obtained by normalizing each row by its (smoothed) row sum.
+
+\subsection{Laplace-smoothed bigrams (probabilities)}
+The Laplace-smoothed conditional probability is
+\[
+P^{*}(w_n\mid w_{n-1})=\frac{C(w_{n-1},w_n)+1}{C(w_{n-1})+V}.
+\]
+\begin{center}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\scriptsize
+\begin{tabular}{|c|r|r|r|r|r|r|r|r|}
+\hline
+ & \textbf{i} & \textbf{want} & \textbf{to} & \textbf{eat} & \textbf{chinese} & \textbf{food} & \textbf{lunch} & \textbf{spend} \\ \hline
+\textbf{i}       & 0.0015 & 0.21   & 0.00025 & 0.00025 & 0.00025 & 0.00025 & 0.00025 & 0.00075 \\ \hline
+\textbf{want}    & 0.0013 & 0.00042& 0.26    & 0.0084  & 0.0029  & 0.0029  & 0.0025  & 0.00084 \\ \hline
+\textbf{to}      & 0.00078& 0.00026& 0.0013  & 0.18    & 0.00078 & 0.00026 & 0.0018  & 0.055   \\ \hline
+\textbf{eat}     & 0.00046& 0.00046& 0.0014  & 0.00046 & 0.0078  & 0.0014  & 0.02    & 0.00046 \\ \hline
+\textbf{chinese} & 0.0012 & 0.00062& 0.00062 & 0.0062  & 0.00062 & 0.052   & 0.0012  & 0.00062 \\ \hline
+\textbf{food}    & 0.0063 & 0.00039& 0.0063  & 0.00039 & 0.00079 & 0.002   & 0.00039 & 0.00039 \\ \hline
+\textbf{lunch}   & 0.0017 & 0.00056& 0.00056 & 0.00056 & 0.00056 & 0.0011  & 0.00056 & 0.00056 \\ \hline
+\textbf{spend}   & 0.0012 & 0.00058& 0.0012  & 0.00058 & 0.00058 & 0.00058 & 0.00058 & 0.00058 \\ \hline
+\end{tabular}
+\end{center}
+
+\subsection{Reconstituted counts}
+Re-scaling smoothed probabilities by the original row totals gives the ``reconstituted'' counts
+\[
+c^{*}(w_{n-1},w_n)=\frac{\big(C(w_{n-1},w_n)+1\big)\times C(w_{n-1})}{C(w_{n-1})+V}.
+\]
+\begin{center}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\scriptsize
+\begin{tabular}{|c|r|r|r|r|r|r|r|r|}
+\hline
+ & \textbf{i} & \textbf{want} & \textbf{to} & \textbf{eat} & \textbf{chinese} & \textbf{food} & \textbf{lunch} & \textbf{spend} \\ \hline
+\textbf{i}       & 3.8  & 527  & 0.64 & 6.4  & 0.64 & 0.64 & 0.64 & 1.9  \\ \hline
+\textbf{want}    & 1.2  & 0.39 & 238  & 0.78 & 2.7  & 2.7  & 2.3  & 0.78 \\ \hline
+\textbf{to}      & 1.9  & 0.63 & 3.1  & 430  & 1.9  & 0.63 & 4.4  & 133  \\ \hline
+\textbf{eat}     & 0.34 & 0.34 & 1    & 0.34 & 5.8  & 1    & 15   & 0.34 \\ \hline
+\textbf{chinese} & 0.2  & 0.098& 0.098& 0.098& 0.86 & 2.2  & 0.2  & 0.098\\ \hline
+\textbf{food}    & 6.9  & 0.43 & 6.9  & 0.43 & 0.86 & 2.2  & 0.43 & 0.43 \\ \hline
+\textbf{lunch}   & 0.57 & 0.19 & 0.19 & 0.19 & 0.19 & 0.38 & 0.19 & 0.19 \\ \hline
+\textbf{spend}   & 0.32 & 0.16 & 0.32 & 0.16 & 0.16 & 0.16 & 0.16 & 0.16 \\ \hline
+\end{tabular}
+\end{center}
+
+\subsection{Compare with raw bigram counts}
+\begin{center}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\scriptsize
+\begin{tabular}{|c|r|r|r|r|r|r|r|r|}
+\hline
+ & \textbf{i} & \textbf{want} & \textbf{to} & \textbf{eat} & \textbf{chinese} & \textbf{food} & \textbf{lunch} & \textbf{spend} \\ \hline
+\textbf{i}       & 5  & 827 & 0 & 9  & 0  & 0  & 0  & 2   \\ \hline
+\textbf{want}    & 2  & 0   & 608& 1  & 6  & 6  & 5  & 1   \\ \hline
+\textbf{to}      & 2  & 0   & 4  & 686& 2  & 0  & 6  & 211 \\ \hline
+\textbf{eat}     & 0  & 0   & 2  & 0  & 16 & 2  & 42 & 0   \\ \hline
+\textbf{chinese} & 1  & 0   & 0  & 0  & 0  & 82 & 1  & 0   \\ \hline
+\textbf{food}    & 15 & 0   & 15 & 0  & 1  & 4  & 0  & 0   \\ \hline
+\textbf{lunch}   & 2  & 0   & 0  & 0  & 1  & 0  & 0  & 0   \\ \hline
+\textbf{spend}   & 1  & 0   & 1  & 0  & 0  & 0  & 0  & 0   \\ \hline
+\end{tabular}
+\end{center}
+
+\subsection{Add-1 is a blunt instrument}
+\begin{itemize}
+    \item Add-1 is generally \emph{not} used for modern $n$-gram LMs; better methods (e.g., Good--Turing, Kneser--Ney) work better.
+    \item It can be useful to smooth other NLP models, e.g., naive Bayes for text classification.
+    \item Works better when the number of zeros is moderate rather than huge.
+\end{itemize}
 
 \end{document}
-
-
