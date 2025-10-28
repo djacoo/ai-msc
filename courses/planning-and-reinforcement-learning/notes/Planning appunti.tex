@@ -2467,4 +2467,439 @@ The explanation mechanism works as follows:
 \end{enumerate}
 
 
+
+\newpage 
+
+\part{SAT-Based Techniques}
+
+\section{Modern SAT Solving}
+
+\subsection{CDCL: An Evolution of DPLL}
+
+CDCL (\textbf{Conflict-Driven Clause Learning}) represents an evolution of the DPLL decision procedure for SAT. While CDCL maintains the same basic decision rule as DPLL, it introduces sophisticated conflict analysis and learning mechanisms that dramatically improve solver efficiency on real-world instances.
+
+\subsubsection{CDCL Transition Rules}
+
+The CDCL procedure employs the following transition rules in search mode:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Decision Rule}]
+\begin{definition}[Decision]
+\[
+\langle S \parallel \varGamma \rangle \rightarrow \langle S \parallel \varGamma, L^d \rangle
+\]
+if $L \notin \varGamma$ and $\neg L \notin \varGamma$, where:
+\begin{itemize}
+    \item $S$ is the set of clauses
+    \item $\varGamma$ is the trail (sequence of assigned literals)
+    \item $L^d$ is a decision literal (chosen by a heuristic)
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Propagation Rule}]
+\begin{definition}[Propagation]
+\[
+\langle S \parallel \varGamma \rangle \rightarrow \langle S \parallel \varGamma, L_{C\lor L} \rangle
+\]
+if $C \lor L \in S$, $L \notin \varGamma$, $\neg L \notin \varGamma$, and $\varGamma \models \neg C$, where:
+\begin{itemize}
+    \item $C$ is a disjunction of literals (all false under the current trail)
+    \item $L$ is the unit literal that must be propagated
+    \item The subscript $C\lor L$ indicates the justification clause for the propagation
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Success Rule}]
+\begin{definition}[Success]
+\[
+\langle S \parallel \varGamma \rangle \rightarrow \text{"sat"}
+\]
+if $\varGamma \models S$ (i.e., the trail satisfies all clauses in the set)
+\end{definition}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Conflict Rule}]
+\begin{definition}[Conflict]
+\[
+\langle S \parallel \varGamma \rangle \rightarrow \langle S \parallel \varGamma \parallel C \rangle
+\]
+if $C \in S$ and $\varGamma \models \neg C$ (i.e., the trail conflicts with clause $C$), where $C$ is the conflict clause that triggers the transition to conflict analysis mode.
+\end{definition}
+\end{tcolorbox}
+
+These four rules define the behavior of CDCL in \textbf{search mode}, which is identical to the DPLL procedure. The key difference lies in how CDCL handles conflicts through its conflict analysis and learning mechanisms.
+
+\subsection{Decision Levels in CDCL}
+
+The trail $\varGamma$ in CDCL is organized into \textbf{decision levels} that provide structure to the search process:
+
+\begin{itemize}
+    \item The trail begins at \textbf{decision level 0} (empty trail)
+    \item Each decision literal opens a new decision level
+    \item If the maximum decision level in $\varGamma$ is $n$, the next decision opens level $n+1$
+    \item All propagations following a decision remain at the same level until the next decision
+\end{itemize}
+
+\subsubsection{Trail as a Stack Structure}
+
+The trail can be conceptualized as a \textbf{stack structure}:
+
+\begin{enumerate}
+    \item Initially, the stack is empty (decision level 0)
+    \item A decision literal is pushed onto the stack, opening a new level
+    \item Unit propagations following the decision are pushed onto the stack at the same level
+    \item Another decision is made, opening the next level
+    \item The process continues with alternating decisions and propagations
+    \item During backtracking/backjumping, literals are popped from the stack until reaching the target decision level
+\end{enumerate}
+
+This organization enables efficient backjumping by allowing the solver to quickly identify and return to relevant decision levels during conflict analysis.
+
+
+
+% --------------------------------------------------
+% Example and Conflict Handling
+% --------------------------------------------------
+
+\subsection{Illustrative Example}
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Instance}]
+$S = \{\, P,\; \neg P \lor Q \lor R,\; T \lor \neg Q,\; \neg R \lor Q \}$
+\end{tcolorbox}
+
+\noindent The initial propagation and decision sequence proceeds as follows:
+\begin{align*}
+\langle S \parallel \epsilon \rangle &\xrightarrow{\text{prop}} \langle S \parallel P_{P} \rangle\\[4pt]
+&\xrightarrow{\text{dec}} \langle S \parallel P_{P},\, Q^{d} \rangle\\[4pt]
+&\xrightarrow{\text{prop}} \langle S \parallel P_{P},\, Q^{d},\, T_{T \lor \neg Q} \rangle
+\end{align*}
+
+\begin{remark}
+The trail behaves exactly like a \emph{stack}: each decision opens a new level and subsequent propagations are pushed on top of that level.
+\end{remark}
+
+\subsection{Conflict Mode}
+
+When a conflict clause $C$ becomes false under the current trail, the solver enters conflict mode. Two outcomes are possible:
+\begin{enumerate}
+    \item \textbf{Fail}: The formula is unsatisfiable.
+    \item \textbf{Conflict resolution}: The solver analyzes the conflict, learns a new clause, backjumps, and resumes search.
+\end{enumerate}
+
+\subsubsection{Fail Rule}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Fail Condition}]
+\begin{definition}[Unsat at Level 0]
+\[
+\langle S \parallel \varGamma \parallel C \rangle \; \rightarrow \; \text{"unsat"}
+\]
+if $\max\operatorname{level}(\varGamma)=0$.
+\end{definition}
+\end{tcolorbox}
+
+\subsubsection{Explanation Rule}
+
+Assume the conflict clause has the form
+\[
+C = L_1 \lor L_2 \lor \dots \lor L_{k-1} \lor L_k, \quad \text{all literals false in } \varGamma.
+\]
+If $\neg L_k$ was propagated by the clause $D \lor \neg L_k$, we resolve $C$ with this justification to obtain a new clause:
+\[
+C' = L_1 \lor L_2 \lor \dots \lor L_{k-1} \lor D.
+\]
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Explanation Transition}]
+\begin{definition}
+\[
+\langle S \parallel \varGamma \parallel C \lor L \rangle \; \rightarrow \; \langle S \parallel \varGamma \parallel C \lor D \rangle
+\]
+if $\neg L_{D \lor \neg L} \in \varGamma$.
+\end{definition}
+\end{tcolorbox}
+
+The resolution step is repeated until the resulting clause contains exactly one literal from the current decision level (\emph{1-UIP clause}).
+
+\subsubsection{Learning Rule}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Clause Learning}]
+\begin{definition}
+\[
+\langle S \parallel \varGamma \parallel C \rangle \; \rightarrow \; \langle S \cup \{C\} \parallel \varGamma \parallel C \rangle
+\]
+if $C \notin S$.
+\end{definition}
+\end{tcolorbox}
+
+The learned clause $C$ prevents the solver from repeating the same conflicting assignment in the future.
+
+\subsubsection{Backjumping Rule}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Backjumping}]
+\begin{definition}
+Let $\varGamma = N\,L^d\,M$ where $L^d$ is the most recent decision literal and $C \lor L'$ is the learned clause with $L'$ falsified at level $k<\operatorname{level}(L^d)$. Then
+\[
+\langle S \parallel N\,L^d\,M \parallel C \lor L' \rangle \; \rightarrow \; \langle S \parallel N \cup \{L'_{C \lor L'}\} \rangle.
+\]
+\end{definition}
+\end{tcolorbox}
+
+Backjumping skips irrelevant decision levels, jumping directly to level $k$, and immediately propagates $L'$ using the learned clause.
+
+% --------------------------------------------------
+\vspace{1em}
+
+\subsection{Control Strategy}
+
+The transition rules of CDCL are governed by specific control policies that determine the order in which rules are applied.
+
+\subsubsection{Search Mode Control}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Search Mode Priority}]
+In search mode, \textbf{Propagation} has higher priority than \textbf{Decision}.
+\end{tcolorbox}
+
+This ensures that all forced assignments (unit propagations) are made before any heuristic decision is taken, maximizing constraint propagation and reducing the search space.
+
+\subsubsection{Conflict Mode Control}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Conflict Mode Sequence}]
+The conflict mode rules are applied in the following order:
+\[
+\text{Explanation}^* \;\rightarrow\; \text{Learning} \;\rightarrow\; \text{Backjumping}
+\]
+where Explanation$^*$ denotes repeated application of the Explanation rule.
+\end{tcolorbox}
+
+\subsection{First Assertion Clause Heuristic}
+
+The \textbf{First Assertion Clause (FAC)} heuristic is a widely used strategy for determining when to stop the explanation process and perform backjumping.
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Assertion Clause}]
+\begin{definition}[Assertion Clause]
+An \textbf{assertion clause} is a conflict clause $C \lor L'$ such that exactly one of its literals (the \textbf{assertion literal} $L'$) is made false by the current (highest) decision level in $\varGamma$, while all other literals are false at earlier decision levels.
+\end{definition}
+\end{tcolorbox}
+
+\subsubsection{FAC Heuristic Strategy}
+
+The First Assertion Clause heuristic operates as follows:
+
+\begin{enumerate}
+    \item Apply the \textbf{Explanation} rule repeatedly until an assertion clause is generated
+    \item \textbf{Learn} the assertion clause by adding it to the clause set $S$
+    \item \textbf{Backjump} to the smallest decision level where:
+    \begin{itemize}
+        \item The assertion literal $L'$ is undefined
+        \item All other literals in the assertion clause are still false
+    \end{itemize}
+    \item Exit conflict mode by placing the assertion literal $L'$ on the trail with the assertion clause as its justification
+\end{enumerate}
+
+
+
+\newpage
+\section{Exercise: CDCL vs. Chronological Backtracking}
+
+\begin{exercise}
+Consider the propositional clause set
+\[
+S = \{\, \neg 1 \lor 2,\; \neg 3 \lor 4,\; \neg 5 \lor \neg 6,\; 6 \lor \neg 5 \lor \neg 2 \,\}.
+\]
+Perform the following tasks.
+\begin{enumerate}
+    \item \textbf{Explore the search tree.} Starting from an empty trail, show every propagation and decision (in DPLL style) until the first conflict is encountered. Record the decision level of each literal.
+    \item \textbf{Chronological backtracking.} Resolve the conflict by undoing only the last decision. Explain why the solver believes the conflict is fixed even though the same assignment can re-appear later.
+    \item \textbf{CDCL with First Assertion Clause (FAC).} Handle the same conflict using CDCL:
+    \begin{enumerate}
+        \item Apply the \emph{explanation} rule repeatedly until the first assertion clause (1-UIP clause) is obtained.
+        \item \emph{Learn} this clause by adding it to $S$.
+        \item Determine the backjump level implied by the clause and show the exact trail after backjumping and the immediate unit propagation.
+    \end{enumerate}
+    \item \textbf{Compare the two approaches.} Discuss why the learned clause prevents the solver from revisiting the conflicting assignment and how this prunes the search space more effectively than chronological backtracking.
+\end{enumerate}
+\end{exercise}
+
+\subsubsection{Understanding the Clause Set}
+
+Before solving, let us interpret the logical constraints encoded in $S$:
+\begin{itemize}
+    \item $C_1 = \neg 1 \lor 2$: If literal $1$ is true, then literal $2$ must also be true
+    \item $C_2 = \neg 3 \lor 4$: If literal $3$ is true, then literal $4$ must also be true
+    \item $C_3 = \neg 5 \lor \neg 6$: Literals $5$ and $6$ cannot both be true simultaneously
+    \item $C_4 = 6 \lor \neg 5 \lor \neg 2$: At least one must hold: $6$ is true, OR $5$ is false, OR $2$ is false
+\end{itemize}
+
+\begin{example}[Detailed Solution]
+Throughout the solution, literals annotated with $^d$ are decisions; subscripts indicate the clause that justified a propagation. Decision levels are shown on the left margin.
+
+\paragraph{1. Exploring the Search Tree Until Conflict}
+
+\textbf{Starting Configuration (Level 0):}
+The solver begins with an empty trail:
+\[
+\langle S \parallel \epsilon \rangle
+\]
+
+\textbf{Decision Level 1:}
+The solver makes its first decision, setting literal $1$ to true:
+\[
+\xrightarrow{\text{dec}} \langle S \parallel 1^{d} \rangle
+\]
+This immediately triggers unit propagation. Since $1$ is true, the literal $\neg 1$ in clause $C_1 = \neg 1 \lor 2$ becomes false, making $2$ the only literal that can satisfy the clause. Therefore, $2$ must be propagated:
+\[
+\xrightarrow{\text{prop}} \langle S \parallel 1^{d},\, 2_{\neg 1 \lor 2} \rangle
+\]
+
+\textbf{Decision Level 2:}
+With no further propagations possible, the solver decides to set literal $3$ to true:
+\[
+\xrightarrow{\text{dec}} \langle S \parallel 1^{d},\, 2,\, 3^{d} \rangle
+\]
+By the same reasoning, clause $C_2 = \neg 3 \lor 4$ forces the propagation of literal $4$:
+\[
+\xrightarrow{\text{prop}} \langle S \parallel 1^{d},\, 2,\, 3^{d},\, 4_{\neg 3 \lor 4} \rangle
+\]
+
+\textbf{Decision Level 3:}
+The solver makes another decision, setting literal $5$ to true:
+\[
+\xrightarrow{\text{dec}} \langle S \parallel 1^{d},\, 2,\, 3^{d},\, 4,\, 5^{d} \rangle
+\]
+Clause $C_3 = \neg 5 \lor \neg 6$ now has $\neg 5$ false (since $5$ is true), so $\neg 6$ must be propagated:
+\[
+\xrightarrow{\text{prop}} \langle S \parallel 1^{d},\, 2,\, 3^{d},\, 4,\, 5^{d},\, \neg 6_{\neg 5 \lor \neg 6} \rangle
+\]
+
+\textbf{Conflict Detection:}
+Examining clause $C_4 = 6 \lor \neg 5 \lor \neg 2$, we find all three literals are false:
+\begin{itemize}
+    \item $6$ is false (because $\neg 6$ is on the trail at level 3)
+    \item $\neg 5$ is false (because $5$ is true on the trail at level 3)
+    \item $\neg 2$ is false (because $2$ is true on the trail at level 1)
+\end{itemize}
+The clause is violated, triggering a conflict at level 3.
+
+\paragraph{2. Resolving the Conflict: Chronological Backtracking}
+
+\textbf{The Classical DPLL Approach:}
+Chronological backtracking simply undoes the most recent decision. The solver performs the following steps:
+\begin{enumerate}
+    \item Remove decision $5^d$ and all its consequences ($\neg 6$) from the trail
+    \item Return to decision level 2 with trail:
+    \[
+    \langle S \parallel 1^{d},\, 2,\, 3^{d},\, 4 \rangle
+    \]
+    \item Try the alternative assignment $\neg 5$ and continue searching
+\end{enumerate}
+
+\textbf{Why the Conflict Appears Resolved:}
+After removing $5^d$ and $\neg 6$ from the trail, clause $C_4$ is no longer violated. The literals are now:
+\begin{itemize}
+    \item $6$ is undefined (not on the trail)
+    \item $\neg 5$ is undefined
+    \item $\neg 2$ is still false (but $C_4$ is satisfied by undefined literals)
+\end{itemize}
+The solver can resume search without an immediate conflict.
+
+\textbf{The Fatal Flaw:}
+The clause set $S$ still does not prevent the combination of $2$ and $5$ both being true. If the search explores a different path that again assigns both $2 = \text{true}$ and $5 = \text{true}$, the exact same conflict will occur. The solver has learned nothing permanent and may waste significant time re-exploring this futile combination multiple times in different parts of the search tree.
+
+\paragraph{3. CDCL with First Assertion Clause}
+
+\textbf{(a) Conflict Analysis:}
+CDCL analyzes the conflict clause $C_4 = 6 \lor \neg 5 \lor \neg 2$ to understand its root cause. The clause contains three false literals:
+\begin{itemize}
+    \item $6$ is false because $\neg 6$ was \textit{propagated} at level 3 (not decided)
+    \item $\neg 5$ is false because $5$ was \textit{decided} at level 3
+    \item $\neg 2$ is false because $2$ was \textit{propagated} at level 1
+\end{itemize}
+
+\textbf{(b) Resolution and Explanation:}
+The literal $\neg 6$ was not a decision—it was propagated using clause $C_3 = \neg 5 \lor \neg 6$. To trace back the cause of the conflict, we resolve the conflict clause with its justification clause:
+\[
+\frac{C_4 = (6 \lor \neg 5 \lor \neg 2) \quad\quad C_3 = (\neg 5 \lor \neg 6)}{C_{\text{learned}} = \neg 5 \lor \neg 2}
+\]
+
+The resolvent $C_{\text{learned}} = \neg 5 \lor \neg 2$ is an \textbf{assertion clause} because:
+\begin{itemize}
+    \item Exactly one literal ($\neg 5$) is false at the current decision level 3 (the assertion literal)
+    \item The other literal ($\neg 2$) is false at an earlier level (level 1)
+\end{itemize}
+
+\textbf{(c) Learning:}
+The solver adds the learned clause to the clause set:
+\[
+S \leftarrow S \cup \{\neg 5 \lor \neg 2\}
+\]
+This new clause permanently encodes the constraint: \textit{literals $2$ and $5$ cannot both be true}.
+
+\textbf{(d) Backjumping:}
+Instead of returning to level 2, CDCL identifies that the conflict was caused by the interaction between:
+\begin{itemize}
+    \item Level 1 (where $2$ was propagated)
+    \item Level 3 (where $5$ was decided)
+\end{itemize}
+Decision level 2 (the decision $3^d$ and propagation of $4$) played \textit{no role} in the conflict.
+
+Therefore, the solver \textbf{backjumps} directly to level 1, skipping level 2 entirely:
+\[
+\langle S \cup \{\neg 5 \lor \neg 2\} \parallel 1^{d},\, 2 \rangle
+\]
+
+\textbf{(e) Unit Propagation from Learned Clause:}
+At level 1, literal $2$ is true, making $\neg 2$ false. The learned clause $\neg 5 \lor \neg 2$ now becomes a unit clause, forcing the immediate propagation:
+\[
+\langle S \cup \{\neg 5 \lor \neg 2\} \parallel 1^{d},\, 2,\, \neg 5_{\neg 5 \lor \neg 2} \rangle
+\]
+
+The solver immediately deduces that $5$ must be false whenever $2$ is true, preventing the conflict from ever occurring again.
+
+\paragraph{4. Comparative Analysis}
+
+\textbf{Summary of Key Differences:}
+
+\begin{center}
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Aspect} & \textbf{Chronological Backtracking} & \textbf{CDCL} \\
+\hline
+\textbf{Backtrack level} & Returns to level 2 & Jumps to level 1 \\
+\hline
+\textbf{Knowledge gained} & None—can repeat same conflict & Learns $\neg 5 \lor \neg 2$ permanently \\
+\hline
+\textbf{Search space} & May re-explore conflicting assignments & Prunes entire subtrees where $2 \land 5$ holds \\
+\hline
+\textbf{Efficiency} & Linear exploration with repetition & Exponential pruning through learning \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+
+\textbf{Why the Learned Clause Is Powerful:}
+
+The clause $\neg 5 \lor \neg 2$ acts as a \textbf{global constraint} that permanently blocks the combination $(2,5)$ throughout the entire search:
+\begin{itemize}
+    \item Any future branch that tries to set both $2 = \text{true}$ and $5 = \text{true}$ will violate the clause immediately
+    \item The violation triggers unit propagation, forcing one of the literals to be false before deeper exploration
+    \item This prevents the solver from wasting time on futile search paths
+\end{itemize}
+
+CDCL therefore prunes an \textit{entire subtree} of the search space in a single learning step, while chronological backtracking may explore that subtree repeatedly in different parts of the search tree.
+
+\textbf{Fundamental Advantages of CDCL:}
+\begin{enumerate}
+    \item \textbf{Non-chronological backjumping}: By analyzing conflict clauses, CDCL can identify and jump directly to the earliest decision level that contributed to the conflict, skipping irrelevant intermediate levels.
+    
+    \item \textbf{Clause learning}: Each conflict generates a new constraint (learned clause) that captures the reason for the failure. This clause remains in the database permanently, preventing the same mistake from happening again.
+    
+    \item \textbf{Search space pruning}: Learned clauses effectively prune exponentially large portions of the search space. A single learned clause can eliminate millions or billions of invalid variable assignments.
+    
+    \item \textbf{Guided search}: The learned clauses provide additional unit propagations that guide the solver away from unproductive regions of the search space, focusing effort on more promising areas.
+\end{enumerate}
+
+These mechanisms make CDCL dramatically more efficient than classical DPLL on real-world SAT instances, enabling modern solvers to handle formulas with millions of variables and clauses.
+\end{example}
+
 \end{document}
