@@ -4907,4 +4907,406 @@ c^{*}(w_{n-1},w_n)=\frac{\big(C(w_{n-1},w_n)+1\big)\times C(w_{n-1})}{C(w_{n-1})
     \item Works better when the number of zeros is moderate rather than huge.
 \end{itemize}
 
+
+
+\newpage
+
+\part{Text Classification and Naive Bayes}
+
+\section{Introduction to Text Classification}
+
+Text classification is one of the fundamental tasks in Natural Language Processing, with applications ranging from spam detection to sentiment analysis. The task involves automatically assigning predefined categories to documents based on their content.
+
+\subsection{Real-World Applications}
+
+Text classification appears in numerous practical applications across different domains:
+
+\subsubsection{Spam Detection}
+
+One of the most common applications is email spam filtering. The system must classify incoming emails as either spam or legitimate (ham). This binary classification task protects users from unwanted commercial messages, phishing attempts, and malicious content.
+
+\subsubsection{Authorship Attribution}
+
+A classic example of authorship attribution is the Federalist Papers problem. Between 1787-1788, anonymous essays were published to convince New York to ratify the U.S. Constitution. These papers were written by Jay, Madison, and Hamilton, but the authorship of 12 letters remained in dispute. In 1963, Mosteller and Wallace successfully solved this problem using Bayesian methods, demonstrating the power of statistical text classification.
+
+\subsubsection{Document Categorization}
+
+In medical literature, systems like MeSH (Medical Subject Headings) automatically categorize MEDLINE articles into hierarchical subject categories including:
+\begin{itemize}
+    \item Antagonists and Inhibitors
+    \item Blood Supply
+    \item Chemistry
+    \item Drug Therapy
+    \item Embryology
+    \item Epidemiology
+\end{itemize}
+
+This categorization helps researchers quickly find relevant articles in their field of study.
+
+\subsubsection{Sentiment Analysis}
+
+Sentiment analysis determines whether a piece of text expresses positive or negative opinions. This is particularly valuable for:
+
+\textbf{Product Reviews:}
+\begin{itemize}
+    \item Positive: ``...zany characters and richly applied satire, and some great plot twists''
+    \item Negative: ``It was pathetic. The worst part about it was the boxing scenes...''
+\end{itemize}
+
+\textbf{Restaurant Reviews:}
+\begin{itemize}
+    \item Positive: ``...awesome caramel sauce and sweet toasty almonds. I love this place!''
+    \item Negative: ``...awful pizza and ridiculously overpriced...''
+\end{itemize}
+
+The system identifies sentiment-bearing words (e.g., \textcolor{blue}{richly, great, awesome, love} for positive; \textcolor{red}{pathetic, worst, awful, ridiculously} for negative) to make classification decisions.
+
+\subsection{Applications of Sentiment Analysis}
+
+Sentiment analysis has broad applications in understanding public opinion and predicting trends:
+
+\begin{itemize}
+    \item \textbf{Movies}: Determining whether reviews are positive or negative
+    \item \textbf{Products}: Analyzing customer opinions about new products (e.g., ``What do people think about the new iPhone?'')
+    \item \textbf{Public sentiment}: Measuring consumer confidence and market trends
+    \item \textbf{Politics}: Understanding public opinion about candidates or policy issues
+    \item \textbf{Prediction}: Using sentiment to predict election outcomes or market trends
+\end{itemize}
+
+\subsection{Scherer Typology of Affective States}
+
+When analyzing sentiment and affect, it's important to distinguish between different types of affective states. The Scherer typology categorizes affective states into five main types:
+
+\begin{enumerate}
+    \item \textbf{Emotion}: Brief, organically synchronized evaluation of a major event
+    \begin{itemize}
+        \item Examples: angry, sad, joyful, fearful, ashamed, proud, elated
+    \end{itemize}
+    
+    \item \textbf{Mood}: Diffuse, non-caused, low-intensity, long-duration change in subjective feeling
+    \begin{itemize}
+        \item Examples: cheerful, gloomy, irritable, listless, depressed, buoyant
+    \end{itemize}
+    
+    \item \textbf{Interpersonal stances}: Affective stance toward another person in a specific interaction
+    \begin{itemize}
+        \item Examples: friendly, flirtatious, distant, cold, warm, supportive, contemptuous
+    \end{itemize}
+    
+    \item \textbf{Attitudes}: Enduring, affectively colored beliefs and dispositions towards objects or persons
+    \begin{itemize}
+        \item Examples: liking, loving, hating, valuing, desiring
+    \end{itemize}
+    
+    \item \textbf{Personality traits}: Stable personality dispositions and typical behavior tendencies
+    \begin{itemize}
+        \item Examples: nervous, anxious, reckless, morose, hostile, jealous
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Focus of Basic Sentiment Classification:}
+Sentiment analysis primarily focuses on detecting \textbf{attitudes}. The basic task is to determine whether the attitude expressed in a text is positive or negative. More complex affect classification (covering emotions, moods, and other affective states) is addressed in advanced chapters.
+
+\subsection{Summary: Text Classification Tasks}
+
+Text classification encompasses a wide variety of tasks:
+\begin{itemize}
+    \item Sentiment analysis (positive/negative opinion detection)
+    \item Spam detection (spam vs. legitimate messages)
+    \item Authorship identification (determining who wrote a text)
+    \item Language identification (detecting the language of a text)
+    \item Assigning subject categories, topics, or genres
+    \item And many other classification problems in NLP
+\end{itemize}
+
+\subsection{Formal Definition of Text Classification}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Text Classification Problem}]
+\textbf{Input:}
+\begin{itemize}
+    \item A document $d$
+    \item A fixed set of classes $C = \{c_1, c_2, \ldots, c_J\}$
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item A predicted class $c \in C$
+\end{itemize}
+\end{tcolorbox}
+
+The goal is to create a function that takes any document $d$ and assigns it to one of the predefined classes in $C$.
+
+\subsection{Classification Methods}
+
+\subsubsection{Hand-coded Rules}
+
+One approach to text classification is to manually write rules based on combinations of words or other features.
+
+\textbf{Example for spam detection:}
+\[
+\text{spam} = \text{black-list-address OR (``dollars'' AND ``you have been selected'')}
+\]
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item Accuracy can be high if rules are carefully refined by experts
+    \item Rules are interpretable and can be easily modified
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item Building and maintaining these rules is expensive
+    \item Requires domain expertise
+    \item Does not scale well to complex classification tasks
+    \item Difficult to adapt to new domains or changing requirements
+\end{itemize}
+
+\subsubsection{Supervised Machine Learning}
+
+A more scalable approach is supervised machine learning, where the system learns classification patterns from labeled training data.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Supervised Machine Learning for Text Classification}]
+\textbf{Input:}
+\begin{itemize}
+    \item A document $d$
+    \item A fixed set of classes $C = \{c_1, c_2, \ldots, c_J\}$
+    \item A training set of $m$ hand-labeled documents $(d_1, c_1), \ldots, (d_m, c_m)$
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item A learned classifier $\gamma: d \rightarrow c$
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Common Machine Learning Classifiers:}
+\begin{itemize}
+    \item Naïve Bayes
+    \item Logistic regression
+    \item Neural networks
+    \item k-Nearest Neighbors
+    \item Support Vector Machines
+    \item Decision Trees
+    \item Random Forests
+\end{itemize}
+
+The machine learning approach learns patterns automatically from examples, making it more scalable and adaptable than hand-coded rules.
+
+\section{The Naïve Bayes Classifier}
+
+The Naïve Bayes classifier is a fundamental text classification algorithm that provides an excellent introduction to the key concepts in text classification. Despite its simplicity and "naive" assumptions, it performs surprisingly well in many practical applications.
+
+\subsection{Naïve Bayes Intuition}
+
+Naïve Bayes is a simple classification method based on Bayes' rule with strong independence assumptions. The key characteristics are:
+
+\begin{itemize}
+    \item Based on probabilistic principles (Bayes' theorem)
+    \item Uses a very simple representation of documents
+    \item Makes "naive" independence assumptions
+    \item Computationally efficient
+    \item Works well despite its simplicity
+\end{itemize}
+
+\subsection{The Bag of Words Representation}
+
+Naïve Bayes relies on the \textbf{bag of words} representation of documents. In this representation:
+
+\begin{itemize}
+    \item A document is represented as an unordered collection of words
+    \item Word order and syntactic structure are ignored
+    \item Only the presence and frequency of words matter
+    \item The document becomes a multiset (or "bag") of words
+\end{itemize}
+
+\textbf{Example:}
+
+Consider the movie review: ``I saw this movie. This movie is sweet and whimsical. I would recommend this movie. It made me happy.''
+
+In the bag of words representation, this becomes a count vector:
+
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Word} & \textbf{Count} \\
+\hline
+seen & 2 \\
+sweet & 1 \\
+whimsical & 1 \\
+recommend & 1 \\
+happy & 1 \\
+movie & (multiple) \\
+this & (multiple) \\
+... & ... \\
+\hline
+\end{tabular}
+\end{center}
+
+The bag of words representation discards all information about word order, grammar, and sentence structure, focusing solely on which words appear and how often.
+
+\subsection{Bayes' Rule Applied to Documents and Classes}
+
+For text classification, we want to find the class $c$ that is most probable given a document $d$. Using Bayes' theorem:
+
+\[
+P(c|d) = \frac{P(d|c) \cdot P(c)}{P(d)}
+\]
+
+Where:
+\begin{itemize}
+    \item $P(c|d)$ is the posterior probability: the probability of class $c$ given document $d$
+    \item $P(d|c)$ is the likelihood: the probability of seeing document $d$ given class $c$
+    \item $P(c)$ is the prior probability: the probability of class $c$ in general
+    \item $P(d)$ is the evidence: the probability of seeing document $d$
+\end{itemize}
+
+\subsection{Naïve Bayes Classifier (I): Maximum A Posteriori}
+
+The classification task is to find the class $\hat{c}$ that maximizes the posterior probability:
+
+\[
+\hat{c} = \arg\max_{c \in C} P(c|d)
+\]
+
+This is called the \textbf{Maximum A Posteriori (MAP)} classification: selecting the most likely class.
+
+Using Bayes' rule:
+\[
+\hat{c} = \arg\max_{c \in C} \frac{P(d|c) \cdot P(c)}{P(d)}
+\]
+
+\textbf{Dropping the denominator:}
+Since $P(d)$ is the same for all classes (it doesn't depend on $c$), we can drop it from the argmax:
+
+\[
+\hat{c} = \arg\max_{c \in C} P(d|c) \cdot P(c)
+\]
+
+This simplification is crucial: we only need to compute the likelihood $P(d|c)$ and prior $P(c)$ for each class, avoiding the computationally expensive calculation of $P(d)$.
+
+\subsection{Representing Documents as Features}
+
+To make the problem tractable, we represent a document $d$ as a set of features $x_1, x_2, \ldots, x_n$, where each feature typically represents a word in the document.
+
+\[
+P(d|c) = P(x_1, x_2, \ldots, x_n | c)
+\]
+
+\textbf{The Challenge:}
+Estimating $P(x_1, x_2, \ldots, x_n | c)$ directly would require:
+\begin{itemize}
+    \item $O(|X|^n \cdot |C|)$ parameters, where $|X|$ is the number of possible feature values
+    \item An enormous amount of training data to estimate these parameters reliably
+    \item Computationally infeasible for realistic vocabulary sizes
+\end{itemize}
+
+For example, if we have 20,000 words in our vocabulary and 10-word documents, we would need to estimate probabilities for $20000^{10}$ possible documents—clearly impossible!
+
+\subsection{Multinomial Naïve Bayes Independence Assumptions}
+
+To make the problem tractable, Naïve Bayes makes two key independence assumptions:
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Naïve Bayes Independence Assumptions}]
+\begin{enumerate}
+    \item \textbf{Bag of Words Assumption}: The position of words doesn't matter. We ignore word order and treat the document as an unordered collection of words.
+    
+    \item \textbf{Conditional Independence}: The feature probabilities $P(x_i | c_j)$ are independent given the class $c$. Knowing one word tells us nothing about other words, once we know the class.
+\end{enumerate}
+\end{tcolorbox}
+
+With these assumptions, the joint probability factors into a product:
+
+\[
+P(x_1, x_2, \ldots, x_n | c) = P(x_1|c) \cdot P(x_2|c) \cdot \ldots \cdot P(x_n|c) = \prod_{i=1}^{n} P(x_i|c)
+\]
+
+This reduces the number of parameters from exponential to linear in the vocabulary size!
+
+\subsection{Multinomial Naïve Bayes Classifier}
+
+Combining the MAP decision rule with the conditional independence assumption, we get the \textbf{Multinomial Naïve Bayes} classifier:
+
+\[
+\hat{c}_{\text{NB}} = \arg\max_{c \in C} P(c) \prod_{i=1}^{n} P(x_i | c)
+\]
+
+Where:
+\begin{itemize}
+    \item $P(c)$ is the prior probability of class $c$
+    \item $P(x_i | c)$ is the probability of feature (word) $x_i$ given class $c$
+    \item The product runs over all feature positions in the document
+\end{itemize}
+
+\subsection{Applying Multinomial Naïve Bayes to Text}
+
+For text classification, the features are the words in the document. The classifier becomes:
+
+\[
+\hat{c}_{\text{NB}} = \arg\max_{c \in C} P(c) \prod_{i \in \text{positions}} P(w_i | c)
+\]
+
+Where:
+\begin{itemize}
+    \item $w_i$ is the word at position $i$ in the test document
+    \item The product runs over all word positions in the document
+    \item Each word contributes its conditional probability $P(w_i | c)$ given the class
+\end{itemize}
+
+\textbf{Key insight:} The same word appearing multiple times will contribute multiple factors to the product, which is why this is called the "multinomial" model—it accounts for word frequencies.
+
+\subsection{The Problem with Multiplying Many Probabilities}
+
+There is a significant practical problem with the formula above:
+
+\textbf{Floating-point underflow:}
+Multiplying many small probabilities together can result in numbers too small to be represented accurately by computers.
+
+For example:
+\[
+0.0006 \times 0.0007 \times 0.0009 \times 0.01 \times 0.5 \times 0.000008 \times \ldots
+\]
+
+This product quickly becomes so small that it underflows to zero in standard floating-point arithmetic, losing all information about relative class probabilities.
+
+\textbf{Solution:} Use logarithms!
+
+Since $\log(ab) = \log(a) + \log(b)$, we can transform the product into a sum:
+
+\[
+\log\left(P(c) \prod_{i=1}^{n} P(x_i | c)\right) = \log P(c) + \sum_{i=1}^{n} \log P(x_i | c)
+\]
+
+Sums of logarithms are numerically stable and avoid underflow problems.
+
+\subsection{We Actually Do Everything in Log Space}
+
+In practice, Naïve Bayes classifiers always work in log space:
+
+\textbf{Instead of this:}
+\[
+\hat{c}_{\text{NB}} = \arg\max_{c \in C} P(c) \prod_{i \in \text{positions}} P(w_i | c)
+\]
+
+\textbf{We use this:}
+\[
+\hat{c}_{\text{NB}} = \arg\max_{c \in C} \left[ \log P(c) + \sum_{i \in \text{positions}} \log P(w_i | c) \right]
+\]
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Important Notes About Log Space}]
+\begin{enumerate}
+    \item \textbf{Ranking is preserved}: Taking the logarithm doesn't change which class has the highest probability. Since log is a monotonic function, the class with the highest probability also has the highest log probability.
+    
+    \item \textbf{It's a linear model}: The log-space formulation shows that Naïve Bayes is actually a \textbf{linear classifier}:
+    \[
+    \text{score}(c) = \log P(c) + \sum_{i} \log P(w_i | c) = b_c + \sum_{i} w_{ci} \cdot f_i
+    \]
+    
+    Where $b_c = \log P(c)$ is a bias term, $w_{ci} = \log P(w_i | c)$ are weights, and $f_i$ indicates whether word $i$ appears in the document.
+    
+    The classifier simply computes a weighted sum of features (plus a bias) and takes the maximum—this is a linear function of the inputs.
+\end{enumerate}
+\end{tcolorbox}
+
+The log-space formulation is crucial for both numerical stability and understanding the theoretical properties of Naïve Bayes as a linear classifier.
+
 \end{document}
