@@ -4729,5 +4729,1039 @@ As the number of training samples $N \to \infty$ and $k \to \infty$ (but $k/N \t
 \end{remark}
 
 
+\newpage
+
+\part{Decision Trees and Ensemble Methods}
+\section{Introduction to Decision Trees}
+
+Decision trees are fundamental machine learning models that provide both powerful predictive capabilities and high interpretability. They are tree-structured prediction models that make decisions by routing data through a hierarchy of tests.
+
+\subsection{Decision Tree Structure}
+
+A decision tree is composed of two types of nodes:
+
+\begin{itemize}
+    \item \textbf{Non-terminal nodes}: These nodes have 2 or more children and implement a \textbf{routing function}. They perform tests on the input features to decide which branch to follow.
+    
+    \item \textbf{Leaf nodes (terminal nodes)}: These nodes have no children and implement a \textbf{prediction function}. They provide the final output of the model.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Key Structural Properties}]
+\begin{itemize}
+    \item There are no cycles in the tree structure
+    \item All nodes have at most 1 parent
+    \item There is exactly one node with no parent, called the \textbf{root node}
+    \item The tree forms a directed acyclic graph (DAG)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{How Decision Trees Work}
+
+A decision tree takes an input \(\mathbf{x} \in \mathcal{X}\) and routes it through its nodes until it reaches a leaf node, where a prediction is made.
+
+\textbf{The process:}
+\begin{enumerate}
+    \item The input enters at the root node
+    \item Each node represents a test on a variable (feature)
+    \item An edge to a child node represents the outcome of the test
+    \item The routing continues until a leaf node is reached
+    \item At the leaf, a prediction is made based on the prediction function
+\end{enumerate}
+
+\subsection{Decision Tree Inference: Non-terminal Nodes}
+
+Each non-terminal node can be formally represented as \(\text{Node}(\phi, t_L, t_R)\), where:
+
+\begin{itemize}
+    \item \(\phi: \mathcal{X} \rightarrow \{L, R\}\) is a \textbf{routing function}
+    \item \(t_L\) is the left child subtree
+    \item \(t_R\) is the right child subtree
+\end{itemize}
+
+When an input \(\mathbf{x}\) reaches the node:
+\begin{itemize}
+    \item If \(\phi(\mathbf{x}) = L\), the input goes to the left child \(t_L\)
+    \item If \(\phi(\mathbf{x}) = R\), the input goes to the right child \(t_R\)
+\end{itemize}
+
+\textbf{Note:} We assume binary trees here, but the concept generalizes to trees with more than two children.
+
+\subsection{Decision Tree Inference: Leaf Nodes}
+
+Each leaf node can be represented as \(\text{Leaf}(h)\), where:
+
+\begin{itemize}
+    \item \(h \in \mathcal{F}_{\text{task}}\) is a \textbf{prediction function} (typically a constant)
+    \item Depending on the task:
+    \begin{itemize}
+        \item For \textbf{classification}: \(h \in \mathcal{Y}\) (a class label)
+        \item For \textbf{regression}: \(h \in \mathbb{R}\) (a continuous value)
+    \end{itemize}
+\end{itemize}
+
+Once \(\mathbf{x}\) reaches the leaf, the final prediction is given by \(h(\mathbf{x})\).
+
+\subsection{Formal Decision Tree Function}
+
+The complete decision tree function can be defined recursively:
+
+\[
+f_t(\mathbf{x}) = \begin{cases}
+h(\mathbf{x}) & \text{if } t = \text{Leaf}(h) \\
+f_{t_{\phi(\mathbf{x})}}(\mathbf{x}) & \text{if } t = \text{Node}(\phi, t_L, t_R)
+\end{cases}
+\]
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item If we are at a leaf node, return the prediction \(h(\mathbf{x})\)
+    \item If we are at a non-terminal node, apply the routing function \(\phi(\mathbf{x})\) to determine which child to visit, then recursively apply the tree function to that child
+\end{itemize}
+
+\subsection{Decision Tree Inference Example}
+
+Consider a 2D classification problem with classes \(\xi \in \{+, \times, \circ, \triangle, \square\}\). We can build a decision tree with routing functions:
+
+\[
+\phi_1(x, y) = \begin{cases}
+L & \text{if } y \geq 3 \\
+R & \text{else}
+\end{cases}
+\]
+
+\[
+\phi_2(x, y) = \begin{cases}
+L & \text{if } x \leq 3 \\
+R & \text{else}
+\end{cases}
+\]
+
+\[
+\phi_3(x, y) = \begin{cases}
+L & \text{if } x \leq 2 \\
+R & \text{else}
+\end{cases}
+\]
+
+\[
+\phi_4(x, y) = \begin{cases}
+L & \text{if } x \leq 4 \\
+R & \text{else}
+\end{cases}
+\]
+
+These routing functions partition the 2D space into axis-aligned rectangular regions, with each region corresponding to a leaf node that predicts a specific class.
+
+\section{Learning Decision Trees}
+
+\subsection{The Learning Problem}
+
+Given a training set \(\mathcal{D} = \{(\mathbf{x}_1, y_1), \ldots, (\mathbf{x}_n, y_n)\}\), we want to find a tree \(t^* \in \mathcal{T}\) from the set of all possible decision trees \(\mathcal{T}\) that best fits the data.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{The Challenge}]
+This optimization problem has many solutions and can be \textbf{NP-hard} in general. Thus, we need to impose constraints, such as:
+\begin{itemize}
+    \item Finding the most compact tree
+    \item Using greedy algorithms that find locally optimal splits
+    \item Limiting tree depth or complexity
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Tree Learning Framework}
+
+To learn a decision tree, we need to specify:
+
+\begin{enumerate}
+    \item \textbf{\(\mathcal{H}_{\text{leaf}}\)}: A set of leaf prediction functions (e.g., constant functions)
+    \item \textbf{\(\Phi\)}: A set of possible splitting functions \(\Phi \subseteq \{L, R\}^{\mathcal{X}}\)
+    \item \textbf{Tree-growing strategy}: A recursive algorithm that partitions the training set and decides whether to grow leaves or non-terminal nodes
+\end{enumerate}
+
+\textbf{Two Popular Algorithms:}
+\begin{itemize}
+    \item \textbf{ID3} (Iterative Dichotomiser 3): Developed by Ross Quinlan
+    \item \textbf{CART} (Classification and Regression Trees): Developed by Breiman et al.
+\end{itemize}
+
+\subsection{Tree Growing Strategy}
+
+The tree-growing process works recursively:
+
+\begin{enumerate}
+    \item Start with all training examples at the root
+    \item Find the best splitting function \(\phi \in \Phi\) that partitions the data
+    \item For each resulting subset:
+    \begin{itemize}
+        \item If the subset is pure or meets stopping criteria, create a leaf node
+        \item Otherwise, recursively apply the splitting process
+    \end{itemize}
+\end{enumerate}
+
+\section{ID3 and CART Algorithms}
+
+\subsection{Example: Playing Tennis Dataset}
+
+Consider a classic example with 14 training samples and 4 attributes:
+
+\begin{center}
+\small
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\textbf{Day} & \textbf{Outlook} & \textbf{Temperature} & \textbf{Humidity} & \textbf{Wind} & \textbf{PlayTennis} \\
+\hline
+D1 & Sunny & Hot & High & Weak & No \\
+D2 & Sunny & Hot & High & Strong & No \\
+D3 & Overcast & Hot & High & Weak & Yes \\
+D4 & Rain & Mild & High & Weak & Yes \\
+D5 & Rain & Cool & Normal & Weak & Yes \\
+D6 & Rain & Cool & Normal & Strong & No \\
+D7 & Overcast & Cool & Normal & Strong & Yes \\
+D8 & Sunny & Mild & High & Weak & No \\
+D9 & Sunny & Cool & Normal & Weak & Yes \\
+D10 & Rain & Mild & Normal & Weak & Yes \\
+D11 & Sunny & Mild & Normal & Strong & Yes \\
+D12 & Overcast & Mild & High & Strong & Yes \\
+D13 & Overcast & Hot & Normal & Weak & Yes \\
+D14 & Rain & Mild & High & Strong & No \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+    \item 14 training samples
+    \item 4 attributes (features)
+    \item 9 samples with class ``Yes''
+    \item 5 samples with class ``No''
+\end{itemize}
+
+\subsection{Choosing the Best Attribute}
+
+The fundamental question in building a decision tree is: \textbf{How do we pick the best attribute to split on?}
+
+Consider two possible splits on the root node:
+
+\textbf{Split 1: Outlook attribute}
+\begin{itemize}
+    \item Sunny: 2 yes / 3 no
+    \item Overcast: 4 yes / 0 no (pure!)
+    \item Rain: 3 yes / 2 no
+\end{itemize}
+
+\textbf{Split 2: Wind attribute}
+\begin{itemize}
+    \item Weak: 6 yes / 2 no
+    \item Strong: 3 yes / 3 no
+\end{itemize}
+
+\textbf{Which split is better?}
+
+The \textbf{Outlook} split is better because:
+\begin{itemize}
+    \item It produces one pure subset (Overcast: 4 yes / 0 no)
+    \item Pure subsets mean we are completely certain about the classification
+    \item The Weak wind subset (6 yes / 2 no) is better than Strong (3 yes / 3 no), but neither is pure
+\end{itemize}
+
+\subsection{Measuring Purity}
+
+We need a formal way to measure the ``purity'' of a split. Key properties:
+
+\begin{itemize}
+    \item \textbf{Pure set} (4 yes / 0 no): Completely certain (100\% confidence)
+    \item \textbf{Impure set} (3 yes / 3 no): Completely uncertain (50\% confidence)
+    \item The measure should be \textbf{symmetric}: 4 yes / 0 no is as pure as 0 yes / 4 no
+\end{itemize}
+
+There are different ways to measure purity, with \textbf{entropy} being the most popular.
+
+\section{Entropy and Information Gain}
+
+\subsection{Entropy}
+
+For binary classification problems with positive and negative classes:
+
+\begin{itemize}
+    \item \(p(+)\) is the proportion of positives in a subset
+    \item \(p(-)\) is the proportion of negatives in a subset
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Entropy Formula}]
+The entropy of a subset \(S\) is:
+\[
+H(S) = -p(+) \log_2 p(+) - p(-) \log_2 p(-)
+\]
+\end{tcolorbox}
+
+\textbf{Important properties:}
+\begin{itemize}
+    \item Entropy measures uncertainty or impurity
+    \item Higher entropy = more impure = more uncertain
+    \item Lower entropy = more pure = more certain
+\end{itemize}
+
+\subsubsection{Entropy Examples}
+
+\textbf{Impure subset (3 yes / 3 no):}
+\begin{align*}
+p(+) &= 0.5, \quad p(-) = 0.5 \\
+H(S) &= -0.5 \log_2(0.5) - 0.5 \log_2(0.5) \\
+&= -0.5 \times (-1) - 0.5 \times (-1) \\
+&= 0.5 + 0.5 = 1.0
+\end{align*}
+
+\textbf{Pure subset (4 yes / 0 no):}
+\begin{align*}
+p(+) &= 1.0, \quad p(-) = 0.0 \\
+H(S) &= -1.0 \log_2(1.0) - 0.0 \log_2(0.0) \\
+&= -1.0 \times 0 - 0 \\
+&= 0.0
+\end{align*}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item Maximum entropy (1.0) for the impure set (50/50 split)
+    \item Minimum entropy (0.0) for the pure set (100\% one class)
+    \item Higher numbers correspond to less pure subsets!
+\end{itemize}
+
+\subsection{Information Gain}
+
+We want to have many items in pure sets after splitting. We calculate the \textbf{expected drop in entropy} after each split.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Information Gain Formula}]
+The information gain of attribute \(A\) on set \(S\) is:
+\[
+\text{Gain}(S, A) = H(S) - \sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|} H(S_v)
+\]
+
+Where:
+\begin{itemize}
+    \item \(H(S)\) is the entropy of the original set
+    \item \(\text{Values}(A)\) are the possible values of attribute \(A\)
+    \item \(S_v\) is the subset of \(S\) where \(x_A = v\)
+    \item \(|S_v| / |S|\) weights each subset by its size
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item Information gain is the \textbf{mutual information} between attribute \(A\) and class labels
+    \item It measures how much uncertainty is reduced by knowing attribute \(A\)
+    \item We want to \textbf{maximize information gain}
+    \item Higher gain = better attribute for splitting
+\end{itemize}
+
+\subsection{Using Information Gain for Attribute Selection}
+
+The ID3 algorithm uses information gain to decide which attribute to pick:
+
+\begin{enumerate}
+    \item For every attribute in your data, compute the information gain
+    \item Select the attribute with the \textbf{highest information gain}
+    \item This attribute reduces uncertainty the most and leads to the purest possible split
+\end{enumerate}
+
+\textbf{Note:} We consider one level split at a time, but the procedure is recursive. After splitting on an attribute, we recursively apply the same process to each resulting subset.
+
+\subsection{Problems with Information Gain}
+
+Information gain has a significant problem: it favors attributes with many values.
+
+\textbf{Example:} Consider the ``Day'' attribute (D1, D2, ..., D14) in the tennis dataset:
+\begin{itemize}
+    \item Each day is unique, so splitting on ``Day'' creates 14 subsets
+    \item Each subset contains exactly one example
+    \item All subsets are perfectly pure (optimal split according to information gain!)
+    \item But this is useless! It won't generalize to new data
+\end{itemize}
+
+If we encounter a new example ``D15: Rain, High, Weak'', the tree cannot classify it because it only knows about days D1-D14.
+
+\textbf{The problem:} Information gain can lead to overfitting by favoring attributes that perfectly separate the training data but generalize poorly to test data.
+
+\subsection{Gain Ratio: A Solution}
+
+One solution is to use \textbf{Gain Ratio} instead of information gain:
+
+\[
+\text{GainRatio}(S, A) = \frac{\text{Gain}(S, A)}{\text{SplitInfo}(S, A)}
+\]
+
+Where:
+\[
+\text{SplitInfo}(S, A) = -\sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|} \log_2 \frac{|S_v|}{|S|}
+\]
+
+\textbf{Effect:}
+\begin{itemize}
+    \item SplitInfo measures how broadly and uniformly the attribute splits the data
+    \item Dividing by SplitInfo \textbf{penalizes attributes with many values}
+    \item This helps prevent overfitting to attributes like ``Day''
+\end{itemize}
+
+\subsection{Advantages of Information Gain}
+
+Despite its limitations, information gain (and decision trees in general) has important advantages:
+
+\begin{itemize}
+    \item \textbf{Interpretability}: Decision trees are easy to understand
+    \item \textbf{Readable rules}: It's possible to extract concise rules describing classification decisions
+    \item \textbf{No ``black box''}: The decision-making process is transparent
+    \item \textbf{Important for users}: Explainability is crucial in many applications (medical diagnosis, loan approval, etc.)
+\end{itemize}
+
+\textbf{Example rule from a decision tree:}
+\begin{verbatim}
+IF Outlook = Overcast THEN PlayTennis = Yes
+IF Outlook = Sunny AND Humidity = High THEN PlayTennis = No
+\end{verbatim}
+
+\section{Alternative Splitting Criteria}
+
+Besides entropy and information gain, there are other measures for selecting splits.
+
+\subsection{Gini Impurity}
+
+The \textbf{CART algorithm} uses Gini impurity instead of entropy.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Gini Impurity Formula}]
+For a set \(S\) with \(C\) classes:
+\[
+\text{Gini}(S) = 1 - \sum_{i=1}^{C} p_i^2
+\]
+
+Where \(p_i\) is the proportion of samples belonging to class \(i\).
+\end{tcolorbox}
+
+\textbf{Properties:}
+\begin{itemize}
+    \item Gini impurity = 0 for a pure set (all samples from one class)
+    \item Gini impurity = 0.5 for a binary classification with 50/50 split
+    \item When building a decision tree, we choose features with the \textbf{least Gini index} as the root node
+\end{itemize}
+
+\subsection{Comparison of Splitting Criteria}
+
+\begin{center}
+\begin{tabular}{|l|l|l|p{6cm}|}
+\hline
+\textbf{Criterion} & \textbf{Task} & \textbf{Formula} & \textbf{Description} \\
+\hline
+Entropy & Classification & \(-\sum_{i=1}^{C} p_i \log_2(p_i)\) & \(p_i\) is the frequency of label \(i\) at a node, \(C\) is the number of unique labels. Maximize the Gain. \\
+\hline
+Gini Impurity & Classification & \(1 - \sum_{i=1}^{C} p_i^2\) & \(p_i\) is the frequency of label \(i\) at a node, \(C\) is the number of unique labels. Minimize the Gini. \\
+\hline
+Variance & Regression & \(\frac{1}{N} \sum_{i=1}^{N} (y_i - \mu)^2\) & \(y_i\) is the label for instance \(i\), \(N\) is the number of instances, \(\mu = \frac{1}{N} \sum_{i=1}^{N} y_i\). Minimize the variance. \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Decision Trees and Overfitting}
+
+\subsection{Why Decision Trees Overfit}
+
+Decision trees are \textbf{non-parametric models} with a structure determined by the data. As a result:
+
+\begin{itemize}
+    \item They are very \textbf{flexible} and can easily fit the training set
+    \item They have a \textbf{high risk of overfitting}
+    \item Without constraints, they can create a leaf for every training example
+\end{itemize}
+
+\subsection{Overfitting Example}
+
+Consider the relationship between tree size and accuracy:
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    width=10cm,
+    height=6cm,
+    xlabel={Size of tree (number of nodes)},
+    ylabel={Accuracy},
+    xmin=0, xmax=100,
+    ymin=0.5, ymax=0.95,
+    legend pos=south east,
+    grid=both,
+    grid style={line width=.1pt, draw=gray!10},
+    major grid style={line width=.2pt,draw=gray!50},
+]
+
+% Training data curve
+\addplot[color=blue, thick, smooth] coordinates {
+    (0,0.5) (10,0.72) (20,0.82) (30,0.88) (40,0.91) 
+    (50,0.93) (60,0.94) (70,0.945) (80,0.95) (90,0.952) (100,0.953)
+};
+
+% Test data curve
+\addplot[color=red, thick, dashed, smooth] coordinates {
+    (0,0.5) (10,0.70) (20,0.80) (30,0.85) (40,0.87) 
+    (50,0.86) (60,0.83) (70,0.80) (80,0.76) (90,0.72) (100,0.68)
+};
+
+\legend{Training data, Test data}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{Observations:}
+\begin{itemize}
+    \item Training accuracy continues to increase with tree size
+    \item Test accuracy initially increases, then decreases
+    \item The optimal tree size is around 30-40 nodes
+    \item Larger trees overfit to the training data
+\end{itemize}
+
+\subsection{Techniques to Prevent Overfitting}
+
+Standard machine learning techniques apply to decision trees:
+
+\begin{enumerate}
+    \item \textbf{Early stopping}: Stop growing the tree before it perfectly fits the training data
+    \begin{itemize}
+        \item Set a maximum depth
+        \item Require a minimum number of samples to split
+        \item Require a minimum information gain to split
+    \end{itemize}
+    
+    \item \textbf{Pruning}: Build a full tree, then remove branches that don't improve validation performance
+    
+    \item \textbf{Regularization}: Add penalties for tree complexity
+    
+    \item \textbf{Data augmentation}: Increase training data
+    
+    \item \textbf{Ensemble methods}: Combine multiple trees (Random Forest, boosting)
+\end{enumerate}
+
+\subsection{Pruning (Post-processing)}
+
+Pruning is a technique to reduce complexity \textit{after} tree building:
+
+\begin{enumerate}
+    \item \textbf{Build the full tree}: Grow the tree until each leaf node is pure or a stopping criterion is met
+    
+    \item \textbf{Evaluate nodes from bottom to top}: Starting from the bottom, evaluate each node to see if pruning it would improve performance on a validation set
+    
+    \item \textbf{Define cost-complexity measure}: Consider both the accuracy of the node and the size of the subtree rooted at that node
+    
+    \item \textbf{Prune nodes iteratively}: Identify the node with the smallest cost-complexity measure and prune its subtree (turn it into a leaf labeled with the majority class)
+    
+    \item \textbf{Repeat until done}: Continue until a suitable tree is achieved or further pruning doesn't improve performance
+\end{enumerate}
+
+\section{Decision Trees for Different Data Types}
+
+\subsection{Continuous Attributes}
+
+So far, we have focused on categorical attributes, but decision trees can also handle continuous attributes.
+
+\textbf{Strategy:} Pick a threshold to create a binary split.
+
+For example, for a continuous attribute like temperature:
+\[
+\phi(\text{temperature}) = \begin{cases}
+L & \text{if temperature} > 77.8 \\
+R & \text{else}
+\end{cases}
+\]
+
+\textbf{How to choose the threshold?}
+\begin{itemize}
+    \item Consider all possible split points (or a sample of them)
+    \item For each candidate threshold, compute the information gain (or Gini impurity reduction)
+    \item Choose the threshold that maximizes information gain
+\end{itemize}
+
+\textbf{Geometric interpretation:}
+\begin{itemize}
+    \item Each split creates an axis-aligned boundary in feature space
+    \item For 2D data with continuous features \(x_1\) and \(x_2\), splits create rectangular regions
+    \item Example splits: \(x_1 > \theta_1\), \(x_2 < \theta_2\), \(x_2 > \theta_3\), \(x_1 < \theta_4\)
+\end{itemize}
+
+\subsection{Multi-class Classification}
+
+Decision trees naturally extend to multi-class problems (\(k\) different classes):
+
+\begin{itemize}
+    \item At each leaf, predict the \textbf{most frequent class} in that subset
+    
+    \item Entropy for multi-class:
+    \[
+    H(S) = -\sum_{c=1}^{k} p(c) \log_2 p(c)
+    \]
+    Where \(p(c)\) is the proportion of examples of class \(c\) in subset \(S\)
+    
+    \item Information gain and Gini impurity formulas extend naturally to \(k\) classes
+\end{itemize}
+
+\section{Decision Trees: Summary}
+
+\subsection{Advantages (Pros)}
+
+\begin{itemize}
+    \item \textbf{Interpretable}: Humans can understand the reason for decisions
+    \item \textbf{Handles irrelevant data}: Irrelevant features have Gain = 0 and won't be selected
+    \item \textbf{Handles missing data}: Can be adapted to deal with missing values
+    \item \textbf{Very compact}: After pruning, \# nodes \(\ll\) \# training data
+    \item \textbf{Fast at test time}: \(O(\text{depth})\), where depth \(\ll\) \# training data
+    \item \textbf{No feature scaling needed}: Works with features on different scales
+\end{itemize}
+
+\subsection{Disadvantages (Cons)}
+
+\begin{itemize}
+    \item \textbf{Greedy algorithm}: May not find the globally optimal tree (locally optimal choices at each split)
+    
+    \item \textbf{NP-hard problem}: Finding the optimal tree is exponentially difficult (exponentially many possible trees)
+    
+    \item \textbf{Only axis-aligned splits}: Cannot naturally capture diagonal decision boundaries
+    \begin{itemize}
+        \item Linear classifiers can have diagonal boundaries
+        \item Decision trees create rectangular partitions
+        \item This limits expressiveness for some problems
+    \end{itemize}
+    
+    \item \textbf{High variance}: Small changes in training data can lead to very different trees
+    
+    \item \textbf{Prone to overfitting}: Especially with deep trees
+\end{itemize}
+
+\subsection{Key Takeaways}
+
+\begin{itemize}
+    \item \textbf{ID3 algorithm}: Grows decision tree from root down, greedily selecting the next best attribute using information gain
+    
+    \item \textbf{Entropy}: Measures uncertainty (impurity) in a set
+    
+    \item \textbf{Information Gain}: Measures the reduction in uncertainty following a split
+    
+    \item \textbf{Complete hypothesis space}: Searches the entire space of possible trees
+    
+    \item \textbf{Preference}: Prefers smaller trees and high information gain at the root
+    
+    \item \textbf{Overfitting}: Addressed by post-pruning (remove nodes while accuracy increases on validation set)
+    
+    \item \textbf{Performance}: Fast, compact, and interpretable
+\end{itemize}
+
+\section{Random Forests}
+
+Random forests address many limitations of individual decision trees by combining multiple trees into an ensemble.
+
+\subsection{What is a Random Forest?}
+
+\textbf{Random forests are ensembles of decision trees.}
+
+\begin{itemize}
+    \item Each tree is trained on a \textbf{bootstrapped version} of the training set (sampled with replacement)
+    \item This creates diversity among the trees
+    \item Different trees make different errors
+    \item Combining their predictions reduces overall error
+\end{itemize}
+
+\subsubsection{Sampling with Replacement (Bootstrapping)}
+
+Given a dataset \(\mathcal{D} = \{(\mathbf{x}_1, y_1), \ldots, (\mathbf{x}_n, y_n)\}\):
+
+\begin{enumerate}
+    \item For each tree \(t_i\), create a new dataset \(\mathcal{D}_i\) by:
+    \begin{itemize}
+        \item Randomly sampling \(n\) examples from \(\mathcal{D}\) \textbf{with replacement}
+        \item Some examples may appear multiple times
+        \item Some examples may not appear at all (approximately 37\% are left out)
+    \end{itemize}
+    
+    \item Train tree \(t_i\) on dataset \(\mathcal{D}_i\)
+    
+    \item Repeat for all \(T\) trees in the forest
+\end{enumerate}
+
+\subsection{Random Feature Selection}
+
+In addition to bootstrap sampling, random forests introduce randomness in feature selection:
+
+\begin{itemize}
+    \item At each node, instead of considering all features for splitting, only a \textbf{random subset} of features is considered
+    
+    \item Typical choices:
+    \begin{itemize}
+        \item For classification: \(\sqrt{d}\) features, where \(d\) is the total number of features
+        \item For regression: \(d/3\) features
+    \end{itemize}
+    
+    \item This helps to \textbf{decorrelate} decision trees
+    
+    \item \textbf{Extremely randomized trees} take this further by sampling split thresholds randomly instead of optimizing them
+\end{itemize}
+
+\subsection{Random Forest Prediction}
+
+The final prediction of a random forest is obtained by \textbf{aggregating} the predictions of all trees:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Random Forest Prediction}]
+\textbf{For classification:}
+\[
+\hat{y}_{\text{RF}}(\mathbf{x}) = \text{mode}\{f_{t_1}(\mathbf{x}), \ldots, f_{t_T}(\mathbf{x})\}
+\]
+(Majority vote across all trees)
+
+\textbf{For regression:}
+\[
+\hat{y}_{\text{RF}}(\mathbf{x}) = \frac{1}{T} \sum_{i=1}^{T} f_{t_i}(\mathbf{x})
+\]
+(Average of all tree predictions)
+\end{tcolorbox}
+
+\subsection{Why Random Forests Work}
+
+Random forests work well because of several key principles:
+
+\begin{enumerate}
+    \item \textbf{Variance reduction}: Averaging multiple models reduces variance without increasing bias
+    
+    \item \textbf{Decorrelation}: Random feature selection ensures trees make different types of errors
+    
+    \item \textbf{Robustness}: Errors of individual trees tend to cancel out
+    
+    \item \textbf{Overfitting resistance}: Individual trees may overfit, but the ensemble typically does not
+\end{enumerate}
+
+\textbf{Bias-Variance Trade-off:}
+\begin{itemize}
+    \item Individual deep trees have low bias but high variance
+    \item Averaging many trees keeps bias low while reducing variance
+    \item Result: Better generalization performance
+\end{itemize}
+
+\section{Ensemble Methods}
+
+Random forests are one example of a broader class of techniques called \textbf{ensemble methods}.
+
+\subsection{What are Ensemble Methods?}
+
+\textbf{Ensemble learning} combines different models to obtain more accurate predictions than any individual model.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Ensemble Learning Principle}]
+``Wisdom of crowds'': Aggregating predictions from multiple models often yields better performance than using a single model.
+\end{tcolorbox}
+
+\subsection{Types of Ensemble Methods}
+
+There are three main types of ensemble methods:
+
+\begin{enumerate}
+    \item \textbf{Bagging} (Bootstrap Aggregating)
+    \item \textbf{Boosting}
+    \item \textbf{Stacking}
+\end{enumerate}
+
+\section{Bagging (Bootstrap Aggregating)}
+
+\subsection{The Bagging Algorithm}
+
+Bagging is a technique where we train \(T\) models on \(T\) different samplings of the dataset.
+
+\textbf{Procedure:}
+\begin{enumerate}
+    \item Take the original dataset \(\mathcal{D}\)
+    
+    \item Create \(T\) bootstrap samples:
+    \begin{itemize}
+        \item \(\mathcal{D}_1\): Sample \(n\) examples from \(\mathcal{D}\) with replacement
+        \item \(\mathcal{D}_2\): Sample \(n\) examples from \(\mathcal{D}\) with replacement
+        \item ...
+        \item \(\mathcal{D}_T\): Sample \(n\) examples from \(\mathcal{D}\) with replacement
+    \end{itemize}
+    
+    \item Train a model on each bootstrap sample:
+    \begin{itemize}
+        \item Model 1 trained on \(\mathcal{D}_1\)
+        \item Model 2 trained on \(\mathcal{D}_2\)
+        \item ...
+        \item Model \(T\) trained on \(\mathcal{D}_T\)
+    \end{itemize}
+    
+    \item \textbf{Aggregate} predictions:
+    \begin{itemize}
+        \item Classification: Majority vote
+        \item Regression: Average
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Benefits of Bagging}
+
+\begin{itemize}
+    \item \textbf{Reduces variance}: Different bootstrap samples lead to different models; averaging reduces variance
+    
+    \item \textbf{Doesn't increase bias}: Each model is trained on a dataset of the same size as the original
+    
+    \item \textbf{Robust to overfitting}: Individual models may overfit to their bootstrap samples, but averaging helps
+    
+    \item \textbf{Parallel training}: All models can be trained independently and in parallel
+\end{itemize}
+
+\subsection{When to Use Bagging}
+
+Bagging works best with:
+\begin{itemize}
+    \item \textbf{High-variance, low-bias models}: e.g., deep decision trees
+    \item Models that are sensitive to small changes in training data
+    \item Situations where you want to reduce overfitting
+\end{itemize}
+
+\section{Boosting}
+
+Boosting is a different ensemble strategy that trains models \textbf{sequentially}, with each new model focusing on the errors of previous models.
+
+\subsection{Key Differences from Bagging}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Aspect} & \textbf{Bagging} & \textbf{Boosting} \\
+\hline
+Training & Parallel (independent) & Sequential (dependent) \\
+\hline
+Sampling & Uniform (with replacement) & Weighted (focus on errors) \\
+\hline
+Model weights & Equal & Based on performance \\
+\hline
+Goal & Reduce variance & Reduce bias and variance \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Boosting Intuition}
+
+\begin{itemize}
+    \item Trained models are \textbf{weighted based on their performance}
+    
+    \item Weak classifiers are learned \textbf{sequentially}
+    
+    \item The more mistakes the previous classifier makes on a dataset, the more those misclassified examples are \textbf{weighted for the next classifier}
+    
+    \item Each new model focuses on the ``hard'' examples that previous models got wrong
+\end{itemize}
+
+\subsection{Weak Learners}
+
+Ensemble methods often use \textbf{weak learners} rather than complex models.
+
+\begin{definition}[Weak Learner]
+A weak learner is a classification model that performs \textbf{slightly better than random guessing}.
+
+For binary classification with balanced classes:
+\begin{itemize}
+    \item Random guessing: 50\% accuracy
+    \item Weak learner: slightly better than 50\% (e.g., 55\%)
+\end{itemize}
+\end{definition}
+
+\textbf{Examples of weak learners:}
+\begin{itemize}
+    \item \textbf{Decision stump}: A decision tree with only one split (depth = 1)
+    \item \textbf{1-Nearest Neighbor}: k-NN with k=1 on a subset of features
+    \item Simple linear classifiers on a single feature
+\end{itemize}
+
+\textbf{Why use weak learners?}
+\begin{itemize}
+    \item Fast to train
+    \item Less likely to overfit individually
+    \item Ensemble of many weak learners can create a strong classifier
+    \item ``Two heads are better than one'' principle
+\end{itemize}
+
+\subsection{AdaBoost (Adaptive Boosting)}
+
+AdaBoost is one of the most popular boosting algorithms.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{AdaBoost Algorithm}]
+\textbf{Step 1:} Initialize weights uniformly for all training samples:
+\[
+w_i^{(1)} = \frac{1}{n} \quad \text{for } i = 1, \ldots, n
+\]
+
+\textbf{Step 2:} For \(t = 1\) to \(T\):
+\begin{enumerate}
+    \item Train a weak classifier \(h_t\) using the current weights \(w^{(t)}\)
+    
+    \item Compute the weighted error:
+    \[
+    \epsilon_t = \sum_{i: h_t(\mathbf{x}_i) \neq y_i} w_i^{(t)}
+    \]
+    
+    \item Compute classifier weight:
+    \[
+    \alpha_t = \frac{1}{2} \ln\left(\frac{1 - \epsilon_t}{\epsilon_t}\right)
+    \]
+    
+    \item Update sample weights:
+    \[
+    w_i^{(t+1)} = w_i^{(t)} \cdot \exp\left(-\alpha_t y_i h_t(\mathbf{x}_i)\right)
+    \]
+    (Increase weight for misclassified samples, decrease for correctly classified)
+    
+    \item Normalize weights: \(w^{(t+1)} \leftarrow w^{(t+1)} / \sum_i w_i^{(t+1)}\)
+\end{enumerate}
+
+\textbf{Step 3:} Final classifier:
+\[
+H(\mathbf{x}) = \text{sign}\left(\sum_{t=1}^{T} \alpha_t h_t(\mathbf{x})\right)
+\]
+(Weighted vote of all weak classifiers)
+\end{tcolorbox}
+
+\subsection{AdaBoost: Key Steps Explained}
+
+\textbf{Step 1: Initialize with equal weights}
+\begin{itemize}
+    \item All training samples start with equal importance
+    \item Build the first weak classifier on this uniformly weighted dataset
+    \item Check which samples are correctly classified and which are not
+\end{itemize}
+
+\textbf{Step 2: Increase weights for misclassified samples}
+\begin{itemize}
+    \item Samples that were misclassified get higher weights
+    \item This makes classifying them correctly more important for the next model
+    \item The next weak classifier will focus more on these "hard" examples
+\end{itemize}
+
+\textbf{Step 3: Iterate until convergence}
+\begin{itemize}
+    \item Repeat until all data points are correctly classified
+    \item OR until a maximum number of iterations is reached
+    \item Each iteration focuses on the remaining difficult examples
+\end{itemize}
+
+\subsection{AdaBoost Properties}
+
+\begin{itemize}
+    \item \textbf{Adaptive}: Adapts to the errors of previous weak learners
+    
+    \item \textbf{Reduces bias and variance}: Combines weak learners to create a strong learner
+    
+    \item \textbf{Sensitive to noisy data}: Can overfit if there are many outliers (keeps increasing their weights)
+    
+    \item \textbf{No need for feature selection}: Weak learners can be based on individual features
+    
+    \item \textbf{Fast training}: Each weak learner is simple and fast to train
+\end{itemize}
+
+\section{Stacking}
+
+Stacking (stacked generalization) is a more sophisticated ensemble method that uses a \textbf{meta-model} to combine base models.
+
+\subsection{What is Stacking?}
+
+Stacking combines predictions of multiple ML models (called \textbf{base models}) to improve overall performance.
+
+\textbf{Key differences from bagging and boosting:}
+\begin{itemize}
+    \item Base models are typically \textbf{heterogeneous} (different types of models)
+    \item Uses a \textbf{meta-model} to learn how to combine base model predictions
+    \item Can be used for both regression and classification
+    \item Often more powerful than bagging or boosting alone
+\end{itemize}
+
+\subsection{The Stacking Process}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Stacking Algorithm}]
+\textbf{Level 0 (Base Models):}
+\begin{enumerate}
+    \item Train multiple diverse base models on the training set:
+    \begin{itemize}
+        \item Model 1: e.g., Decision Tree
+        \item Model 2: e.g., Logistic Regression
+        \item Model 3: e.g., Support Vector Machine
+        \item Model 4: e.g., Neural Network
+    \end{itemize}
+    
+    \item Generate predictions from each base model on the training set
+\end{enumerate}
+
+\textbf{Level 1 (Meta-Model):}
+\begin{enumerate}
+    \item Use the predictions from base models as \textbf{features}
+    
+    \item Train a \textbf{meta-model} that learns how to combine these predictions
+    
+    \item The meta-model learns which base models to trust for which types of inputs
+\end{enumerate}
+
+\textbf{Prediction:}
+\begin{enumerate}
+    \item For a new input \(\mathbf{x}\):
+    \begin{itemize}
+        \item Get predictions from all base models
+        \item Feed these predictions to the meta-model
+        \item Meta-model outputs the final prediction
+    \end{itemize}
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Why Stacking Works}
+
+\begin{itemize}
+    \item \textbf{Diversity}: Different models capture different patterns in the data
+    
+    \item \textbf{Complementary strengths}: Each model may excel in different regions of the input space
+    
+    \item \textbf{Learned combination}: The meta-model learns the optimal way to combine predictions (better than simple averaging)
+    
+    \item \textbf{Flexibility}: Can combine any types of models
+\end{itemize}
+
+\subsection{Stacking Best Practices}
+
+\begin{itemize}
+    \item \textbf{Use diverse base models}: Different model types, different hyperparameters
+    
+    \item \textbf{Avoid data leakage}: Use cross-validation to generate training predictions for the meta-model
+    
+    \item \textbf{Keep meta-model simple}: Often a simple linear model or logistic regression works well
+    
+    \item \textbf{Regularization}: Add regularization to prevent the meta-model from overfitting
+\end{itemize}
+
+\subsection{Comparison of Ensemble Methods}
+
+\begin{center}
+\small
+\begin{tabular}{|p{2.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Method} & \textbf{Base Models} & \textbf{Training} & \textbf{Combination} \\
+\hline
+\textbf{Bagging} & Same type (homogeneous), trained on bootstrap samples & Parallel, independent & Equal weight voting/averaging \\
+\hline
+\textbf{Boosting} & Same type (weak learners), trained sequentially & Sequential, each focuses on previous errors & Weighted voting based on model performance \\
+\hline
+\textbf{Stacking} & Different types (heterogeneous) & Parallel for base models, then meta-model & Meta-model learns optimal combination \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Key Takeaways}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Main Lessons}]
+\begin{enumerate}
+    \item \textbf{Single models vs. Ensembles}: Ensembles generally outperform single models
+    
+    \item \textbf{Bias-Variance tradeoff}: Different ensemble methods address different aspects
+    \begin{itemize}
+        \item Bagging reduces variance
+        \item Boosting reduces both bias and variance
+        \item Stacking leverages diverse model strengths
+    \end{itemize}
+    
+    \item \textbf{Interpretability vs. Performance}: Trade-off between understanding and accuracy
+    
+    \item \textbf{Computational cost}: Ensembles are slower to train and predict than single models
+    
+    \item \textbf{Real-world impact}: Random forests and boosting (e.g., XGBoost, LightGBM) are among the most successful ML methods in practice
+\end{enumerate}
+\end{tcolorbox}
 
 \end{document}
