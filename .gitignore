@@ -94,3 +94,6 @@ node_modules/
 quizzer-v2/user_data/
 *.db
 *.db-journal
+
+# Dataset directories
+flowers102/

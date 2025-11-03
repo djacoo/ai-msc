@@ -2616,7 +2616,7 @@ This framework provides a foundation for reasoning about complex recursive data 
 
 \newpage
 
-\part{}
+\part{Theory of Lists and Recursive Data Structures}
 
 \section{Decision Procedure for Equality and Lists}
 
@@ -2692,6 +2692,180 @@ From the negative atom literals we derive
 x = \textsf{cons}(\textsf{car}(x), \textsf{cdr}(x)) \quad \text{and} \quad y = \textsf{cons}(\textsf{car}(y), \textsf{cdr}(y)).
 \]
 Congruence propagates the selector equalities, yielding $x = y$. This contradicts $f(x) \neq f(y)$, so $F$ is unsatisfiable in $\mathcal{T}_{\textsf{CONS}} \cup \mathcal{T}_{=}$. 
+\end{example}
+
+
+
+\newpage 
+
+\part{Satisfiability Modulo Theories and Theorem Proving}
+
+\section{Overview of SMT and ATP}
+
+\subsection{Satisfiability Modulo Theories}
+
+The topic of Satisfiability Modulo Theories (SMT) focuses on procedures to determine satisfiability in specific first-order logic theories. The course covers the quantifier-free fragments (QFF) of several important theories:
+
+\begin{itemize}
+    \item Theory of Equality
+    \item Theory of CONS (Lists)
+    \item Theory of Arrays
+    \item Combination of Theories
+    \item Integration with SAT solvers
+\end{itemize}
+
+\subsection{Automated Theorem Proving}
+
+In contrast to SMT, Automated Theorem Proving (ATP) deals with full first-order logic:
+
+\begin{itemize}
+    \item Admits quantifiers
+    \item Equality as the only defined symbol
+    \item Uses semidecision procedures
+\end{itemize}
+
+\section{Reduction to Clausal Form}
+
+The reduction of first-order formulas to clausal form is a fundamental transformation necessary for both SMT and ATP. This process converts arbitrary first-order formulas into a standardized form suitable for automated reasoning procedures.
+
+\subsection{Basic Logical Equivalences}
+
+The first step involves eliminating certain connectives using standard logical equivalences:
+
+\begin{align*}
+F \leftrightarrow G &\equiv (F \rightarrow G) \wedge (G \rightarrow F) \\
+F \rightarrow G &\equiv \neg F \vee G \\
+\neg (F \wedge G) &\equiv \neg F \vee \neg G \\
+\neg (F \vee G) &\equiv \neg F \wedge \neg G
+\end{align*}
+
+\subsection{Negation Normal Form}
+
+\begin{definition}[Negation Normal Form]
+A formula is in \textbf{Negation Normal Form (NNF)} if the only connectives are $\vee$, $\wedge$, and $\neg$, and all occurrences of negation apply directly to atoms.
+\end{definition}
+
+To achieve NNF when quantifiers are present, we push negations through quantifiers using the following equivalences:
+
+\begin{align*}
+\neg \forall x \, F &\equiv \exists x \, \neg F \\
+\neg \exists x \, F &\equiv \forall x \, \neg F
+\end{align*}
+
+These transformations are analogous to De Morgan's laws. The universal quantifier can be viewed as a potentially infinite conjunction, while the existential quantifier corresponds to a potentially infinite disjunction.
+
+\subsection{Clausal Form and CNF}
+
+\begin{definition}[Clause]
+A \textbf{clause} is a disjunction of literals.
+\end{definition}
+
+\begin{definition}[Conjunctive Normal Form]
+A formula is in \textbf{Conjunctive Normal Form (CNF)} if it is a conjunction of clauses (i.e., a conjunction of disjunctions of literals).
+\end{definition}
+
+\begin{definition}[Clausal Form]
+In first-order logic, \textbf{clausal form} is a set of clauses where all variables are implicitly universally quantified. There are no free variables and no existentially quantified variables.
+\end{definition}
+
+\subsection{Skolemization}
+
+Skolemization is the process of eliminating existential quantifiers by introducing new symbols.
+
+\subsubsection{Outermost Existential Quantifiers}
+
+For a formula $\exists x \, F$ where the existential quantifier is outermost, we replace all occurrences of $x$ with a fresh constant symbol $a$:
+\[
+\exists x \, F \quad \rightsquigarrow \quad F[x \leftarrow a]
+\]
+where $a$ is a new \textbf{Skolem constant}.
+
+\begin{example}
+\[
+\exists x \, [(P(x) \wedge P(a)) \vee (R(x) \rightarrow Q(x))]
+\]
+Introducing the fresh constant $b$ for $x$, we obtain:
+\[
+(P(b) \wedge P(a)) \vee (R(b) \rightarrow Q(b))
+\]
+\end{example}
+
+For multiple consecutive existential quantifiers:
+\begin{align*}
+\exists x \, \exists y \, R(x, y) 
+&\quad \rightsquigarrow \quad \exists y \, R(a, y) \\
+&\quad \rightsquigarrow \quad R(a, b)
+\end{align*}
+where $a$ and $b$ are new constant symbols.
+
+\subsubsection{Nested Existential Quantifiers}
+
+For a formula where an existential quantifier appears within the scope of universal quantifiers:
+\[
+\forall y_1 \, \forall y_2 \, \cdots \, \forall y_n \, \exists x \, F \quad \text{for } n \geq 1
+\]
+we replace $x$ with a fresh function applied to all universally quantified variables in whose scope it appears:
+\[
+\forall \overline{y} \, \exists x \, F \quad \rightsquigarrow \quad \forall \overline{y} \, F[x \leftarrow g(\overline{y})]
+\]
+where $g$ is a new \textbf{Skolem function symbol}.
+
+\begin{definition}[Skolem Symbols]
+\begin{itemize}
+    \item A \textbf{Skolem constant} is a fresh constant symbol introduced to replace an outermost existential quantifier
+    \item A \textbf{Skolem function symbol} is a fresh function symbol introduced to replace a nested existential quantifier
+    \item \textbf{Skolem terms} are the terms constructed using these symbols (e.g., $a$, $b$, $g(\overline{y})$)
+\end{itemize}
+\end{definition}
+
+\subsection{Dropping Universal Quantifiers}
+
+After Skolemization, all remaining quantifiers are universal. These can be dropped, with the understanding that all variables are implicitly universally quantified, which is exactly the requirement for clausal form.
+
+\subsection{Distribution to CNF}
+
+The final step applies distributivity to transform the formula into a conjunction of disjunctions:
+\[
+F \vee (G \wedge H) \equiv (F \vee G) \wedge (F \vee H)
+\]
+
+The result is a set of clauses in clausal form.
+
+\subsection{Complete Example}
+
+\begin{example}
+Consider the formula:
+\[
+\forall x \, \bigl(P(x) \rightarrow \bigl[\forall y \, (P(y) \rightarrow P(f(x, y))) \wedge \neg \forall y \, (Q(x, y) \rightarrow P(y))\bigr]\bigr)
+\]
+
+\textbf{Step 1: Eliminate implications}
+\begin{align*}
+&\forall x \, \bigl(\neg P(x) \vee \bigl[\forall y \, (\neg P(y) \vee P(f(x, y))) \wedge \exists y \, \neg (\neg Q(x, y) \vee P(y))\bigr]\bigr)
+\end{align*}
+
+\textbf{Step 2: Push negations inward (NNF)}
+\begin{align*}
+&\forall x \, \bigl(\neg P(x) \vee \bigl[\forall y \, (\neg P(y) \vee P(f(x, y))) \wedge \exists y \, (Q(x, y) \wedge \neg P(y))\bigr]\bigr)
+\end{align*}
+
+\textbf{Step 3: Standardize variables apart}
+\begin{align*}
+&\forall x \, \bigl(\neg P(x) \vee \bigl[\forall y_1 \, (\neg P(y_1) \vee P(f(x, y_1))) \wedge \exists y_2 \, (Q(x, y_2) \wedge \neg P(y_2))\bigr]\bigr)
+\end{align*}
+
+\textbf{Step 4: Skolemization}
+
+The existential quantifier $\exists y_2$ appears in the scope of $\forall x$ and $\forall y_1$. We replace $y_2$ with $g(x, y_1)$ where $g$ is a fresh function symbol:
+\begin{align*}
+&\forall x \, \forall y_1 \, \bigl(\neg P(x) \vee \bigl[(\neg P(y_1) \vee P(f(x, y_1))) \wedge Q(x, g(x, y_1)) \wedge \neg P(g(x, y_1))\bigr]\bigr)
+\end{align*}
+
+\textbf{Alternative Skolemization}: If we use $y_2 \leftarrow g(x)$ (depending only on $x$), we obtain a simpler form.
+
+\textbf{Step 5: Drop universal quantifiers and distribute}
+
+The formula is already in a form that can be converted to clauses by distribution.
 \end{example}
 
 \end{document}
