@@ -2756,6 +2756,7 @@ These transformations are analogous to De Morgan's laws. The universal quantifie
 
 \subsection{Clausal Form and CNF}
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Clausal Form and CNF}]
 \begin{definition}[Clause]
 A \textbf{clause} is a disjunction of literals.
 \end{definition}
@@ -2767,6 +2768,7 @@ A formula is in \textbf{Conjunctive Normal Form (CNF)} if it is a conjunction of
 \begin{definition}[Clausal Form]
 In first-order logic, \textbf{clausal form} is a set of clauses where all variables are implicitly universally quantified. There are no free variables and no existentially quantified variables.
 \end{definition}
+\end{tcolorbox}
 
 \subsection{Skolemization}
 
@@ -2867,5 +2869,245 @@ The existential quantifier $\exists y_2$ appears in the scope of $\forall x$ and
 
 The formula is already in a form that can be converted to clauses by distribution.
 \end{example}
+
+
+
+\newpage 
+
+\part{Theory of Arrays}
+
+\section{The Theory of Arrays}
+
+We now investigate the theory of arrays, following our study of the theory of equality and the theory of lists.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Theory of Arrays}]
+\begin{definition}[Theory of Arrays]
+The theory of arrays is defined as:
+\[
+\mathcal{T}_A = \langle \Sigma_A, A_A \rangle
+\]
+where $\Sigma_A$ is the signature and $A_A$ is the axiomatization.
+\end{definition}
+\end{tcolorbox}
+
+An \textbf{array} is a data structure in which we can reach directly every value contained in the array through indexing. Arrays support two fundamental operations:
+\begin{itemize}
+    \item \textbf{Read}: $a[i]$ (also called \textsf{select})
+    \item \textbf{Write}: $a[i] := w$ (also called \textsf{store})
+\end{itemize}
+
+\subsubsection{Signature of the Theory of Arrays}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Signature of the Theory of Arrays}]
+The signature of the theory of arrays is:
+\[
+\Sigma_A = \{\textsf{select}, \textsf{store}, \backsimeq\}
+\]
+
+In general, a signature of a theory $\Sigma_A = \langle \mathcal{S}_A, \mathcal{F}_A \rangle$ consists of:
+\begin{itemize}
+    \item $\mathcal{S}_A$: the set of sorts
+    \item $\mathcal{F}_A$: the set of function symbols
+\end{itemize}
+
+For the theory of arrays, we have:
+\[
+\mathcal{S}_A = \{\textsf{ARRAY}, \textsf{INDEX}, \textsf{VALUE}\}
+\]
+
+These are all distinct sorts. This means that in reality we have three equality relations:
+\[
+\backsimeq_{\textsf{ARRAY}}, \quad \backsimeq_{\textsf{INDEX}}, \quad \backsimeq_{\textsf{VALUE}}
+\]
+\end{tcolorbox}
+
+\subsubsection{Function Symbols: Select and Store}
+
+For function symbols in general, we need to know not only the arity, but also the sorts involved. A function $f$ has type:
+\[
+f: s_1 \times s_2 \times \dots \times s_k \rightarrow s
+\]
+
+For example, addition has type $+: \textsf{int} \times \textsf{int} \rightarrow \textsf{int}$.
+
+\begin{center}
+\textbf{The Select Function}
+\end{center}
+
+\[
+\textsf{select}: \textsf{ARRAY} \times \textsf{INDEX} \rightarrow \textsf{VALUE}
+\]
+
+We write $a[i]$ as $\textsf{select}(a, i)$.
+
+\begin{center}
+\textbf{The Store Function}
+\end{center}
+
+\[
+\textsf{store}: \textsf{ARRAY} \times \textsf{INDEX} \times \textsf{VALUE} \rightarrow \textsf{ARRAY}
+\]
+
+The store function takes an array and modifies it by storing a value $w$ at index $i$, returning a new array.
+
+We write $a[i] := w$ as $\textsf{store}(a, i, w)$.
+
+\begin{remark}
+In general, it may be true that $a \backsimeq \textsf{store}(a, i, w)$, but it could also be that $a \not\backsimeq \textsf{store}(a, i, w)$ since we are modifying the array.
+
+We can observe that:
+\begin{itemize}
+    \item If $\textsf{select}(a, i) \not\backsimeq w$, then $a \not\backsimeq \textsf{store}(a, i, w)$
+    \item If $\textsf{select}(a, i) \backsimeq w$, then $a \backsimeq \textsf{store}(a, i, w)$
+\end{itemize}
+\end{remark}
+\subsubsection{Axioms of the Theory of Arrays}
+
+Now we consider the axioms $A_A$ of the theory of arrays.
+
+\begin{center}
+\textbf{Equality Axioms}
+\end{center}
+
+The basic equality axioms include:
+
+\begin{align*}
+&\forall x \, (x \backsimeq x) && \text{(Reflexivity)} \\
+&\forall x \, \forall y \, (x \backsimeq y \rightarrow y \backsimeq x) && \text{(Symmetry)} \\
+&\forall x \, \forall y \, \forall z \, ((x \backsimeq y \wedge y \backsimeq z) \rightarrow x \backsimeq z) && \text{(Transitivity)}
+\end{align*}
+
+\begin{center}
+\textbf{Congruence Axioms}
+\end{center}
+
+\begin{align*}
+&\forall x_1 \, \forall x_2 \, \forall y_1 \, \forall y_2 \, ((x_1 \backsimeq x_2 \wedge y_1 \backsimeq y_2) \rightarrow \textsf{select}(x_1, y_1) \backsimeq \textsf{select}(x_2, y_2)) \\
+&\forall x_1 \, \forall x_2 \, \forall y_1 \, \forall y_2 \, \forall z_1 \, \forall z_2 \, ((x_1 \backsimeq x_2 \wedge y_1 \backsimeq y_2 \wedge z_1 \backsimeq z_2) \\
+&\quad\quad\quad\quad\quad\quad \rightarrow \textsf{store}(x_1, y_1, z_1) \backsimeq \textsf{store}(x_2, y_2, z_2))
+\end{align*}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Select-over-Store Axioms}]
+\begin{align*}
+&\forall x \, \forall y \, \forall z \, (\textsf{select}(\textsf{store}(x, y, z), y) \backsimeq z) \\
+&\forall x \, \forall y_1 \, \forall y_2 \, \forall z \, (y_1 \not\backsimeq y_2 \rightarrow \textsf{select}(\textsf{store}(x, y_1, z), y_2) \backsimeq \textsf{select}(x, y_2))
+\end{align*}
+
+\begin{remark}
+The select-over-store axioms are analogous to those in the theory of lists.
+\end{remark}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Extensionality Axiom}]
+\[
+\forall x_1 \, \forall x_2 \, \bigl((\forall y \, (\textsf{select}(x_1, y) \backsimeq \textsf{select}(x_2, y))) \rightarrow x_1 \backsimeq x_2\bigr)
+\]
+
+This axiom can be written as a bi-implication:
+\[
+\forall x_1 \, \forall x_2 \, \bigl(x_1 \backsimeq x_2 \leftrightarrow (\forall y \, (\textsf{select}(x_1, y) \backsimeq \textsf{select}(x_2, y)))\bigr)
+\]
+
+However, we typically write it as a single implication (from right to left) because the other direction (from left to right) follows from the congruence axioms.
+\end{tcolorbox}
+
+\subsection{Validity Example in the Theory of Arrays}
+
+\begin{example}[Validity in Array Theory]
+Consider the following formula:
+\[
+\phi: \quad \textsf{select}(a, i) \backsimeq e \rightarrow \textsf{store}(a, i, e) \backsimeq a
+\]
+
+\textbf{Question}: Is $\phi$ valid in $\mathcal{T}_A^{\backsimeq}$ (the theory of arrays with equality)?
+
+\textbf{Alternative formulation}: We can equivalently express the validity as:
+\[
+\textsf{select}(a, i) \backsimeq e \rightarrow \forall y \, (\textsf{select}(\textsf{store}(a, i, e), y) \backsimeq \textsf{select}(a, y))
+\]
+
+\textbf{Proof by contradiction}:
+
+Assume the negation of the formula:
+
+\textbf{I)} Suppose:
+\begin{align*}
+&\textsf{select}(a, i) \backsimeq e \\
+&\neg (\forall y \, (\textsf{select}(\textsf{store}(a, i, e), y) \backsimeq \textsf{select}(a, y)))
+\end{align*}
+
+This is equivalent to:
+\[
+\exists y \, (\textsf{select}(\textsf{store}(a, i, e), y) \not\backsimeq \textsf{select}(a, y))
+\]
+
+Applying Skolemization, we introduce a new constant $j$:
+
+\textbf{II)}
+\[
+\textsf{select}(\textsf{store}(a, i, e), j) \not\backsimeq \textsf{select}(a, j)
+\]
+
+Now we apply the select-over-store axioms to find a contradiction:
+\begin{itemize}
+    \item $\textsf{select}(\textsf{store}(x, y, z), y) \backsimeq z$
+    \item $y_1 \not\backsimeq y_2 \rightarrow \textsf{select}(\textsf{store}(x, y_1, z), y_2) \backsimeq \textsf{select}(x, y_2)$
+\end{itemize}
+
+We consider two cases:
+
+\textbf{Case 1}: $i \backsimeq j$
+
+By the first select-over-store axiom:
+\[
+\textsf{select}(\textsf{store}(a, i, e), j) \backsimeq e
+\]
+
+But from assumption I), we have $\textsf{select}(a, i) \backsimeq e$, and since $i \backsimeq j$, by congruence $\textsf{select}(a, j) \backsimeq e$.
+
+Therefore, $\textsf{select}(\textsf{store}(a, i, e), j) \backsimeq \textsf{select}(a, j)$, which contradicts II).
+
+\textbf{Case 2}: $i \not\backsimeq j$
+
+By the second select-over-store axiom:
+\[
+\textsf{select}(\textsf{store}(a, i, e), j) \backsimeq \textsf{select}(a, j)
+\]
+
+This directly contradicts II).
+
+Since both cases lead to a contradiction, the formula $\phi$ is valid in $\mathcal{T}_A$.
+\end{example}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}

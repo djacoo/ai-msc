@@ -2902,4 +2902,209 @@ CDCL therefore prunes an \textit{entire subtree} of the search space in a single
 These mechanisms make CDCL dramatically more efficient than classical DPLL on real-world SAT instances, enabling modern solvers to handle formulas with millions of variables and clauses.
 \end{example}
 
+
+
+\newpage 
+
+\section{CDCL with Proof Generation}
+
+\subsection{Motivation for Proof Generation}
+
+When we submit a formula $F$ to a SAT solver and receive an \texttt{unsat} verdict, in many applications a simple yes/no answer is insufficient. For unsatisfiable formulas, we often need a \textbf{proof of unsatisfiability} that can be independently verified.
+
+\subsubsection{Resolution Proofs}
+
+The resolution rule is the foundation for unsatisfiability proofs:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Resolution Rule}]
+\[
+\frac{C \lor L \quad D \lor \neg L}{C \lor D}
+\]
+From two clauses containing complementary literals $L$ and $\neg L$, we can derive the resolvent $C \lor D$.
+\end{tcolorbox}
+
+A \textbf{resolution proof} is represented as a resolution proof tree with the following structure:
+
+\begin{itemize}
+    \item The \textbf{root} is labeled by the empty clause $\square$
+    \item The \textbf{leaves} are labeled by input clauses
+    \item The \textbf{intermediate nodes} are labeled by resolvents other than $\square$
+\end{itemize}
+
+\begin{example}[Simple Unsatisfiable Formula]
+Consider the easily unsatisfiable set of clauses:
+\[
+S = \{ P \lor Q, \neg P \lor Q, P \lor \neg Q, \neg P \lor \neg Q \}
+\]
+
+Through successive resolution steps, this reduces to the empty clause $\square$, proving unsatisfiability.
+\end{example}
+
+\subsection{Generating Resolution Proofs in CDCL}
+
+The key question is: how do we generate resolution proofs inside a CDCL procedure?
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{CDCL Proof Generation}]
+\textbf{Without proof generation:}
+\[
+\text{Fail: } S \parallel \Gamma \parallel C \longrightarrow \texttt{"unsat"}
+\]
+if the only level in trail $\Gamma$ is level 0.
+
+\vspace{0.5em}
+
+\textbf{With proof generation:}
+\[
+\text{Fail: } S \parallel \Gamma \parallel \square \longrightarrow \texttt{"unsat"}
+\]
+Perform additional \textsc{Explanation} steps after reaching a conflict state where the only level on the trail is level 0.
+
+\vspace{0.5em}
+
+\textbf{Proof:} All the resolution inference steps (encapsulated in \textsc{Explanation} transitions) that connect $\square$ back to the input clauses form the resolution proof.
+\end{tcolorbox}
+
+\begin{example}[CDCL Execution with Proof Generation]
+Consider the formula:
+\[
+F = \{ p \lor q,\ \neg p \lor q,\ p \lor \neg q,\ s \lor \neg p \lor q,\ \neg s \lor p \lor \neg q,\ \neg p \lor r,\ \neg q \lor \neg r \}
+\]
+
+The CDCL execution trace with proof generation:
+
+\begin{align*}
+F \parallel \epsilon &\xrightarrow{\text{Decision}} F \parallel s^d \\
+&\xrightarrow{\text{Decision}} F \parallel s^d r^d \\
+&\xrightarrow{\text{Propagation}} F \parallel s^d r^d \neg q \\
+&\xrightarrow{\text{Propagation}} F \parallel s^d r^d \neg q \neg p \\
+&\xrightarrow{\text{Conflict}} F \parallel s^d r^d \neg q \neg p \parallel p \lor q \\
+&\xrightarrow{\text{Explanation}} F \parallel s^d r^d \neg q \neg p \\
+&\xrightarrow{\text{Learning}} F \cup \{q\} \parallel s^d r^d \neg q \neg p \parallel q \\
+&\xrightarrow{\text{Backjumping}} F \cup \{q\} \parallel q \\
+&\xrightarrow{\text{Propagation}} F \cup \{q\} \parallel q\ p \\
+&\xrightarrow{\text{Propagation}} F \cup \{q\} \parallel q\ p\ r \\
+&\xrightarrow{\text{Conflict}} F \cup \{q\} \parallel q\ p\ r \parallel \neg q \lor \neg r \\
+&\xrightarrow{\text{Explanation}} F \cup \{q\} \parallel q\ p\ r \parallel \neg q \lor \neg p \\
+&\xrightarrow{\text{Explanation}} F \cup \{q\} \parallel q\ p\ r \parallel \neg q \\
+&\xrightarrow{\text{Explanation}} F \cup \{q\} \parallel q\ p\ r \parallel \square \\
+&\xrightarrow{\text{Fail}} \texttt{"unsat"}
+\end{align*}
+
+The proof is represented as a resolution tree showing how $\square$ was derived from the input clauses.
+\end{example}
+
+\newpage
+
+\subsection{Decision Heuristics in CDCL}
+
+The choice of which variable to branch on (and which truth value to assign first) can dramatically affect solver performance. Modern CDCL solvers employ sophisticated decision heuristics.
+
+\subsubsection{First Fail Principle}
+
+The \textbf{First Fail Principle} suggests that we should try to detect failures as early as possible in the search. This leads to two main strategies:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{First Fail Heuristics}]
+\textbf{Strategy I (Literal-based):}
+
+Pick a literal with the highest number of occurrences in the current clause set (i.e., input clauses + learned clauses). Ties are broken arbitrarily.
+
+\vspace{0.5em}
+
+\textbf{Strategy II (Variable-based):}
+
+Pick a variable with the maximum number of occurrences in the current set, then pick the sign (polarity) with the most occurrences. Ties among variables are broken arbitrarily.
+\end{tcolorbox}
+
+\textbf{Optimization:} Apply Strategy I or II only to clauses of length up to $k$ for some parameter $k$, as short clauses are more likely to become unit clauses or conflict clauses.
+
+\subsubsection{VSIDS (Variable State Independent Decaying Sum)}
+
+VSIDS is one of the most successful decision heuristics in modern SAT solvers. The core idea is to \textbf{measure variable activity} based on participation in conflicts.
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{VSIDS Algorithm}]
+\textbf{Data structure:} Keep a counter (activity score) for every variable.
+
+\vspace{0.5em}
+
+\textbf{Initialization:}
+\begin{itemize}
+    \item Set to 0 if we ignore the input formula
+    \item Or set to the number of occurrences of the variable in the input clause set
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Update rule:} Bump (increment) the counter whenever the variable appears in a learned clause.
+
+\vspace{0.5em}
+
+\textbf{Decay mechanism:} Periodically reduce all counters to give more weight to recent activity:
+\begin{itemize}
+    \item Subtract $k$ (where $k \geq 0$), or
+    \item Divide by $k$ (where $k > 1$), or
+    \item Augment the increment so that more recent activity weighs more
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Decision:} Choose the variable with the highest activity score.
+\end{tcolorbox}
+
+\textbf{Variant - EVSIDS (Extended VSIDS):} Instead of counting only variables in learned clauses, count variables in \textit{all} resolution steps performed during conflict analysis, not just the final learned clause.
+
+\subsection{Implementation of Propagation: The 2-Watched Literal Scheme}
+
+The 2-watched literal scheme is an efficient data structure for implementing Boolean Constraint Propagation (BCP) in CDCL solvers.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Goals of the 2-Watched Literal Scheme}]
+\begin{itemize}
+    \item Discover implied literals efficiently
+    \item Detect conflict clauses quickly
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Core Invariant}
+
+For every clause, maintain \textbf{2 watched literals} that are not false (i.e., either true or undefined). This invariant is maintained throughout the search.
+
+\subsubsection{Update Rules}
+
+The scheme operates according to the following rules when literals are assigned:
+
+\begin{enumerate}
+    \item \textbf{Case 1 - One watched literal becomes false:}
+    
+    If $L_1$ becomes false and $L_2$ remains non-false, look for another literal $L_3$ that is non-false:
+    \begin{itemize}
+        \item If we find $L_3$: set $L_2$ and $L_3$ as the new pair of watched literals
+        \item If we cannot find $L_3$: then $L_2$ is implied (it must be true to satisfy the clause)
+    \end{itemize}
+    
+    \item \textbf{Case 2 - Both watched literals become false:}
+    
+    If both $L_1$ and $L_2$ become false, look for two replacement literals $L_3$ and $L_4$:
+    \begin{itemize}
+        \item If we find both $L_3$ and $L_4$: set them as the new pair of watched literals
+        \item If we find only one (say $L_3$): then $L_3$ is implied
+        \item If we find none: the clause is a \textbf{conflict clause}
+    \end{itemize}
+    
+    \item \textbf{Case 3 - Otherwise:}
+    
+    If neither watched literal becomes false, do nothing (no update needed).
+\end{enumerate}
+
+\textbf{Efficiency:} This scheme is highly efficient because it requires examining only the two watched literals per clause during propagation, rather than scanning all literals in every clause. The watched literals are updated lazily only when necessary.
+
+
+
+
+
+
+
+
+
+
+
+
 \end{document}
