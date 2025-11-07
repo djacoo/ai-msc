@@ -5313,11 +5313,1380 @@ The log-space formulation is crucial for both numerical stability and understand
 
 \newpage
 
-\part{}
+\part{Naive Bayes Learning and Evaluation}
 
-\section{}
+\section{Learning the Multinomial Naive Bayes Model}
 
-slide di L4 da 31 a 84
+\subsection{Maximum Likelihood Estimates}
+
+The first approach to learning the parameters of a Multinomial Naive Bayes classifier is to use \textbf{maximum likelihood estimates} (MLE). This simply means using the frequencies observed in the training data.
+
+The probability of a word $w_i$ given class $c_j$ is estimated as:
+
+\[
+\hat{P}(w_i | c_j) = \frac{\text{count}(w_i, c_j)}{\sum_{w \in V} \text{count}(w, c_j)}
+\]
+
+Where:
+\begin{itemize}
+    \item $\text{count}(w_i, c_j)$ is the number of times word $w_i$ appears in documents of class $c_j$
+    \item The denominator is the total count of all words in documents of class $c_j$
+    \item $V$ is the vocabulary (set of all words)
+\end{itemize}
+
+The prior probability of class $c_j$ is estimated as:
+
+\[
+\hat{P}(c_j) = \frac{N_{c_j}}{N_{\text{total}}}
+\]
+
+Where $N_{c_j}$ is the number of documents in class $c_j$ and $N_{\text{total}}$ is the total number of documents.
+
+\subsection{Parameter Estimation}
+
+To compute these estimates in practice:
+
+\textbf{Create a mega-document:}
+\begin{itemize}
+    \item For each class $c_j$, concatenate all documents belonging to that class into a single "mega-document"
+    \item Count how many times each word $w_i$ appears in this mega-document
+    \item The fraction of times $w_i$ appears among all words in documents of class $c_j$ gives us $\hat{P}(w_i | c_j)$
+\end{itemize}
+
+\subsection{Problem with Maximum Likelihood}
+
+There is a critical problem with using raw maximum likelihood estimates:
+
+\textbf{The zero probability problem:}
+
+What if we have never seen a particular word in the training documents for a certain class?
+
+For example, suppose the word "fantastic" never appeared in any positive training document. Then:
+
+\[
+\hat{P}(\text{"fantastic"} | \text{positive}) = \frac{\text{count}(\text{"fantastic"}, \text{positive})}{\sum_{w \in V} \text{count}(w, \text{positive})} = 0
+\]
+
+\textbf{Why is this a problem?}
+
+Recall the Naive Bayes classifier formula:
+
+\[
+c_{\text{MAP}} = \arg\max_{c} \hat{P}(c) \prod_{i} \hat{P}(x_i | c)
+\]
+
+If any single probability $\hat{P}(x_i | c) = 0$, then the entire product becomes zero, regardless of all other evidence. Zero probabilities cannot be conditioned away!
+
+This means a single unseen word would make it impossible to classify any document containing that word into that class, even if all other words strongly suggest that class.
+
+\subsection{Laplace (Add-1) Smoothing}
+
+To solve the zero probability problem, we use \textbf{Laplace smoothing} (also called add-1 smoothing).
+
+\textbf{Original MLE formula:}
+\[
+\hat{P}(w_i | c) = \frac{\text{count}(w_i, c)}{\sum_{w \in V} \text{count}(w, c)}
+\]
+
+\textbf{With Laplace smoothing:}
+\[
+\hat{P}(w_i | c) = \frac{\text{count}(w_i, c) + 1}{\sum_{w \in V} \text{count}(w, c) + |V|}
+\]
+
+Equivalently:
+\[
+\hat{P}(w_i | c) = \frac{\text{count}(w_i, c) + 1}{\left(\sum_{w \in V} \text{count}(w, c)\right) + |V|}
+\]
+
+Where:
+\begin{itemize}
+    \item We add 1 to the count of each word (the numerator)
+    \item We add $|V|$ to the total count (the denominator), where $|V|$ is the vocabulary size
+    \item This ensures that every word has a non-zero probability, even if it was never observed in the training data
+\end{itemize}
+
+\textbf{Effect of smoothing:}
+\begin{itemize}
+    \item Words that appeared frequently still have high probabilities
+    \item Words that never appeared now have small but non-zero probabilities
+    \item No single word can completely eliminate a class from consideration
+\end{itemize}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Laplace Smoothing Essentials}]
+\begin{itemize}
+    \item Replace each count with $\text{count} + \alpha$ (typically $\alpha = 1$) so every term keeps a non-zero likelihood.
+    \item Add $\alpha \cdot |V|$ to each class denominator to keep probabilities normalized and comparable across classes.
+    \item Acts like a uniform prior: the smaller the training sample, the more estimates fall back to $\frac{1}{|V|}$ instead of zero.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Multinomial Naive Bayes Learning Algorithm}
+
+The complete learning algorithm with Laplace smoothing:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Multinomial NB Training Checklist}]
+\textbf{Step 1: Extract Vocabulary}
+\begin{itemize}
+    \item Extract the vocabulary $V$ from the training corpus (all unique words)
+\end{itemize}
+
+\textbf{Step 2: Calculate Prior Probabilities $P(c_j)$}
+
+For each class $c_j \in C$:
+\begin{itemize}
+    \item Let $\text{docs}_j$ = all documents with class $c_j$
+    \item $P(c_j) = \frac{|\text{docs}_j|}{|\text{total \# documents}|}$
+\end{itemize}
+
+\textbf{Step 3: Calculate Likelihood Probabilities $P(w_k | c_j)$}
+
+For each class $c_j$:
+\begin{itemize}
+    \item Create $\text{Text}_j$ = single mega-document containing all $\text{docs}_j$
+    \item For each word $w_k$ in the Vocabulary:
+    \begin{itemize}
+        \item $n_k$ = number of occurrences of $w_k$ in $\text{Text}_j$
+        \item $n$ = total number of words in $\text{Text}_j$
+        \item $P(w_k | c_j) = \frac{n_k + \alpha}{n + \alpha \cdot |\text{Vocabulary}|}$
+    \end{itemize}
+\end{itemize}
+
+Where $\alpha$ is the smoothing parameter (typically $\alpha = 1$ for Laplace smoothing).
+\end{tcolorbox}
+
+\subsection{Unknown Words}
+
+\textbf{What about words that appear in test data but not in training data?}
+
+These are called \textbf{unknown words} or \textbf{out-of-vocabulary (OOV) words}.
+
+\textbf{Standard approach:}
+\begin{itemize}
+    \item We \textbf{ignore} unknown words
+    \item Remove them from the test document
+    \item Pretend they weren't there
+    \item Don't include any probability for them at all in the classification
+\end{itemize}
+
+\textbf{Why don't we build an unknown word model?}
+
+Knowing which class has more unknown words is generally not helpful for classification. Unknown words typically don't carry class-specific information, so ignoring them is the practical solution.
+
+\subsection{Stop Words}
+
+\textbf{Stop words} are very frequent words like "the", "a", "and", "of", etc.
+
+\textbf{Some systems use stop word removal:}
+\begin{itemize}
+    \item Sort the vocabulary by word frequency in the training set
+    \item Call the top 10, 50, or 100 most frequent words the "stopword list"
+    \item Remove all stop words from both training and test sets
+    \item Process as if they were never there
+\end{itemize}
+
+\textbf{But:} Removing stop words doesn't usually help performance.
+
+\textbf{In practice:}
+\begin{itemize}
+    \item Most Naive Bayes algorithms use all words
+    \item They don't use stopword lists
+    \item This is because stop words can actually carry useful information for classification
+\end{itemize}
+
+\subsubsection{Stop Word Elimination Example}
+
+Consider the famous phrase: "To be or not to be"
+
+Words with their statistics:
+\begin{itemize}
+    \item "to": 0.9904365 (before SE), 0.0257643 (after SE)
+    \item "be": 0.8844671 (before SE), 0.0045653 (after SE)
+    \item "not": 0.8447221 (before SE), 0.0038483 (after SE)
+    \item "or": 0.7504242 (before SE), 0.0031062 (after SE)
+\end{itemize}
+
+After stop word elimination (SE), the phrase becomes: \texttt{«»} (empty)
+
+This example shows that stop word elimination can matter significantly, removing potentially meaningful content. While these words are frequent, they can still carry semantic information.
+
+\section{Sentiment Analysis and Binary Naive Bayes}
+
+\subsection{Worked Sentiment Example}
+
+Let's work through a concrete example of sentiment classification using Naive Bayes with add-1 smoothing.
+
+\textbf{Setup:}
+\begin{itemize}
+    \item Task: Classify movie reviews as positive (+) or negative (-)
+    \item Training set: 5 documents (3 negative, 2 positive)
+\end{itemize}
+
+\textbf{Step 1: Calculate priors from training data}
+
+\[
+P(-) = \frac{3}{5} = 0.6
+\]
+
+\[
+P(+) = \frac{2}{5} = 0.4
+\]
+
+\textbf{Step 2: Calculate likelihoods from training}
+
+For each word $w_i$ and class $c$:
+
+\[
+P(w_i | c) = \frac{\text{count}(w_i, c) + 1}{\sum_{w \in V} \text{count}(w, c) + |V|}
+\]
+
+\textbf{Step 3: Handle test data}
+
+\begin{itemize}
+    \item Drop uninformative words (like "with") if using stop word removal
+    \item Calculate the probability for each class using the classifier formula
+\end{itemize}
+
+\textbf{Step 4: Score the test set}
+
+For a test document, compute:
+
+\[
+\text{Score}(c) = \log P(c) + \sum_{i \in \text{positions}} \log P(w_i | c)
+\]
+
+Choose the class with the highest score.
+
+\subsection{Binary Multinomial Naive Bayes}
+
+\subsubsection{Motivation}
+
+For tasks like sentiment analysis, \textbf{word occurrence} seems to be more important than \textbf{word frequency}.
+
+\textbf{Observation:}
+\begin{itemize}
+    \item The \textit{occurrence} of the word "fantastic" in a review tells us a lot (suggests positive sentiment)
+    \item The fact that "fantastic" occurs 5 times versus 1 time may not tell us much more
+\end{itemize}
+
+\textbf{Solution: Binary Multinomial Naive Bayes (Binary NB)}
+
+\textbf{Key idea:} Clip word counts at 1
+\begin{itemize}
+    \item Instead of counting how many times each word appears, we only record whether it appears or not
+    \item Each word's count is binarized: if count $> 0$, set it to 1
+\end{itemize}
+
+\textbf{Note:} This is different from Bernoulli Naive Bayes (see textbook for details on the distinction).
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!65!black,title=\textbf{Binary Multinomial NB Essentials}]
+\begin{itemize}
+    \item Clip counts \textit{within} each document before forming mega-documents so that presence, not frequency, drives the evidence.
+    \item Aggregated counts can still exceed 1 because they reflect how many documents contain the token.
+    \item Apply the same binarization to test documents to keep training and inference consistent.
+    \item Works well for tasks (like sentiment) where repeated adjectives add little new information.
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Binary Multinomial Naive Bayes: Learning Algorithm}
+
+\textbf{Step 1: Extract Vocabulary}
+\begin{itemize}
+    \item Extract the vocabulary from the training corpus
+\end{itemize}
+
+\textbf{Step 2: Calculate Prior Probabilities}
+
+For each class $c_j \in C$:
+\begin{itemize}
+    \item $\text{docs}_j$ = all documents with class $c_j$
+    \item $P(c_j) = \frac{|\text{docs}_j|}{|\text{total \# documents}|}$
+\end{itemize}
+
+\textbf{Step 3: Calculate Likelihood Probabilities}
+
+For each class $c_j$:
+\begin{itemize}
+    \item Create $\text{Text}_j$ = single document containing all $\text{docs}_j$
+    \item \textbf{Binarization step:} Remove duplicates in each individual document:
+    \begin{itemize}
+        \item For each word type $w$ in each document $\text{doc}_j$
+        \item Retain only a single instance of $w$ (before creating the mega-document)
+    \end{itemize}
+    \item For each word $w_k$ in Vocabulary:
+    \begin{itemize}
+        \item $n_k$ = number of occurrences of $w_k$ in the binarized $\text{Text}_j$
+        \item $P(w_k | c_j) = \frac{n_k + \alpha}{n + \alpha \cdot |\text{Vocabulary}|}$
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Applying Binary Multinomial Naive Bayes to Test Documents}
+
+Given a test document $d$:
+
+\textbf{Step 1: Binarize the test document}
+\begin{itemize}
+    \item First remove all duplicate words from $d$
+    \item Keep only one instance of each unique word
+\end{itemize}
+
+\textbf{Step 2: Compute classification score}
+
+Then compute using the same equation as standard Naive Bayes:
+
+\[
+c_{\text{NB}} = \arg\max_{c_j \in C} P(c_j) \prod_{i \in \text{positions}} P(w_i | c_j)
+\]
+
+\subsubsection{Important Note About Binarization}
+
+\textbf{Counts can still be greater than 1 in the training data!}
+
+This is because \textbf{binarization is within-document}, not across documents.
+
+\textbf{Example:}
+\begin{itemize}
+    \item If the word "good" appears in 5 different positive reviews (after binarization within each review)
+    \item The count of "good" in the positive mega-document can be 5
+    \item Even though within each individual document, "good" is counted at most once
+\end{itemize}
+
+The binarization removes multiple occurrences \textit{within} each document, but the word can still appear in multiple documents, leading to counts $> 1$ in the final mega-document.
+
+\section{More on Sentiment Classification}
+
+\subsection{Dealing with Negation}
+
+\textbf{The Problem:}
+
+Negation fundamentally changes the meaning of words and phrases.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item "I really like this movie" $\rightarrow$ positive sentiment
+    \item "I really don't like this movie" $\rightarrow$ negative sentiment
+\end{itemize}
+
+The word "like" is positive, but the negation "don't" reverses its polarity.
+
+\textbf{Negation can also change negative to positive-ish:}
+\begin{itemize}
+    \item "Don't dismiss this film" $\rightarrow$ suggests the film has merit
+    \item "Doesn't let us get bored" $\rightarrow$ positive aspect
+\end{itemize}
+
+\subsection{Simple Baseline Method for Handling Negation}
+
+\textbf{Algorithm:}
+
+Add the prefix "NOT\_" to every word between a negation word and the following punctuation mark.
+
+\textbf{Example:}
+
+\textit{Original:} "didn't like this movie , but I"
+
+\textit{After negation handling:} "didn't NOT\_like NOT\_this NOT\_movie but I"
+
+\textbf{How it helps:}
+\begin{itemize}
+    \item Creates distinct features for negated words
+    \item "like" and "NOT\_like" are treated as completely different words
+    \item The model can learn that "NOT\_like" is associated with negative sentiment
+    \item Simple but effective approach
+\end{itemize}
+
+\textbf{References:}
+\begin{itemize}
+    \item Das, Sanjiv and Mike Chen. 2001. Yahoo! for Amazon: Extracting market sentiment from stock message boards. In Proceedings of the Asia Pacific Finance Association Annual Conference (APFA).
+    \item Bo Pang, Lillian Lee, and Shivakumar Vaithyanathan. 2002. Thumbs up? Sentiment Classification using Machine Learning Techniques. EMNLP-2002, 79-86.
+\end{itemize}
+
+\subsection{Sentiment Lexicons}
+
+\textbf{Motivation:}
+
+Sometimes we don't have enough labeled training data for supervised learning. In such cases, we can make use of pre-built word lists called \textbf{lexicons}.
+
+\textbf{What are sentiment lexicons?}
+\begin{itemize}
+    \item Lists of words annotated with their sentiment polarity (positive/negative)
+    \item Often include intensity information (strong/weak)
+    \item Publicly available resources that can enhance classification
+\end{itemize}
+
+\subsubsection{MPQA Subjectivity Cues Lexicon}
+
+\textbf{Details:}
+\begin{itemize}
+    \item Home page: \url{https://mpqa.cs.pitt.edu/lexicons/subj_lexicon/}
+    \item 6,885 words from 8,221 lemmas
+    \item Annotated for intensity (strong/weak)
+    \item 2,718 positive words
+    \item 4,912 negative words
+\end{itemize}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item Positive words: admirable, beautiful, confident, dazzling, ecstatic, favor, glee, great
+    \item Negative words: awful, bad, bias, catastrophe, cheat, deny, envious, foul, harsh, hate
+\end{itemize}
+
+\textbf{References:}
+\begin{itemize}
+    \item Theresa Wilson, Janyce Wiebe, and Paul Hoffmann (2005). Recognizing Contextual Polarity in Phrase-Level Sentiment Analysis. Proc. of HLT-EMNLP-2005.
+    \item Riloff and Wiebe (2003). Learning extraction patterns for subjective expressions. EMNLP-2003.
+\end{itemize}
+
+\subsubsection{The General Inquirer}
+
+\textbf{Details:}
+\begin{itemize}
+    \item Home page: \url{http://www.wjh.harvard.edu/~inquirer}
+    \item List of categories: \url{http://www.wjh.harvard.edu/~inquirer/homecat.htm}
+    \item Spreadsheet: \url{http://www.wjh.harvard.edu/~inquirer/inquirerbasic.xls}
+\end{itemize}
+
+\textbf{Categories:}
+\begin{itemize}
+    \item Positiv: 1,915 words
+    \item Negativ: 2,291 words
+    \item Other dimensions: Strong vs Weak, Active vs Passive, Overstated vs Understated
+    \item Additional categories: Pleasure, Pain, Virtue, Vice, Motivation, Cognitive Orientation, etc.
+\end{itemize}
+
+\textbf{Availability:} Free for research use
+
+\textbf{Reference:}
+\begin{itemize}
+    \item Philip J. Stone, Dexter C Dunphy, Marshall S. Smith, Daniel M. Ogilvie. 1966. The General Inquirer: A Computer Approach to Content Analysis. MIT Press
+\end{itemize}
+
+\subsection{Using Lexicons in Sentiment Classification}
+
+\textbf{Approach:}
+
+Add lexicon-based features to the Naive Bayes classifier.
+
+\textbf{How it works:}
+\begin{itemize}
+    \item Create a feature that counts whenever a word from the lexicon occurs
+    \item Example features:
+    \begin{itemize}
+        \item "this word occurs in the positive lexicon"
+        \item "this word occurs in the negative lexicon"
+    \end{itemize}
+    \item Now all positive words (good, great, beautiful, wonderful) count toward the positive lexicon feature
+    \item Similarly, all negative words count toward the negative lexicon feature
+\end{itemize}
+
+\textbf{Trade-offs:}
+\begin{itemize}
+    \item Using 1-2 lexicon features isn't as good as using all individual words (when you have enough training data)
+    \item \textbf{But:} When training data is sparse or not representative of the test set, dense lexicon features can help significantly
+    \item Lexicons provide external knowledge that can compensate for limited training data
+\end{itemize}
+
+\subsection{Other Applications of Naive Bayes}
+
+\subsubsection{Spam Filtering}
+
+\textbf{SpamAssassin Features:}
+
+Naive Bayes is widely used for spam detection. Example features used by SpamAssassin:
+
+\begin{itemize}
+    \item Mentions "millions of dollars" (pattern: dollar \$NN,NNN,NNN.NN)
+    \item "From:" field starts with many numbers
+    \item Subject line is all capitals
+    \item HTML has a low ratio of text to image area
+    \item Contains phrases like "One hundred percent guaranteed"
+    \item Claims "you can be removed from the list"
+\end{itemize}
+
+These features combine lexical patterns with structural properties of emails to identify spam.
+
+\subsubsection{Language Identification}
+
+\textbf{Task:} Determining what language a piece of text is written in.
+
+\textbf{Features:}
+\begin{itemize}
+    \item Character n-grams work very well for this task
+    \item Different languages have characteristic patterns of character sequences
+\end{itemize}
+
+\textbf{Important consideration:}
+\begin{itemize}
+    \item Train on many varieties of each language
+    \item Examples:
+    \begin{itemize}
+        \item American English varieties like African-American English
+        \item English varieties around the world like Indian English, Australian English, etc.
+    \end{itemize}
+    \item This ensures the classifier generalizes well to different dialects and regional variations
+\end{itemize}
+
+\subsection{Summary: Naive Bayes is Not So Naive}
+
+\textbf{Advantages of Naive Bayes:}
+
+\begin{itemize}
+    \item \textbf{Very fast:} Low computational requirements and low storage requirements
+    
+    \item \textbf{Works with small } Performs well even with very small amounts of training data
+    
+    \item \textbf{Robust to irrelevant features:} Irrelevant features tend to cancel each other out without affecting results
+    
+    \item \textbf{Good for high-dimensional problems:} Very effective in domains with many equally important features
+    \begin{itemize}
+        \item Decision trees suffer from fragmentation in such cases, especially with little data
+    \end{itemize}
+    
+    \item \textbf{Optimal under independence:} If the independence assumptions hold (i.e., features are truly independent given the class), then Naive Bayes is the Bayes Optimal Classifier for the problem
+    
+    \item \textbf{Excellent baseline:} A good dependable baseline for text classification
+    \begin{itemize}
+        \item Though other classifiers (like logistic regression, neural networks) can give better accuracy
+    \end{itemize}
+\end{itemize}
+
+\section{Naive Bayes and Language Modeling}
+
+\subsection{Generative Model for Multinomial Naive Bayes}
+
+Naive Bayes can be viewed as a \textbf{generative model}. The model generates documents by:
+
+\begin{enumerate}
+    \item First choosing a class $c$ (e.g., $c = +$ for positive sentiment)
+    \item Then generating each word position independently from the word distribution for that class
+\end{enumerate}
+
+\textbf{Example:}
+\begin{itemize}
+    \item Class: $c = +$ (positive)
+    \item Generated words: $X_1 = \text{I}$, $X_2 = \text{love}$, $X_3 = \text{this}$, $X_4 = \text{fun}$, $X_5 = \text{film}$
+\end{itemize}
+
+Each word is drawn independently from $P(\text{word} | c = +)$.
+
+\subsection{Connection to Language Modeling}
+
+\textbf{General case:}
+Naive Bayes classifiers can use any sort of features:
+\begin{itemize}
+    \item URLs, email addresses
+    \item Dictionary features
+    \item Network features
+    \item Structural features
+\end{itemize}
+
+\textbf{Special case:}
+But if we:
+\begin{itemize}
+    \item Use only word features (no other types of features)
+    \item Use \textit{all} of the words in the text (not a subset)
+\end{itemize}
+
+\textbf{Then:} Naive Bayes has an important similarity to language modeling.
+
+\subsection{Each Class as a Unigram Language Model}
+
+\textbf{Key insight:} Each class can be viewed as a unigram language model.
+
+\textbf{For each class:}
+\begin{itemize}
+    \item We assign each word a probability: $P(\text{word} | c)$
+    \item We assign each sentence a probability: $P(s | c) = \prod P(\text{word} | c)$
+\end{itemize}
+
+\textbf{Example: Positive class model}
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Word} & \textbf{Probability} \\
+\hline
+I & 0.1 \\
+love & 0.1 \\
+this & 0.01 \\
+fun & 0.05 \\
+film & 0.1 \\
+\end{tabular}
+\end{center}
+
+\textbf{Sentence:} "I love this fun film"
+
+\textbf{Probability under positive model:}
+\[
+P(s | \text{pos}) = 0.1 \times 0.1 \times 0.01 \times 0.05 \times 0.1 = 0.0000005
+\]
+
+\subsection{Naive Bayes as Comparing Language Models}
+
+\textbf{Classification question:} Which class assigns the higher probability to sentence $s$?
+
+\textbf{Example with two models:}
+
+\textbf{Model pos (positive):}
+\begin{center}
+\begin{tabular}{ll}
+Word & Probability \\
+\hline
+I & 0.1 \\
+love & 0.1 \\
+this & 0.01 \\
+fun & 0.05 \\
+film & 0.1 \\
+\end{tabular}
+\end{center}
+
+\textbf{Model neg (negative):}
+\begin{center}
+\begin{tabular}{ll}
+Word & Probability \\
+\hline
+I & 0.2 \\
+love & 0.001 \\
+this & 0.01 \\
+fun & 0.005 \\
+film & 0.1 \\
+\end{tabular}
+\end{center}
+
+\textbf{Computing probabilities:}
+\[
+P(s | \text{pos}) = 0.1 \times 0.1 \times 0.01 \times 0.05 \times 0.1
+\]
+
+\[
+P(s | \text{neg}) = 0.2 \times 0.001 \times 0.01 \times 0.005 \times 0.1
+\]
+
+\textbf{Result:} $P(s | \text{pos}) > P(s | \text{neg})$
+
+Therefore, the sentence "I love this fun film" would be classified as positive.
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item Each class defines a language model (unigram probability distribution over words)
+    \item Classification chooses the language model that best explains the test document
+    \item Words like "love" and "fun" have much higher probability under the positive model
+    \item Even though "I" has higher probability under the negative model, the positive model overall assigns higher probability to this sentence
+\end{itemize}
+
+\section{Evaluation Metrics: Precision, Recall, and F-measure}
+
+\subsection{Binary Classification Evaluation}
+
+Let's consider binary text classification tasks to understand evaluation metrics.
+
+\textbf{Example scenario:}
+\begin{itemize}
+    \item You're the CEO of Delicious Pie Company
+    \item You want to know what people are saying about your pies
+    \item You build a "Delicious Pie" tweet detector
+    \item \textbf{Positive class:} tweets about Delicious Pie Co
+    \item \textbf{Negative class:} all other tweets
+\end{itemize}
+
+\subsection{The 2-by-2 Confusion Matrix}
+
+A confusion matrix organizes the classification results:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+ & \textbf{System says Positive} & \textbf{System says Negative} \\
+\hline
+\textbf{Gold: Positive} & True Positive (TP) & False Negative (FN) \\
+\hline
+\textbf{Gold: Negative} & False Positive (FP) & True Negative (TN) \\
+\hline
+\end{tabular}
+\end{center}
+
+Where:
+\begin{itemize}
+    \item \textbf{True Positive (TP):} System correctly identified a positive example
+    \item \textbf{False Positive (FP):} System incorrectly labeled a negative example as positive
+    \item \textbf{True Negative (TN):} System correctly identified a negative example
+    \item \textbf{False Negative (FN):} System incorrectly labeled a positive example as negative
+\end{itemize}
+
+\subsection{Why Not Use Accuracy?}
+
+\textbf{Problem with accuracy:}
+
+Imagine we saw 1 million tweets:
+\begin{itemize}
+    \item 100 talked about Delicious Pie Co.
+    \item 999,900 talked about something else
+\end{itemize}
+
+We could build a dumb classifier that labels every tweet as "not about pie":
+\begin{itemize}
+    \item It would get 99.99\% accuracy!
+    \item But it's completely useless!
+    \item It doesn't return any of the comments we're looking for
+\end{itemize}
+
+\textbf{Why accuracy fails:}
+\begin{itemize}
+    \item In imbalanced datasets, accuracy can be misleading
+    \item A classifier that always predicts the majority class gets high accuracy
+    \item But it provides no useful information about the minority class we care about
+\end{itemize}
+
+\textbf{Solution:} Use precision and recall instead.
+
+\subsection{Precision}
+
+\textbf{Definition:}
+
+Precision is the percentage of items the system detected (i.e., labeled as positive) that are actually positive according to the gold labels.
+
+\[
+\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}}
+\]
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item "Of all the items the system said were positive, how many were actually positive?"
+    \item Measures the accuracy of positive predictions
+    \item High precision means few false alarms
+\end{itemize}
+
+\subsection{Recall}
+
+\textbf{Definition:}
+
+Recall is the percentage of actual positive items that were correctly identified by the system.
+
+\[
+\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}}
+\]
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item "Of all the items that were actually positive, how many did the system find?"
+    \item Measures the coverage of positive predictions
+    \item High recall means few missed positives
+\end{itemize}
+
+\subsection{Why Precision and Recall Matter}
+
+\textbf{Back to our dumb pie-classifier:}
+
+The classifier that labels nothing as "about pie":
+\begin{itemize}
+    \item \textbf{Accuracy:} 99.99\%
+    \item \textbf{Recall:} 0 (it doesn't find any of the 100 pie tweets)
+    \item \textbf{Precision:} undefined (no positive predictions made)
+\end{itemize}
+
+\textbf{Key insight:}
+
+Precision and recall, unlike accuracy, emphasize \textbf{true positives}: finding the things we're supposed to be looking for.
+
+\textbf{Trade-off:}
+\begin{itemize}
+    \item High precision (few false positives) often comes at the cost of lower recall (missing some true positives)
+    \item High recall (finding most true positives) often comes at the cost of lower precision (more false positives)
+\end{itemize}
+
+\subsection{F-measure: Combining Precision and Recall}
+
+\textbf{Motivation:}
+
+We often want a single number that combines precision and recall.
+
+\textbf{F-measure formula:}
+
+\[
+F = \frac{(\beta^2 + 1) \cdot P \cdot R}{\beta^2 \cdot P + R}
+\]
+
+Where:
+\begin{itemize}
+    \item $P$ is precision
+    \item $R$ is recall
+    \item $\beta$ controls the relative weight of precision vs recall
+\end{itemize}
+
+\textbf{Balanced F1 measure:}
+
+We almost always use $\beta = 1$, which gives equal weight to precision and recall:
+
+\[
+F_1 = \frac{2 \cdot P \cdot R}{P + R}
+\]
+
+This is the harmonic mean of precision and recall.
+
+\textbf{Properties of F1:}
+\begin{itemize}
+    \item $F_1 = 1$ when both precision and recall are perfect
+    \item $F_1 = 0$ when either precision or recall is zero
+    \item Heavily penalizes classifiers with low precision or low recall
+    \item Requires balancing both metrics for a high score
+\end{itemize}
+
+\subsection{Development Sets and Cross-Validation}
+
+\subsubsection{Development Test Sets ("Devsets")}
+
+\textbf{Best practice:} Split data into three sets:
+\begin{itemize}
+    \item \textbf{Training set:} Used to learn model parameters
+    \item \textbf{Development set (devset):} Used to tune hyperparameters and make modeling decisions
+    \item \textbf{Test set:} Used only once for final evaluation
+\end{itemize}
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Train on training set
+    \item Tune on devset (make all modeling decisions based on devset performance)
+    \item Report final results on test set
+\end{enumerate}
+
+\textbf{Why this matters:}
+\begin{itemize}
+    \item Avoids "overfitting" or "tuning to the test set"
+    \item Gives a more conservative estimate of real-world performance
+    \item The test set remains truly unseen until final evaluation
+\end{itemize}
+
+\textbf{The paradox:}
+\begin{itemize}
+    \item We want as much data as possible for training (to learn better models)
+    \item We also want as much data as possible for development (to tune effectively)
+    \item We need to balance these competing needs when splitting the data
+\end{itemize}
+
+\subsubsection{Cross-Validation: Multiple Splits}
+
+\textbf{Idea:} Make multiple different train/dev splits
+
+\textbf{Procedure:}
+\begin{enumerate}
+    \item Divide data into $k$ folds (typically $k = 5$ or $k = 10$)
+    \item For each fold:
+    \begin{itemize}
+        \item Use that fold as the development set
+        \item Use the remaining $k-1$ folds as the training set
+        \item Train the model and evaluate on the dev fold
+    \end{itemize}
+    \item Pool results over all splits
+    \item Compute pooled development performance
+\end{enumerate}
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item Uses all data for both training and evaluation
+    \item Reduces variance in performance estimates
+    \item Provides more reliable estimate of model performance
+\end{itemize}
+
+\section{Evaluation with More Than Two Classes}
+
+\subsection{Confusion Matrix for Multi-class Classification}
+
+For classification with more than two classes, the confusion matrix extends to $n \times n$ dimensions:
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & \textbf{Predicted Class 1} & \textbf{Predicted Class 2} & \textbf{Predicted Class 3} \\
+\hline
+\textbf{Actual Class 1} & TP for Class 1 & Errors & Errors \\
+\hline
+\textbf{Actual Class 2} & Errors & TP for Class 2 & Errors \\
+\hline
+\textbf{Actual Class 3} & Errors & Errors & TP for Class 3 \\
+\hline
+\end{tabular}
+\end{center}
+
+Each cell $(i,j)$ shows the number of instances of class $i$ that were predicted as class $j$.
+
+\subsection{Combining Precision and Recall from Multiple Classes}
+
+\textbf{Challenge:} With multiple classes, we get a precision and recall value for each class. How do we combine them into a single metric?
+
+Two main approaches:
+
+\subsubsection{Macroaveraging}
+
+\textbf{Procedure:}
+\begin{enumerate}
+    \item Compute precision and recall for each class separately
+    \item Average these values across all classes
+\end{enumerate}
+
+\textbf{Formulas:}
+\[
+\text{Macro-Precision} = \frac{1}{|C|} \sum_{c \in C} \text{Precision}_c
+\]
+
+\[
+\text{Macro-Recall} = \frac{1}{|C|} \sum_{c \in C} \text{Recall}_c
+\]
+
+\textbf{Characteristic:}
+\begin{itemize}
+    \item Each class contributes equally to the final metric
+    \item Small classes have the same weight as large classes
+    \item Good when all classes are equally important
+\end{itemize}
+
+\subsubsection{Microaveraging}
+
+\textbf{Procedure:}
+\begin{enumerate}
+    \item Collect decisions for all classes into one confusion matrix
+    \item Sum up the true positives, false positives, and false negatives across all classes
+    \item Compute precision and recall from these aggregate counts
+\end{enumerate}
+
+\textbf{Formulas:}
+\[
+\text{Micro-Precision} = \frac{\sum_{c \in C} \text{TP}_c}{\sum_{c \in C} (\text{TP}_c + \text{FP}_c)}
+\]
+
+\[
+\text{Micro-Recall} = \frac{\sum_{c \in C} \text{TP}_c}{\sum_{c \in C} (\text{TP}_c + \text{FN}_c)}
+\]
+
+\textbf{Characteristic:}
+\begin{itemize}
+    \item Larger classes contribute more to the final metric
+    \item Each individual classification decision has equal weight
+    \item Good when you care more about overall classification accuracy
+\end{itemize}
+
+\subsection{Macroaveraging vs Microaveraging: When to Use Each}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Choosing Macro vs Micro Averaging}]
+\textbf{Use Macroaveraging when:}
+\begin{itemize}
+    \item All classes are equally important (regardless of their frequency)
+    \item You want to give equal weight to rare classes and frequent classes
+    \item Example: Medical diagnosis where rare diseases should be detected as reliably as common ones
+\end{itemize}
+
+\textbf{Use Microaveraging when:}
+\begin{itemize}
+    \item You care about overall classification accuracy
+    \item Larger classes are more important (or it's okay if they dominate the metric)
+    \item You want a metric that reflects performance on individual examples
+\end{itemize}
+
+\textbf{Key difference:}
+\begin{itemize}
+    \item Macroaveraging treats each class equally
+    \item Microaveraging treats each instance equally
+\end{itemize}
+\end{tcolorbox}
+
+\section{Statistical Significance Testing}
+
+\subsection{The Core Question}
+
+\textbf{Problem:} How do we know if one classifier is really better than another?
+
+\textbf{Given:}
+\begin{itemize}
+    \item Classifier A and B
+    \item Metric $M$: $M(A, x)$ is the performance of A on test set $x$
+    \item $\delta(x)$: the performance difference between A and B on $x$
+    \[
+    \delta(x) = M(A, x) - M(B, x)
+    \]
+    \item We want to know if $\delta(x) > 0$, meaning A is better than B
+    \item $\delta(x)$ is called the \textbf{effect size}
+\end{itemize}
+
+\textbf{The problem:}
+
+Suppose we observe that $\delta(x)$ is positive. Are we done?
+
+\textbf{No!} This might be just:
+\begin{itemize}
+    \item An accident of this particular test set
+    \item A circumstance of the experiment
+    \item Random chance
+\end{itemize}
+
+\textbf{Solution:} Use statistical hypothesis testing
+
+\subsection{Statistical Hypothesis Testing}
+
+\subsubsection{The Hypotheses}
+
+Consider two hypotheses:
+
+\begin{itemize}
+    \item \textbf{Null hypothesis ($H_0$):} A isn't better than B
+    \item \textbf{Alternative hypothesis:} A is better than B
+\end{itemize}
+
+\textbf{Goal:} We want to rule out $H_0$ (the null hypothesis)
+
+\subsubsection{The Approach}
+
+\begin{enumerate}
+    \item Create a random variable $X$ ranging over test sets
+    \item Ask: "How likely is it, if $H_0$ is true, that among these test sets we would see the $\delta(x)$ we observed?"
+    \item This likelihood is formalized as the \textbf{p-value}
+\end{enumerate}
+
+\subsection{Understanding the p-value}
+
+\textbf{Definition:}
+
+The p-value is the probability that we would see the observed $\delta(x)$ (or something more extreme) assuming $H_0$ is true (i.e., assuming A is not better than B).
+
+\textbf{Interpretation:}
+
+\begin{itemize}
+    \item If $H_0$ is true but $\delta(x)$ is huge, that's surprising!
+    \item Very low probability!
+    \item A very small p-value means the difference we observed is very unlikely under the null hypothesis
+\end{itemize}
+
+\textbf{Decision rule:}
+
+\begin{itemize}
+    \item If p-value is very small (typically $< 0.05$ or $< 0.01$):
+    \begin{itemize}
+        \item We reject the null hypothesis
+        \item Conclude that the difference is statistically significant
+        \item A is better than B
+    \end{itemize}
+\end{itemize}
+
+\textbf{Definition of statistical significance:}
+
+A result (e.g., "A is better than B") is \textbf{statistically significant} if the $\delta$ we observed has a probability below the threshold (typically 0.05 or 0.01) under the null hypothesis, and we therefore reject the null hypothesis.
+
+\subsection{Computing the p-value}
+
+\textbf{Challenge:} How do we compute this probability?
+
+\textbf{Approach in NLP:}
+
+\begin{itemize}
+    \item We don't use parametric tests (like t-tests)
+    \item Instead, we use \textbf{non-parametric tests} based on \textbf{sampling}
+    \item Artificially create many versions of the experimental setup
+\end{itemize}
+
+\textbf{Idea:}
+
+\begin{enumerate}
+    \item Suppose we had created many test sets $x'$
+    \item Measure the value of $\delta(x')$ on each test set
+    \item This gives us a distribution of $\delta$ values
+    \item Set a threshold (say 0.01)
+    \item If we see that in 99\% of test sets, $\delta(x) > \delta(x')$:
+    \begin{itemize}
+        \item We conclude our original $\delta$ was real and not an artifact
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Paired Tests}
+
+\textbf{Paired test:} Comparing two sets of observations where each observation in one set can be paired with an observation in another.
+
+\textbf{Example:}
+\begin{itemize}
+    \item When comparing systems A and B on the same test set
+    \item We can compare the performance of A and B on each same observation $x_i$
+    \item Each test instance creates a pair of outcomes: (result from A, result from B)
+\end{itemize}
+
+\textbf{Advantage:}
+\begin{itemize}
+    \item More powerful than unpaired tests
+    \item Controls for variation across test instances
+    \item Each instance serves as its own control
+\end{itemize}
+
+\textbf{Two common approaches:}
+\begin{itemize}
+    \item Approximate randomization
+    \item Bootstrap test (discussed next)
+\end{itemize}
+
+\section{The Paired Bootstrap Test}
+
+\subsection{Bootstrap Test Basics}
+
+\textbf{What is bootstrapping?}
+
+Bootstrap means to repeatedly draw large numbers of smaller samples with replacement (called bootstrap samples) from an original larger sample.
+
+\textbf{Properties:}
+\begin{itemize}
+    \item Can apply to any metric (accuracy, precision, recall, F1, etc.)
+    \item Non-parametric (doesn't assume a particular distribution)
+    \item Based on resampling from observed data
+\end{itemize}
+
+\textbf{Reference:} Efron and Tibshirani, 1993
+
+\subsection{Bootstrap Example: Setup}
+
+Consider a simple text classification example:
+
+\textbf{Test set $x$:} 10 documents
+
+\textbf{Metric:} Accuracy
+
+\textbf{Results of systems A and B on each document:}
+
+There are 4 possible outcomes for each document:
+\begin{itemize}
+    \item A\&B: Both A and B correct
+    \item A$\Diamond$B: Both A and B wrong
+    \item AB: A right, B wrong
+    \item AB: A wrong, B right
+\end{itemize}
+
+\textbf{Example results:}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & A\% & B\% & $\delta()$ \\
+\hline
+$x$ & A\&B & A$\Diamond$B & AB & AB & A$\Diamond$B & AB & A$\Diamond$B & AB & A$\Diamond$B & A$\Diamond$B & .70 & .50 & .20 \\
+\hline
+\end{tabular}
+\end{center}
+
+Here A got 7 correct (70\% accuracy), B got 5 correct (50\% accuracy), so $\delta(x) = 0.20$.
+
+\subsection{Creating Bootstrap Samples}
+
+\textbf{Procedure:}
+
+Create many (say, $b = 10{,}000$) virtual test sets $x^{(i)}$, each of size $n = 10$.
+
+\textbf{How to create each $x^{(i)}$:}
+\begin{itemize}
+    \item Randomly select a cell from the original row $x$
+    \item Do this with replacement
+    \item Repeat 10 times to create a new test set of size 10
+\end{itemize}
+
+\textbf{Example bootstrap samples:}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & A\% & B\% & $\delta()$ \\
+\hline
+$x$ & A\&B & A$\Diamond$B & AB & AB & A$\Diamond$B & AB & A$\Diamond$B & AB & A$\Diamond$B & A$\Diamond$B & .70 & .50 & .20 \\
+\hline
+$x^{(1)}$ & A$\Diamond$B & AB & A$\Diamond$B & AB & AB & A$\Diamond$B & AB & AB & A$\Diamond$B & AB & .60 & .60 & .00 \\
+\hline
+$x^{(2)}$ & A$\Diamond$B & AB & A$\Diamond$B & AB & AB & AB & AB & A$\Diamond$B & AB & AB & .60 & .70 & -.10 \\
+\hline
+\multicolumn{14}{|c|}{...} \\
+\hline
+$x^{(b)}$ & \multicolumn{13}{c|}{} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Computing the p-value}
+
+\textbf{Step 1: Create the distribution}
+
+Now we have a distribution of $\delta$ values from the bootstrap samples!
+
+We can check how often A has an accidental advantage to see if the original $\delta(x)$ we observed was very common or very rare.
+
+\textbf{Step 2: Formulating the test}
+
+Assuming $H_0$ (null hypothesis), normally we expect $\delta(x') = 0$ (no difference between A and B).
+
+\textbf{Naive approach:} Count how many times the $\delta(x')$ we found exceeds 0 by $\delta(x)$ or more.
+
+\textbf{But wait!} This is slightly more complicated.
+
+\subsection{Accounting for Bias in Bootstrap Samples}
+
+\textbf{The problem:}
+
+We didn't draw these samples from a distribution with 0 mean. We created them from the original test set $x$, which happens to be biased (by 0.20) in favor of A.
+
+\textbf{The correction:}
+
+To measure how surprising our observed $\delta(x)$ is, we actually compute the p-value by counting how often $\delta(x')$ exceeds the expected value of $\delta(x)$ by $\delta(x)$ or more.
+
+\textbf{Formula:}
+
+Count how often:
+\[
+\delta(x^{(i)}) \geq 2\delta(x)
+\]
+
+This accounts for the fact that the bootstrap distribution is centered around $\delta(x)$ rather than 0.
+
+\subsection{Bootstrap Example: Conclusion}
+
+\textbf{Suppose:}
+\begin{itemize}
+    \item We have 10,000 bootstrap test sets $x^{(i)}$
+    \item Threshold of 0.01 (1\% significance level)
+    \item In only 47 of the test sets do we find that $\delta(x^{(i)}) \geq 2\delta(x)$
+\end{itemize}
+
+\textbf{Computing the p-value:}
+\[
+\text{p-value} = \frac{47}{10{,}000} = 0.0047
+\]
+
+\textbf{Conclusion:}
+\begin{itemize}
+    \item This p-value (0.0047) is smaller than 0.01
+    \item This indicates $\delta(x)$ is indeed sufficiently surprising
+    \item We reject the null hypothesis
+    \item We conclude that A is statistically significantly better than B
+\end{itemize}
+
+\textbf{Reference:} After Berg-Kirkpatrick et al (2012)
+
+\section{Avoiding Harms in Classification}
+
+\subsection{Harms in Sentiment Classifiers}
+
+\textbf{Research finding:}
+
+Kiritchenko and Mohammad (2018) found that most sentiment classifiers assign:
+\begin{itemize}
+    \item Lower sentiment scores to sentences containing African American names
+    \item More negative emotions to such sentences
+\end{itemize}
+
+\textbf{The harm:}
+
+This perpetuates negative stereotypes that associate African Americans with negative emotions.
+
+\textbf{Example problem:}
+\begin{itemize}
+    \item "John is happy" might get a more positive sentiment score than
+    \item "Jamal is happy" (where Jamal is a stereotypically African American name)
+    \item Even though both sentences express the same positive sentiment
+\end{itemize}
+
+\subsection{Harms in Toxicity Classification}
+
+\textbf{Task:} Toxicity detection aims to identify hate speech, abuse, harassment, or other toxic language.
+
+\textbf{The problem:}
+
+Some toxicity classifiers incorrectly flag as toxic sentences that:
+\begin{itemize}
+    \item Are non-toxic
+    \item Simply mention identities like:
+    \begin{itemize}
+        \item Blind people
+        \item Women
+        \item Gay people
+        \item Other marginalized groups
+    \end{itemize}
+\end{itemize}
+
+\textbf{The harm:}
+
+This could lead to censorship of discussion about these groups, silencing legitimate conversations about marginalized communities.
+
+\subsection{What Causes These Harms?}
+
+These biases can be caused by problems in:
+
+\begin{enumerate}
+    \item \textbf{Training }
+    \begin{itemize}
+        \item Machine learning systems are known to amplify biases in their training data
+        \item If training data contains societal biases, the model will learn and potentially amplify them
+    \end{itemize}
+    
+    \item \textbf{Human labels:}
+    \begin{itemize}
+        \item Annotators may have unconscious biases
+        \item Labeling guidelines may not account for sensitive contexts
+    \end{itemize}
+    
+    \item \textbf{Resources used (like lexicons):}
+    \begin{itemize}
+        \item Pre-built sentiment lexicons may contain biased word associations
+        \item Historical biases embedded in language resources
+    \end{itemize}
+    
+    \item \textbf{Model architecture:}
+    \begin{itemize}
+        \item What the model is trained to optimize
+        \item How features are represented and combined
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Current state:}
+Mitigation of these harms is an active area of research. There are no complete solutions yet, but awareness and documentation are important first steps.
+
+\subsection{Model Cards}
+
+\textbf{Solution: Documentation and transparency}
+
+For each algorithm you release, document:
+
+\begin{itemize}
+    \item \textbf{Training algorithms and parameters:}
+    \begin{itemize}
+        \item What learning algorithm was used
+        \item What hyperparameters were chosen
+        \item Why these choices were made
+    \end{itemize}
+    
+    \item \textbf{Training }
+    \begin{itemize}
+        \item Sources of training data
+        \item Motivation for data collection
+        \item Preprocessing steps applied
+    \end{itemize}
+    
+    \item \textbf{Evaluation }
+    \begin{itemize}
+        \item Sources of evaluation data
+        \item How evaluation data differs from training data
+        \item Preprocessing applied to evaluation data
+    \end{itemize}
+    
+    \item \textbf{Intended use and users:}
+    \begin{itemize}
+        \item What tasks is the model designed for
+        \item What contexts is it appropriate for
+        \item What users is it designed to serve
+    \end{itemize}
+    
+    \item \textbf{Model performance across groups:}
+    \begin{itemize}
+        \item Performance broken down by demographic groups
+        \item Performance in different environmental situations
+        \item Known failure modes and limitations
+    \end{itemize}
+\end{itemize}
+
+\textbf{Reference:} Mitchell et al., 2019
+
+\textbf{Purpose of model cards:}
+\begin{itemize}
+    \item Increase transparency
+    \item Help users understand model limitations
+    \item Enable informed decisions about model deployment
+    \item Facilitate auditing and accountability
+\end{itemize}
 
 
 \end{document}
