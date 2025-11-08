@@ -3097,14 +3097,277 @@ The scheme operates according to the following rules when literals are assigned:
 \textbf{Efficiency:} This scheme is highly efficient because it requires examining only the two watched literals per clause during propagation, rather than scanning all literals in every clause. The watched literals are updated lazily only when necessary.
 
 
+\newpage 
+
+\section{Advanced CDCL Techniques}
+
+\subsection{Clause Forgetting and Restart Strategies}
+
+We complete the discussion of the CDCL procedure for SAT by introducing two important optimizations that improve practical performance: \textbf{clause forgetting} and \textbf{restart strategies}.
+
+While CDCL has the capacity to learn clauses that help prune the search space, unbounded clause learning can lead to memory problems and decreased efficiency. Modern SAT solvers address this through selective clause deletion.
+
+\subsubsection{The Forget Transition Rule}
+
+The \textbf{Forget} rule allows the solver to remove learned clauses that are no longer deemed useful, preventing the clause database from growing indefinitely.
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Forget Transition Rule}]
+Let $S_0$ denote the input clause set. The Forget rule is defined as:
+\[
+\text{Forget: } S \parallel \mathcal{M} \longrightarrow S \setminus \{C\} \parallel \mathcal{M}
+\]
+if $C \in S$ and $C \notin S_0$ (i.e., $C$ is a learned clause).
+\end{tcolorbox}
+
+\textbf{Which clauses should we forget?}
+
+Heuristic criteria for clause deletion typically include:
+\begin{itemize}
+    \item \textbf{Clause length criterion}: Forget clauses where $|C| > k$ for some integer parameter $k$, where $|C|$ denotes the number of literals in $C$. Short learned clauses tend to be more useful for propagation.
+    
+    \item \textbf{Periodic deletion}: Apply the forgetting mechanism only when the number of transition steps performed in the derivation is a multiple of some period $T$. This prevents excessive overhead from constant clause management.
+    
+    \item \textbf{Activity-based deletion}: Track clause activity (how often a clause participates in conflict analysis or propagation) and preferentially retain active clauses.
+\end{itemize}
+
+\subsubsection{The Restart Transition Rule}
+
+The \textbf{Restart} rule allows the solver to abandon the current search path and restart from scratch, while keeping all learned clauses. This helps escape unproductive regions of the search space.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!75!black,title=\textbf{Restart Transition Rule}]
+\[
+\text{Restart: } S \parallel \mathcal{M} \longrightarrow S \parallel \mathcal{M}_0
+\]
+where $\mathcal{M}_0$ is the prefix of $\mathcal{M}$ containing all and only the literals at level 0 in $\mathcal{M}$.
+
+\textbf{Important:} All learned clauses in $S$ are kept across restarts.
+\end{tcolorbox}
+
+\textbf{Rationale:} While restarting discards the current partial assignment, the learned clauses accumulated so far guide the search away from previously explored unpromising regions. This often leads to finding solutions or proofs much faster than exhaustively exploring a single search path.
+
+\subsection{First Assertion Clause Strategy}
+
+We use the \textbf{First Assertion Clause} heuristic for determining the backjump level:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Backjump with First Assertion Clause}]
+\[
+S \parallel \mathcal{M}\ L^d\ \mathcal{N} \parallel C \lor L' \longrightarrow S \parallel \mathcal{M}\ L'_{C \lor L'}
+\]
+if $C \lor L' \in S$ and $\mathcal{M} \models \neg C$, where $L'$ is the \textbf{assertion literal} (the only literal in $C \lor L'$ which is falsified by the current decision level).
+\end{tcolorbox}
+
+\subsubsection{Why Choose the First Assertion Clause?}
+
+Suppose we have a conflict clause:
+\[
+L_1^{n_1} \lor L_2^{n_2} \lor \cdots \lor L_k^{n_k} \lor L_{k+1}^n
+\]
+where:
+\begin{itemize}
+    \item $n$ is the current decision level
+    \item $n_i$ is the level where literal $L_i$ is falsified
+    \item $n > n_i$ for all $i \in \{1, \ldots, k\}$
+    \item $L_{k+1}^n$ is the assertion literal at level $n$
+\end{itemize}
+
+This is a \textbf{first assertion clause} (also called a \textbf{1-UIP clause}) because exactly one literal is falsified at the current level.
+
+\subsubsection{Resolution and Backjump Levels}
+
+Consider the resolution inference:
+\[
+\frac{\neg L \lor C \quad\quad L \lor D}{C \lor D}
+\]
+
+Let:
+\begin{itemize}
+    \item $p$ = maximum level that falsifies literals in $C$
+    \item $q$ = maximum level that falsifies literals in $L \lor D$
+    \item $\ell$ = maximum level that falsifies literals in $C \lor D$
+\end{itemize}
+
+Then:
+\[
+\ell = \max(p, q)
+\]
+
+\textbf{Key insight for backjumping:} When we backjump, we need to ensure that the level we return to still falsifies all literals in the learned clause except the assertion literal. The longer the learned clause (i.e., the more literals it contains at different levels), the shorter the backjump may be. Conversely, using the first assertion clause (which has only one literal at the current level) allows for maximal backjumping, potentially skipping many irrelevant decision levels.
 
 
+\newpage
 
+\section{Temporal Planning and Constraint Solving}
 
+\subsection{Extensions to Classical Planning}
 
+Beyond the classical planning framework, there exist several important extensions that allow for more expressive problem formulations. One key extension involves \textbf{temporal reasoning}, which allows us to reason about the duration of actions and temporal relationships between events.
 
+\subsubsection{Temporal Constraints}
 
+Temporal planning introduces constraints about \textbf{time}, specifying when certain actions should occur and how they relate temporally.
 
+\textbf{Simple temporal constraints:}
+\[
+t < t'
+\]
+where $t$ and $t'$ are time points at which certain actions occur.
 
+\textbf{Duration constraints:}
+\[
+d \leq t' - t \leq d'
+\]
+which can be equivalently written as:
+\[
+(d \leq t' - t) \land (t' - t \leq d')
+\]
+
+Here:
+\begin{itemize}
+    \item $d$ is the \textbf{lower bound} for the duration
+    \item $d'$ is the \textbf{upper bound} for the duration
+    \item $t' - t$ represents the duration of the time interval between two actions performed at times $t$ and $t'$, respectively
+\end{itemize}
+
+These constraints allow us to model requirements such as "action $A$ must complete at least 5 time units before action $B$ starts" or "the total duration of action $C$ must be between 3 and 7 time units."
+
+\subsection{Constraint Solving in Arithmetic}
+
+To solve temporal planning problems, we need to address the question: \textbf{How do we solve Constraint Satisfaction Problems (CSP) in arithmetic?}
+
+Arithmetic constraints can be classified into two main categories:
+
+\begin{itemize}
+    \item \textbf{Linear arithmetic}: Involves only addition and subtraction (algebraic sums). Products are allowed only between a constant $c$ and a variable $x$, but \textit{not} between variables.
+    
+    \item \textbf{Non-linear arithmetic}: Allows products between variables and other non-linear operations.
+\end{itemize}
+
+\subsubsection{Decidability of Arithmetic Theories}
+
+Different arithmetic theories have different computational properties:
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Theory} & \textbf{Decidability} \\
+\hline
+LIA (Linear Integer Arithmetic) & Decidable \\
+NIA (Non-linear Integer Arithmetic) & Undecidable \\
+LRA (Linear Rational/Real Arithmetic) & Decidable \\
+NRA (Non-linear Real Arithmetic) & Decidable \\
+\hline
+\end{tabular}
+\end{center}
+
+For temporal planning, we focus on \textbf{LRA (Linear Rational/Real Arithmetic)} because it is decidable and sufficiently expressive for modeling temporal constraints.
+
+\subsection{Linear Rational Arithmetic (LRA)}
+
+In LRA, we consider a set of constraints of the form:
+\[
+L \bowtie R
+\]
+where $\bowtie \in \{<, \leq, =\}$.
+
+We distinguish between:
+\begin{itemize}
+    \item \textbf{Strict inequality}: $<$
+    \item \textbf{Weak inequality}: $\leq$
+    \item \textbf{Equality}: $=$
+\end{itemize}
+
+\textbf{Structure of constraints:}
+
+Both $L$ and $R$ are algebraic sums of linear monomials:
+\[
+c_1 \cdot x_1 + c_2 \cdot x_2 + \cdots + c_k \cdot x_k
+\]
+where:
+\begin{itemize}
+    \item $x_1, x_2, \ldots, x_k$ are \textbf{variables}
+    \item $c_1, c_2, \ldots, c_k$ are \textbf{constants} (rational numbers)
+\end{itemize}
+
+\subsubsection{Decision Procedure for LRA}
+
+Given a set $S$ of LRA constraints, a decision procedure determines:
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm and 3cm, auto]
+    % Input node
+    \node[rectangle, draw, thick, minimum width=2cm, minimum height=1cm] (S) {$S$};
+    
+    % Decision procedure node
+    \node[rectangle, draw, thick, minimum width=3.5cm, minimum height=1.2cm, right=of S] (DP) {Decision Procedure};
+    
+    % Output nodes
+    \node[rectangle, draw, thick, minimum width=3.5cm, minimum height=0.9cm, above right=of DP] (sat) {\texttt{sat} + assignment $\alpha$};
+    \node[rectangle, draw, thick, minimum width=3.5cm, minimum height=0.9cm, below right=of DP] (unsat) {\texttt{unsat}};
+    
+    % Arrows
+    \draw[->, thick] (S) -- (DP);
+    \draw[->, thick] (DP.east) |- (sat.west);
+    \draw[->, thick] (DP.east) |- (unsat.west);
+\end{tikzpicture}
+\end{center}
+
+\begin{example}[LRA Constraint System]
+Consider the following system of constraints:
+\begin{align*}
+x + y &\geq 2 \\
+2x - y &\geq 0 \\
+-x + 2y &\geq 1
+\end{align*}
+
+These are typical LRA constraints we want to solve.
+\end{example}
+
+\subsection{The Simplex Method}
+
+There are two variants of the Simplex method relevant to our discussion:
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Classical Simplex Method}]
+Solves \textbf{optimization problems}: Given a set $S$ of LRA constraints and an objective function $f$ over variables in $S$, find an assignment $\alpha: X \rightarrow \mathbb{Q}$ that satisfies $S$ and maximizes (or minimizes) $f$.
+\end{tcolorbox}
+
+However, for constraint satisfaction we do \textbf{not} need optimization. Instead, we use:
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{General Simplex Method}]
+Solves \textbf{CSP in LRA}: Given a set $S$ of LRA constraints, find an assignment $\alpha: X \rightarrow \mathbb{Q}$ that satisfies $S$ (without optimization).
+\end{tcolorbox}
+
+\subsubsection{General Form Transformation}
+
+\textbf{Step I: Transform the input problem into general form}
+
+Introduce \textbf{slack variables} to convert inequalities into equalities plus non-negativity constraints:
+
+\begin{example}[Slack Variable Introduction]
+Starting from the constraint system:
+\begin{align*}
+x + y &\geq 2 \\
+2x - y &\geq 0 \\
+-x + 2y &\geq 1
+\end{align*}
+
+We introduce slack variables $s_1, s_2, s_3$ and rewrite as:
+\begin{align*}
+x + y - s_1 &= 0 \quad \land \quad s_1 \geq 2 \\
+2x - y - s_2 &= 0 \quad \land \quad s_2 \geq 0 \\
+-x + 2y - s_3 &= 0 \quad \land \quad s_3 \geq 1
+\end{align*}
+
+This transformation separates the structural equations (equalities) from the bound constraints (inequalities on slack variables).
+\end{example}
+
+\vspace{1em}
+
+The general form consists of:
+\begin{itemize}
+    \item A system of linear equations (the structural equations with slack variables)
+    \item Bound constraints on the slack variables
+\end{itemize}
+
+This standard form is the basis for applying the Simplex algorithm to determine satisfiability of the constraint system.
 
 \end{document}
