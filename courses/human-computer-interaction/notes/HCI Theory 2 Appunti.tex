@@ -5,7 +5,8 @@
 % ========================================
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[italian]{babel} 
+\usepackage{lmodern}  % Better font support for larger sizes
+\usepackage[english]{babel}
 \usepackage[margin=2.5cm]{geometry}
 
 % Mathematics
@@ -44,19 +45,19 @@
 % THEOREM ENVIRONMENTS
 % ========================================
 \theoremstyle{definition}
-\newtheorem{definition}{Definizione}[section]
-\newtheorem{example}{Esempio}[section]
-\newtheorem{exercise}{Esercizio}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
 
 \theoremstyle{plain}
-\newtheorem{theorem}{Teorema}[section]
+\newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposizione}
-\newtheorem{corollary}[theorem]{Corollario}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
 
 \theoremstyle{remark}
-\newtheorem*{remark}{Nota}
-\newtheorem*{observation}{Osservazione}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
 
 % ========================================
 % CUSTOM COMMANDS
@@ -96,7 +97,72 @@
 % ========================================
 \begin{document}
 
-\maketitle
+% Custom title page
+\begin{titlepage}
+    \begin{center}
+        \vspace*{2cm}
+        
+        % University/Course info at top
+        {\large\textsc{Artificial Intelligence}}
+        
+        \vspace{0.4cm}
+        \textcolor{blue!60!black}{\rule{0.5\textwidth}{1pt}}
+        
+        \vspace{2.5cm}
+        
+        % Main title with modern spacing
+        {\fontsize{36}{44}\selectfont\bfseries Human-Computer\\[0.5cm] Interaction}
+        
+        \vspace{1.5cm}
+        
+        % Subtitle with clean design
+        \begin{tcolorbox}[
+            colback=blue!3!white,
+            colframe=blue!40!black,
+            width=0.6\textwidth,
+            arc=1mm,
+            boxrule=0.8pt,
+            left=15pt,
+            right=15pt,
+            top=10pt,
+            bottom=10pt
+        ]
+            \centering
+            {\large\textit{Lecture Notes}}\\[0.3cm]
+            \textcolor{gray}{MultiModal Systems --- Theory 2}
+        \end{tcolorbox}
+        
+        \vfill
+        
+        % Clean course details
+        \begin{tcolorbox}[
+            enhanced,
+            colback=white,
+            colframe=gray!30,
+            width=0.5\textwidth,
+            arc=0mm,
+            boxrule=0.5pt,
+            left=20pt,
+            right=20pt,
+            top=12pt,
+            bottom=12pt,
+            shadow={2mm}{-2mm}{0mm}{black!10}
+        ]
+            \centering
+            {\small\textcolor{gray!70}{\textbf{ACADEMIC YEAR}}}\\[0.4cm]
+            {\Large 2025--2026}
+        \end{tcolorbox}
+        
+        \vspace{2cm}
+        
+        % Author
+        {\LARGE\textsc{Jacopo Parretti}}
+        
+        \vspace{1.5cm}
+        
+    \end{center}
+\end{titlepage}
+
 \newpage
 \tableofcontents
 \newpage
