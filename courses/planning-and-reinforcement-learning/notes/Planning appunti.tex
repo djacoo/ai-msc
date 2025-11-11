@@ -3436,4 +3436,166 @@ The general form consists of:
 
 This standard form is the basis for applying the Simplex algorithm to determine satisfiability of the constraint system.
 
+
+\newpage 
+
+\subsection{The General Simplex Algorithm}
+
+Having discussed Step I (transformation into general form), we now present \textbf{Step II}: the core algorithm for satisfiability checking.
+
+\subsubsection{Detailed Transformation Process (Step I Recap)}
+
+For each input constraint $L \bowtie R$ where $\bowtie \in \{\leq, <, =\}$:
+
+\begin{enumerate}
+    \item Rewrite it into the form $L' \bowtie b$ where $L'$ is an LRA-term and $b$ is a constant
+    
+    \item Introduce an additional \textbf{slack variable} $s$ and rewrite:
+    \[
+    L' \bowtie b \quad \Rightarrow \quad L' - s = 0 \land s \bowtie b
+    \]
+    
+    \item If $\bowtie$ is $=$, rewrite the bound constraint as:
+    \[
+    s = b \quad \Rightarrow \quad s \leq b \land s \geq b
+    \]
+\end{enumerate}
+
+\begin{example}[Complete Transformation]
+Starting from:
+\begin{align*}
+x + y &\geq 2 \\
+2x - y &\geq 0 \\
+-x + 2y &\geq 1
+\end{align*}
+
+After introducing slack variables $s_1, s_2, s_3$:
+\begin{align*}
+x + y - s_1 &= 0 \quad \land \quad s_1 \geq 2 \\
+2x - y - s_2 &= 0 \quad \land \quad s_2 \geq 0 \\
+-x + 2y - s_3 &= 0 \quad \land \quad s_3 \geq 1
+\end{align*}
+
+\textbf{Variables:}
+\begin{itemize}
+    \item \textbf{Problem variables}: $\{x, y\}$ (original variables)
+    \item \textbf{Slack variables}: $\{s_1, s_2, s_3\}$ (additional variables)
+\end{itemize}
+\end{example}
+
+\subsubsection{Tableau Representation}
+
+The transformation creates a matrix $A$ representing the system $Ax = 0$. This matrix is formed by:
+\begin{itemize}
+    \item Coefficients of the problem variables $x_1, \ldots, x_n$
+    \item A diagonal submatrix for the slack variables $s_1, \ldots, s_m$ (with $-1$ on the diagonal)
+\end{itemize}
+
+\textbf{Key concepts:}
+\begin{itemize}
+    \item $\mathcal{B}$ = set of \textbf{basic variables} (dependent variables)
+    \item $\mathcal{N}$ = set of \textbf{non-basic variables} (independent variables)
+    \item $\alpha: X \rightarrow \mathbb{Q}$ = assignment function where $X = \{x_1, \ldots, x_n, s_1, \ldots, s_m\}$
+\end{itemize}
+
+\subsubsection{Step II: The Simplex Algorithm for Satisfiability}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{General Simplex Algorithm}]
+
+\textbf{Initialization:}
+\begin{itemize}
+    \item $\mathcal{B} = \{s_1, \ldots, s_m\}$ (basic variables are initially the slack variables)
+    \item $\mathcal{N} = \{x_1, \ldots, x_n\}$ (non-basic variables are the problem variables)
+    \item $\alpha(x) = 0$ for all $x \in \mathcal{B} \cup \mathcal{N}$
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Invariants maintained throughout:}
+\begin{itemize}
+    \item \textbf{Inv-1}: $Ax = 0$ is satisfied by $\alpha$ (structural equations hold)
+    \item \textbf{Inv-2}: The lower and upper bounds on variables in $\mathcal{N}$ are satisfied
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Algorithm:}
+
+Construct the initial tableau. Let $<$ be a fixed ordering on $\mathcal{B} \cup \mathcal{N}$.
+
+\begin{algorithmic}[1]
+\WHILE{\texttt{true}}
+    \IF{$\alpha$ satisfies the bounds on all basic variables}
+        \RETURN $(\texttt{sat}, \alpha)$
+    \ENDIF
+    \STATE Let $x_i$ be the $<$-smallest basic variable such that $\alpha(x_i)$ violates its bounds
+    \STATE Look for a suitable non-basic variable $x_j$
+    \IF{no suitable $x_j$ exists}
+        \RETURN $(\texttt{unsat}, \bot)$
+    \ELSE
+        \STATE Let $x_j$ be the $<$-smallest suitable non-basic variable
+        \STATE Perform \textbf{pivoting}: update $\alpha$ and swap $x_i$ and $x_j$ between $\mathcal{B}$ and $\mathcal{N}$
+    \ENDIF
+\ENDWHILE
+\end{algorithmic}
+\end{tcolorbox}
+
+\subsubsection{Pivoting: Finding Suitable Non-Basic Variables}
+
+Suppose basic variable $x_i$ violates its bounds. We have $x_i$ expressed in terms of non-basic variables:
+\[
+x_i = \sum_{j=1}^{|\mathcal{N}|} a_{ij} x_j
+\]
+
+\textbf{Case 1}: $\alpha(x_i) < l_i$ (current value is below the lower bound)
+
+We need to \textbf{augment} $\alpha(x_i)$. A non-basic variable $x_j$ is \textbf{suitable} if:
+\begin{itemize}
+    \item $a_{ij} > 0$ and $\alpha(x_j) < u_j$ (we can increase $x_j$), \textbf{or}
+    \item $a_{ij} < 0$ and $\alpha(x_j) > l_j$ (we can decrease $x_j$)
+\end{itemize}
+
+\textbf{Case 2}: $\alpha(x_i) > u_i$ (current value is above the upper bound)
+
+We need to \textbf{reduce} $\alpha(x_i)$. A non-basic variable $x_j$ is \textbf{suitable} if:
+\begin{itemize}
+    \item $a_{ij} > 0$ and $\alpha(x_j) > l_j$ (we can decrease $x_j$), \textbf{or}
+    \item $a_{ij} < 0$ and $\alpha(x_j) < u_j$ (we can increase $x_j$)
+\end{itemize}
+
+\subsubsection{Update Rule}
+
+Once a suitable $x_j$ is found, we compute the change $\Delta$ and update the assignment:
+
+\[
+\Delta = \frac{\text{target value} - \alpha(x_i)}{a_{ij}}
+\]
+
+For example, if $\alpha(x_i) < l_i$, we set:
+\[
+\Delta = \frac{l_i - \alpha(x_i)}{a_{ij}}, \quad \alpha(x_j) := \alpha(x_j) + \Delta
+\]
+
+Then we update $\alpha(x_i)$ and all other basic variables that depend on $x_j$ accordingly, and swap $x_i$ and $x_j$ between $\mathcal{B}$ and $\mathcal{N}$.
+
+\begin{remark}
+The algorithm maintains the invariants Inv-1 and Inv-2 at each step. Termination is guaranteed because:
+\begin{itemize}
+    \item If we find a satisfying assignment, we return \texttt{sat}
+    \item If we cannot find a suitable non-basic variable to fix a bound violation, the system is \texttt{unsat}
+    \item The choice of ordering $<$ and careful pivoting rules prevent cycling
+\end{itemize}
+\end{remark} 
+
+
+
+
+
+
+
+
+
+
+
+
 \end{document}
