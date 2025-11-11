@@ -1,177 +1,134 @@
 <div align="center">
-  <h1>
-    <span style="display: inline-block; animation: fadeInUp 1s ease-out;">
-      🤖 AI Master's Notes — University of Verona
-    </span>
-  </h1>
-  <p style="animation: fadeIn 1.5s ease-out;">
-    A comprehensive collection of notes, teaching materials, reference books, and resources for the Master's program in Artificial Intelligence at the University of Verona (Academic Year 2025/2026).
-  </p>
-</div>
 
-<style>
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+<svg width="800" height="100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 36px sans-serif; fill: #2c3e50; }
+      .letter { opacity: 0; animation: fadeIn 0.5s ease-in forwards; }
+      @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+  </defs>
+  <text x="50%" y="50" text-anchor="middle" class="title">
+    <tspan class="letter" style="animation-delay: 0s">A</tspan><tspan class="letter" style="animation-delay: 0.05s">I</tspan>
+    <tspan class="letter" style="animation-delay: 0.1s"> </tspan>
+    <tspan class="letter" style="animation-delay: 0.15s">M</tspan><tspan class="letter" style="animation-delay: 0.2s">a</tspan><tspan class="letter" style="animation-delay: 0.25s">s</tspan><tspan class="letter" style="animation-delay: 0.3s">t</tspan><tspan class="letter" style="animation-delay: 0.35s">e</tspan><tspan class="letter" style="animation-delay: 0.4s">r</tspan><tspan class="letter" style="animation-delay: 0.45s">'</tspan><tspan class="letter" style="animation-delay: 0.5s">s</tspan>
+    <tspan class="letter" style="animation-delay: 0.55s"> </tspan>
+    <tspan class="letter" style="animation-delay: 0.6s">N</tspan><tspan class="letter" style="animation-delay: 0.65s">o</tspan><tspan class="letter" style="animation-delay: 0.7s">t</tspan><tspan class="letter" style="animation-delay: 0.75s">e</tspan><tspan class="letter" style="animation-delay: 0.8s">s</tspan>
+    <tspan class="letter" style="animation-delay: 0.85s"> </tspan><tspan class="letter" style="animation-delay: 0.9s">—</tspan><tspan class="letter" style="animation-delay: 0.95s"> </tspan>
+    <tspan class="letter" style="animation-delay: 1s">U</tspan><tspan class="letter" style="animation-delay: 1.05s">n</tspan><tspan class="letter" style="animation-delay: 1.1s">i</tspan><tspan class="letter" style="animation-delay: 1.15s">v</tspan><tspan class="letter" style="animation-delay: 1.2s">e</tspan><tspan class="letter" style="animation-delay: 1.25s">r</tspan><tspan class="letter" style="animation-delay: 1.3s">s</tspan><tspan class="letter" style="animation-delay: 1.35s">i</tspan><tspan class="letter" style="animation-delay: 1.4s">t</tspan><tspan class="letter" style="animation-delay: 1.45s">y</tspan>
+    <tspan class="letter" style="animation-delay: 1.5s"> </tspan>
+    <tspan class="letter" style="animation-delay: 1.55s">o</tspan><tspan class="letter" style="animation-delay: 1.6s">f</tspan>
+    <tspan class="letter" style="animation-delay: 1.65s"> </tspan>
+    <tspan class="letter" style="animation-delay: 1.7s">V</tspan><tspan class="letter" style="animation-delay: 1.75s">e</tspan><tspan class="letter" style="animation-delay: 1.8s">r</tspan><tspan class="letter" style="animation-delay: 1.85s">o</tspan><tspan class="letter" style="animation-delay: 1.9s">n</tspan><tspan class="letter" style="animation-delay: 1.95s">a</tspan>
+  </text>
+</svg>
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-</style>
-
----
-
-<div style="animation: slideIn 1s ease-out;">
-
-## 📂 Repository Structure
-
-<details open>
-<summary><strong>📁 courses/</strong> — Course materials for all AI Master's subjects</summary>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<details>
-  <summary><strong>🧠 automated-reasoning/</strong></summary>
-  
-  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
-  - 📊 `slides/` — Presentation slides and summaries
-  </details>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<details>
-  <summary><strong>💻 human-computer-interaction/</strong></summary>
-  
-  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
-  - 📊 `slides/` — Presentation slides and summaries
-  - 📋 `assignment-1/` — Course assignments
-  </details>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<details>
-  <summary><strong>🤖 machine-learning-and-deep-learning/</strong></summary>
-  
-  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
-  - 📊 `slides/` — Presentation slides and summaries
-  - 🔬 `lab/` — Laboratory exercises and Jupyter notebooks
-  </details>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<details>
-  <summary><strong>🗣️ natural-language-processing/</strong></summary>
-  
-  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
-  - 📊 `slides/` — Presentation slides and summaries
-  </details>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<details>
-  <summary><strong>🎯 planning-and-reinforcement-learning/</strong></summary>
-  
-  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
-  - 📊 `slides/` — Presentation slides and summaries
-  </details>
-
-</details>
-
-<details open>
-<summary><strong>📚 books/</strong> — Comprehensive reference library</summary>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<details>
-  <summary><strong>📖 ML/</strong> — Machine Learning textbooks</summary>
-  
-  - Machine Learning for Absolute Beginners
-  - Bishop: Pattern Recognition and Machine Learning (2006)
-  - Designing Machine Learning Systems
-  - Hands-On Machine Learning (Scikit-Learn, Keras, TensorFlow)
-  - Machine Learning: A Probabilistic Perspective
-  - Practical MLOps
-  - Probabilistic Machine Learning: Advanced Topics
-  - Building Machine Learning Powered Applications
-  - And more...
-  </details>
-
-&nbsp;&nbsp;&nbsp;&nbsp;**General AI & Deep Learning:**
-  - 🎓 AI Engineering
-  - 🔬 Applied Machine Learning and AI for Engineers
-  - 📘 Artificial Intelligence: A Modern Approach (Russell & Norvig)
-  - 🧠 Deep Learning (Goodfellow, Bengio, Courville)
-  - 🎨 GANs in Action
-  - 🌟 Generative Deep Learning
-  
-&nbsp;&nbsp;&nbsp;&nbsp;**NLP & LLMs:**
-  - 💬 NLP with Transformer Models
-  - 🤗 Hands-On Large Language Models
-  - 🚀 Hands-On Generative AI with Transformers
-  - 📚 LLM Engineers Handbook
-
-</details>
-
-<details>
-<summary><strong>📄 Root Files</strong></summary>
-
-- `README.md` — This file
-- `LICENSE` — MIT License
-- `.gitignore` — Git ignore rules
-
-</details>
+A comprehensive collection of notes, teaching materials, reference books, and resources for the Master's program in Artificial Intelligence at the University of Verona (Academic Year 2025/2026).
 
 </div>
 
 ---
 
-## Reference Books
+## Repository Structure
 
-### General AI & Engineering
-- **AI Engineering** — Comprehensive guide to AI system design
-- **Applied Machine Learning and AI for Engineers** — Practical applications
-- **Artificial Intelligence: A Modern Approach** — Russell & Norvig
+<svg width="100%" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .node { font: 14px monospace; fill: #2c3e50; }
+      .folder { fill: #3498db; font-weight: bold; }
+      .file { fill: #95a5a6; }
+      .line { stroke: #bdc3c7; stroke-width: 2; }
+      .branch { opacity: 0; animation: slideIn 0.8s ease-out forwards; }
+      @keyframes slideIn { 
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+    </style>
+  </defs>
+  
+  <!-- Root -->
+  <text x="20" y="30" class="node folder branch" style="animation-delay: 0s">ai-masters-notes/</text>
+  
+  <!-- Root Files -->
+  <line x1="20" y1="35" x2="20" y2="110" class="line branch" style="animation-delay: 0.1s"/>
+  <text x="40" y="55" class="node file branch" style="animation-delay: 0.2s">├── README.md</text>
+  <text x="40" y="75" class="node file branch" style="animation-delay: 0.25s">├── LICENSE</text>
+  <text x="40" y="95" class="node file branch" style="animation-delay: 0.3s">├── .gitignore</text>
+  
+  <!-- Courses Folder -->
+  <text x="40" y="125" class="node folder branch" style="animation-delay: 0.4s">├── courses/</text>
+  <line x1="60" y1="130" x2="60" y2="400" class="line branch" style="animation-delay: 0.45s"/>
+  
+  <!-- Automated Reasoning -->
+  <text x="80" y="150" class="node folder branch" style="animation-delay: 0.5s">│   ├── automated-reasoning/</text>
+  <text x="100" y="170" class="node file branch" style="animation-delay: 0.55s">│   │   ├── notes/</text>
+  <text x="100" y="185" class="node file branch" style="animation-delay: 0.6s">│   │   └── slides/</text>
+  
+  <!-- HCI -->
+  <text x="80" y="210" class="node folder branch" style="animation-delay: 0.65s">│   ├── human-computer-interaction/</text>
+  <text x="100" y="230" class="node file branch" style="animation-delay: 0.7s">│   │   ├── assignment-1/</text>
+  <text x="100" y="245" class="node file branch" style="animation-delay: 0.75s">│   │   ├── notes/</text>
+  <text x="100" y="260" class="node file branch" style="animation-delay: 0.8s">│   │   └── slides/</text>
+  
+  <!-- ML & DL -->
+  <text x="80" y="285" class="node folder branch" style="animation-delay: 0.85s">│   ├── machine-learning-and-deep-learning/</text>
+  <text x="100" y="305" class="node file branch" style="animation-delay: 0.9s">│   │   ├── lab/</text>
+  <text x="100" y="320" class="node file branch" style="animation-delay: 0.95s">│   │   ├── notes/</text>
+  <text x="100" y="335" class="node file branch" style="animation-delay: 1s">│   │   └── slides/</text>
+  
+  <!-- NLP -->
+  <text x="80" y="360" class="node folder branch" style="animation-delay: 1.05s">│   ├── natural-language-processing/</text>
+  <text x="100" y="380" class="node file branch" style="animation-delay: 1.1s">│   │   ├── notes/</text>
+  <text x="100" y="395" class="node file branch" style="animation-delay: 1.15s">│   │   └── slides/</text>
+  
+  <!-- Planning & RL -->
+  <text x="80" y="420" class="node folder branch" style="animation-delay: 1.2s">│   └── planning-and-reinforcement-learning/</text>
+  <text x="100" y="440" class="node file branch" style="animation-delay: 1.25s">│       ├── notes/</text>
+  <text x="100" y="455" class="node file branch" style="animation-delay: 1.3s">│       └── slides/</text>
+  
+  <!-- Books Folder -->
+  <text x="40" y="485" class="node folder branch" style="animation-delay: 1.35s">└── books/</text>
+  <line x1="60" y1="490" x2="60" y2="650" class="line branch" style="animation-delay: 1.4s"/>
+  
+  <!-- ML Books -->
+  <text x="80" y="510" class="node folder branch" style="animation-delay: 1.45s">    ├── ML/</text>
+  <text x="100" y="530" class="node file branch" style="animation-delay: 1.5s">    │   ├── Machine Learning textbooks...</text>
+  <text x="100" y="545" class="node file branch" style="animation-delay: 1.55s">    │   └── (9 books)</text>
+  
+  <!-- General Books -->
+  <text x="80" y="570" class="node file branch" style="animation-delay: 1.6s">    ├── AI Engineering.pdf</text>
+  <text x="80" y="590" class="node file branch" style="animation-delay: 1.65s">    ├── Deep Learning.pdf</text>
+  <text x="80" y="610" class="node file branch" style="animation-delay: 1.7s">    ├── LLM Engineers Handbook.pdf</text>
+  <text x="80" y="630" class="node file branch" style="animation-delay: 1.75s">    ├── NLP with Transformers.pdf</text>
+  <text x="80" y="650" class="node file branch" style="animation-delay: 1.8s">    └── (10 more books...)</text>
+</svg>
 
-### Machine Learning
-#### Core ML
-- **Bishop: Pattern Recognition and Machine Learning (2006)** — Classic ML textbook
-- **Machine Learning: A Probabilistic Perspective** — Advanced probabilistic methods
-- **Machine Learning for Absolute Beginners** — Introductory text
-- **Hands-On Machine Learning with Scikit-Learn, Keras and TensorFlow** — Practical guide
-- **Hands-On Machine Learning with Scikit-Learn and PyTorch (Second Early Release)** — Updated practical guide
-- **Hands-On Machine Learning with PyTorch** — PyTorch-focused implementation
-- **Machine Learning** — General reference
+### Directory Descriptions
 
-#### MLOps & Production
-- **Designing Machine Learning Systems: An Iterative Process** — System design
-- **Practical MLOps: Operationalizing Machine Learning Models** — Deployment and operations
-- **Building Machine Learning Powered Applications: Going from Idea to Product** — End-to-end ML product development
+**courses/** — Course materials for all AI Master's subjects
+- **automated-reasoning/** — Logic, proof systems, and automated theorem proving
+  - `notes/` — Lecture notes in LaTeX/PDF format
+  - `slides/` — Presentation slides and summaries
+  
+- **human-computer-interaction/** — User interface design and usability
+  - `assignment-1/` — Course assignments and projects
+  - `notes/` — Lecture notes in LaTeX/PDF format
+  - `slides/` — Presentation slides and summaries
 
-#### Advanced Topics
-- **Probabilistic Machine Learning: Advanced Topics** — Kevin Murphy's advanced text
-- **ML Math** — Mathematical foundations
+- **machine-learning-and-deep-learning/** — Core ML and neural network concepts
+  - `lab/` — Laboratory exercises and Jupyter notebooks
+  - `notes/` — Lecture notes in LaTeX/PDF format
+  - `slides/` — Presentation slides and summaries
 
-### Deep Learning
-- **Deep Learning** — Goodfellow, Bengio, Courville (The definitive textbook)
-- **Generative Deep Learning** — Comprehensive guide to generative models
-- **GANs in Action: Deep Learning with Generative Adversarial Networks** — Practical GANs
+- **natural-language-processing/** — Text processing and language models
+  - `notes/` — Lecture notes in LaTeX/PDF format
+  - `slides/` — Presentation slides and summaries
 
-### Natural Language Processing & LLMs
-- **NLP with Transformer Models** — Modern NLP architectures
-- **Hands-On Large Language Models: Language Understanding and Generation** — Alammar & Grootendorst
-- **Hands-On Generative AI with Transformers and Diffusion Models** — Practical generative AI
-- **LLM Engineers Handbook** — Engineering with large language models
+- **planning-and-reinforcement-learning/** — Decision making and sequential learning
+  - `notes/` — Lecture notes in LaTeX/PDF format
+  - `slides/` — Presentation slides and summaries
+
+**books/** — Comprehensive reference library with textbooks covering Machine Learning, Deep Learning, NLP, LLMs, and AI Engineering
 
 ---
 
