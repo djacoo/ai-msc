@@ -3146,6 +3146,116 @@ Since both cases lead to a contradiction, the formula $\phi$ is valid in $\mathc
 \end{example}
 
 
+\subsection{Decision Procedure for Quantifier-Free Array Theory}
+
+We now present a decision procedure for the quantifier-free fragment of the theory of arrays.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Decision Problem for $\mathcal{T}_A$}]
+\textbf{Input:} A formula $S$ over $\mathcal{T}_A$
+
+\textbf{Output:}
+\begin{itemize}
+    \item \texttt{SAT} if $S$ is satisfiable in $\mathcal{T}_A$
+    \item \texttt{UNSAT} if $S$ is unsatisfiable in $\mathcal{T}_A$
+\end{itemize}
+
+\textbf{Assumption:} $S$ is a set of literals (equivalently, a conjunction) where all variables, if any, are free (i.e., quantifier-free).
+\end{tcolorbox}
+
+\subsubsection{Key Observation}
+
+The function $\textsf{select}(a, i)$ can be viewed as applying array $a$ to index $i$. An array is essentially a table that maps indices to values—it is an \textbf{extensional representation of a function}.
+
+This observation motivates the following decision procedure, which reduces array satisfiability to congruence closure by eliminating array-specific operations.
+
+\subsubsection{Decision Procedure Algorithm}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Array Theory Decision Procedure}]
+The procedure operates in two main cases depending on whether $\textsf{store}$ operations appear in the formula.
+
+\vspace{0.5em}
+
+\textbf{Case 1: No $\textsf{store}$ operations}
+
+If $S$ does not contain any $\textsf{store}$ terms:
+\begin{enumerate}
+    \item For each array constant (or function) $a$ of sort \textsf{ARRAY}, introduce a new function symbol $f_a$
+    \item Rewrite each term of the form $\textsf{select}(a, i)$ as $f_a(i)$
+    \item Apply the \textbf{congruence closure algorithm} to decide satisfiability
+\end{enumerate}
+
+\vspace{0.5em}
+
+\textbf{Case 2: With $\textsf{store}$ operations}
+
+If $S$ contains $\textsf{store}$ operations:
+\begin{enumerate}
+    \item \textbf{Key observation}: In $\mathcal{T}_A$ (not $\mathcal{T}_A^{\backsimeq}$), $\textsf{store}$ can only appear inside a $\textsf{select}$ operation
+    
+    \item Perform case analysis corresponding to the two select-over-store axioms of $\mathcal{T}_A$
+    
+    \item For each occurrence of $\textsf{select}(\textsf{store}(a, i, v), i')$, create two subproblems:
+    \begin{itemize}
+        \item \textbf{Subproblem 1}: $i \backsimeq i'$ (indices are equal)
+        
+        Replace $\textsf{select}(\textsf{store}(a, i, v), i')$ with $v$ (the store is immaterial, we get the stored value)
+        
+        \item \textbf{Subproblem 2}: $i \not\backsimeq i'$ (indices are different)
+        
+        Replace $\textsf{select}(\textsf{store}(a, i, v), i')$ with $\textsf{select}(a, i')$ (the store is irrelevant)
+    \end{itemize}
+    
+    \item Repeat this case splitting for each $\textsf{store}$ operation (we get $2^n$ subproblems for $n$ stores)
+    
+    \item Once all $\textsf{store}$ operations are eliminated, apply the congruence closure algorithm to each subproblem
+    
+    \item \textbf{Final verdict}:
+    \begin{itemize}
+        \item If \textit{all} subproblems are found \texttt{UNSAT}, return \texttt{UNSAT}
+        \item If \textit{at least one} subproblem is found \texttt{SAT}, return \texttt{SAT}
+    \end{itemize}
+\end{enumerate}
+\end{tcolorbox}
+
+\subsubsection{Procedure Visualization}
+
+For a term $S[\textsf{select}(\textsf{store}(a, i, v), i')]$, the case splitting can be visualized as:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.5cm and 2cm,
+    every node/.style={align=center},
+    level/.style={sibling distance=40mm/#1}
+]
+    \node[rectangle, draw, fill=blue!20] {$S[\textsf{select}(\textsf{store}(a, i, v), i')]$}
+        child {node[rectangle, draw, fill=green!20] {Case: $i \backsimeq i'$\\$S[v]$\\(store eliminated)}}
+        child {node[rectangle, draw, fill=yellow!20] {Case: $i \not\backsimeq i'$\\$S[\textsf{select}(a, i')]$\\(store eliminated)}};
+\end{tikzpicture}
+\end{center}
+
+\begin{remark}
+The procedure generates $2^n$ subproblems for $n$ occurrences of $\textsf{store}$, which can lead to exponential complexity in the worst case. However, in practice, many subproblems can be pruned early, and modern optimizations (such as lazy case splitting) significantly improve performance.
+\end{remark}
+
+\subsubsection{Correctness}
+
+The correctness of this procedure follows from:
+\begin{itemize}
+    \item \textbf{Soundness}: Each subproblem correctly encodes a possible case consistent with the select-over-store axioms
+    \item \textbf{Completeness}: The case splitting exhaustively covers all possibilities (either $i \backsimeq i'$ or $i \not\backsimeq i'$)
+    \item \textbf{Termination}: The procedure terminates because each case split eliminates at least one $\textsf{store}$ operation, and we start with finitely many stores
+\end{itemize}
+
+
+
+
+
+
+\newpage 
+
+\part{}
+
+\section{}
 
 
 
