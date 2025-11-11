@@ -1,91 +1,138 @@
-# AI Master's Notes — University of Verona
+<div align="center">
+  <h1>
+    <span style="display: inline-block; animation: fadeInUp 1s ease-out;">
+      🤖 AI Master's Notes — University of Verona
+    </span>
+  </h1>
+  <p style="animation: fadeIn 1.5s ease-out;">
+    A comprehensive collection of notes, teaching materials, reference books, and resources for the Master's program in Artificial Intelligence at the University of Verona (Academic Year 2025/2026).
+  </p>
+</div>
 
-A comprehensive collection of notes, teaching materials, reference books, and resources for the Master's program in Artificial Intelligence at the University of Verona (Academic Year 2025/2026).
+<style>
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+</style>
 
 ---
 
-## Table of Contents
-- [Overview](#overview)
-- [Repository Structure](#repository-structure)
-- [Reference Books](#reference-books)
-- [Getting Started](#getting-started)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+<div style="animation: slideIn 1s ease-out;">
 
----
+## 📂 Repository Structure
 
-## Overview
+<details open>
+<summary><strong>📁 courses/</strong> — Course materials for all AI Master's subjects</summary>
 
-This repository contains structured materials for five core courses in the AI Master's program:
-- Automated Reasoning
-- Human-Computer Interaction
-- Machine Learning and Deep Learning
-- Natural Language Processing
-- Planning and Reinforcement Learning
+&nbsp;&nbsp;&nbsp;&nbsp;<details>
+  <summary><strong>🧠 automated-reasoning/</strong></summary>
+  
+  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
+  - 📊 `slides/` — Presentation slides and summaries
+  </details>
 
-Additionally, a curated collection of reference books and textbooks is included to support learning and research.
+&nbsp;&nbsp;&nbsp;&nbsp;<details>
+  <summary><strong>💻 human-computer-interaction/</strong></summary>
+  
+  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
+  - 📊 `slides/` — Presentation slides and summaries
+  - 📋 `assignment-1/` — Course assignments
+  </details>
 
----
+&nbsp;&nbsp;&nbsp;&nbsp;<details>
+  <summary><strong>🤖 machine-learning-and-deep-learning/</strong></summary>
+  
+  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
+  - 📊 `slides/` — Presentation slides and summaries
+  - 🔬 `lab/` — Laboratory exercises and Jupyter notebooks
+  </details>
 
-## Repository Structure
+&nbsp;&nbsp;&nbsp;&nbsp;<details>
+  <summary><strong>🗣️ natural-language-processing/</strong></summary>
+  
+  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
+  - 📊 `slides/` — Presentation slides and summaries
+  </details>
 
-```
-ai-masters-notes/
-├── README.md
-├── LICENSE
-├── .gitignore
-├── courses/
-│   ├── automated-reasoning/
-│   │   ├── notes/
-│   │   └── slides/
-│   ├── human-computer-interaction/
-│   │   ├── assignment-1/
-│   │   ├── notes/
-│   │   └── slides/
-│   ├── machine-learning-and-deep-learning/
-│   │   ├── lab/
-│   │   ├── notes/
-│   │   └── slides/
-│   ├── natural-language-processing/
-│   │   ├── notes/
-│   │   └── slides/
-│   └── planning-and-reinforcement-learning/
-│       ├── notes/
-│       └── slides/
-└── books/
-    ├── ML/
-    │   ├── 0812_Machine-Learning-for-Absolute-Beginners.pdf
-    │   ├── Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf
-    │   ├── Designing Machine Learning Systems An Iterative Process.pdf
-    │   ├── Hands-On_Machine_Learning_with_Scikit-Learn_Keras_and_Tensorflow_-_Aurelien_Geron.pdf
-    │   ├── ML Machine Learning-A Probabilistic Perspective.pdf
-    │   ├── Practical MLOps_ Operationalizing Machine Learning Models.pdf
-    │   ├── Probabilistic Machine Learning Advanced Topics.pdf
-    │   ├── building-machine-learning-powered-applications-going-from-idea-to-product.pdf
-    │   └── machine_learning.pdf
-    ├── AI Engineering.pdf
-    ├── Applied-Machine-Learning-and-AI-for-Engineers.pdf
-    ├── Artificial Intelligence. A modern approach (Stuart Russell  Peter Norvig).pdf
-    ├── Deep Learning by Ian Goodfellow, Yoshua Bengio, Aaron Courville.pdf
-    ├── Gans-in-action-deep-learning-with-generative-adversarial-networks.pdf
-    ├── Generative-Deep-Learning.pdf
-    ├── Hands-On Generative AI with Transformers and Diffusion Models.pdf
-    ├── Hands-On Large Language Models Language Understanding and Generation.pdf
-    ├── Hands-On Machine Learning with Pytorch.pdf
-    ├── Hands-On Machine Learning with Scikit-Learn and PyTorch (Second Early Release).pdf
-    ├── LLM Engineers Handbook.pdf
-    ├── ML Math.pdf
-    └── NLP with Transformer models.pdf
-```
+&nbsp;&nbsp;&nbsp;&nbsp;<details>
+  <summary><strong>🎯 planning-and-reinforcement-learning/</strong></summary>
+  
+  - 📝 `notes/` — Lecture notes in LaTeX/PDF format
+  - 📊 `slides/` — Presentation slides and summaries
+  </details>
 
-### Course Folders
+</details>
 
-Each course directory contains:
-- **`notes/`** — Lecture notes in LaTeX/PDF format
-- **`slides/`** — Presentation slides and summaries
-- **`lab/`** — Laboratory exercises and Jupyter notebooks (where applicable)
-- **`assignment-X/`** — Course assignments and projects (where applicable)
+<details open>
+<summary><strong>📚 books/</strong> — Comprehensive reference library</summary>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<details>
+  <summary><strong>📖 ML/</strong> — Machine Learning textbooks</summary>
+  
+  - Machine Learning for Absolute Beginners
+  - Bishop: Pattern Recognition and Machine Learning (2006)
+  - Designing Machine Learning Systems
+  - Hands-On Machine Learning (Scikit-Learn, Keras, TensorFlow)
+  - Machine Learning: A Probabilistic Perspective
+  - Practical MLOps
+  - Probabilistic Machine Learning: Advanced Topics
+  - Building Machine Learning Powered Applications
+  - And more...
+  </details>
+
+&nbsp;&nbsp;&nbsp;&nbsp;**General AI & Deep Learning:**
+  - 🎓 AI Engineering
+  - 🔬 Applied Machine Learning and AI for Engineers
+  - 📘 Artificial Intelligence: A Modern Approach (Russell & Norvig)
+  - 🧠 Deep Learning (Goodfellow, Bengio, Courville)
+  - 🎨 GANs in Action
+  - 🌟 Generative Deep Learning
+  
+&nbsp;&nbsp;&nbsp;&nbsp;**NLP & LLMs:**
+  - 💬 NLP with Transformer Models
+  - 🤗 Hands-On Large Language Models
+  - 🚀 Hands-On Generative AI with Transformers
+  - 📚 LLM Engineers Handbook
+
+</details>
+
+<details>
+<summary><strong>📄 Root Files</strong></summary>
+
+- `README.md` — This file
+- `LICENSE` — MIT License
+- `.gitignore` — Git ignore rules
+
+</details>
+
+</div>
 
 ---
 
@@ -125,68 +172,6 @@ Each course directory contains:
 - **Hands-On Large Language Models: Language Understanding and Generation** — Alammar & Grootendorst
 - **Hands-On Generative AI with Transformers and Diffusion Models** — Practical generative AI
 - **LLM Engineers Handbook** — Engineering with large language models
-
----
-
-## Getting Started
-
-### Prerequisites
-- **Git** — For cloning the repository
-- **LaTeX Distribution** — For compiling `.tex` files (e.g., MacTeX, TeX Live, MiKTeX)
-- **PDF Reader** — For viewing compiled documents
-- **Python 3.x** — For running lab notebooks (if applicable)
-- **Jupyter Notebook/Lab** — For interactive lab sessions
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/djacoo/ai-masters-notes.git
-   cd ai-masters-notes
-   ```
-
-2. **Browse course materials:**
-   ```bash
-   cd courses/<course-name>/notes/
-   ```
-
-3. **Compile LaTeX notes (if needed):**
-   ```bash
-   pdflatex <filename>.tex
-   ```
-
-4. **Access reference books:**
-   ```bash
-   cd books/
-   ```
-
-### Recommended Tools
-- **LaTeX Editor:** VS Code with LaTeX Workshop extension, Overleaf, TeXstudio
-- **PDF Viewer:** Adobe Acrobat Reader, Preview (macOS), Evince (Linux)
-- **IDE:** VS Code, PyCharm, Jupyter Lab
-
----
-
-## Contributing
-
-Contributions are welcome! To suggest improvements, corrections, or additions:
-
-1. **Fork the repository**
-2. **Create a feature branch:**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. **Commit your changes:**
-   ```bash
-   git commit -m "Description of changes"
-   ```
-4. **Push to your fork:**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-5. **Open a Pull Request**
-
-For issues or suggestions, please open an issue on GitHub.
 
 ---
 
