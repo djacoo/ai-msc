@@ -5831,12 +5831,1189 @@ Stacking combines predictions of multiple ML models (called \textbf{base models}
 \end{tcolorbox}
 
 
-
 \newpage 
 
 \part{}
 
-\section{}
+\section{Linear Discriminant Functions}
 
+The objective of this lecture is to present methods for learning \textbf{linear discriminant} functions of the form:
+\[
+g(x) = w^T x + w_0 \Leftrightarrow 
+\begin{cases}
+g(x) > 0 & x \in \omega_1 \\
+g(x) < 0 & x \in \omega_2
+\end{cases}
+\]
+
+where:
+\begin{itemize}
+    \item $w$ is the \textbf{weight vector}
+    \item $w_0$ is the \textbf{threshold weight} or \textbf{bias}
+    \item $\mathbf{x} = [x_1, \ldots, x_n]$, $\mathbf{w} = [w_1, \ldots, w_n]$
+\end{itemize}
+
+For a problem with 2 classes, the goal is to create a \textbf{linear function} $g(x)$ that separates the examples belonging to the two classes.
+
+\textbf{Note:} $g(x) = 0 \Rightarrow$ either class
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/linear_discriminant_intro.png}
+\end{center}
+
+\subsection{Learning the Linear Discriminant Function}
+
+Suppose we have a set of $m$ samples $\mathbf{x}_1, \ldots, \mathbf{x}_m$, some tagged $\omega_1$ and others tagged $\omega_2$.
+
+We want to use these samples to determine the weights $\mathbf{w}$ and $w_0$ of the linear discriminating function.
+
+Suppose also that there is a solution for which the probability of error is very low.
+
+Thus, a reasonable approach is to look for a weight vector that classifies all of the samples correctly or that the probability of making a mistake is zero.
+
+If such a \textbf{weight vector} exists, the samples are said to be \textbf{linearly separable}.
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/linear_discriminant_samples.png}
+\end{center}
+
+\subsection{Linear Separability}
+
+Data are \textbf{linearly separable} if there exists a linear boundary (hyperplane) that perfectly separates the two classes.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{Linearly separable}: Classes that can be separated by a straight line (in 2D) or hyperplane (in higher dimensions)
+    \item \textbf{NOT Linearly separable}: Classes that cannot be separated by any linear boundary
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/linear_separability_examples.png}
+\end{center}
+
+\subsection{Properties of Linear Discriminant Functions}
+
+Linear discriminant functions are:
+\begin{itemize}
+    \item \textbf{Optimal for Gaussian distributions with equal covariance}: When the data follows Gaussian distributions with equal covariance matrices, the optimal decision boundary is linear
+    
+    \item \textbf{May not be optimal for other data distributions}, but they are very simple to use
+    
+    \item \textbf{Knowledge of class densities is not required} when using linear discriminant functions
+    \begin{itemize}
+        \item Therefore, we can say that this is a \textbf{non-parametric approach}
+    \end{itemize}
+\end{itemize}
+
+\textbf{Note:} With unequal covariance, the optimal decision boundary is quadratic rather than linear.
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/linear_discriminant_gaussian.png}
+\end{center}
+
+\section{Linear Classifiers}
+
+Every linear discriminant function defines a linear classifier.
+
+But not every linear classifier is necessarily described in the form of a "discriminant function" (although in practice, the terms are often used interchangeably).
+
+\subsection{Decision Boundary}
+
+The linear discriminant function is defined as:
+\[
+g(x) = w^T x + w_0 \Leftrightarrow 
+\begin{cases}
+g(x) > 0 & x \in \omega_1 \\
+g(x) < 0 & x \in \omega_2
+\end{cases}
+\]
+
+The \textbf{decision boundary} is defined by $g(x) = w^T x + w_0 = 0$:
+\begin{itemize}
+    \item In 2D, is a \textbf{line}
+    \item In 3D, is a \textbf{plane}
+    \item In nD, is a \textbf{hyperplane}
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/linear_classifiers_decision_boundary.png}
+\end{center}
+
+\subsection{The Role of Weights}
+
+The training data is used to learn $\mathbf{w}$.
+
+\textbf{Important:} Only $\mathbf{w}$ is needed to classify the new data point.
+
+The equation $\mathbf{w}^{\mathrm{T}} \mathbf{x}_i = 0$ defines a hyperplane passing through the origin of the feature space, having $\mathbf{w}$ as a normal vector.
+
+\begin{itemize}
+    \item $\mathbf{w}$ determines the orientation of the decision hyperplane
+    \item $w_0$ determines the location of the decision surface
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/linear_classifiers_hyperplane.png}
+\end{center}
+
+\subsection{Which Hyperplanes?}
+
+If a solution vector exists (if there is a hyperplane) then:
+\begin{itemize}
+    \item Which hyperplane a linear classifier choose when the data is linearly separable?
+    \item The solution vector is not unique!
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/which_hyperplanes.png}
+\end{center}
+
+\subsection{Optimization Approaches}
+
+There are different approaches to find the optimal weight vector:
+
+\subsubsection{Unit-Length Weight Vector}
+
+One possibility is to seek a \textbf{unit-length weight vector} that maximizes the minimum distance from the samples to the separating plane.
+
+\subsubsection{Minimum-Length Weight Vector}
+
+Another possibility is to seek the \textbf{minimum-length weight vector} satisfying:
+\[
+\mathbf{w}^{\mathrm{T}} \mathbf{x}_i \geq b, \quad \forall i
+\]
+
+where $b$ is a positive constant called the \textbf{margin}.
+
+These techniques attempt to find a solution vector closer to the "middle" of the solution region:
+\begin{itemize}
+    \item In this way, the resulting solution is more likely to classify new test samples correctly
+\end{itemize}
+
+\subsection{The Margin}
+
+\begin{definition}[Margin]
+The \textbf{margin} of a classifier is the distance to the closest points of either class.
+\end{definition}
+
+A larger margin generally leads to better generalization performance on unseen data.
+
+\section{Multi-Class Problems}
+
+In case of a multi-class (C-class) problem:
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Multi-Class Classification Strategies}]
+\subsection*{One-vs-Rest Classifiers}
+C-1 classifiers $g_i(\mathbf{x})$ are constructed, one for each class $C_i$ versus non-$C_i$.
+
+\subsection*{One-vs-One Classifiers}
+$C(C-1)/2$ binary classifiers (one-vs-one), and then classify a test sample following a \textbf{majority voting}.
+
+\subsection*{Ambiguity Regions}
+Both approaches lead to areas of \textbf{ambiguity}.
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/multiclass_ambiguity.png}
+\end{center}
+
+\section{LDF: Augmented Feature Vector}
+
+LDF: $g(x) = w^T x + w_0$
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Augmented Feature Vector Transformation}]
+We can write it as:
+\[
+g(\mathbf{x}) = [w_0 \quad w^T] \begin{bmatrix} 1 \\ \mathbf{x} \end{bmatrix} = \mathbf{a}^T \mathbf{y} = g(\mathbf{y})
+\]
+
+where:
+\begin{itemize}
+    \item $\mathbf{a}$ is the \textbf{new weight vector}
+    \item $\mathbf{y}$ is the \textbf{new feature vector} (called the \textbf{augmented feature vector})
+\end{itemize}
+
+We added a dummy dimension to get a completely equivalent new \textbf{homogeneous} problem.
+
+\textbf{Old problem:} $g(\mathbf{x}) = w^t \mathbf{x} + w_0$, with $\mathbf{x} = [x_1, \ldots, x_d]$
+
+\textbf{New problem:} $g(\mathbf{y}) = \mathbf{a}^T \mathbf{y}$, with $\mathbf{y} = [1, x_1, \ldots, x_d]$
+\end{tcolorbox}
+
+\textbf{Feature augmenting is done only for simpler notation.}
+
+\textbf{Note:} Throughout these lecture notes we replace $\mathbf{a}$ with $\mathbf{w}$ for simplicity, since they both refer to weights.
+
+\section{LDF: Training Error}
+
+For the rest of the lecture, assume we have 2 classes.
+
+We will use samples (training data) to determine weights $\mathbf{a}$ (or indicated with $\mathbf{w}$) in the discriminant function $g(\mathbf{y}) = \mathbf{a}^T \mathbf{y}$.
+
+\subsection{Criterion for Determining Weights}
+
+What should be our criterion for determining $\mathbf{a}$?
+
+Suppose, for now that we want to minimize the training error (the number of misclassified samples $y_1, \ldots, y_n$).
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Zero Training Error Conditions}]
+Recall that:
+\begin{itemize}
+    \item $g(y_i) > 0 \Rightarrow y_i$ classified as class 1
+    \item $g(y_i) < 0 \Rightarrow y_i$ classified as class 2
+\end{itemize}
+
+Thus, training error is $0$ if:
+\begin{align*}
+g(y_i) > 0 \quad \forall y_i \in c_1 \\
+g(y_i) < 0 \quad \forall y_i \in c_2
+\end{align*}
+
+This is equivalent to:
+\begin{align*}
+\mathbf{a}^T y_i > 0 \quad \forall y_i \in c_1 \\
+\mathbf{a}^T y_i < 0 \quad \forall y_i \in c_2
+\end{align*}
+
+Which can be rewritten as:
+\begin{align*}
+\mathbf{a}^T y_i > 0 \quad \forall y_i \in c_1 \\
+\mathbf{a}^T (-y_i) > 0 \quad \forall y_i \in c_2
+\end{align*}
+\end{tcolorbox}
+\newpage
+\section{LDF: Normalization}
+
+This suggests a so-called \textbf{"normalization"}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Normalization Procedure}]
+\begin{itemize}
+    \item Replace all examples from class 2 by their negatives:
+    \[
+    y_i \rightarrow -y_i \quad \forall y_i \in c_2
+    \]
+    
+    \item Seek weight vector $\mathbf{a}$ such that:
+    \[
+    \mathbf{a}^T y_i > 0 \quad \forall y_i
+    \]
+    
+    \item If such $\mathbf{a}$ exists, it is called a \textbf{separating} or \textbf{solution vector}
+    
+    \item Original samples $\mathbf{x}_1, \ldots, \mathbf{x}_n$ can indeed be separated by a line in that way
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Before and After Normalization}
+
+\textbf{Before normalization}: Seek a hyperplane that separates patterns from different categories.
+
+\textbf{After normalization}: Seek a hyperplane that puts normalized patterns on the same positive side.
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/normalization_diagram.png}
+\end{center}
+
+\section{LDF: Solution Region}
+
+Coming back to the "which hyperplane" question...
+
+We can see that many solutions for the weight vector $\mathbf{a}$ exist:
+\[
+\mathbf{a}^T y_i = \sum_{k=0}^{d} a_k y_i^{(k)} > 0
+\]
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Solution Region}]
+The \textbf{solution region} corresponding to $\mathbf{a}$ consists of all points classified on one side of the hyperplane, where the hyperplane is perpendicular to the \textbf{normal vector $\mathbf{a}$}.
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/solution_region.png}
+\end{center}
+
+\section{Gradient Descent}
+
+\textbf{Gradient Descent} is one of the simplest approaches to calculating a discriminant function.
+
+It is an iterative method for progressively adjusting the \textbf{weights}.
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Key Principle}]
+The gradient vector in space $\mathbf{W}$ points to the direction of \textbf{maximum deviation} of a function to be maximized/minimized.
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/gradient_descent_intro.png}
+\end{center}
+
+\subsection{Gradient Descent Update Rule}
+
+The procedure consists of updating the value of the weight vector at the $k+1$ step with a contribution proportional to the gradient module calculated at the previous step:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Gradient Descent Formula}]
+\[
+\mathbf{w}(k+1) = \mathbf{w}(k) - \rho_k \nabla J(\mathbf{w})\big|_{\mathbf{w}=\mathbf{w}(k)}
+\]
+
+where $J(\mathbf{w})$ is an \textbf{evaluation function} (\textit{loss function}) that must be \textbf{minimized}.
+
+\begin{itemize}
+    \item $J(\mathbf{w})$ is chosen in such a way as to reach \textbf{the minimum} when $\mathbf{w}$ approaches the \textbf{optimal solution}
+    
+    \item That is, $J(\mathbf{w})$ should be convex, and $\mathbf{w}$ is the solution vector
+\end{itemize}
+\end{tcolorbox}
+
+where:
+\begin{itemize}
+    \item $\rho_k$ is the \textbf{learning rate} (step size) at iteration $k$
+    \item $\nabla J(\mathbf{w})$ is the \textbf{gradient} of the loss function
+\end{itemize}
+
+\subsection{Local vs Global Minimum}
+
+\begin{itemize}
+    \item The minimum of $J(\mathbf{w})$ is obtained by moving $\mathbf{w}$ in the direction opposite to the gradient (in the direction of steepest descent)
+    
+    \item Gradient descent is guaranteed to find only a \textbf{local minimum}
+    
+    \item Very popular, as it is simple and applicable to any function
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/gradient_descent_local_minimum.png}
+\end{center}
+
+\subsection{Gradient Operator}
+
+$\nabla$ is the gradient operator symbol, given by:
+\[
+\nabla J = \begin{bmatrix}
+\frac{\partial J}{\partial w_1} \\
+\vdots \\
+\vdots \\
+\vdots \\
+\frac{\partial J}{\partial w_n}
+\end{bmatrix}
+\]
+
+The update rule remains:
+\[
+\mathbf{w}(k+1) = \mathbf{w}(k) - \rho_k \nabla J(\mathbf{w})\big|_{\mathbf{w}=\mathbf{w}(k)}
+\]
+
+$\rho_k$ (\textbf{learning rate}) is an appropriate scalar value that varies with the iteration $k$, fixing the "magnitude" of the correction.
+
+\subsection{Gradient Descent Summary}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Gradient Descent Algorithm}]
+To summarize, at the k-th iteration:
+\begin{enumerate}
+    \item Start with a chosen weight vector $\mathbf{w}(1)$ and calculate its gradient $J(\mathbf{w}(1))$
+    
+    \item Then, move from $\mathbf{w}(1)$ in the direction of the steepest descent (opposite to the gradient) by a fixed step size $\rho_k$ to obtain the new vector $\mathbf{w}(2)$
+\end{enumerate}
+
+\textbf{Main issue}: How to determine the optimal choice of $\rho_k$
+\end{tcolorbox}
+
+\subsection{Learning Rate Selection}
+
+The choice of learning rate $\rho_k$ is critical:
+
+\begin{itemize}
+    \item If $\rho_k$ is too \textbf{large}, gradient descent may overshoot the minimum and possibly never find the minimum
+    
+    \item If $\rho_k$ is too \textbf{small}, it needs too many iterations
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/learning_rate_comparison.png}
+\end{center}
+
+\section{Perceptron}
+
+Let's learn a \textbf{binary classifier} with linear discriminant function.
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Important Note}]
+From this point to the rest, $\mathbf{w}$ and $\mathbf{x}$ are used for an \textbf{augmented feature vector} for simplicity, instead of using $\mathbf{a}$ and $\mathbf{y}$.
+\end{tcolorbox}
+
+To do so, we need to choose a $J(\mathbf{w})$ such that the gradient descent can solve it, in this way we can find the minimum of $J(\mathbf{w})$.
+
+\subsection{Perceptron Criterion Function}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Perceptron Criterion Function}]
+A good choice is the \textbf{Perceptron criterion function}:
+\[
+J(\mathbf{w}) = -\sum_{i \in X} \mathbf{w}^T \mathbf{x}_i
+\]
+where $X$ is a set of \textbf{samples misclassified} by $\mathbf{w}$.
+
+\textbf{Key property}: $J(\mathbf{w})$ is non-negative since $\mathbf{w}^T \mathbf{x}_i < 0$ for all misclassified samples.
+\end{tcolorbox}
+
+\textbf{Important}: Do not forget to "normalize" the training set by replacing all examples from class $\omega_2$ with their negatives.
+
+\subsection{Convergence Limitation}
+
+We want to use gradient descent to solve the $J(\mathbf{w})$ so that it can converge; however, for such data (not linearly separable), we cannot converge.
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/perceptron_nonseparable.png}
+\end{center}
+
+\subsection{Perceptron Gradient Descent}
+
+To find the minimum of $J(\mathbf{w})$, we use gradient descent, which is defined by:
+
+\begin{itemize}
+    \item $i$-th component of the gradient of $J(\mathbf{w})$ is equal to $\partial J/\partial w_i$, thus:
+\end{itemize}
+
+\[
+J(\mathbf{w}) = -\sum_{i \in X} \mathbf{w}^T \mathbf{x}_i \quad \Rightarrow \quad \nabla J = -\sum_{i \in X} \mathbf{x}_i
+\]
+
+Note that this does not depend on $\mathbf{w}$.
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=\textbf{Perceptron Rule}]
+The update rule becomes:
+\[
+\mathbf{w}_{k+1} = \mathbf{w}_k + \rho_k \cdot \sum_{i \in X} \mathbf{x}_i, \quad \text{when } \rho_k = \frac{1}{k}
+\]
+
+This is known as the \textbf{Perceptron rule}.
+\end{tcolorbox}
+
+\textbf{Historical note}: Perceptron is the first \textbf{Neural Network}, which was then evolved to more complex versions such as \textbf{Multilayer Perceptron}.
+
+\subsection{Perceptron Example (Non-Separable Scenario)}
+
+Suppose we have 2 features and 5 samples for 2 classes:
+\begin{itemize}
+    \item Class 1: $[2,1]$, $[4,3]$, $[3,5]$
+    \item Class 2: $[1,3]$, $[5,6]$
+\end{itemize}
+
+These samples are not separable with a line, still we will try to get approximate separation by a line.
+
+Obtain the augmented features and normalize the data, by doing so we obtain:
+\[
+\begin{bmatrix} 1 \\ 2 \\ 1 \end{bmatrix}, 
+\begin{bmatrix} 1 \\ 4 \\ 3 \end{bmatrix}, 
+\begin{bmatrix} 1 \\ 3 \\ 5 \end{bmatrix}, 
+\begin{bmatrix} -1 \\ -1 \\ -3 \end{bmatrix}, 
+\begin{bmatrix} -1 \\ -5 \\ -6 \end{bmatrix}
+\]
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/perceptron_example_setup.png}
+\end{center}
+
+\subsection{Applying the Perceptron Method}
+
+Let's apply the perceptron method:
+\begin{itemize}
+    \item Initial weights $[1 \quad 1 \quad 1]$
+    \item This is a line $x_1 + x_2 + 1 = 0$
+    \item Fixed learning rate $\rho(k) = 1$
+\end{itemize}
+
+\textbf{Iteration 1:}
+\begin{align*}
+\mathbf{w}_1^{\mathrm{T}} \mathbf{x}_1 &\Rightarrow [1 \; 1 \; 1][1 \; 2 \; 1]^{\mathrm{T}} > 0 \\
+\mathbf{w}_1^{\mathrm{T}} \mathbf{x}_2 &\Rightarrow [1 \; 1 \; 1][1 \; 4 \; 3]^{\mathrm{T}} > 0 \\
+\mathbf{w}_1^{\mathrm{T}} \mathbf{x}_3 &\Rightarrow [1 \; 1 \; 1][1 \; 3 \; 5]^{\mathrm{T}} > 0
+\end{align*}
+
+\begin{align*}
+\mathbf{w}_1^{\mathrm{T}} \mathbf{x}_4 &\Rightarrow [1 \; 1 \; 1][-1 \; -1 \; -3]^{\mathrm{T}} = -5 < 0 \\
+&\text{Update w!!!} \; \mathbf{w}_2 = [1 \; 1 \; 1] + [-1 \; -1 \; -3] = [0 \; 0 \; -2]
+\end{align*}
+
+\textbf{Continue iteration:}
+\[
+\mathbf{w}_2^{\mathrm{T}} \mathbf{x}_5 \Rightarrow [0 \; 0 \; -2][-1 \; -5 \; -6]^{\mathrm{T}} > 0
+\]
+
+\textbf{Iteration 2:}
+\[
+\mathbf{w}_2^{\mathrm{T}} \mathbf{x}_1 \Rightarrow [0 \; 0 \; -2][1 \; 2 \; 1]^{\mathrm{T}} < 0
+\]
+Update w again!!!
+\[
+\mathbf{w}_3 = [0 \; 0 \; -2] + [1 \; 2 \; 1] = [1 \; 2 \; -1]
+\]
+
+$\ldots$
+
+$\ldots$
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{Non-Convergence Result}]
+We can continue this forever since there is no solution vector $\mathbf{w}$ satisfying the perceptron rule.
+
+The data is \textbf{not linearly separable}, so the perceptron algorithm will not converge to a solution.
+\end{tcolorbox}
+
+\subsection{Need for Relaxation}
+
+We want to learn something like this, but our Perceptron constraint does not allow!
+
+\textbf{Solution}: Let's apply some \textbf{relaxation}.
+
+\subsection{Perceptron Summary}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Perceptron Convergence Properties}]
+\begin{itemize}
+    \item If classes are \textbf{linearly separable}, the perceptron rule is \textbf{guaranteed to converge} to a valid solution
+    \begin{itemize}
+        \item Some versions of the perceptron rule use a \textbf{variable learning rate} $\rho(k)$; for now, we fixed it as $1/k$
+    \end{itemize}
+    
+    \item However, if the two classes are \textbf{not linearly separable}, the perceptron rule will \textbf{not converge}
+    \begin{itemize}
+        \item Since no weight vector $\mathbf{w}$ can correctly classify every sample in a non-separable dataset, the corrections in the perceptron rule will never cease
+        
+        \item One ad-hoc solution to this problem is to enforce convergence by using variable learning rates $\rho(k)$ that approach zero as $k \rightarrow \infty$
+        
+        \item We will see once we introduce NN architectures
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
+
+\section{The Relaxation Method}
+
+\subsection{Relaxation Criterion Function (1)}
+
+The $J(\mathbf{w})$ takes the form:
+\[
+J_q(\mathbf{w}) = \sum_{i \in X} (\mathbf{w}^T \mathbf{x}_i)^2
+\]
+
+\begin{itemize}
+    \item Also, this function takes into account the \textbf{misclassified samples}, and it is minimized when $\mathbf{w}$ is the solution vector
+    
+    \item Its main difference is that its \textbf{gradient is now continuous}, whereas the gradient of the perceptron function $J$ is not
+    
+    \item So, such a function is suitable for finding smooth surfaces, but this may lead to problems
+    \begin{itemize}
+        \item In fact, in this way, the points very far from the origin $(0,0,\ldots,0)$ (i.e., with large feature magnitudes $==$ outliers) are weighted a lot
+    \end{itemize}
+\end{itemize}
+
+\subsection{Relaxation Criterion Function (2)}
+
+Another option for $J(\mathbf{w})$ is:
+\[
+J(\mathbf{w}) = \frac{1}{2} \sum_{i \in X} \left\{ \frac{(\mathbf{w}^T \mathbf{x}_i - b)^2}{\|\mathbf{x}_i\|^2} \right\}
+\]
+
+where $b \geq 0$ margin (e.g., $b = 1$) and $\mathbf{w}^T \mathbf{x}_i \leq b$.
+
+\begin{itemize}
+    \item Dividing by $\|\mathbf{x}_i\|^2$ ensures that samples \textbf{contribute roughly equally}, regardless of their distance from the origin
+\end{itemize}
+
+The gradient descent becomes:
+\[
+\mathbf{w}_{k+1} = \mathbf{w}_k - \rho_k \sum_{i \in X} \left\{ \frac{(\mathbf{w}^T \mathbf{x}_i - b)\mathbf{x}_i}{\|\mathbf{x}_i\|^2} \right\}
+\]
+
+with $\mathbf{x}_i$ that verify $\mathbf{w}^T \mathbf{x}_i \leq b$ and $\mathbf{w}$ is calculated with the usual rule.
+
+$J(\mathbf{w}) > 0$ always, and $J(\mathbf{w}) = 0$ if $\mathbf{w}^T \mathbf{x}_i \geq b \; \forall \mathbf{x}_i$
+
+\section{Minimum Squared Error (MSE) Solution}
+
+The classical MSE criterion provides an alternative to the perceptron rule.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Key Difference: Perceptron vs MSE}]
+\textbf{Perceptron rule}: Only considers \textbf{misclassified samples}, since these are the only ones that violate the $J(\mathbf{w})$.
+
+\textbf{MSE criterion}: Looks for a solution involving \textbf{all of the samples} (not just the misclassified ones).
+\begin{itemize}
+    \item The goal is to verify $\mathbf{w}^T x_i = b_i$, where the $b_i$ are some arbitrarily specified \textbf{positive constants}
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Problem Transformation}
+
+We have replaced the problem of finding the solution to a set of linear inequalities (\textit{perceptron}), now, we have the problem of finding the solution for a set of linear equations (\textit{MSE}).
+
+\begin{itemize}
+    \item \textbf{Perceptron}: $\mathbf{w}^T x_i > 0$ for all samples $x_i$, this solves the system of linear inequalities
+    
+    \item \textbf{MSE}: $\mathbf{w}^T x_i = b_i$ for all samples $x_i$, this solves the system of linear equations
+\end{itemize}
+
+\subsection{Comparison: Perceptron Rule vs MSE/Relaxation Method}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Aspect} & \textbf{Perceptron Rule} & \textbf{MSE / Relaxation Method} \\
+\hline
+Loss function & Step / misclassification-based & Continuous quadratic (MSE) \\
+\hline
+Update & Only for misclassified samples & Gradient descent on all samples \\
+\hline
+Differentiability & Non-differentiable & Differentiable \\
+\hline
+Surface & Piecewise constant & Smooth (quadratic) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{MSE Procedure}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{MSE Procedure}]
+\begin{enumerate}
+    \item Choose positive constants $b_1, b_2, \ldots, b_n$
+    
+    \item Try to find a weight vector $\mathbf{w}$ such that $\mathbf{w}^T \mathbf{x}_i = b_i$ for all samples $x_i$
+    
+    \item If we can find a weight vector $\mathbf{w}$ such that $\mathbf{w}^T \mathbf{x}_i = b_i$ for all samples $x_i$, then $\mathbf{w}$ is a solution because $b_i$'s are all positive
+    
+    \item Consider all the samples
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Normalization and Dataset Setup}
+
+For consistency, we will continue assuming that examples from class $\omega_2$ have been replaced by their \textbf{negative vector}, although this is not a requirement for the MSE solution. Thus, we have:
+\[
+x_{i,n+1} = 1 \text{ for } \omega_1 \quad \text{and} \quad x_{i,n+1} = -1 \text{ for } \omega_2
+\]
+
+Suppose we have the following dataset:
+\begin{align*}
+\text{1st sample: } & x_{1,1}w_1 + x_{1,2}w_2 + \ldots + x_{1,n}w_n + x_{1,n+1}w_{n+1} = b_1, \quad b_1 \geq 0 \\
+\text{2nd sample: } & x_{2,1}w_1 + x_{2,2}w_2 + \ldots + x_{2,n}w_n + x_{2,n+1}w_{n+1} = b_2, \quad b_2 \geq 0 \\
+& \ldots \\
+\text{N-th sample: } & x_{N,1}w_1 + x_{N,2}w_2 + \ldots + x_{N,n}w_n + x_{N,n+1}w_{n+1} = b_N, \quad b_N \geq 0
+\end{align*}
+
+\subsection{Matrix Formulation}
+
+We then obtain N equations (equal to the training samples, $N_1$ for $\omega_1$ and $N_2$ for $\omega_2$), with $N = N_1 + N_2$.
+
+We need to solve N equations.
+
+In matrix notation we have: $\mathbf{X} \cdot \mathbf{w} = \mathbf{b}$ where:
+\[
+\mathbf{X} = \begin{bmatrix}
+x_{1,1} & x_{1,2} & \cdots & x_{1,n} & \pm 1 \\
+x_{2,1} & \ddots & & \vdots & \vdots \\
+\vdots & & \ddots & \vdots & \vdots \\
+x_{N,1} & \cdots & \cdots & x_{N,n} & \pm 1
+\end{bmatrix}, \quad
+\mathbf{b} = \begin{bmatrix}
+b_1 \\ b_2 \\ \vdots \\ b_N
+\end{bmatrix}, \quad
+\mathbf{w} = \begin{bmatrix}
+w_1 \\ \vdots \\ w_n \\ w_{n+1}
+\end{bmatrix}
+\]
+
+Thus, we need to solve a linear system: $\mathbf{X} \cdot \mathbf{w} = \mathbf{b}$
+
+\subsection{Error Vector and MSE Criterion}
+
+Generally, $N >> n+1$, so there are more equations than unknowns.
+\[
+\mathbf{X} \cdot \mathbf{w} = \mathbf{b} \Rightarrow \mathbf{w} = \mathbf{X}^{-1} \mathbf{b}
+\]
+
+Let's now inject the \textbf{error vector} (needed to obtain the loss function), defined as:
+\[
+\mathbf{e} = \mathbf{X}\mathbf{w} - \mathbf{b}
+\]
+(imagine this as $\mathbf{b}$ is the real class label and $\mathbf{X}\mathbf{w}$ is your predictions)
+
+MSE finds $\mathbf{w}$ which minimises the length of the error vector $\mathbf{e}$. Thus, minimise the \textbf{minimum squared error} criterion function $J(\mathbf{w})$:
+\[
+J_M(\mathbf{w}) = (\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} (\mathbf{X}\mathbf{w} - \mathbf{b}) = \| \mathbf{X}\mathbf{w} - \mathbf{b} \|^2
+\]
+
+\subsection{Analytical Solution}
+
+Unlike the perceptron criterion, the MSE function is quadratic and differentiable.
+
+Therefore, we can find its minimum \textbf{analytically} by setting the gradient to zero.
+
+The gradient of the objective function $J_M(\mathbf{w})$:
+\begin{itemize}
+    \item Find derivative of $J_M(\mathbf{w})$ wrt. to $\mathbf{w}$
+\end{itemize}
+
+Given $J_M(\mathbf{w}) = (\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} (\mathbf{X}\mathbf{w} - \mathbf{b}) = \| \mathbf{X}\mathbf{w} - \mathbf{b} \|^2$ in matrix format, we differentiate the expression $(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} (\mathbf{X}\mathbf{w} - \mathbf{b})$ with respect to $\mathbf{w}$.
+
+Let's denote $Y = \mathbf{X}\mathbf{w} - \mathbf{b}$, \textbf{then} $J_M(\mathbf{w}) = Y^{\mathrm{T}} Y$
+
+\subsection{Gradient Derivation}
+
+Now, differentiating $J_M(\mathbf{w})$ wrt. $\mathbf{w}$, we have:
+\[
+\frac{dJ_M(\mathbf{w})}{d\mathbf{w}} = \frac{d}{d\mathbf{w}}(Y^{\mathrm{T}}Y)
+\]
+
+Remember the chain rule, if not clear to you:
+\[
+= 2Y^{\mathrm{T}} \frac{dY}{d\mathbf{w}} \quad \Rightarrow \quad \frac{dY}{d\mathbf{w}} = \frac{d}{d\mathbf{w}}(\mathbf{X}\mathbf{w} - \mathbf{b}) = \mathbf{X}
+\]
+
+Therefore,
+\[
+\frac{dJ_M(\mathbf{w})}{d\mathbf{w}} = 2Y^{\mathrm{T}} \mathbf{X} = 2(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} \mathbf{X}
+\]
+
+\subsection{Finding the Optimal Solution}
+
+\begin{tcolorbox}[colback=cyan!10!white,colframe=cyan!75!black,title=\textbf{Pseudoinverse Solution}]
+By setting the \textbf{gradient to zero}, this becomes:
+\[
+2(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} \mathbf{X} = 0 \Rightarrow \mathbf{X}^{\mathrm{T}} \mathbf{X} \mathbf{w} = \mathbf{X}^{\mathrm{T}} \mathbf{b}
+\]
+
+(the proof can be found below)
+
+If we multiply by $[\mathbf{X}^{\mathrm{T}} \mathbf{X}]^{-1}$, we get:
+\[
+\mathbf{w} = [\mathbf{X}^{\mathrm{T}} \mathbf{X}]^{-1} \mathbf{X}^{\mathrm{T}} \mathbf{b} = \mathbf{X}^{\#} \mathbf{b}
+\]
+
+where $\mathbf{X}^{\#} = [\mathbf{X}^{\mathrm{T}} \mathbf{X}]^{-1} \mathbf{X}^{\mathrm{T}}$ is the \textbf{pseudoinverse} of $\mathbf{X}$.
+
+\textbf{Consequently}, $\mathbf{w} = \mathbf{X}^{\#} \mathbf{b}$ is the optimal solution according to the MSE method.
+\end{tcolorbox}
+
+\subsection{Proof of the Gradient Result}
+
+Starting from:
+\[
+2(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} \mathbf{X} = 0
+\]
+
+\textbf{Step 1}: Since we have a factor of 2 on the left side, divide both sides by 2:
+\[
+(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} \mathbf{X} = 0
+\]
+
+\textbf{Step 2}: The expression $(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} \mathbf{X} = 0$ can be rewritten by expanding the transpose:
+\[
+(\mathbf{X}\mathbf{w})^{\mathrm{T}} \mathbf{X} - \mathbf{b}^{\mathrm{T}} \mathbf{X} = 0
+\]
+
+\textbf{Step 3}: We know that $(\mathbf{X}\mathbf{w})^{\mathrm{T}} \mathbf{X} = \mathbf{w}^{\mathrm{T}} \mathbf{X}^{\mathrm{T}} \mathbf{X}$ (since $(\mathbf{A}\mathbf{B})^{\mathrm{T}} = \mathbf{B}^{\mathrm{T}} \mathbf{A}^{\mathrm{T}}$):
+\[
+\mathbf{w}^{\mathrm{T}} \mathbf{X}^{\mathrm{T}} \mathbf{X} - \mathbf{b}^{\mathrm{T}} \mathbf{X} = 0
+\]
+
+\textbf{Step 4}: This equality holds if:
+\[
+\mathbf{X}^{\mathrm{T}} \mathbf{X} \mathbf{w} = \mathbf{X}^{\mathrm{T}} \mathbf{b}
+\]
+
+This is the desired result, so we have shown that:
+\[
+2(\mathbf{X}\mathbf{w} - \mathbf{b})^{\mathrm{T}} \mathbf{X} = 0 \Rightarrow \mathbf{X}^{\mathrm{T}} \mathbf{X} \mathbf{w} = \mathbf{X}^{\mathrm{T}} \mathbf{b}
+\]
+
+\section{MSE Properties}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Dependence on Margin Vector}]
+$\mathbf{w} = \mathbf{X}^{\#} \mathbf{b}$ shows that the MSE solution depends on the \textbf{margin vector $\mathbf{b}$}.
+
+\begin{itemize}
+    \item Different choices of $\mathbf{b}$ lead to different properties of the solution
+\end{itemize}
+\end{tcolorbox}
+
+\begin{itemize}
+    \item If $\mathbf{b}$ is arbitrarily fixed, there is no evidence that the MSE solution gives a separator vector in the case of linear separability
+    
+    \item So, how to choose $\mathbf{b}$ in the MSE procedure?
+    \begin{itemize}
+        \item Good choice is $b_1 = b_2 = \ldots = B_n = 1$. In this case, the MSE solution is identical to Fischer's linear discriminant solution (\textit{next lesson})
+    \end{itemize}
+\end{itemize}
+
+\subsection{Sensitivity to Outliers}
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{Warning: Outlier Sensitivity}]
+MSE pays too much attention to \textbf{outlier examples}!
+
+\begin{itemize}
+    \item Because MSE squares the error, \textbf{large errors (outliers)} have a disproportionately large influence on the solution
+    
+    \item For classification, where we only care about \textit{which side} of the boundary a sample is on, this sensitivity is undesirable
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Computational Challenges}
+
+$\mathbf{X}^{\#}$ is difficult to obtain:
+\begin{itemize}
+    \item As this requires inverting a large matrix, which is:
+    \begin{itemize}
+        \item \textbf{expensive} for high-dimensional data
+        \item \textbf{impossible} if $\mathbf{X}^{\mathrm{T}}\mathbf{X}$ is \textbf{singular} (non-invertible)
+    \end{itemize}
+    
+    \item The analytical solution is \textit{computationally heavy} and sometimes \textit{ill-defined}
+\end{itemize}
+
+\subsection{Lack of Flexibility}
+
+It is not an iterative process, indeed, $\mathbf{w}$ is obtained directly through mathematical computations in \textbf{one step}.
+
+\begin{itemize}
+    \item Even if this sounds good,
+    \item it means we \textbf{lose flexibility}
+    \begin{itemize}
+        \item E.g., no gradual correction
+        \item online learning
+    \end{itemize}
+\end{itemize}
+
+\section{Example: Perceptron vs MSE}
+
+Compute the \textbf{perceptron} and \textbf{MSE} solution for the dataset:
+
+\textbf{Class 1 (X1)}: $[(1,6), (7,2), (8,9), (9,9)]$
+
+\textbf{Class 2 (X2)}: $[(2,1), (2,2), (2,4), (7,1)]$
+
+\subsection{Perceptron Learning}
+
+Assume $\rho_k = 0.1$ and an online update rule.
+
+Assume $\mathbf{w}_1 = [0.1, 0.1, 0.1]$
+
+\textbf{Step 1}: Normalize the dataset (augment features and replace class 2 with negatives):
+\[
+\begin{bmatrix}
+1 & 1 & 6 \\
+1 & 7 & 2 \\
+1 & 8 & 9 \\
+1 & 9 & 9 \\
+-1 & -2 & -1 \\
+-1 & -2 & -2 \\
+-1 & -2 & -4 \\
+-1 & -7 & -1
+\end{bmatrix}
+\]
+
+\subsection{Perceptron Iteration}
+
+\textbf{Step 2}: Iterate through all the examples ($\mathbf{w}^{\mathrm{T}}\mathbf{x}_i$) and update $\mathbf{w}(k)$:
+
+\textit{Data point 1}: $[0.1 \; 0.1 \; 0.1]^{\mathrm{T}} [1 \; 1 \; 6]$ this is $>0$ so correctly classified, therefore there is no update
+
+\textit{Data point 2}: $[0.1 \; 0.1 \; 0.1]^{\mathrm{T}} [1 \; 7 \; 2]$ this is $>0$ so correctly classified, therefore there is no update
+
+$\ldots$
+
+\textit{Data point 5}: $[0.1 \; 0.1 \; 0.1]^{\mathrm{T}} [-1 \; -2 \; -1]$ this is $<0$ so we have to apply an update:
+\[
+\mathbf{w}(2) = \mathbf{w}(1) + \rho_1 [-1 \; -2 \; -1] = [0 \; -0.1 \; 0]
+\]
+
+$\ldots$
+
+\textit{Data point 1}: $[0 \; -0.1 \; 0]^{\mathrm{T}} [1 \; 1 \; 6]$ this is $<0$ so update:
+\[
+\mathbf{w}(3) = \mathbf{w}(2) + \rho_1 [1 \; 1 \; 6] = [0 \; -0.1 \; 0] + 0.1[1 \; 1 \; 6] = [0.1 \; 0 \; 0.6]
+\]
+
+\textit{Data point 2}: $[0.1 \; 0 \; 0.6]^{\mathrm{T}} [1 \; 7 \; 2] > 0 \Rightarrow$ no update
+
+$\ldots$
+
+\textbf{The perceptron with this data and setup converges after 175 iterations, when $\mathbf{w} = [-3.5 \; 0.3 \; 0.7]$}
+
+\subsection{MSE Solution}
+
+\textbf{MSE}: This solution will be found in one shot $\mathbf{w} = [\mathbf{X}^{\mathrm{T}} \mathbf{X}]^{-1} \mathbf{X}^{\mathrm{T}} \mathbf{b}$
+
+For the choice of $\mathbf{b} = [1 \; 1 \; 1 \; 1 \; 1 \; 1 \; 1 \; 1]$, the solution is:
+\[
+\mathbf{w} = [-1.1870 \; 0.0746 \; 0.1959]
+\]
+
+Dataset:
+\begin{itemize}
+    \item X1 = $[(1,6), (7,2), (8,9), (9,9)]$
+    \item X2 = $[(2,1), (2,2), (2,4), (7,1)]$
+\end{itemize}
+
+As seen in the figure, the MSE misclassifies one of the samples.
+
+\section{Perceptron vs. MSE (Summary)}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Comparison Summary}]
+\textbf{Perceptron rule}: The perceptron rule always finds a solution if the classes are linearly separable, but does not converge if the classes are non-separable.
+
+\textbf{MSE criterion}: The MSE solution has guaranteed convergence, but it may not find a separating hyperplane if classes are linearly separable.
+
+\begin{itemize}
+    \item Notice that MSE tries to minimize the sum of the squares of the distances of the training data to the separating hyperplane, as opposed to finding this hyperplane
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Gradient Descent Alternative for MSE}
+
+The objective function $J_M(\mathbf{w})$ can also be minimized using a gradient descent procedure. In this way, we avoid:
+\begin{itemize}
+    \item the problems that arise when $\mathbf{X}^{\mathrm{T}} \mathbf{X}$ is singular (happens if samples are correlated)
+    \item the need for working with large matrices
+\end{itemize}
+
+Since $\nabla J_M(\mathbf{w}) = 2 \mathbf{X}^{\mathrm{T}} (\mathbf{X}\mathbf{w} - \mathbf{b})$, the gradient descent algorithm is:
+\[
+\mathbf{w}_{k+1} = \mathbf{w}_k - \rho_k \mathbf{X}^{\mathrm{T}} (\mathbf{X}\mathbf{w}_k - \mathbf{b}) \quad \text{with } \mathbf{w}_1 \text{ arbitrary}
+\]
+
+[$X$ and $b$ are in matrix and vector form, written for all data]
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Convergence Property}]
+It can be shown that if $\rho_k = \rho_1/k$ where $\rho_1$ is any positive constant, this rule generates a sequence of weight vectors that converge to a solution to:
+\[
+\mathbf{X}^{\mathrm{T}} (\mathbf{X} \mathbf{w} - \mathbf{b}) = 0
+\]
+
+The gradient descent algorithm leads to the solution \textbf{regardless of whether $\mathbf{X}^{\mathrm{T}} \mathbf{X}$ is singular or not}.
+\end{tcolorbox}
+
+\section{The Least MSE (LMSE = Widrow-Hoff Method)}
+
+Considering \textbf{one sample at a time}, we get:
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{LMS Rule}]
+\[
+\mathbf{w}_{k+1} = \mathbf{w}_k + \rho_k (b_k - \mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k) \mathbf{x}_k
+\]
+
+such that $b_k$ is the value for the k-th sample of the margin $\mathbf{b}$ ($b_k \geq 0$), i.e., it depends on the sample $\mathbf{x}_k$.
+\end{tcolorbox}
+
+This method is called \textbf{Widrow-Hoff}, \textbf{least-mean-squares (LMS)} or \textbf{delta rule}:
+\begin{itemize}
+    \item reduces \textbf{storage requirements} by considering single samples \textbf{sequentially}
+\end{itemize}
+
+\subsection{Correction Mechanism}
+
+Widrow-Hoff rule "corrects" $\mathbf{w}_k$ whenever $\mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k \neq b_k$.
+
+\textbf{Why?}
+
+The weight change is:
+\[
+\Delta \mathbf{w}_k = \mathbf{w}_{k+1} - \mathbf{w}_k = \rho_k (b_k - \mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k) \mathbf{x}_k
+\]
+
+\textbf{Case 1: Prediction is correct}
+\[
+\mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k = b_k
+\]
+
+then
+\[
+\Delta \mathbf{w}_k = \rho_k (b_k - \mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k) \mathbf{x}_k = \rho_k (0) \mathbf{x}_k = 0
+\]
+
+so $\mathbf{w}_{k+1} = \mathbf{w}_k \rightarrow$ \textbf{no correction happens}.
+
+\subsection{Case 2: Prediction is Wrong}
+
+\[
+\mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k \neq b_k
+\]
+
+then
+\[
+\Delta \mathbf{w}_k = \rho_k (b_k - \mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k) \mathbf{x}_k \neq 0
+\]
+
+so $\mathbf{w}_{k+1} \neq \mathbf{w}_k \rightarrow$ \textbf{the weight vector is corrected}.
+
+\begin{itemize}
+    \item The advantage of "correcting only when $\mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k \neq b_k$" is that learning is \textbf{efficient, stable, proportional, and error-driven}
+    
+    \item We adjust weights \textbf{exactly when and as much as needed}
+\end{itemize}
+
+\subsection{Widrow-Hoff Method: Summary}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Widrow-Hoff Advantages}]
+Iterative, gradient-descent-based update:
+\[
+\mathbf{w}_{k+1} = \mathbf{w}_k + \rho_k (b_k - \mathbf{w}_k^{\mathrm{T}} \mathbf{x}_k) \mathbf{x}_k
+\]
+
+\begin{itemize}
+    \item Can update \textbf{sample-by-sample}
+    \begin{itemize}
+        \item Low computational cost per iteration, scalable to large datasets
+    \end{itemize}
+    
+    \item Learning rate controls convergence speed
+    
+    \item Adapts to new data (suitable for online learning)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Widrow-Hoff Method: Disadvantages}
+
+\begin{itemize}
+    \item Can converge slowly
+    \begin{itemize}
+        \item Sensitive to correlated features and outliers
+    \end{itemize}
+    
+    \item Needs careful learning rate
+    
+    \item \textbf{Requires multiple iterations; not one-step like analytical MSE}
+    
+    \item May struggle with non-linear or non-separable data
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/widrow_hoff_disadvantages.png}
+\end{center}
+
+\section{The Ho-Kashyap Method}
+
+\begin{tcolorbox}[colback=red!10!white,colframe=red!75!black,title=\textbf{MSE Limitation}]
+The main limitation of the MSE criterion is the \textbf{lack of guarantees} that a separating hyperplane will be found in the linearly separable case.
+\end{tcolorbox}
+
+All we can say about the MSE rule is that it minimises $\|\mathbf{X}\mathbf{w} - \mathbf{b}\|^2$ when $\mathbf{b}$ is chosen arbitrarily.
+
+This means that whether MSE finds a separating hyperplane or not depends on how properly the margin $\mathbf{b}$ is selected (notice that in some sources $\mathbf{b}$ is referred to as \textit{target outputs}).
+
+\subsection{Ho-Kashyap Approach}
+
+If the training samples are linearly separable, then there must be vectors $\mathbf{w}^*$ and $\mathbf{b}^*$ such that $\mathbf{X}\mathbf{w}^* = \mathbf{b}^* > 0$ where $\mathbf{b}^* > 0$, meaning that every component of $\mathbf{b}^*$ is \textbf{positive}.
+
+\begin{itemize}
+    \item If $\mathbf{b}^*$ were \textbf{known}, one could simply use MSE solution to compute separating hyperplane
+    
+    \item \textbf{Idea}: find both $\mathbf{w}^*$ and $\mathbf{b}^*$
+    
+    \item Minimize the following criterion function, restricting to positive $\mathbf{b}$:
+    \[
+    J_{HK}(\mathbf{w}, \mathbf{b}) = \|\mathbf{X}\mathbf{w} - \mathbf{b}\|^2
+    \]
+    
+    \item $J_{HK}(\mathbf{w}^*, \mathbf{b}^*) = 0$
+\end{itemize}
+
+\subsection{Gradient Descent Optimization}
+
+\[
+J_{HK}(\mathbf{w}, \mathbf{b}) = \|\mathbf{X}\mathbf{w} - \mathbf{b}\|^2
+\]
+
+As usual, take partial derivatives with respect to $\mathbf{w}$ and $\mathbf{b}$:
+\begin{align*}
+\nabla_{\mathbf{w}} J_{HK} &= -2 \mathbf{W}^{\mathrm{T}} (\mathbf{X}\mathbf{w} - \mathbf{b}) = 0 \\
+\nabla_{\mathbf{b}} J_{HK} &= -2 (\mathbf{X}\mathbf{w} - \mathbf{b}) = 0
+\end{align*}
+
+Use gradient descent to find a minimum $J_{HK}(\mathbf{w}, \mathbf{b})$.
+
+Alternate the two steps below until convergence:
+\begin{itemize}
+    \item Fix $\mathbf{b}$ and minimize $J_{HK}(\mathbf{w}, \mathbf{b})$ with respect to $\mathbf{w}$
+    \item Fix $\mathbf{w}$ and minimize $J_{HK}(\mathbf{w}, \mathbf{b})$ with respect to $\mathbf{b}$
+\end{itemize}
+
+\subsection{Ho-Kashyap Rule}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Ho-Kashyap Rule}]
+The resulting iterative \textbf{Ho-Kashyap rule} is:
+\[
+\mathbf{b}_{k+1} = \mathbf{b}_k - \frac{1}{2}\rho_k [\nabla_{\mathbf{b}} J_{HK}(\mathbf{w}_k, \mathbf{b}_k) - |\nabla_{\mathbf{b}} J_{HK}(\mathbf{w}_k, \mathbf{b}_k)|]
+\]
+
+where $\nabla_{\mathbf{b}} J_{HK} = -2 (\mathbf{X}\mathbf{w} - \mathbf{b}) = 0$
+
+Let $\mathbf{e}_k = \mathbf{X}\mathbf{w}_k - \mathbf{b}_k = -\frac{1}{2}[\nabla_{\mathbf{b}} J_{HK}(\mathbf{w}_k, \mathbf{b}_k)]$
+
+Then:
+\begin{align*}
+\mathbf{b}_{k+1} &= \mathbf{b}_k - \frac{1}{2}\rho_k [-2\mathbf{e}_k - |2\mathbf{e}_k|] \\
+&= \mathbf{b}_k + \rho_k [\mathbf{e}_k + |\mathbf{e}_k|]
+\end{align*}
+\end{tcolorbox}
+
+\subsection{Ho-Kashyap Algorithm}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Ho-Kashyap Algorithm}]
+\textbf{(0)} Start with arbitrary $\mathbf{b}_1 > 0$ and $\mathbf{w}_1$, let $k=1$
+
+\textbf{Repeat steps (1) to (4):}
+
+\textbf{(1)} $\mathbf{e}_k = \mathbf{X}\mathbf{w}_k - \mathbf{b}_k$
+
+\textbf{(2)} Solve for $\mathbf{b}_{k+1}$ using $\mathbf{w}_k$ and $\mathbf{b}_k$:
+\[
+\mathbf{b}_{k+1} = \mathbf{b}_k + [\mathbf{e}_k + |\mathbf{e}_k|]
+\]
+
+\textbf{(3)} Solve for $\mathbf{w}_{k+1}$ using $\mathbf{b}_{k+1}$:
+\[
+\mathbf{w}_{k+1} = (\mathbf{w}^{\mathrm{T}}\mathbf{w})^{-1} Y^{\mathrm{T}} \mathbf{b}_{k+1}
+\]
+
+\textbf{(4)} $k = k+1$
+
+\textbf{until} $\mathbf{e}_k = 0$ or $k > k_{max}$ or $\mathbf{b}_{k+1} = \mathbf{b}_k$ (for convergence fix learning rate as $0 < \rho_k < 1$)
+\end{tcolorbox}
+
+\subsection{Convergence Properties}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Ho-Kashyap Convergence}]
+\textbf{In the linearly separable case:}
+\begin{itemize}
+    \item $\mathbf{e}_k = 0$, solution is found, STOP!
+    \item One of the components of $\mathbf{e}_k$ is positive, algorithm continues
+\end{itemize}
+
+\textbf{In non-separable case:}
+\begin{itemize}
+    \item $\mathbf{e}_k$ will have only negative components eventually, thus found proof of non-separability
+    \item No bound on how many iterations is needed for the proof of non-separability
+\end{itemize}
+\end{tcolorbox}
+
+\section{Summary: Linear Discriminant Functions}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Comparison of Methods}]
+
+\subsection*{Perceptron Procedure}
+\begin{itemize}
+    \item Find a separating hyperplane in the linearly separable case
+    \item Do not converge in the non-separable case
+    \item Can force convergence by using a decreasing learning rate, but there is no guarantee of a reasonable stopping point
+\end{itemize}
+
+\subsection*{MSE Procedure}
+\begin{itemize}
+    \item Converge in separable and non-separable cases
+    \item May not find a separating hyperplane if classes are linearly separable
+    \item Use pseudoinverse if $\mathbf{X}^{\mathrm{T}}\mathbf{X}$ is not singular and not too large
+    \item Use gradient descent (Widrow-Hoff procedure) otherwise
+\end{itemize}
+
+\subsection*{Ho-Kashyap Procedure}
+\begin{itemize}
+    \item Always converge
+    \item Find a separating hyperplane in the linearly separable case
+    \item More costly
+\end{itemize}
+\end{tcolorbox}
 
 \end{document}
