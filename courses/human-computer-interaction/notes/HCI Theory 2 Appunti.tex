@@ -26,6 +26,7 @@
 \usepackage{enumitem}
 \usepackage{parskip}
 \usepackage{fancyhdr}
+\usepackage{array}
 
 % Code listings
 \usepackage{listings}
@@ -334,15 +335,686 @@ Understanding these technological foundations is essential for designing and imp
 
 \section{Human Factors}
 
+\textbf{Human factors} are the psychological and physiological characteristics of the human body that are relevant to the design of human-computer interfaces.
+Perceptual aspects such as vision, hearing, touch, taste, and smell are relevant to the design of human-computer interfaces.
+We will mainly focus on visual aspects.
+
+\subsection{Brightness perception}
+\textit{Brightness perception} is the ability to perceive the brightness of a light.
+
+\begin{itemize}
+    \item \textbf{Brightness} perception is subjective and depends on the individual.
+    \item \textbf{Brightness} is conditioned by the quantity of light.
+    \item \textbf{Brightness} is a function of the object brightness and the background brightness.
+    \item \textbf{Visual acuity} is the ability to see details and increases with lighter scenes.
+\end{itemize}
+
+The \textit{flicker effect} perceived in large monitors is due to the refresh rate of the monitor.
+A monitor with a refresh rate of 60 Hz refreshes the image 60 times per second.
+If the image is not refreshed at this rate, the eye will perceive a \textit{flicker effect}.
+
+\subsection{Abilities and limitations of vision processing}
+The visual system compensates for motion (i.e., \textit{image stabilization}) and light (or color) variations.
+Examples of overcompensations are demonstrated in the following optical illusions:
+
+\subsection{Context awareness}
+Context is important for the perception of the environment.
+For instance, the perception of a face is different in a dark room than in a bright room. 
+Limits of vision processing are also affected by the context.
+
+While reading we follow a few steps:
+\begin{itemize}
+    \item perception of visual patterns,
+    \item patterns are decoded using the internal representation of the 
+    language,
+    \item they are explained using syntactic and semantic 
+    knowledge (and pragmatics)
+\end{itemize}
+Reading is performed by \textit{saccadic eye movement} and \textit{visual fixation}.
+The shape of a single word is very important for the perception of the word.
+
+\subsection{Cognitive aspects of vision processing}
+Some of the cognitive aspects of vision processing are the following:
+ \begin{itemize}
+    \item Long-term memory and learning
+    \item Problem solving
+    \item Decision making
+    \item Attention and problem dimensionality
+\end{itemize}
+
+\subsection{Human Memory}
+We can differentiate between different \textit{sensorial buffers}:
+\begin{itemize}
+    \item \textit{iconic memory}
+    \item \textit{echoic memory}
+    \item \textit{haptic memory}
+\end{itemize}
+%sensorial buffer->attention -> short term memory -> long term memory
+These sensorial buffers after being processed by the \textit{attention mechanism} are stored in the \textbf{short-term memory}.
+The \textbf{short-term memory} is then processed by the \textbf{working memory} and stored in the \textbf{long-term memory} after 
+enough repetitions.
+
+\subsection{Short-term memory (STM)}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!75!black,title=\textbf{Miller's Law and Chunking}]
+Information is remembered better when organized in chunks.
+The chunk organization is called \textit{closure} and is classically summarized by \textit{Miller's Law}.
+In general a user can remember 
+%formula 7 plus or minus 2
+\begin{math}
+    7 \pm 2 \text{ chunks}
+\end{math}
+The user always expects a closure at the end of a task. For example, in early cash retrieval
+machines users often forgot to take the card after getting the cash.
+\end{tcolorbox}
+
+
+\subsection{Inductive reasoning}
+\textit{Inductive reasoning} describes the generalization of unseen examples from seen examples:
+For example, if all cars I have seen have four wheels, then all cars have four wheels.
+This is not fully reliable, as we can prove falsity but not absolute truth.
+Humans are generally not able to use negative evidence effectively.
+
+\section{Human and Virtual Reality}
+\textbf{Virtual reality} is a technology that allows the user to interact with a virtual environment.
+There are many issues about human perception that must be considered in depth when analyzing interaction in VR.
+These issues are often neglected for classic \textbf{HCI} based on intentional actions and simple stimuli.
+Some of the issues are the following:
+\begin{itemize}
+    \item Awareness, attention
+    \item Information fusion
+    \item Hierarchical processing
+    \item Adaptation
+    \item Psychophysics
+\end{itemize}
+
+\subsection{Human senses}
+
+Humans have more than five senses.
+Some of these senses include:
+\begin{itemize}
+    \item \textbf{Proprioception}: sense of body position—what is your
+    body doing right now
+    \item \textbf{Equilibrium}: balance
+    \item \textbf{Acceleration}: perception of linear and angular changes
+    \item \textbf{Nociception}: sense of pain
+    \item \textbf{Thermoreception}: temperature
+    \item \textbf{Satiety}
+    \item \textbf{Thirst}
+    \item \textbf{Micturition}
+    \item \textbf{Chemoreception}: amount of CO$_2$ and Na$^+$ in blood
+\end{itemize}
+
+In virtual reality \textbf{vision} is the main channel, but other senses are also 
+important and therefore must be coherent with the virtual environment.
+\textbf{Sensing} is an active process that depends on previous inputs \textbf{not in a conscious way}.
+
+
+
+\subsection{Adaptation}
+\textbf{Adaptation} is the process of changing the perception of a stimulus over time.
+For instance, the perceived loudness of motor noise in an aircraft or car decreases
+within minutes.
+The optical system of our eyes and the photoreceptor sensitivities
+adapt to change perceived brightness.
+Over long periods, perceptual training can lead to adaptation;
+In military training simulations, sickness experienced by soldiers
+appears to be less than expected, perhaps due to regular exposure.
+The same appears to be true of experienced video game players. Those who have spent many hours and days in front of large screens
+playing first-person shooter games apparently experience less
+\textit{vection} when locomoting themselves in VR.
+\textbf{Adaptation} therefore becomes a crucial factor for VR.
+
+
+\subsection{Constraints for VR systems}
+In VR systems we have to consider the following constraints due to human vision:
+\begin{itemize}
+    \item \textbf{Human frontal FOV}: 100$^\circ$--110$^\circ$ horizontal per eye and up to 200$^\circ$--220$^\circ$ with both eyes
+    \item \textbf{Stereo overlap}: roughly 110$^\circ$--120$^\circ$
+    \item \textbf{Foveal field}: approximately 60$^\circ$ horizontally and vertically where both eyes can see in focus
+\end{itemize}
+
+\subsection{Eye movements}
+When designing AR/VR systems, we must take into account how human eyes move.
+\begin{itemize}
+    \item \textbf{Saccades}: brisk motions lasting less than 45 ms with rotations of about 90$^\circ$ per second that quickly relocate the \textit{fovea} so important features in a scene are sensed with the highest visual acuity, giving the illusion of high acuity over a large angular range. We typically have little awareness of these eye movements even though we can consciously control \textit{fixation targets}.
+    \item \textbf{Vestibulo-ocular reflex (VOR)}: an involuntary movement of the eyes that counteracts head motion and is one of the most important motions to understand for VR.
+    \item \textbf{Smooth pursuit}: slow eye movement (usually $<30^\circ$/s) used to track a moving target feature such as a car, tennis ball, or person walking by, reducing \textit{motion blur} on the retina.
+    \item \textbf{Optokinetic reflex}: rapid movement of the eyes to track a fast object; the eyes rapidly and involuntarily choose features for tracking on the object.
+    \item \textbf{Vergence stereopsis}: movement of the eyes to converge or diverge the pupils, providing important information about the distance of objects.
+    \item \textbf{Microsaccades}: small, involuntary jerks (less than one degree) that trace out an erratic path and are believed to augment fixation control, reduce \textit{perceptual fading} due to adaptation, and improve visual acuity.
+\end{itemize}
+
+
+\subsection{Vergence and accommodation}
+\textbf{Vergence} is the movement of the eyes to converge or diverge the pupils.
+\textbf{Accommodation} is the adjustment of the eyes to focus on near objects.
+\textbf{Binocular disparity} is the difference in the image seen by the two eyes.
+\textbf{Retinal blur} is the blurring of the image seen by the eyes due to the finite size of the retina.
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Vergence-Accommodation Mismatch in VR}]
+In the real world, \textit{vergence} and \textit{accommodation} match, but
+in VR, \textit{vergence} and \textit{accommodation} can mismatch.
+This can cause discomfort:
+\begin{itemize}
+    \item \textbf{fatigue}
+    \item \textbf{nausea}
+    \item \textbf{eye strain}
+    \item \textbf{motion sickness}
+\end{itemize}
+\textbf{Flicker fusion rate} is the frequency at which the eyes can perceive a flickering image.
+It is important because it affects the perception of the image and can cause discomfort.
+For instance, if the flicker fusion rate is too low, the eyes will perceive the image as flickering.
+
+\textbf{Dynamic range} is the ratio of the brightest to the darkest part of the image.
+Human vision has a dynamic range far higher than any available display technology.
+\end{tcolorbox}
+
+
+\subsection{Human Vision System}
+The human vision system is the following:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|>{\raggedright\arraybackslash}p{6.5cm}|}
+    \hline
+    \textbf{Visual acuity} & 20/20 is $\sim$1 arc min \\
+    \hline
+    \textbf{Field of view} & $\sim$200$^\circ$ monocular, $\sim$120$^\circ$ binocular, $\sim$135$^\circ$ vertical \\
+    \hline
+    \textbf{Resolution of eye} & $\sim$576 megapixels \\
+    \hline
+    \textbf{Temporal resolution} & $\sim$60 Hz (depends on contrast, luminance) \\
+    \hline
+    \textbf{Dynamic range} & instantaneous 6.5 f-stops, adapts to 46.5 f-stops \\
+    \hline
+    \textbf{Colour} & everything in CIE xy diagram \\
+    \hline
+    \textbf{Depth cues in 3D displays} & vergence, focus, (dis)comfort \\
+    \hline
+    \textbf{Accommodation range} & $\sim$8 cm to $\infty$, degrades with age \\
+    \hline
+    \end{tabular}
+    \caption{Human Vision System}
+\end{table}
+Modern displays can't exactly match this level of performance. 
+Let's see a comparison between the human eyes and the HTC Vive (2016) VR headset:
+
+    \begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|c|}
+    \hline
+     & \textbf{Human Eyes} & \textbf{HTC Vive} \\
+    \hline
+    FOV & 200$^\circ$ $\times$ 135$^\circ$ & 110$^\circ$ $\times$ 110$^\circ$ \\
+    \hline
+    Stereo Overlap & 120$^\circ$ & 110$^\circ$ \\
+    \hline
+    Resolution & 30,000 $\times$ 20,000 & 2,160 $\times$ 1,200 \\
+    \hline
+    Pixels/inch & $>$2190 (100mm to screen) & 456 \\
+    \hline
+    Update & 60 Hz & 90 Hz \\
+    \hline
+    \end{tabular}
+    \caption{Comparison between the human eyes and the HTC Vive (2016) VR headset}
+\end{table}
+    
+
+The following are some of the 3D cues that are used to create the illusion of depth:
+\begin{itemize}
+    \item \textbf{Atmospheric artifacts}: fog, smoke, dust, etc.
+    \item \textbf{Relative sizes}: objects that are closer are larger than objects that are further away.
+    \item \textbf{Image blur}: objects that are further away are blurred.
+    \item \textbf{Occlusion}: objects that are further away are occluded by objects that are closer.
+    \item \textbf{Shadows}: objects that are further away have smaller shadows.
+    \item \textbf{Texture}: objects that are further away have less texture.
+    \item \textbf{Colour}: bluish objects are more distant.
+    \item \textbf{Motion parallax}: Objects in relative motion provide depth information; closer objects appear to move faster than distant objects when the observer moves.
+\end{itemize}
+
+
+\subsection{Issues for VR}
+The following are some of the issues for VR:
+\begin{itemize}
+    \item \textbf{Coherence of depth cues}: Achieving coherent depth cues across all visual elements is difficult.
+    \item \textbf{Vergence-accommodation mismatch in VR headsets}: In conventional VR displays, vergence and accommodation are decoupled because the display is at a fixed focal distance while the eyes converge at different distances. This mismatch can cause discomfort and is a fundamental limitation of current VR technology.
+    \item \textbf{Imperfect head tracking}: If there is significant latency, visual stimuli will not appear in the correct place at the expected time, causing spatial misalignment and potential motion sickness.
+    \item \textbf{Limited tracking systems}: Many tracking systems monitor only head orientation, which has obvious drawbacks for accurate spatial interaction.
+
+\end{itemize}
+
+
+\subsection{Motion perception}
+Motion detection in the human visual system depends on local processing at the \textit{retinal level}, which is then integrated at higher \textit{cortical levels} to create a coherent perception of motion.
+
+\begin{itemize}
+    \item \textbf{Optical flow}: The pattern of apparent motion of objects, surfaces, and edges in a visual scene caused by the relative motion between an observer and the scene. It represents the motion field projected onto the image plane and is fundamental to understanding how we perceive movement in both real and virtual environments.
+    
+    \item \textbf{Apparent motion in Virtual Reality}: VR systems exploit \textit{apparent motion} by rapidly displaying sequences of static images. The brain perceives continuous motion from discrete frames, similar to how \textit{motion pictures} and animation work. This illusion allows VR to create convincing motion experiences despite rendering discrete frames.
+    
+    \item \textbf{Stroboscopic apparent motion}: A visual phenomenon where discrete images presented in rapid succession are perceived as continuous motion. This is the fundamental principle behind animation, film, and VR displays, where the brain fills in the gaps between frames to create the perception of \textit{smooth motion}.
+    
+    \item \textbf{Beta and Phi effects}: Two related phenomena that explain apparent motion:
+    \begin{itemize}
+        \item \textbf{Beta effect}: The perception of motion between two static images when they are presented in rapid succession with appropriate timing and spatial separation.
+        \item \textbf{Phi effect}: The perception of motion in a single object that appears to move between different positions, creating an illusion of continuous movement.
+    \end{itemize}
+    
+    \item \textbf{Persistence of Vision}: A traditional but somewhat misleading explanation suggesting that images persist on the retina for approximately 100 ms after the stimulus is removed. However, modern research indicates that motion perception in film and VR is better explained by the \textit{phi phenomenon} and \textit{beta effect} rather than true \textit{persistence of vision}.
+    
+    \item \textbf{Motion perception at low frame rates}: Interestingly, motion can be perceived even at very low frame rates (as low as 2 fps), though it appears jerky and discontinuous. This observation challenges the traditional \textit{persistence of vision} explanation and demonstrates that motion perception is more complex than simple \textit{retinal persistence}.
+\end{itemize}
+
+
+
+\subsection{Issues in HMD}
+The following are some of the issues in HMD:
+\begin{itemize}
+    \item \textbf{Reducing image display time}: Reducing the time each image is displayed can help minimize flickering.
+    \item \textbf{Frame rate requirements}: Flickering appears if the frame rate is not high enough; frame rates greater than 90 fps are typically acceptable.
+    \item \textbf{Fast pixel switching}: Fast pixel switching is needed to reduce flickering. OLED displays achieve switching times of less than 0.1 ms.
+\end{itemize}
+
+\subsection{Other important senses in VR}
+In immersive environments \textbf{somatosensory cues} complement vision and audition by providing information about contact, pressure, body pose, and motion. The somatosensory system is a distributed network of receptors in the skin, muscles, tendons, and joints that continuously reports the state of the body. Key aspects for VR design include:
+\begin{itemize}
+    \item \textbf{Haptic sensations}: The skin contains specialized cells that respond to pressure, vibration, and temperature. Haptic feedback adds realism by matching virtual contact events with tactile effects such as vibration or force.
+    
+    \item \textbf{Tactile channel}: Tactile receptors do not have uniform density across the body. Areas such as the tongue and fingertips contain many more mechanoreceptors, allowing finer spatial discrimination of textures and edges.
+    
+    \item \textbf{Mechanoreceptors}: Specialized receptors that encode different aspects of touch (high-frequency vibration, stretch, low-frequency vibration, and steady pressure, respectively). Haptic devices stimulate these receptors indirectly through actuators embedded in controllers, gloves, or suits.
+    
+    \item \textbf{Proprioception (joint position sense)}: Sensors embedded in muscles, tendons, and joints report limb positions even with eyes closed. This ability lets users reach or touch virtual objects with confidence. Joints closer to the torso are generally sensed more accurately, and healthy adults localize hand position within $\sim$8 cm without visual feedback.
+    
+    \item \textbf{Kinaesthesia (joint motion sense)}: Movement is detected through dynamic responses of muscle spindles and tendon organs. Accurate motion cues help the user perceive forces and resistances generated by the virtual world.
+\end{itemize}
+
+\paragraph{Two-point discrimination.} The \textit{two-point test} measures tactile acuity by determining the minimum separation at which two simultaneous touches are perceived as distinct. Lower values indicate higher spatial sensitivity. Typical thresholds are summarized in Table~\ref{tab:two-point}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|}
+        \hline
+        \textbf{Body site} & \textbf{Threshold distance (mm)} \\
+        \hline
+        Finger & $2$--$3$ \\
+        Cheek & $6$ \\
+        Nose & $7$ \\
+        Palm & $10$ \\
+        Forehead & $15$ \\
+        Foot & $20$ \\
+        Belly & $30$ \\
+        Forearm & $35$ \\
+        Upper arm & $39$ \\
+        Back & $39$ \\
+        Shoulder & $41$ \\
+        Thigh & $42$ \\
+        Calf & $45$ \\
+        \hline
+    \end{tabular}
+    \caption{Approximate two-point discrimination thresholds across the body.}
+    \label{tab:two-point}
+
+\end{table}
+
+\subsection{Proprioception and Kinesthesia: Advanced Aspects}
+
+\subsubsection{Efference Copies and Motor Control}
+
+The \textit{motor cortex}, which controls body movement, sends signals called \textbf{efference copies} to other parts of the brain to communicate which movements have been executed. This mechanism is analogous to having encoders on robot joints or wheels to indicate how much they have moved.
+
+\textbf{Implication:} You cannot tickle yourself because your brain knows where your fingers are moving through these efference copies, which cancel out the expected sensory feedback.
+
+\subsection{The Vestibular System}
+
+The \textbf{vestibular system}, located in the inner ear alongside the \textit{cochlea}, provides crucial information about balance, spatial orientation, and motion:
+
+\begin{itemize}
+    \item \textbf{Utricle and saccule}: Together form the \textbf{otolithic system}, which measures linear acceleration. \textit{Otoliths} (calcium carbonate crystals) move over \textit{hair cells} to detect gravity and linear acceleration, providing information about head position relative to gravity.
+    
+    \item \textbf{Semicircular canals}: Three fluid-filled canals oriented in orthogonal planes measure angular acceleration (rotational head movements). Each canal is sensitive to rotation in its specific plane.
+\end{itemize}
+
+\subsection{Auditory Perception}
+
+Similar to vision, auditory experiences are often surprising and based on adaptation, missing data, and assumptions filled by \textit{neural structures}. Many interesting aspects derive from \textit{psychophysical measurements}.
+
+\subsubsection{Auditory Illusions}
+
+\begin{itemize}
+    \item \textbf{Precedence effect}: When two nearly identical sounds arrive at slightly different times, we perceive a single sound. This is fundamental for handling \textbf{reverberation} (delayed copies of sound due to reflections), allowing us to perceive a single sound source based on the first arrival (usually the strongest). An \textit{echo} is perceived if the temporal difference exceeds the "\textit{echo threshold}."
+    
+    \item \textbf{McGurk effect}: Demonstrates the power of multisensory integration by mixing visual and auditory cues. In experiments where a video of a person speaking is dubbed with mismatched audio (e.g., hearing "ba" while seeing "ga"), most subjects perceive "da." The brain "fuses" the two inputs into a third plausible result. While not directly relevant to VR, this effect illustrates how sensory fusion works.
+\end{itemize}
+
+\subsubsection{Loudness Perception}
+
+\textit{Loudness perception} varies with frequency. This must be considered in audio interaction experiments, referencing \textbf{equal-loudness contours} (also known as \textit{Fletcher-Munson curves}), which show how perceived loudness changes across different frequencies at the same \textit{sound pressure level}.
+
+\subsubsection{Steven's Power Law}
+
+The response to a stimulus (\textit{perceived magnitude}) is not linear but follows a \textit{power law}:
+\begin{equation}
+    p = k \cdot m^x
+\end{equation}
+where $p$ is the perceived magnitude, $m$ is the physical magnitude, $k$ is a constant, and $x$ is an exponent that depends on the stimulus type (e.g., $x = 3.5$ for electric shock, $x = 0.33$ for brightness).
+
+\subsubsection{Just Noticeable Difference (JND)}
+
+The \textbf{Just Noticeable Difference (JND)} is the minimum amount by which a stimulus must be modified for a subject to perceive the change at least 50\% of the time. This threshold varies across sensory modalities and stimulus types.
+
+\subsubsection{Sound Localization}
+
+\textbf{Sound localization} is the estimation of a sound source's position through hearing. This is crucial for VR: auditory and visual stimuli must correspond (e.g., a voice should appear to come from the avatar's mouth).
+
+The JND applied to localization is the \textbf{Minimum Audible Angle (MAA)}, the minimum angular variation that can be detected.
+
+\paragraph{Monaural cues (one ear).}
+\begin{itemize}
+    \item \textbf{Pinna (auricle)}: The asymmetric shape of the outer ear distorts incoming sound in a direction-dependent manner, especially for elevation perception.
+    
+    \item \textbf{Amplitude}: Decreases quadratically with distance.
+    
+    \item \textbf{Spectral distortion}: At distance, high frequencies attenuate more rapidly (e.g., distant vs. nearby thunder).
+    
+    \item \textbf{Reverberation}: Can be used for echolocation.
+\end{itemize}
+
+\paragraph{Binaural cues (two ears).}
+\begin{itemize}
+    \item \textbf{Interaural Level Difference (ILD)}: The difference in sound magnitude (volume) as heard by each ear. The farther ear is in acoustic "shadow" (works better for high frequencies).
+    
+    \item \textbf{Interaural Time Difference (ITD)}: The difference in arrival time of sound at the two ears (approximately 21.5 cm apart, resulting in a maximum delay of $\sim$0.6 ms).
+    
+    \item \textbf{Cone of confusion}: A set of positions in space that produce the same ILD and ITD, making localization ambiguous (e.g., a sound in front or behind). Head movement helps resolve this ambiguity.
+\end{itemize}
+
+\subsection{Hierarchical Processing}
+
+Stimuli captured by receptors ascend through a \textit{hierarchical network of neurons}. In early stages, signals are combined and propagated upward. In later stages, information flows bidirectionally, allowing \textit{top-down influences} to modulate \textit{lower-level processing}.
+
+\subsection{Information Fusion}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Multisensory Integration and Sensory Conflict}]
+Signals from multiple senses and proprioception are processed and combined by the brain with our experiences. We expect coherent information across modalities. VR often cannot provide all sensations correlated with a simulation, leading to \textbf{sensory conflict}.
+
+This conflict can cause problems such as dizziness or nausea, particularly in cases of \textbf{vection}.
+\end{tcolorbox}
+
+\subsubsection{Vection and Optical Flow}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Vection: The Illusion of Self-Motion}]
+\textbf{Vection} is the illusion of self-motion. A classic example: you are stationary in a train, and the train on the adjacent track moves, giving you the illusion that you are moving backward.
+
+In VR, vision (\textit{optical flow}) tells the brain that you are accelerating, but the \textit{vestibular system} (balance) and \textit{proprioception} indicate that you are stationary. This conflict is a primary cause of \textbf{VR sickness}.
+
+Movement is perceived (also in computer vision) by estimating "optical flow" from image sequences. Flow vectors are used to recover the type of movement (vection). Types of vection/movement include: (a) yaw, (b) pitch, (c) roll, (d) lateral, (e) vertical, (f) forward/backward.
+\end{tcolorbox}
+
+\paragraph{Factors affecting vection sensitivity.}
+\begin{itemize}
+    \item \textbf{Percentage of visual field (FOV)}: The larger the moving area, the greater the vection. A small moving object is perceived as "object in motion," while an entire moving environment is perceived as "I am moving."
+    
+    \item \textbf{Distance from center of view}: Peripheral motion contributes more to vection perception.
+    
+    \item \textbf{Exposure time}: Self-motion perception increases with time.
+    
+    \item \textbf{Spatial frequency}: Greater detail (texture) increases optical flow perception.
+    
+    \item \textbf{Contrast}: Higher contrast increases the optical flow signal.
+    
+    \item \textbf{Other sensory cues}: If coherent (e.g., engine noise, vibrations), they can enhance (correct or incorrect) motion perception.
+    
+    \item \textbf{Prior knowledge}: Knowing what is about to happen can alter perception.
+    
+    \item \textbf{Attention}: If the user is distracted (e.g., aiming with a weapon, selecting a menu), vection and its side effects can be mitigated.
+    
+    \item \textbf{Training/prior adaptation}: With sufficient exposure, the body can learn to distinguish vection from real movement, reducing VR sickness.
+\end{itemize}
+
+\section{Interaction and Usability}
+
+\subsection{Interaction Design}
+%itemize
+\begin{itemize}
+    \item \textbf{Human Factors}: The study of human capabilities and limitations in the 
+    design of human-computer interfaces.
+    \item \textbf{Appearance and presentation}: The design of the user interface to make it attractive and easy to use.
+    \item \textbf{Interaction}: The design of the interaction between a user and a system.
+\end{itemize}    
+\subsubsection{Human Factors}
+Human factors are the psychological and physiological characteristics of the human body that are relevant to the design of human-computer interfaces.
+
+We need to identify the capabilities and limitations involved in the user activities to solve an interaction task.
+In particular we need to focus on the following aspects:
+\begin{itemize}
+    \item \textbf{Perception}
+    \item \textbf{Memory}
+    \item \textbf{Attention and Learning}
+\end{itemize}
+We also need to give control to the user and reduce the amount of \textit{cognitive load}, i.e. the amount of
+ information that the user needs to process to solve an \textit{interaction task}.
+
+\subsubsection{User Control}
+User control is the ability of the user to control the system.
+We need to give the user control and guidance over the system.
+The user is the one that decides which functions to use and when to use them.
+The interface should differentiate between different users, expertise levels and tasks building a \textbf{flexible interface}.
+\subsubsection{Reducing Cognitive Load}
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Recognition vs. Recall}]
+It is easier for a user to \textit{recognize} rather than \textit{remember}.
+It is good practice to show the user all the available commands and options, show proper information to complete a task and organize
+the information to help the user focus on the \textit{task at hand}.
+\end{tcolorbox}
+
+
+\subsection{Appearance and Presentation}
+We need to distinguish between 3 different principles:
+\begin{enumerate}
+    \item Create an attractive aspect.
+    \item Use meaningful and recognizable object representations.
+    \item Keep the interface simple and consistent.
+\end{enumerate}
+
+\subsubsection{Create an attractive aspect}
+\begin{itemize}
+\item All elements on the screen should be visible and recognizable.
+\item A proper use of contrast
+\item A proper use of colors, shapes and sizes.
+\end{itemize}
+
+\subsubsection{Use meaningful and recognizable object representations}
+\begin{itemize}
+    \item Use clear and distinguishable objects.
+    \item Group hierarchically the interface elements.
+    \item A visual coherence should be achieved.
+\end{itemize}
+
+\begin{tcolorbox}[colback=teal!5!white,colframe=teal!75!black,title=\textbf{Functional Consistency}]
+We need to obtain \textit{functional consistency}, i.e. the same function should be represented by the same object in the same way.
+A consistent design provides a more \textit{predictable} and \textit{intuitive} interface and thus it is easier to learn for the user.
+Icons should suggest how to use the interface. The use of non-consistent icons is a source of \textit{confusion} and \textit{error} for the user.
+\end{tcolorbox}
+
+\subsection{Interaction}
+It is the way the user interacts with the interface. This can be achieved through the use of mouse, keyboard, touch screen, voice, etc.
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Core Interaction Design Principles}]
+We distinguish between 3 main different design principles:
+\begin{itemize}
+    \item \textbf{Direct handling}: The user can directly handle the interface elements. The aim is to mimic the \textit{natural way} of interacting with the world.
+    \item \textbf{Feedback}: The user should receive \textit{feedback} from the interface. This feedback should be \textit{immediate} and \textit{clear}. This also improves 
+    the user \textit{awareness} and \textit{learning}. Some examples of feedback are: highlighting a selected object, make a sound when an action is completed, etc.
+    \item \textbf{Error tolerance}: The user should be able to recover from \textit{errors}. The system can accept wrong actions without negative consequences.
+\end{itemize}
+\end{tcolorbox}
+
+There are also other design principles that are important to consider such as:
+\begin{itemize}
+    \item \textbf{Affordance}: help the user to understand the interface and the \textit{actions} that can be performed.
+    \item \textbf{Causality}: help the user to understand the relationship between the actions and the results. If false causality occurs,
+    we get an effect called \textit{overshooting}.
+    \item \textbf{Constraints}: help the user to understand the \textit{limitations} of the interface.
+    \item \textbf{Conceptual model}: 
+    \begin{tcolorbox}[colback=violet!5!white,colframe=violet!75!black,title=\textbf{Conceptual Model}]
+    Help the user to understand the interface and the actions that can be performed. 
+    This is a \textit{mental model} of the interface that the user can use to understand the actions that can be performed.
+    A good conceptual model enables the user to predict the results of the actions that can be performed and help him understand
+    relations between the device control and outputs.
+    A bad conceptual model can lead to confusion and error for the user, it enforces the user to operate blindly and makes
+    the identification of action effects more difficult.
+    \end{tcolorbox}
+    \item \textbf{Visibility}: it is achieved by placing the controls in a \textit{high visibility area}. Just by looking
+    at the interface the user can see the controls and the actions. Visibility is often violated in order to make things look more appealing.
+    \item \textbf{Mapping}: it is a relation between two objects. It is important that this is easy to 
+    learn and remember. Some types of mappings are \textit{spatial} and \textit{perceptual}.
+    
+\end{itemize}
+\subsection{Classic Interaction and pervasive interfaces}
+Classic interaction is the traditional way of interacting with the interface. 
+Traditional computer interfaces are based on the \textit{Desktop concept}, as an example of 
+\textit{remediation}. Together with the Desktop concept we have the icons, mouse, menus, etc.
+\subsubsection{Pervasive interfaces}
+In pervasive interfaces, the computational infrastructure is distributed in the environment.
+The interface identifies and serves the user needs.
+Other similar concepts are \textit{ubiquitous computing}, the \textit{invisible computer}, the \textit{disappearing computer}, \textit{ambient intelligence}, and others.
+Computation is part of our everyday life, standard objects became \textit{computational objects}.
+\begin{itemize}
+    \item \textbf{Calm Computing}: the computer does not absorb the user's full attention, but requires an intermittent level of attention.
+\end{itemize}
+We need to put some limits to this \textbf{Pervasive Computing}, in order to avoid the user to be overwhelmed by the amount of
+information and the complexity of the interface. We also need to guarantee the user \textbf{privacy} and \textbf{security}.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Implicit Interaction in Pervasive Computing}]
+In pervasive computing the user interaction with the machine changes:
+\begin{itemize}
+    \item \textbf{Implicit input}: human \textit{actions} and \textit{behaviors} are captured, recognized and interpreted by the machine as inputs.
+    \item \textbf{Implicit output}: the machine generates outputs that are not directly visible but are \textit{integrated in the environment}.
+\end{itemize}
+\end{tcolorbox}
+
+Some examples of pervasive interfaces are:
+\begin{itemize}
+    \item \textbf{wearable devices}: smartwatches, smartglasses, smartrings, etc.
+    \item \textbf{tangible computing}: computation in everyday objects.
+    \item \textbf{Locative media}: media and information that are tied to a \textit{specific location}.
+    \item \textbf{Intelligent Environments}: the computer is part of the environment and it is \textit{integrated} in it.
+\end{itemize}
+\textbf{Natural interfaces} are more effective for the user since the user is focused on the solution of the task at hand rather than understanding the interface.
+The idea of pervasive interaction is nowadays feasible with the development of the \textbf{Internet of Things (IoT)} and \textbf{Artificial Intelligence (AI)}.
+The HCI solution must exploit \textit{AI} and \textit{machine learning} techniques to understand the user's needs and to provide the user with the best possible experience.
 
 
 
 
 
+\section{Augmented Reality}
+\textbf{\textit{Mixed Reality}} describes the merging of a real-world environment with a computer-generated one.
+Physical and virtual objects coexist and interact in real time, enabling scenarios such as previewing
+how a new piece of furniture would look in a room before purchasing it.
 
+\begin{tcolorbox}[colback=blue!4!white,colframe=blue!60!black,title=\textbf{Key Concept: Mixed Reality}]
+Successful AR experiences align digital content with the physical world so that
+virtual objects respond consistently to real-world geometry, lighting, and user motion.
+\end{tcolorbox}
 
+\begin{itemize}
+    \item Synthetic and real objects are visualized within the same scenario.
+    \item Synthetic objects are rendered through a virtual camera controlled by the graphics pipeline.
+    \item Real objects are captured through a physical camera, then processed so they can be displayed within the shared scenario.
+\end{itemize}
 
+Integration between the virtual and real scenes is obtained by calibrating the synthetic camera with the same parameters as the physical one.
+In practice, both cameras must share the same \textbf{\textit{intrinsic}} and \textbf{\textit{extrinsic}} characteristics.
 
+\subsection{Custom Camera in Unity}
+Unity is a game engine that allows the creation of 3D games and simulations (render engine).
+We can create a custom camera in Unity to be used in an AR application, modifying its parameters so they match those of the real camera.
+Unity exposes both \textbf{\textit{intrinsic}} and \textbf{\textit{extrinsic}} parameters of the camera, which we derive using calibration techniques.
 
+Unity is specialized in video games and simulations, it is not specialized in AR/VR.
+Default game objects are:
+\begin{itemize}
+    \item Object(s)
+    \item Camera
+    \item Light
+\end{itemize}
 
-\end{document}
+We particularly focus on the \textbf{\textit{Transform}} component of game objects.
+The Transform component positions, rotates, and scales each object in the scene.
+The Camera component exposes many tunable parameters that we can modify to match the real camera.
+
+\subsection{Calibration Inputs}
+\begin{itemize}
+    \item A picture of the real scene.
+    \item The intrinsic and extrinsic parameters of the real camera.
+    \item A synthetic model represented in the same reference system as the real scene (e.g., a 3D model aligned to the captured environment).
+\end{itemize}
+
+We use software such as Zephyr to estimate the camera parameters from the real scene and the synthetic model.
+
+\subsubsection{Calibration Objective}
+The virtual camera in the synthetic scene must be configured with the parameters of the real camera.
+We therefore control the \textbf{\textit{intrinsic}} and \textbf{\textit{extrinsic}} parameters of the virtual camera to match the real one.
+In Unity we mainly need the following \textbf{\textit{intrinsic}} values to control the virtual camera:
+\begin{itemize}
+    \item Focal length in mm (not in pixels)
+    \item Sensor size (pixel size)
+    \item Lens shift (principal point) 
+\end{itemize}
+
+We apply the correct formulas to convert focal length values from pixels to millimeters.
+In Unity we also set the \textbf{\textit{extrinsic}} parameters through the Transform component (position and rotation of the virtual camera).
+This step is non-trivial because Zephyr and Unity use different reference systems for the extrinsic parameters.
+\begin{itemize}
+    \item The x axis is the same in Zephyr and Unity.
+    \item The y axis has opposite direction in Zephyr and Unity.
+\end{itemize}
+
+We reverse the Y axis using the following matrix:
+
+\begin{equation}
+    \begin{pmatrix}
+        1 & 0 & 0 \\
+        0 & -1 & 0 \\
+        0 & 0 & 1
+    \end{pmatrix}
+\end{equation}
+
+We switch the Z and Y axes using the following matrix:
+
+\begin{equation}
+    \begin{pmatrix}
+        1 & 0 & 0 \\
+        0 & 0 & 1 \\
+        0 & 1 & 0
+    \end{pmatrix}
+\end{equation}
+
+Given the rotation matrix and the translation vector we can compute the extrinsic parameters of the virtual camera.
+Finally, in Unity the rotation matrix is converted into Euler angles using a dedicated procedure.
+
+After completing these operations we can convert the Zephyr parameters to Unity parameters (Transform component).
+
+Now we overlap the real scene and the synthetic object by creating a canvas as a child of the camera object.
+
+\begin{tcolorbox}[colback=yellow!8!white,colframe=orange!60!black,title=\textbf{Camera Alignment Checklist}]
+\begin{itemize}
+    \item Match intrinsic parameters (focal length, sensor size, principal point).
+    \item Align extrinsic parameters by mirroring or swapping axes when required.
+    \item Validate the pose by rendering a reference object over the captured frame.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Our Pipeline}
+
+\begin{tcolorbox}[colback=green!6!white,colframe=green!50!black,title=\textbf{AR Integration Pipeline}]
+\begin{enumerate}
+    \item Create or import the 3D representation of the synthetic object.
+    \item Calibrate the real camera (e.g., with Zephyr) to obtain intrinsic and extrinsic parameters.
+    \item Export the calibration data (e.g., XMP file) and convert focal length values from pixels to millimetres.
+    \item Translate the extrinsic parameters into Unity's Transform conventions (Euler angles and axis adjustments).
+    \item Render the 3D model with the calibrated virtual camera and composite it with the captured scene.
+\end{enumerate}
+\end{tcolorbox}
+\end{document}  
