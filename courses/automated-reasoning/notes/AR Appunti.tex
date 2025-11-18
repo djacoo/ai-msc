@@ -3251,33 +3251,236 @@ The correctness of this procedure follows from:
 
 
 
+\newpage
+
+\part{Array Theory: Worked Examples}
+
+\section{Decision Procedure Examples}
+
+We now present four examples illustrating how the decision procedure for the theory of arrays works in practice.
+
+\begin{example}[Satisfiability with store and inequality]
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Example 1: SAT with Index Inequality},breakable]
+\textbf{Given formula}:
+\[
+\textsf{select}(\textsf{store}(a, i, e), j) \backsimeq e \quad \wedge \quad i \not\backsimeq j
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.3em}
+
+\textbf{Intuition}: The store operation creates a new array with value $e$ at index $i$. Since $i \neq j$, it is perfectly possible for the original array $a$ to already have value $e$ at position $j$. This does not lead to a contradiction.
+
+\vspace{0.5em}
+
+\textbf{Decision Procedure Analysis}:
+
+The procedure detects one occurrence of $\textsf{store}$ and performs case analysis based on whether the indices are equal:
+
+\vspace{0.3em}
+
+\textbf{Case 1}: $i \backsimeq j$
+
+The formula becomes:
+\[
+i \backsimeq j \quad \wedge \quad e \backsimeq e \quad \wedge \quad i \not\backsimeq j
+\]
+
+\textbf{Result}: \texttt{UNSAT} — contradiction between $i \backsimeq j$ and $i \not\backsimeq j$.
+
+\vspace{0.3em}
+
+\textbf{Case 2}: $i \not\backsimeq j$
+
+Applying the second select-over-store axiom:
+\[
+i \not\backsimeq j \quad \wedge \quad \textsf{select}(a, j) \backsimeq e
+\]
+
+Transform $\textsf{select}(a, j)$ into $f_a(j)$:
+\[
+i \not\backsimeq j \quad \wedge \quad f_a(j) \backsimeq e
+\]
+
+Congruence closure determines that $f_a(j)$ and $e$ are in the same equivalence class. No contradiction arises.
+
+\textbf{Result}: \texttt{SAT}
+
+\vspace{0.5em}
+
+\textbf{Final Verdict}: Since at least one branch is satisfiable, the procedure returns \texttt{SAT}.
+\end{tcolorbox}
+\end{example}
+
+\newpage
+
+\begin{example}[Satisfiability with conflicting constraints]
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Example 2: SAT with Partial Contradiction},breakable]
+\textbf{Given formula}:
+\[
+\textsf{select}(\textsf{store}(a, i, e), j) \backsimeq e \quad \wedge \quad \textsf{select}(a, j) \not\backsimeq e
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Decision Procedure Analysis}:
+
+\textbf{Case 1}: $i \backsimeq j$
+
+Applying the first select-over-store axiom, replace $\textsf{select}(\textsf{store}(a, i, e), j)$ with $e$:
+\[
+i \backsimeq j \quad \wedge \quad e \backsimeq e \quad \wedge \quad \textsf{select}(a, j) \not\backsimeq e
+\]
+
+Transform $\textsf{select}(a, j)$ into $f_a(j)$:
+\[
+i \backsimeq j \quad \wedge \quad e \backsimeq e \quad \wedge \quad f_a(j) \not\backsimeq e
+\]
+
+The congruence closure algorithm processes this successfully — the original array $a$ could have had any value at position $j$.
+
+\textbf{Result}: \texttt{SAT}
+
+\vspace{0.3em}
+
+\textbf{Case 2}: $i \not\backsimeq j$
+
+Applying the second select-over-store axiom:
+\[
+i \not\backsimeq j \quad \wedge \quad \textsf{select}(a, j) \backsimeq e \quad \wedge \quad \textsf{select}(a, j) \not\backsimeq e
+\]
+
+Direct contradiction: $\textsf{select}(a, j) \backsimeq e$ and $\textsf{select}(a, j) \not\backsimeq e$ cannot both be true.
+
+\textbf{Result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Final Verdict}: Since at least one branch is satisfiable (Case 1), the procedure returns \texttt{SAT}.
+\end{tcolorbox}
+\end{example}
+
+\newpage
+
+\begin{example}[Unsatisfiability on all branches]
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Example 3: UNSAT on All Branches},breakable]
+\textbf{Given formula}:
+\[
+\textsf{select}(\textsf{store}(a, i, e), j) \backsimeq e \quad \wedge \quad \textsf{select}(a, j) \not\backsimeq e \quad \wedge \quad i \not\backsimeq j
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Decision Procedure Analysis}:
+
+\textbf{Case 1}: $i \backsimeq j$
+
+The formula becomes:
+\[
+i \backsimeq j \quad \wedge \quad \textsf{select}(\textsf{store}(a, i, e), j) \backsimeq e \quad \wedge \quad \textsf{select}(a, j) \not\backsimeq e \quad \wedge \quad i \not\backsimeq j
+\]
+
+Immediate contradiction between $i \backsimeq j$ and $i \not\backsimeq j$.
+
+\textbf{Result}: \texttt{UNSAT}
+
+\vspace{0.3em}
+
+\textbf{Case 2}: $i \not\backsimeq j$
+
+Applying the second select-over-store axiom:
+\[
+\textsf{select}(a, j) \backsimeq e \quad \wedge \quad \textsf{select}(a, j) \not\backsimeq e \quad \wedge \quad i \not\backsimeq j
+\]
+
+Direct contradiction between $\textsf{select}(a, j) \backsimeq e$ and $\textsf{select}(a, j) \not\backsimeq e$.
+
+\textbf{Result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Final Verdict}: Since both branches are unsatisfiable, the procedure returns \texttt{UNSAT}.
+\end{tcolorbox}
+\end{example}
+
+\newpage
+
+\begin{example}[Nested store operations]
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Example 4: UNSAT with Nested Stores},breakable]
+\textbf{Given formula}:
+\begin{align*}
+i_1 \backsimeq j \quad &\wedge \quad i_1 \not\backsimeq i_2 \quad \wedge \quad \textsf{select}(a, j) \backsimeq v_1 \\
+&\wedge \quad \textsf{select}(\textsf{store}(\textsf{store}(a, i_1, v_1), i_2, v_2), j) \not\backsimeq \textsf{select}(a, j)
+\end{align*}
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Decision Procedure Analysis}:
+
+The formula involves nested $\textsf{store}$ operations. We perform case analysis on whether $j \backsimeq i_2$:
+
+\vspace{0.3em}
+
+\textbf{Case 1}: $j \backsimeq i_2$
+
+Applying the first select-over-store axiom (since $j \backsimeq i_2$):
+\begin{align*}
+i_1 \backsimeq j \quad &\wedge \quad i_1 \not\backsimeq i_2 \quad \wedge \quad j \backsimeq i_2 \quad \wedge \quad \textsf{select}(a, j) \backsimeq v_1 \\
+&\wedge \quad v_2 \not\backsimeq \textsf{select}(a, j)
+\end{align*}
+
+Transform $\textsf{select}(a, j)$ into $f_a(j)$:
+\[
+i_1 \backsimeq j \quad \wedge \quad i_1 \not\backsimeq i_2 \quad \wedge \quad j \backsimeq i_2 \quad \wedge \quad f_a(j) \backsimeq v_1 \quad \wedge \quad v_2 \not\backsimeq f_a(j)
+\]
+
+Congruence closure returns \texttt{UNSAT}: we have $i_1 \backsimeq j \backsimeq i_2$ but $i_1 \not\backsimeq i_2$ (contradiction).
+
+\textbf{Result}: \texttt{UNSAT}
+
+\vspace{0.3em}
+
+\textbf{Case 2}: $j \not\backsimeq i_2$
+
+Applying the second select-over-store axiom:
+\begin{align*}
+i_1 \backsimeq j \quad &\wedge \quad i_1 \not\backsimeq i_2 \quad \wedge \quad \textsf{select}(a, j) \backsimeq v_1 \\
+&\wedge \quad \textsf{select}(\textsf{store}(a, i_1, v_1), j) \not\backsimeq \textsf{select}(a, j)
+\end{align*}
+
+Now we need a second case analysis on whether $j \backsimeq i_1$. However, we already have $i_1 \backsimeq j$ as part of the problem, so the branch $j \not\backsimeq i_1$ is immediately unsatisfiable.
+
+\textbf{Subcase 2.1}: $j \backsimeq i_1$ (forced by the given constraint)
+
+Applying the first select-over-store axiom:
+\[
+i_1 \backsimeq j \quad \wedge \quad i_1 \not\backsimeq i_2 \quad \wedge \quad \textsf{select}(a, j) \backsimeq v_1 \quad \wedge \quad v_1 \not\backsimeq \textsf{select}(a, j)
+\]
+
+Direct contradiction: $\textsf{select}(a, j) \backsimeq v_1$ and $v_1 \not\backsimeq \textsf{select}(a, j)$ cannot both be true.
+
+\textbf{Result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Final Verdict}: Since all branches are unsatisfiable, the procedure returns \texttt{UNSAT}.
+\end{tcolorbox}
+\end{example} 
+
+
+
 \newpage 
 
 \part{}
 
 \section{}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
