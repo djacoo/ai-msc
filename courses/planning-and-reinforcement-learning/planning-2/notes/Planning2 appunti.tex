@@ -167,6 +167,99 @@
 \tableofcontents
 \newpage
 
-% Start adding your sections here
+\part{}
+
+\section{}
+
+State-Transition Systems
+
+We want to model a complex environment - we need simplifying assumtions
+classical planning:
+- finite, static workd with just one actor
+- no concurrent actions, no explicit time
+- determinism, no uncertainty
+
+sequence of states and actions <s_0, a_1, s_1, a_2, ...>
+
+most real world environment violate these assumption but classical planning could be a useful approximation
+
+State transition systems: \Epsilon = < S, A, \gamma, cost >
+S and A, finite set of states and actions
+
+plan: a sequence of actions \pi = <a_1, a_2, ..., a_n>
+
+empty plan <>
+concatenation of plans \pi \circ \pi' 
+
+\gamma(s_0, \pi) = s_n means that after executing \pi starting from s_0 we end up in s_n 
+
+run-plan(\Epsilon, \pi) 
+while True do
+    \dots
+
+
+given a transition system, a planning problem is P = (\Epsilon, s_0, S_g) 
+from s_0 to one of the states in S_g 
+
+solution for P:
+- a plan \pi such that \gamma(s_0, \pi) \in S_g 
+- \pi is minimal if no subsequence of \pi is a solution
+- pi is shortest if no solution pi', where |pi'| < |pi| 
+- pi is optimal if cost(pi) = min{cost(pi') | pi' is a solution for P}
+
+
+Representing a transition system \Epsilon 
+
+(small)
+if S and A are small enough ---> state/action unique name ---> for each s, a, \dots
+
+(large)
+cannot represent all states explicitly 
+
+
+the more we are specific to the representation, the more we can reason 
+high effectiveness: can use whatever works best for specific domain
+low generality tho 
+
+domain independent:
+
+
+\dots
+
+
+State-varaible representations 
+
+example of robots, containers, locs 
+
+r1 is a robot, but actually r1 is a symbol 
+we consider it a robot tho 
+
+symbols for objects/actions should interpret correctly the environment
+ 
+
+rigid properties: properties of the states that don't change over time 
+
+varying properties (fluents): represented with a state variable; a term to which we can assign a value
+
+states s are functions that assigns values to state variables
+one state is an assingment 
+can be also a set of ground positive literals (= is a used as a predicate symbol)
+
+
+action template/schema: a parametrized set of actions 
+
+
+actions: \A = set of action templates 
+assign each param a value in its range 
+
+
+
+
+
+
+
+
+
+
 
 \end{document}

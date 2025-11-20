@@ -3478,15 +3478,416 @@ Direct contradiction: $\textsf{select}(a, j) \backsimeq v_1$ and $v_1 \not\backs
 
 \newpage 
 
-\part{}
+\part{Theory Combination: Exercises and Assumptions}
 
-\section{}
+\section{Exercise}
+
+\begin{example}[Theory Combination Exercise]
+Consider the formula:
+\[
+1 \leq x \wedge x \leq 2 \wedge f(x) \not\backsimeq f(1) \wedge f(x) \not\backsimeq f(2)
+\]
+
+\textbf{Analysis with different theories}:
+
+\begin{itemize}
+    \item $\mathcal{T}_E \cup \mathcal{T}_{\text{LRA}}$ (Linear Rational Arithmetic) $\longrightarrow$ \texttt{SAT}
+
+    Satisfying assignment: $x \leftarrow 0.5$
+
+    \item $\mathcal{T}_E \cup \mathcal{T}_{\text{LIA}}$ (Linear Integer Arithmetic) $\longrightarrow$ \texttt{UNSAT}
+\end{itemize}
+
+\textbf{Key observation}: In $\mathcal{T}_E$, from $x \backsimeq 1 \vee x \backsimeq 2$ we can deduce $f(x) \backsimeq f(1)$ (by congruence).
+\end{example}
+
+\section{The Nelson-Oppen Scheme for Theory Combination}
+
+The Nelson-Oppen scheme is an \textbf{equality-sharing scheme} for combining theories.
+
+\subsection{Assumptions}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Nelson-Oppen Assumptions}]
+\textbf{Assumption 1: Decision Procedures}
+
+Each theory $\mathcal{T}_i$ has a decision procedure for the satisfiability of sets (conjunctions) of $\mathcal{T}_i$-literals.
+
+Combining theories by combining procedures as black-boxes.
+
+\vspace{0.5em}
+
+\textbf{Assumption 2: Disjoint Signatures}
+
+The theories are pairwise disjoint, i.e., the only shared symbol is $\backsimeq$ (equality).
+
+\begin{itemize}
+    \item It's ok if they share sorts and variables (and hence also constants, because variables and constants are interchangeable in the quantifier-free fragment)
+    \item They cannot share function or predicate symbols
+\end{itemize}
+
+Example:
+\begin{align*}
+f &\in \Sigma_E \\
+1, 2, < &\in \Sigma_{\text{Arithm}} \\
+\backsimeq &\in \Sigma_E \cap \Sigma_{\text{Arithm}}
+\end{align*}
+
+The theories will have to agree only about $\backsimeq$.
+
+\vspace{0.5em}
+
+\textbf{Assumption 3: Stable Infiniteness}
+
+The theories are \textbf{stably infinite}, i.e., each theory $\mathcal{T}_i$ has models where all the sorts are interpreted as countably infinite sets.
+
+The theories agree upfront on the cardinality of the shared sorts (by making them all infinite).
+\end{tcolorbox}
+
+\subsection{Architecture}
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm]
+    \node[rectangle, draw, fill=blue!20] (cm) {CENTRAL MANAGER};
+    \node[rectangle, draw, fill=green!20, below left=1.5cm and 1cm of cm, text width=3.5cm, align=center] (t1) {$\mathcal{T}_1$ decision procedure \\ for sets of $\mathcal{T}_1$-literals};
+    \node[rectangle, draw, fill=green!20, below right=1.5cm and 1cm of cm, text width=3.5cm, align=center] (t2) {$\mathcal{T}_2$ decision procedure \\ for sets of $\mathcal{T}_2$-literals};
+    \draw[->,thick] (cm) -- (t1);
+    \draw[->,thick] (cm) -- (t2);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Phase I: Separation}
+
+Separate and decompose the problem.
+
+\begin{example}[Separation Example]
+Given:
+\[
+1 \leq x \wedge x \leq 2 \wedge f(x) \not\backsimeq f(1) \wedge f(x) \not\backsimeq f(2)
+\]
+
+After separation into $\mathcal{T}_E$ and $\mathcal{T}_{\text{Arithm}}$:
+\begin{align*}
+F_E &: f(x) \not\backsimeq f(w_2) \wedge f(x) \not\backsimeq f(w_1) \\
+F_{\text{Arithm}} &: 1 \leq x \wedge x \leq 2 \wedge w_1 \backsimeq 1 \wedge w_2 \backsimeq 2
+\end{align*}
+
+Shared variables: $V = \{w_1, x, w_2\}$
+\end{example}
+
+\subsubsection{Separation Rules}
+
+When we have $[t[s]]$ where the top symbol of $s$ belongs to $\Sigma_i$ and $t$ to $\Sigma_j$:
+\begin{align*}
+F_1 &: L[t[w]] \\
+F_2 &: w \backsimeq s
+\end{align*}
+
+When we have $t_1 \backsimeq t_2$ where the top symbol of $t_1$ belongs to $\Sigma_i$ and the top of $t_2$ belongs to $\Sigma_j$ ($i \neq j$), we introduce a fresh variable.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Separation Process}]
+\textbf{Input} $F$: set of $\mathcal{T}_1 \cup \mathcal{T}_2$ literals
+
+\textbf{After separation}: $F_1$ and $F_2$
+\begin{itemize}
+    \item $F_1$: set of $\mathcal{T}_1$-literals
+    \item $F_2$: set of $\mathcal{T}_2$-literals
+\end{itemize}
+
+\textbf{Key property}: $F$ is $\mathcal{T}_1 \cup \mathcal{T}_2$-satisfiable if and only if $F_1 \cup F_2$ is $\mathcal{T}_1 \cup \mathcal{T}_2$-satisfiable.
+\end{tcolorbox}
+
+\subsection{Phase II: Arrangements}
+
+Work on the shared variables and $\backsimeq$.
+
+Find an arrangement of the set $V$ of shared variables.
+
+\newpage
 
 
+\part{Nelson-Oppen Scheme}
 
+\section{Combining Decision Procedures}
 
+\subsection{Introduction to the Nelson-Oppen Scheme}
 
+The \textbf{Nelson-Oppen scheme} provides a method for combining $\mathcal{T}_i$-decision procedures where $i \in \{1, 2\}$.
 
+The procedure is organized with a \textbf{central manager} (C.M.) which is responsible for the communication between the two decision procedures. We don't want to modify the procedures, just combine them as black-boxes.
 
+\begin{center}
+\begin{tikzpicture}[node distance=2cm]
+    \node[rectangle, draw, fill=blue!20] (cm) {Central Manager (C.M.)};
+    \node[rectangle, draw, fill=green!20, below left=1.5cm and 1cm of cm] (t1) {$\mathcal{T}_1$ decision procedure};
+    \node[rectangle, draw, fill=green!20, below right=1.5cm and 1cm of cm] (t2) {$\mathcal{T}_2$ decision procedure};
+    \draw[->,thick] (cm) -- (t1);
+    \draw[->,thick] (cm) -- (t2);
+\end{tikzpicture}
+\end{center} 
+
+\subsection{Phase I: Separation}
+
+The first phase of the scheme is called \textbf{Separation}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Separation Phase}]
+The separation phase separates the input into two sets:
+\[
+F \longrightarrow F_1 \wedge F_2
+\]
+
+where:
+\begin{itemize}
+    \item $F$ is a set of mixed $\mathcal{T}_1 \cup \mathcal{T}_2$ literals
+    \item $F_i$ is the set of $\mathcal{T}_i$-literals only
+\end{itemize}
+
+\textbf{Key property}: $F$ is $\mathcal{T}_1 \cup \mathcal{T}_2$-satisfiable if and only if $F_1 \wedge F_2$ is $\mathcal{T}_1 \cup \mathcal{T}_2$-satisfiable.
+\end{tcolorbox}
+
+\subsubsection{Separation Rules}
+
+Let $w$ be a new variable. The separation is performed according to the following rules:
+
+\begin{enumerate}
+    \item If $\text{head}(t) \in \Sigma_j$ and $f \in \Sigma_i$ with $j \neq i$:
+    \[
+    F[f(t_1, \ldots, t, \ldots, t_n)] \longrightarrow F[f(t_1, \ldots, w, \ldots, t_n)] \wedge w \backsimeq t
+    \]
+
+    \item If $\text{head}(t) \in \Sigma_j$ and $P \in \Sigma_i$ with $j \neq i$ (where $P$ can also be equality $\backsimeq$):
+    \[
+    F[P(t_1, \ldots, t, \ldots, t_n)] \longrightarrow F[P(t_1, \ldots, w, \ldots, t_n)] \wedge w \backsimeq t
+    \]
+
+    \item If $\text{head}(s) \in \Sigma_i$ and $\text{head}(t) \in \Sigma_j$:
+    \[
+    F[\ldots] \wedge s \backsimeq t \longrightarrow F[\ldots] \wedge s \backsimeq w \wedge w \backsimeq t
+    \]
+\end{enumerate}
+
+\begin{example}[Simple Separation]
+Consider:
+\[
+f(2, y) \backsimeq f(x, y)
+\]
+
+This is a combination of theories because $f \in \Sigma_{\text{Equality}}$ and $2 \in \Sigma_{\mathbb{Z}}$ (arithmetic).
+
+We create $F_E$ and $F_{\mathbb{Z}}$:
+\begin{align*}
+F_E &: f(w, y) \backsimeq f(x, y) \\
+F_{\mathbb{Z}} &: w \backsimeq 2
+\end{align*}
+\end{example} 
+
+\begin{example}[Complex Separation]
+Consider:
+\[
+F: x \leq y \wedge y \leq (x + g(x)) \wedge P(h(x) - h(y)) \wedge \neg P(0) \wedge g(x) \backsimeq 0
+\]
+
+where $x$ is some kind of number (for the $+$ symbol), $g$ is a function that takes an integer and returns an integer (integers or rational numbers); if $x$ is a number, also $y$ must be a number; $h$ is like $g$, a function (although it operates on numbers and returns numbers); $P$ is a predicate which applies also to numbers.
+
+This is a combination between:
+\[
+\mathcal{T}_{\mathbb{Z}} \cup \mathcal{T}_E
+\]
+
+where $\mathcal{T}_{\mathbb{Z}}$ is the theory of integers $\{\leq, +, -, 0\}$ and $\mathcal{T}_E$ is the theory of equality $\{f, g, h, P\}$.
+
+We could also interpret $\mathcal{T}_{\mathbb{Z}}$ as the theory of rationals $\mathcal{T}_{\mathbb{Q}}$ (these integers could actually also be rationals).
+
+\textbf{How can we separate}:
+\begin{align*}
+F_{\mathbb{Z}} &: x \leq y \wedge y \leq (x + w_1) \wedge w_2 \backsimeq w_3 - w_4 \wedge w_5 \backsimeq 0 \\
+F_E &: w_1 \backsimeq g(x) \wedge P(w_2) \wedge w_3 \backsimeq h(x) \wedge w_4 \backsimeq h(y) \wedge \neg P(w_5) \wedge g(x) \backsimeq w_5
+\end{align*}
+
+\textbf{Set of shared variables}:
+\[
+V = \{x, y, w_1, w_2, w_3, w_4, w_5\}
+\]
+
+We rewrite the problem (rewriting $P$ as $f_P$):
+\[
+F_E: w_1 \backsimeq g(x) \wedge f_P(w_2) \backsimeq \bullet \wedge w_3 \backsimeq h(x) \wedge w_4 \backsimeq h(y) \wedge f_P(w_5) \not\backsimeq \bullet \wedge g(x) \backsimeq w_5
+\]
+\end{example} 
+
+\subsection{Phase II: Arrangements}
+
+Two procedures decide $\mathcal{T}_1$-SAT and $\mathcal{T}_2$-SAT: but not $\mathcal{T}_1 \cup \mathcal{T}_2$-SAT.
+
+Here comes the notion of \textbf{arrangement} of the set $V$ of shared variables.
+
+An arrangement will have to do with equality (the \textit{only} shared symbol in the 2 theories, all other symbols make sense only in 1 of the 2 theories). It will say which shared variables are equal and which are not.
+
+\subsubsection{Arrangements and Equivalence Relations}
+
+We have a set $V$ of shared variables:
+\[
+V = \{x, y, w_1, w_2, w_3, w_4, w_5\}
+\]
+
+Here we are considering equality between variables (no function symbols), so an equivalence is sufficient.
+
+We are interested in an equivalence relation over the set $V$ of shared variables:
+\[
+E \subseteq V \times V
+\]
+
+We know that an equivalence relation generates a partition. We are looking for the partition of the set $E$ of shared variables.
+
+\begin{tcolorbox}[colback=teal!10!white,colframe=teal!75!black,title=\textbf{Arrangement Definition}]
+We define an \textbf{arrangement} $\alpha(V, E)$ as a conjunction of equalities and disequalities:
+\[
+\alpha(V, E) = \bigwedge_{\substack{u, v \in V \\ u \, E \, v}} u \backsimeq v \quad \wedge \quad \bigwedge_{\substack{u, v \in V \\ \neg(u \, E \, v)}} u \not\backsimeq v
+\]
+\end{tcolorbox}
+
+\textbf{Phase II goal}: Find an $\alpha(V, E)$ such that:
+\[
+F_1 \wedge F_2 \text{ is } \mathcal{T}_1 \cup \mathcal{T}_2\text{-satisfiable iff } F_1 \wedge \alpha(V, E) \text{ is } \mathcal{T}_1\text{-satisfiable and } F_2 \wedge \alpha(V, E) \text{ is } \mathcal{T}_2\text{-satisfiable}
+\] 
+
+\subsection{Non-Deterministic Nelson-Oppen Scheme}
+
+\textbf{How to look for $\alpha$?}
+
+The non-deterministic version of the Nelson-Oppen scheme is simply based on:
+\begin{itemize}
+    \item Guess $E$ and hence $\alpha(V, E)$
+    \item Check the $\mathcal{T}_1$-satisfiability and the $\mathcal{T}_2$-satisfiability of $F_1 \wedge \alpha(V, E)$ and $F_2 \wedge \alpha(V, E)$ respectively
+\end{itemize}
+
+Enumerate all possible $E$ and test them:
+\begin{itemize}
+    \item As soon as one succeeds (both problems return \texttt{SAT}), we return \texttt{SAT}
+    \item If none succeeds (at least one returns \texttt{UNSAT}), we return \texttt{UNSAT}
+\end{itemize}
+
+\begin{example}[Non-Deterministic Nelson-Oppen]
+Consider:
+\[
+f(x) \backsimeq x + y \wedge x \leq y + z \wedge x + z \leq y \wedge y \backsimeq 1 \wedge f(x) \not\backsimeq f(2)
+\]
+
+After separation:
+\begin{align*}
+F_E &: f(x) \backsimeq w_1 \wedge f(x) \not\backsimeq f(w_2) \\
+F_{\mathbb{Z}} &: w_1 \backsimeq x + y \wedge x \leq y + z \wedge x + z \leq y \wedge y \backsimeq 1 \wedge w_2 \backsimeq 2
+\end{align*}
+
+Set of shared variables:
+\[
+V = \{w_1, w_2, x\}
+\]
+
+Try different equivalence relations:
+\begin{itemize}
+    \item $E_0: \{\{w_1\}, \{w_2\}, \{x\}\}$ \\
+    $\alpha(E_0, V) = w_1 \not\backsimeq w_2 \wedge w_1 \not\backsimeq x \wedge w_2 \not\backsimeq x$ $\longrightarrow$ \texttt{SAT}
+
+    \item $E_1: \{\{w_1\}, \{w_2, x\}\}$ \\
+    $\alpha(E_1, V) = w_2 \backsimeq x \wedge w_1 \not\backsimeq w_2 \wedge w_1 \not\backsimeq x$ $\longrightarrow$ \texttt{CONTRADICTION}
+\end{itemize}
+\end{example}
+
+\begin{remark}
+For $|V| = n$, the number of equivalence relations is equal to $\text{Bell}(n)$.
+
+Bell numbers are a sequence of integers which capture exactly the number of equivalence relations that exist over a set of $n$ elements.
+\end{remark} 
+
+\subsection{Deterministic Nelson-Oppen Scheme}
+
+In the deterministic Nelson-Oppen scheme, we don't guess $E$ and $\alpha(V, E)$, but we build incrementally $E$ and $\alpha(V, E)$ in the arrangement.
+
+This is the one used in practice.
+
+\subsubsection{Convexity Property}
+
+We need to verify the theories have all the property of \textbf{Convexity}.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Convexity Definition}]
+A theory $\mathcal{T}$ is \textbf{convex} if and only if:
+\[
+\mathcal{T} \models H \rightarrow \bigvee_{k=1}^{n} u_k \backsimeq v_k \quad \Rightarrow \quad \exists q, \, 1 \leq q \leq n, \text{ such that } \mathcal{T} \models H \rightarrow u_q \backsimeq v_q
+\]
+
+where:
+\begin{itemize}
+    \item $u_k, v_k$ are variables
+    \item $H$ is a conjunction of $\mathcal{T}$-literals
+\end{itemize}
+\end{tcolorbox}
+
+If a theory is convex we don't need to reason about disjunction.
+
+\begin{center}
+\textbf{Examples of Convex and Non-Convex Theories}
+\end{center}
+
+\textbf{Convex theories}:
+\begin{itemize}
+    \item $\mathcal{T}_E$ (theory of equality)
+    \item $\mathcal{T}_{\text{cons}}$ (theory of lists/constructors)
+    \item $\mathcal{T}_{\mathbb{Q}}$ (theory of rationals)
+\end{itemize}
+
+\textbf{Non-convex theories}:
+\begin{itemize}
+    \item $\mathcal{T}_{\mathbb{Z}}$ (theory of integers)
+    \item $\mathcal{T}_A$ (theory of arrays)
+\end{itemize} 
+
+\subsubsection{Two Versions of the Deterministic Scheme}
+
+We need 2 versions of the deterministic scheme:
+
+\begin{enumerate}
+    \item \textbf{If $\mathcal{T}_1$ and $\mathcal{T}_2$ are convex}: \\
+    It suffices that the $\mathcal{T}_i$-procedure (where $i$ can be 1 or 2) is capable of deducing all equalities between shared variables $\mathcal{T}_i$-entailed by $F_i$.
+
+    \item \textbf{If a theory $\mathcal{T}_i$ is not convex}: \\
+    The $\mathcal{T}_i$-procedure must be capable of deducing all disjunctions of equalities between shared variables $\mathcal{T}_i$-entailed by $F_i$.
+\end{enumerate}
+
+\subsubsection{Deterministic Algorithm for Convex Theories}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Deterministic Nelson-Oppen Algorithm}]
+Let $\mathcal{E}$ be the set of shared equalities between shared variables.
+
+\textbf{Initialization}: $\mathcal{E} = \emptyset$
+
+\textbf{Iteration}:
+\begin{enumerate}
+    \item Suppose $P_i$ (decision procedure for $\mathcal{T}_i$) finds that:
+    \[
+    F_i \cup \mathcal{E} \models_{\mathcal{T}_i} x \backsimeq y \quad \text{where } x, y \in V
+    \]
+    Then it sends it to the central manager (C.M.).
+
+    \item Update:
+    \[
+    \mathcal{E}_{k+1} = \mathcal{E}_k \cup \{x \backsimeq y\}
+    \]
+    We add to the set of shared equalities the new one that we have discovered.
+
+    \item Then, maybe $P_j$ also finds that:
+    \[
+    F_j \cup \mathcal{E}_{k+1} \models_{\mathcal{T}_j} x \backsimeq y \quad \text{where } x, y \in V
+    \]
+    \[
+    \mathcal{E}_{k+2} = \mathcal{E}_{k+1} \cup \{x \backsimeq y\}
+    \]
+\end{enumerate}
+
+\textbf{Termination}:
+\begin{itemize}
+    \item \textbf{Termination 1}: When neither $P_i$ nor $P_j$ can deduce any more equalities between shared variables $\longrightarrow$ return \texttt{SAT}
+    \item \textbf{Termination 2}: When $P_i$ or $P_j$ deduces contradictions $\longrightarrow$ return \texttt{UNSAT}
+\end{itemize}
+\end{tcolorbox}
 
 \end{document}
