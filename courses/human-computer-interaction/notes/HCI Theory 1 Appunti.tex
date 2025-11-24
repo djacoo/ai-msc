@@ -1095,4 +1095,148 @@ Aggiungere appunti fino alla fine del primo pdf 1 intro.pdf
 
 
 
-\end{document}
+
+\section{Ultima lezione Dataset Collection}
+
+On papers new tech to collect dataset
+
+We need to annotate the data we collect.
+Because of subjectiveness we need to have a standard way to annotate the data.
+We need to eliminate noise due to subjectiveness.
+Find consesus between annotators and partecipants.
+Reliability tests.
+Sensors and modalities.
+ELAN tool for annotation.
+Tool used for annotation of multimedia resources.
+Visualize and annotate video, audio. (Max planck institute of psycholinguistics)
+Manual and semi manual annotation.
+Obtain audio transcriptions.
+Tier based tool. You can define levels of annotations in an hierarchical way.
+You can label between more than one person
+
+We get in output 2 files:
+1. The annotated data.
+2. The annotation scheme.
+
+You can annotate the data with different levels of granularity.
+Example
+We can have 2 tier, major and minor emotions
+for each tier we will pick one label from a shortlist(anger, disgust, fear, happiness, sadness, surprise, neutral...)
+You can define vocabulary for each list.
+Controlled vocabularies are better than free text.
+
+A non free service is AmazonTurk.
+
+
+Inter rater reliability 
+Degree of disagreement between annotators.
+Many methods exist to measure consensus between annotators.
+It depends on number of raters
+
+Cohen's Kappa
+Only 2 annotators, 2 or more labels, nominal variables.
+It's a common case because it is hard to find more than 2 annotators.
+the formula is:
+\[kappa = \frac{P(o) - P(c)}{1 - P(o)}\]
+where:
+P(o) is the observed agreement between annotators.
+P(c) is the hypothetical agreement between annotators.
+
+The value ranges from 0 to 1.
+0 means no agreement between annotators.
+1 means perfect agreement between annotators.
+A table defining an example of agreement between annotators:
+
+\begin{table}[h]
+\centering
+\caption{Example: Inter-annotator agreement for emotion ratings }
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Annotator 1} & \textbf{Annotator 2} & \textbf{Agreement} \\
+\hline
+3 & 3 & 1 \\
+5 & 5 & 1 \\
+2 & 2 & 1 \\
+0 & 1 & 0 \\
+4 & 3 & 0 \\
+6 & 5 & 0 \\
+1 & 1 & 1 \\
+4 & 4 & 1 \\
+2 & 3 & 0 \\
+5 & 6 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+You can then compute probability values based on each emotion of each annotator.
+And thus calculate the chance of agreement between annotators.
+
+The chance of agreement between annotators is the sum of the chance of agreement for each emotion.
+\[P(o) = \sum_{i=1}^{n} P(e_i)\]
+
+
+The Kappa does not take into account the disagreement motivations and second level relationships.
+
+Fleiss' Kappa is a generalization of Cohen's Kappa for more than 2 annotators.
+
+for continuous variables, you can use the Pearson correlation, interclass correlation and
+Krippendorff's alpha.
+
+\section{Sensors and Modalities}
+List of madality in multimodal interactive systems:
+\begin{itemize}
+    \item Vision (visual)
+    \begin{itemize}
+        \item Face location
+        \item gaze
+        \item facial expression...
+    \end{itemize}
+    \item Hearing (auditory)
+    \item Touch
+    \item Others
+\end{itemize}
+
+For visual data we can use:
+\begin{itemize}
+    \item Camera
+    \item Webcams
+    \item RGB-D sensors (kinect)
+\end{itemize}
+
+FOr auditory data we can use:
+\begin{itemize}
+    \item Microphone
+    \item Microphones array
+    \item Headsets
+\end{itemize}
+
+For touch data we can use:
+\begin{itemize}
+    \item Touchscreen
+    \item Touchpad
+    \item Artificial skin
+\end{itemize}   
+
+For other data we can use:
+\begin{itemize}
+    \item accelerometer
+    \item wearable sensors
+    \item headsets
+    \item eeg
+\end{itemize}
+motion capture systems:
+\begin{itemize}
+    \item optical
+    \item inertial
+    \item magnetic
+    \item others
+\end{itemize}
+
+MOCAP involves capturing object's position and orientation in 3D space, and recording
+the information in a computer.
+
+Optical motion capture systems use cameras to track the position and orientation of the object
+Passive markers are small, reflective spheres that are attached to the object.
+Active markers are small, powered devices that emit light.
+
+openface tool for facial expression recognition.

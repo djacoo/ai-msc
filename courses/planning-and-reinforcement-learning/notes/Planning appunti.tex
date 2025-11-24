@@ -3587,15 +3587,284 @@ The algorithm maintains the invariants Inv-1 and Inv-2 at each step. Termination
 \end{itemize}
 \end{remark} 
 
+\section{Summary of the General Simplex Method for LRA}
 
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{General Simplex Method for LRA}]
+The general simplex method for Linear Real Arithmetic (LRA) solves systems of linear constraints by maintaining a tableau and iteratively pivoting to find a feasible solution.
 
+\begin{itemize}
+    \item \textbf{Input}: A set of LRA constraints
+    \item \textbf{Transformation}: Convert the constraints into the general form 
+    \[
+        Ax = 0
+    \]
+    with bounds 
+    \[
+        l_i \leq x_i \leq u_i
+    \]
+    \item \textbf{Algorithm}: Use the simplex algorithm to find a feasible solution.
+    \begin{itemize}
+        \item Maintain a tableau with basic and non-basic variables
+        \item Non-basic variables are at their bounds
+        \item If a basic variable violates its bound, pivot to bring it back within the bounds
+    \end{itemize}
+    \item \textbf{Output}: 
+    \begin{itemize}
+        \item If the system is satisfiable, return \texttt{sat}
+        \item If the system is unsatisfiable, return \texttt{unsat}
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
 
+\subsection{Example of Initial Tableau Construction}
 
+Let us consider a simple linear programming problem to illustrate the creation of the initial Simplex tableau.
+    
+\begin{example}[Simple Linear Programming Problem]
+    \textbf{Problem}: Maximize the objective function $Z$
+    \[
+        Z = 3x + 2y
+    \]
+    \textbf{Subject to the following constraints:}
+    
+    \begin{align*}
+        2x + y &\leq 18 \\
+        2x + 3y &\leq 42 \\
+        x &\geq 0,\quad y \geq 0
+    \end{align*}
 
+    \textbf{Step 1: Convert to Standard Form}
+    
+    To use the Simplex method, we first convert the inequalities into equalities by introducing slack variables. A slack variable represents the unused amount of a resource. We introduce slack variables $s_1$ and $s_2$ for the first and second constraints respectively.
 
+    The constraints become:
+    \begin{align*}
+        2x + y + s_1 &= 18 \\
+        2x + 3y + s_2 &= 42 \\
+        x &\geq 0,\quad y \geq 0,\quad s_1 \geq 0,\quad s_2 \geq 0
+    \end{align*}
+    
+    All variables, including the slack variables, must be non-negative:
+    \begin{align*}
+        x \geq 0, \quad y \geq 0, \quad s_1 \geq 0, \quad s_2 \geq 0
+    \end{align*}
+    
+    We also rewrite the objective function to be in the same form as the constraints:
+    \[
+        Z = 3x + 2y \quad \Rightarrow \quad 3x + 2y - Z = 0
+    \]
+    
+    \textbf{Step 2: Create the Initial Simplex Tableau}
+    
+    The initial Simplex tableau is a matrix that represents this system of linear equations. Each row corresponds to an equation and each column corresponds to a variable. Here is the initial Simplex tableau:
+    
+    \[ 
+        \begin{array}{c|cccccc|c}
+            \hline
+            \text{Base} & Z & x & y & s_1 & s_2 & \text{RHS} \\
+            \hline
+            Z & 1 & -3 & -2 & 0 & 0 & 0 \\
+            \hline
+            s_1 & 0 & 2 & 1 & 1 & 0 & 18 \\
+            \hline
+            s_2 & 0 & 2 & 3 & 0 & 1 & 42 \\
+            \hline
+        \end{array}
+    \]
 
+    \textbf{Explanation of the Initial Tableau:}
+    
+    \textbf{Rows:}
+    \begin{itemize}
+        \item The first row corresponds to the objective function: $3x + 2y - Z = 0$. The coefficients of $x$ and $y$ are negative because we moved them to the left side of the equation.
+        \item The second row corresponds to the first constraint: $2x + y + s_1 = 18$.
+        \item The third row corresponds to the second constraint: $2x + 3y + s_2 = 42$.
+    \end{itemize}
+    
+    \textbf{Columns:}
+    \begin{itemize}
+        \item The first column corresponds to the objective function value: $Z$.
+        \item The second and third columns correspond to the problem variables: $x$ and $y$.
+        \item The fourth and fifth columns correspond to the slack variables: $s_1$ and $s_2$.
+        \item The last column corresponds to the right-hand side constant terms of the equations: $18$ and $42$.
+    \end{itemize}
+    
+    \textbf{Basic and Non-Basic Variables:}
+    \begin{itemize}
+        \item In the initial tableau, the slack variables ($s_1$ and $s_2$) and $Z$ are the basic variables. A variable is basic if it has a column with a single 1 and all other entries in that column are 0. The labels on the left side of the tableau indicate the basic variables for that row.
+        \item The non-basic variables are the problem variables: $x$ and $y$, and are initially set to 0.
+    \end{itemize}
+    
+    \textbf{Initial Feasible Solution:}
+    
+    The initial tableau gives us an initial basic feasible solution: by setting the non-basic variables to 0, we can read the values of the basic variables directly from the RHS column.
+    \[
+        Z = 0, \quad x = 0, \quad y = 0, \quad s_1 = 18, \quad s_2 = 42
+    \]
+    
+    This solution satisfies all the constraints and is therefore feasible. The simplex method will start from this initial solution and iteratively improve it by pivoting to find an optimal solution.
+\end{example}
 
+\subsection{Example: Unsatisfiable System}
 
+Let us consider another example that demonstrates how the simplex method detects unsatisfiability.
 
+\begin{example}[Unsatisfiable Constraint System]
+    \textbf{Problem}: Consider the following system of constraints:
+    \begin{align*}
+        x + 2y &\geq 1 \\
+        2x + y &\geq 1 \\
+        2x + 2y &\leq 1
+    \end{align*}
+    
+    \textbf{Step 1: Convert to Standard Form}
+    
+    We convert the inequalities into equalities by introducing slack variables. The constraints become:
+    \begin{align*}
+        x + 2y - s_1 &= 0 \quad \text{with } s_1 \geq 1 \\
+        2x + y - s_2 &= 0 \quad \text{with } s_2 \geq 1 \\
+        2x + 2y - s_3 &= 0 \quad \text{with } s_3 \leq 1
+    \end{align*}
+    
+    \textbf{Variable Ordering}: $x < y < s_1 < s_2 < s_3$
+    
+    \textbf{Step 2: Initial Tableau}
+    
+    The initial tableau in matrix form is:
+    \[
+        \begin{bmatrix}
+            1 & 2 & -1 & 0 & 0 \\
+            2 & 1 & 0 & -1 & 0 \\
+            2 & 2 & 0 & 0 & -1
+        \end{bmatrix}
+    \]
+    
+    The sets of variables are:
+    \begin{itemize}
+        \item $\mathcal{N} = \{x, y\}$ (non-basic variables)
+        \item $\mathcal{B} = \{s_1, s_2, s_3\}$ (basic variables)
+    \end{itemize}
+    
+    The reduced tableau (showing only non-basic variables) is:
+    
+    \begin{center}
+    \begin{tabular}{c|cc}
+        & $x$ & $y$ \\
+        \hline
+        $s_1$ & 1 & 2 \\
+        $s_2$ & 2 & 1 \\
+        $s_3$ & 2 & 2
+    \end{tabular}
+    \end{center}
+    
+    \textbf{Step 3: Initial Assignment}
+    
+    The initial assignment is:
+    \begin{align*}
+        \alpha_1(x) &= 0 \\
+        \alpha_1(y) &= 0 \\
+        \alpha_1(s_1) &= 0 \\
+        \alpha_1(s_2) &= 0 \\
+        \alpha_1(s_3) &= 0
+    \end{align*}
+    
+    \textbf{Step 4: First Pivot}
+    
+    We observe that $\alpha_1(s_1) = 0$ violates the constraint $s_1 \geq 1$. We need to increase $\alpha(s_1)$. The variable $x$ is the smallest suitable non-basic variable (according to the ordering). We compute:
+    \[
+        V = \frac{1 - 0}{1} = 1
+    \]
+    
+    After the pivot, the new assignment is:
+    \begin{align*}
+        \alpha_2(x) &= \alpha_1(x) + V = 0 + 1 = 1 \\
+        \alpha_2(y) &= 0 \\
+        \alpha_2(s_1) &= x + 2y = 1 + 0 = 1 \\
+        \alpha_2(s_2) &= 2x + y = 2 + 0 = 2 \\
+        \alpha_2(s_3) &= 2x + 2y = 2 + 0 = 2
+    \end{align*}
+    
+    The system of equations becomes:
+    \begin{align*}
+        x &= s_1 - 2y \\
+        s_2 &= 2(s_1 - 2y) + y = 2s_1 - 3y \\
+        s_3 &= 2(s_1 - 2y) + 2y = 2s_1 - 2y
+    \end{align*}
+    
+    The new sets are:
+    \begin{itemize}
+        \item $\mathcal{N} = \{s_1, y\}$ (non-basic variables)
+        \item $\mathcal{B} = \{x, s_2, s_3\}$ (basic variables)
+    \end{itemize}
+    
+    The new tableau is:
+    
+    \begin{center}
+    \begin{tabular}{c|cc}
+        & $s_1$ & $y$ \\
+        \hline
+        $x$ & 1 & -2 \\
+        $s_2$ & 2 & -3 \\
+        $s_3$ & 2 & -2
+    \end{tabular}
+    \end{center}
+    
+    \textbf{Step 5: Second Pivot}
+    
+    We observe that $\alpha_2(s_3) = 2$ violates the constraint $s_3 \leq 1$. We need to decrease $\alpha_2(s_3)$. The variable $s_1$ is not suitable because its coefficient in the constraint for $s_3$ is positive; to decrease $\alpha_2(s_3)$, we would need to decrease $\alpha_2(s_1)$, but we cannot because $\alpha_2(s_1) = 1$ is equal to the lower bound for $s_1$. The variable $y$ is suitable: we can increase $y$ to decrease $s_3$ because $y$'s coefficient is negative in the $s_3$ row. We compute:
+    \[
+        V = \frac{1 - 2}{-2} = \frac{1}{2}
+    \]
+    
+    After the pivot, the new assignment is:
+    \begin{align*}
+        \alpha_3(y) &= 0 + \frac{1}{2} = \frac{1}{2} \\
+        \alpha_3(s_1) &= \alpha_2(s_1) = 1 \\
+        \alpha_3(x) &= 1 - 2 \cdot \frac{1}{2} = 0 \\
+        \alpha_3(s_2) &= 2 - 3 \cdot \frac{1}{2} = \frac{1}{2} \\
+        \alpha_3(s_3) &= 2 - 2 \cdot \frac{1}{2} = 1
+    \end{align*}
+    
+    The system of equations becomes:
+    \begin{align*}
+        2y &= 2s_1 - s_3 \quad \Rightarrow \quad y = s_1 - \frac{s_3}{2} \\
+        x &= s_1 - 2\left(s_1 - \frac{s_3}{2}\right) = s_1 - 2s_1 + s_3 = -s_1 + s_3 \\
+        s_2 &= 2s_1 - 3\left(s_1 - \frac{s_3}{2}\right) = 2s_1 - 3s_1 + \frac{3s_3}{2} = -s_1 + \frac{3s_3}{2}
+    \end{align*}
+    
+    The new sets are:
+    \begin{itemize}
+        \item $\mathcal{N} = \{s_1, s_3\}$ (non-basic variables)
+        \item $\mathcal{B} = \{x, s_2, y\}$ (basic variables)
+    \end{itemize}
+    
+    The new tableau is:
+    
+    \begin{center}
+    \begin{tabular}{c|cc}
+        & $s_1$ & $s_3$ \\
+        \hline
+        $x$ & -1 & 1 \\
+        $s_2$ & -1 & $\frac{3}{2}$ \\
+        $y$ & 1 & $-\frac{1}{2}$
+    \end{tabular}
+    \end{center}
+    
+    \textbf{Step 6: Detection of Unsatisfiability}
+    
+    We observe that $\alpha_3(s_2) = \frac{1}{2}$ violates the constraint $s_2 \geq 1$. We need to increase $\alpha_3(s_2)$. 
+    \begin{itemize}
+        \item The variable $s_1$ has a negative coefficient, so to increase $s_2$ we would need to decrease $s_1$, but we cannot because $s_1$ is equal to its lower bound.
+        \item The variable $s_3$ has a positive coefficient, so we could increase $s_3$ to increase $s_2$, but that is not possible because $s_3$ is equal to its upper bound.
+    \end{itemize}
+    
+    Since no independent variable is suitable to increase $s_2$, the system is unsatisfiable. The algorithm returns \texttt{unsat}.
+\end{example}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Pivoting Rule}]
+The \textbf{pivoting rule} is a rule to choose the suitable non-basic variable to pivot to when there is more than one candidate.
+
+The pivoting rule consists of using a fixed ordering on variables known as \textbf{Bland's rule}, which avoids cycles in iterations by always selecting the smallest variable (according to the ordering) that is suitable for pivoting.
+\end{tcolorbox}
 
 \end{document}
