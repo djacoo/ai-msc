@@ -3890,4 +3890,966 @@ Let $\mathcal{E}$ be the set of shared equalities between shared variables.
 \end{itemize}
 \end{tcolorbox}
 
+
+\newpage
+
+\part{Nelson-Oppen: Worked Examples}
+
+\section{Deterministic Nelson-Oppen Exercises}
+
+In this section, we present detailed examples of applying the deterministic Nelson-Oppen scheme. We have already seen examples of the first phase (Separation), now we focus on complete exercises including the second phase (Arrangements).
+
+\begin{example}[Deterministic Nelson-Oppen with Convex Theories]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Example 1: Combining $\mathcal{T}_E$ and $\mathcal{T}_{\text{LIA}}$},breakable]
+\textbf{Given formula}:
+\[
+f(x) \backsimeq x + y \quad \wedge \quad x \leq y + z \quad \wedge \quad x + z \leq y \quad \wedge \quad y \backsimeq 1 \quad \wedge \quad f(x) \not\backsimeq f(2)
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Step 1: Identify the theories involved}
+
+First, we identify which theories are involved:
+\begin{itemize}
+    \item $\mathcal{T}_E$ (Theory of Equality with uninterpreted functions) — because of function symbol $f$
+    \item $\mathcal{T}_{\text{LIA}}$ (Linear Integer Arithmetic) — because of arithmetic operations and constraints
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Step 2: Separation Phase}
+
+We separate the formula into $F_E$ and $F_{\text{LIA}}$:
+
+\begin{align*}
+F_E &: f(x) \backsimeq w_1 \quad \wedge \quad f(x) \not\backsimeq f(w_2) \\
+F_{\text{LIA}} &: w_1 \backsimeq x + y \quad \wedge \quad x \leq y + z \quad \wedge \quad x + z \leq y \quad \wedge \quad y \backsimeq 1 \quad \wedge \quad w_2 \backsimeq 2
+\end{align*}
+
+\textbf{Set of shared variables}:
+\[
+V = \{w_1, w_2, x, y, z\}
+\]
+
+\vspace{0.5em}
+
+\textbf{Step 3: Deterministic Nelson-Oppen — Arrangement Phase}
+
+We now apply the deterministic Nelson-Oppen algorithm. The two decision procedures (congruence closure for $\mathcal{T}_E$ and simplex for $\mathcal{T}_{\text{LIA}}$) will communicate by sharing equalities between variables in $V$.
+
+\textbf{Initial state}: $\mathcal{E}_0 = \emptyset$
+
+\vspace{0.3em}
+
+\textbf{Analysis of $F_{\text{LIA}}$}:
+
+From the arithmetic constraints, we can derive information about the shared variables. Let's analyze what the arithmetic procedure can deduce.
+
+From the constraints $x \leq y + z$ and $x + z \leq y$, we can derive:
+\begin{align*}
+x - y &\leq z \tag{from $x \leq y + z$} \\
+x - y &\leq -z \tag{from $x + z \leq y$}
+\end{align*}
+
+Adding these two inequalities:
+\begin{align*}
+(x - y) + (x - y) &\leq z + (-z) \\
+2x - 2y &\leq 0 \\
+2x &\leq 2y \\
+x &\leq y
+\end{align*}
+
+Since $y \backsimeq 1$, we can conclude:
+\[
+x \leq 1
+\]
+
+Also, from $y \backsimeq 1$ and $w_1 \backsimeq x + y$:
+\[
+w_1 \backsimeq x + 1
+\]
+
+This means $w_1 \not\backsimeq x$ (since $w_1 = x + 1 \neq x$).
+
+Similarly, $w_2 \backsimeq 2$ and $x \leq 1$ imply $x \not\backsimeq w_2$.
+
+\vspace{0.3em}
+
+\textbf{Analysis of $F_E$}:
+
+From $f(x) \not\backsimeq f(w_2)$, the congruence closure algorithm cannot deduce any equality between shared variables (only that $x \not\backsimeq w_2$, but this is a disequality).
+
+\vspace{0.3em}
+
+\textbf{Iteration}: No new equalities between shared variables are propagated
+
+Neither procedure finds equalities between shared variables that need to be propagated to the other procedure. The algorithm terminates without finding a contradiction.
+
+\vspace{0.5em}
+
+\textbf{Step 4: Satisfying Assignment}
+
+Since no contradiction was found, the formula is \texttt{SAT}. We can construct a satisfying assignment:
+
+\begin{align*}
+x &\leftarrow 0 \\
+y &\leftarrow 1 \\
+z &\leftarrow 0 \\
+w_1 &\leftarrow 1 \quad \text{(since $w_1 = x + y = 0 + 1 = 1$)} \\
+w_2 &\leftarrow 2 \\
+f(0) &\leftarrow 1 \\
+f(2) &\leftarrow \text{any value different from } 1
+\end{align*}
+
+We can verify this assignment satisfies all constraints:
+\begin{itemize}
+    \item $f(x) \backsimeq x + y$: $f(0) = 1 = 0 + 1$ \checkmark
+    \item $x \leq y + z$: $0 \leq 1 + 0$ \checkmark
+    \item $x + z \leq y$: $0 + 0 \leq 1$ \checkmark
+    \item $y \backsimeq 1$: $1 = 1$ \checkmark
+    \item $f(x) \not\backsimeq f(2)$: $f(0) = 1 \neq f(2)$ \checkmark
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Final Answer}: The formula is \texttt{SAT}.
+\end{tcolorbox}
+\end{example} 
+
+\newpage
+
+\begin{example}[Deterministic Nelson-Oppen with Fourier-Motzkin]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Example 2: UNSAT with Equality Propagation},breakable]
+\textbf{Given formula}:
+\[
+f(f(x) - f(y)) \not\backsimeq f(z) \quad \wedge \quad x \leq y \quad \wedge \quad y + z \leq x \quad \wedge \quad 0 \leq z
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Step 1: Identify the theories involved}
+
+Again, we have a combination of two theories:
+\begin{itemize}
+    \item $\mathcal{T}_E$ (Theory of Equality with uninterpreted functions) — because of function symbol $f$
+    \item $\mathcal{T}_{\text{LIA}}$ (Linear Integer Arithmetic) — because of arithmetic operations and inequality constraints
+\end{itemize}
+
+Note: We could also use $\mathcal{T}_{\text{LRA}}$ (Linear Rational Arithmetic) instead, as the constraints don't require integrality.
+
+\vspace{0.5em}
+
+\textbf{Step 2: Separation Phase}
+
+We separate the formula into $F_E$ and $F_{\text{LIA}}$:
+
+\begin{align*}
+F_E &: f(w_1) \not\backsimeq f(z) \quad \wedge \quad w_2 \backsimeq f(x) \quad \wedge \quad w_3 \backsimeq f(y) \\
+F_{\text{LIA}} &: w_1 \backsimeq w_2 - w_3 \quad \wedge \quad x \leq y \quad \wedge \quad y + z \leq x \quad \wedge \quad 0 \leq z
+\end{align*}
+
+\textbf{Set of shared variables}:
+\[
+V = \{w_1, w_2, w_3, x, y, z\}
+\]
+
+\vspace{0.5em}
+
+\textbf{Step 3: Deterministic Nelson-Oppen — Arrangement Phase}
+
+We apply the deterministic Nelson-Oppen algorithm with equality sharing.
+
+\textbf{Initial state}: $\mathcal{E}_0 = \emptyset$
+
+\vspace{0.3em}
+
+\textbf{Fourier-Motzkin Elimination Background}:
+
+Before proceeding, recall the Fourier-Motzkin resolution rule used in linear arithmetic:
+\[
+\frac{t_1 \prec_1 z \quad z \prec_2 t_2}{t_1 \prec_3 t_2}
+\]
+where:
+\begin{itemize}
+    \item $t_1, t_2$ are linear arithmetic terms (not containing variable $z$)
+    \item $z$ is a variable to be eliminated
+    \item $\prec_1, \prec_2, \prec_3 \in \{<, \leq\}$
+\end{itemize}
+
+This rule allows us to eliminate variables and derive relationships between other terms.
+
+\vspace{0.3em}
+
+\textbf{Iteration 1: Arithmetic procedure deduces $x \backsimeq y$}
+
+From $F_{\text{LIA}}$, we have:
+\begin{align*}
+x &\leq y \\
+y + z &\leq x \\
+0 &\leq z
+\end{align*}
+
+From $y + z \leq x$, we get $y \leq x - z$. Combined with $0 \leq z$, we have $y \leq x$.
+
+But we also have $x \leq y$. Therefore:
+\[
+x \leq y \quad \wedge \quad y \leq x \quad \Rightarrow \quad x \backsimeq y
+\]
+
+The arithmetic procedure sends this equality to the central manager:
+\[
+\mathcal{E}_1 = \{x \backsimeq y\}
+\]
+
+\vspace{0.3em}
+
+\textbf{Iteration 2: Equality procedure deduces $w_2 \backsimeq w_3$}
+
+The congruence closure procedure receives $x \backsimeq y$ and processes:
+\begin{align*}
+x \backsimeq y &\models_{\mathcal{T}_E} f(x) \backsimeq f(y) \quad \text{(by congruence)} \\
+w_2 \backsimeq f(x) \wedge w_3 \backsimeq f(y) &\models_{\mathcal{T}_E} w_2 \backsimeq w_3 \quad \text{(by transitivity)}
+\end{align*}
+
+The equality procedure sends this to the central manager:
+\[
+\mathcal{E}_2 = \{x \backsimeq y, w_2 \backsimeq w_3\}
+\]
+
+\vspace{0.3em}
+
+\textbf{Iteration 3: Arithmetic procedure deduces $w_1 \backsimeq 0$}
+
+The arithmetic procedure receives $w_2 \backsimeq w_3$ and processes:
+\begin{align*}
+w_1 &\backsimeq w_2 - w_3 \quad \text{(from $F_{\text{LIA}}$)} \\
+w_2 &\backsimeq w_3 \quad \text{(received from equality)} \\
+\Rightarrow w_1 &\backsimeq w_2 - w_2 \\
+\Rightarrow w_1 &\backsimeq 0
+\end{align*}
+
+The arithmetic procedure sends this to the central manager:
+\[
+\mathcal{E}_3 = \{x \backsimeq y, w_2 \backsimeq w_3, w_1 \backsimeq 0\}
+\]
+
+\vspace{0.3em}
+
+\textbf{Iteration 4: Equality procedure detects contradiction}
+
+The congruence closure procedure receives $w_1 \backsimeq 0$ and analyzes:
+
+From $F_E$, we have $f(w_1) \not\backsimeq f(z)$.
+
+Now we need to check if $w_1 \backsimeq z$ or $w_1 \not\backsimeq z$.
+
+Going back to the arithmetic constraints with $x \backsimeq y$ and $w_1 \backsimeq 0$:
+\begin{align*}
+x &\backsimeq y \\
+y + z &\leq x \\
+\Rightarrow y + z &\leq y \quad \text{(substituting $x$ with $y$)} \\
+\Rightarrow z &\leq 0
+\end{align*}
+
+Combined with $0 \leq z$, we get:
+\[
+z \leq 0 \quad \wedge \quad 0 \leq z \quad \Rightarrow \quad z \backsimeq 0
+\]
+
+The arithmetic procedure sends $z \backsimeq 0$ to the central manager:
+\[
+\mathcal{E}_4 = \{x \backsimeq y, w_2 \backsimeq w_3, w_1 \backsimeq 0, z \backsimeq 0\}
+\]
+
+Now the congruence closure procedure has:
+\begin{align*}
+w_1 &\backsimeq 0 \\
+z &\backsimeq 0 \\
+\Rightarrow w_1 &\backsimeq z \quad \text{(by transitivity)}
+\end{align*}
+
+By congruence:
+\[
+w_1 \backsimeq z \quad \models_{\mathcal{T}_E} \quad f(w_1) \backsimeq f(z)
+\]
+
+But from $F_E$, we have $f(w_1) \not\backsimeq f(z)$.
+
+\textbf{CONTRADICTION!}
+
+\vspace{0.5em}
+
+\textbf{Final Answer}: The formula is \texttt{UNSAT}.
+
+\vspace{0.3em}
+
+\textbf{Summary of the propagation chain}:
+\begin{center}
+\begin{tikzpicture}[node distance=2cm, auto]
+    \node[rectangle, draw, fill=yellow!20] (start) {$x \leq y \wedge y+z \leq x$};
+    \node[rectangle, draw, fill=green!20, right=of start] (eq1) {$x \backsimeq y$};
+    \node[rectangle, draw, fill=blue!20, right=of eq1] (eq2) {$w_2 \backsimeq w_3$};
+    \node[rectangle, draw, fill=green!20, below=of eq2] (eq3) {$w_1 \backsimeq 0$};
+    \node[rectangle, draw, fill=blue!20, left=of eq3] (eq4) {$z \backsimeq 0$};
+    \node[rectangle, draw, fill=red!20, left=of eq4] (unsat) {\texttt{UNSAT}};
+
+    \draw[->,thick] (start) -- node {$\mathcal{P}_{\text{Arith}}$} (eq1);
+    \draw[->,thick] (eq1) -- node {$\mathcal{P}_E$} (eq2);
+    \draw[->,thick] (eq2) -- node {$\mathcal{P}_{\text{Arith}}$} (eq3);
+    \draw[->,thick] (eq3) -- node {$\mathcal{P}_{\text{Arith}}$} (eq4);
+    \draw[->,thick] (eq4) -- node {$\mathcal{P}_E$} (unsat);
+\end{tikzpicture}
+\end{center}
+\end{tcolorbox}
+\end{example}
+
+\newpage
+
+\begin{example}[Non-Convex Theory: Disjunctive Reasoning]
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Example 3: Non-Convex $\mathcal{T}_{\text{LIA}}$ with Disjunctions},breakable]
+\textbf{Given formula}:
+\[
+1 \leq x \quad \wedge \quad x \leq 2 \quad \wedge \quad f(x) \not\backsimeq f(1) \quad \wedge \quad f(x) \not\backsimeq f(2)
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Key observation}: This is the classic example we saw earlier that illustrates the importance of \textbf{stable infiniteness} and demonstrates non-convex theory behavior.
+
+\vspace{0.3em}
+
+\textbf{Expected results}:
+\begin{itemize}
+    \item Using $\mathcal{T}_E \cup \mathcal{T}_{\text{LIA}}$ (Linear Integer Arithmetic): \textbf{UNSAT}
+    \item Using $\mathcal{T}_E \cup \mathcal{T}_{\text{LRA}}$ (Linear Rational Arithmetic): \textbf{SAT}
+
+    For $\mathcal{T}_{\text{LRA}}$, we can satisfy with $x \leftarrow 1.5$ (or any value in the open interval $(1, 2)$).
+\end{itemize}
+
+\vspace{0.5em}
+
+We will analyze the case with \textbf{integer arithmetic} to demonstrate how the deterministic Nelson-Oppen scheme handles \textbf{non-convex theories}.
+
+\vspace{0.5em}
+
+\textbf{Step 1: Identify the theories involved}
+
+\begin{itemize}
+    \item $\mathcal{T}_E$ (Theory of Equality) — \textbf{convex}
+    \item $\mathcal{T}_{\text{LIA}}$ (Linear Integer Arithmetic) — \textbf{non-convex}
+\end{itemize}
+
+\begin{remark}
+$\mathcal{T}_{\text{LIA}}$ is \textbf{non-convex} because it can entail disjunctions of equalities without entailing any single equality. For example:
+\[
+1 \leq x \wedge x \leq 2 \quad \models_{\mathcal{T}_{\text{LIA}}} \quad x \backsimeq 1 \vee x \backsimeq 2
+\]
+but neither $x \backsimeq 1$ nor $x \backsimeq 2$ is individually entailed.
+\end{remark}
+
+\vspace{0.5em}
+
+\textbf{Step 2: Separation Phase}
+
+We separate the formula into $F_E$ and $F_{\text{LIA}}$:
+
+\begin{align*}
+F_E &: f(x) \not\backsimeq f(w_1) \quad \wedge \quad f(x) \not\backsimeq f(w_2) \\
+F_{\text{LIA}} &: 1 \leq x \quad \wedge \quad x \leq 2 \quad \wedge \quad w_1 \backsimeq 1 \quad \wedge \quad w_2 \backsimeq 2
+\end{align*}
+
+\textbf{Set of shared variables}:
+\[
+V = \{w_1, w_2, x\}
+\]
+
+\vspace{0.5em}
+
+\textbf{Step 3: Deterministic Nelson-Oppen for Non-Convex Theories}
+
+When one of the theories is \textbf{non-convex}, the procedure must handle \textbf{disjunctions of equalities}.
+
+\textbf{Initial state}: $\mathcal{E}_0 = \emptyset$
+
+\vspace{0.3em}
+
+\textbf{Analysis by $\mathcal{P}_{\text{LIA}}$}:
+
+The arithmetic procedure analyzes the constraints:
+\[
+1 \leq x \quad \wedge \quad x \leq 2
+\]
+
+Since $x$ is an integer and $1 \leq x \leq 2$, the only possible values are:
+\[
+\mathcal{P}_{\text{LIA}}: \{1 \leq x \wedge x \leq 2\} \models_{\mathcal{T}_{\text{LIA}}} x \backsimeq 1 \vee x \backsimeq 2
+\]
+
+Equivalently, using shared variables:
+\[
+\mathcal{P}_{\text{LIA}} \text{ deduces: } x \backsimeq w_1 \vee x \backsimeq w_2
+\]
+
+\textbf{Key point}: The arithmetic procedure cannot deduce a single equality; it can only deduce a \textbf{disjunction} of equalities. This is the hallmark of a non-convex theory.
+
+\vspace{0.3em}
+
+\textbf{Case Analysis}: We must explore both branches:
+
+\begin{itemize}
+    \item \textbf{Branch 1}: $\mathcal{E}_1 = \{x \backsimeq w_1\}$
+    \item \textbf{Branch 2}: $\mathcal{E}_2 = \{x \backsimeq w_2\}$
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Step 4: Branch 1 — Assume $x \backsimeq w_1$}
+
+The central manager sends $x \backsimeq w_1$ to both procedures.
+
+\textbf{Analysis by $\mathcal{P}_E$}:
+
+The congruence closure procedure receives $x \backsimeq w_1$ and processes:
+\begin{align*}
+x \backsimeq w_1 &\models_{\mathcal{T}_E} f(x) \backsimeq f(w_1) \quad \text{(by congruence)}
+\end{align*}
+
+But from $F_E$, we have:
+\[
+f(x) \not\backsimeq f(w_1)
+\]
+
+\textbf{Contradiction in Branch 1!}
+
+We have both $f(x) \backsimeq f(w_1)$ and $f(x) \not\backsimeq f(w_1)$.
+
+\textbf{Branch 1 result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Step 5: Branch 2 — Assume $x \backsimeq w_2$}
+
+The central manager sends $x \backsimeq w_2$ to both procedures.
+
+\textbf{Analysis by $\mathcal{P}_E$}:
+
+The congruence closure procedure receives $x \backsimeq w_2$ and processes:
+\begin{align*}
+x \backsimeq w_2 &\models_{\mathcal{T}_E} f(x) \backsimeq f(w_2) \quad \text{(by congruence)}
+\end{align*}
+
+But from $F_E$, we have:
+\[
+f(x) \not\backsimeq f(w_2)
+\]
+
+\textbf{Contradiction in Branch 2!}
+
+We have both $f(x) \backsimeq f(w_2)$ and $f(x) \not\backsimeq f(w_2)$.
+
+\textbf{Branch 2 result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Step 6: Final Verdict}
+
+Since \textbf{all branches} lead to contradiction, the formula is unsatisfiable.
+
+The disjunction $x \backsimeq w_1 \vee x \backsimeq w_2$ was necessary (from integer constraints), but each case individually leads to a contradiction with the equality constraints.
+
+\vspace{0.5em}
+
+\textbf{Final Answer}: The formula is \texttt{UNSAT}.
+
+\vspace{0.5em}
+
+\textbf{Explanation of Non-Convexity}:
+
+This example perfectly illustrates why handling non-convex theories requires case splitting:
+
+\begin{enumerate}
+    \item The non-convex theory ($\mathcal{T}_{\text{LIA}}$) produces a disjunction: $x \backsimeq 1 \vee x \backsimeq 2$
+    \item We cannot simply propagate a single equality to the equality procedure
+    \item Instead, we must try \textbf{all possibilities} in the disjunction
+    \item Only if \textbf{all branches} are \texttt{UNSAT} can we conclude the original formula is \texttt{UNSAT}
+    \item If \textbf{at least one branch} is \texttt{SAT}, the original formula is \texttt{SAT}
+\end{enumerate}
+
+\begin{center}
+\textbf{Branching Visualization}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.5cm and 2.5cm,
+    every node/.style={align=center},
+    level/.style={sibling distance=50mm/#1}
+]
+    \node[rectangle, draw, fill=yellow!20] (start) {$\mathcal{P}_{\text{LIA}}$: \\ $x \backsimeq w_1 \vee x \backsimeq w_2$}
+        child {node[rectangle, draw, fill=blue!20] (b1) {Branch 1: \\ $x \backsimeq w_1$ \\ (i.e., $x \backsimeq 1$)}
+            child {node[rectangle, draw, fill=red!20] (r1) {$f(x) \backsimeq f(w_1)$ \\ $f(x) \not\backsimeq f(w_1)$ \\ \texttt{UNSAT}}}}
+        child {node[rectangle, draw, fill=blue!20] (b2) {Branch 2: \\ $x \backsimeq w_2$ \\ (i.e., $x \backsimeq 2$)}
+            child {node[rectangle, draw, fill=red!20] (r2) {$f(x) \backsimeq f(w_2)$ \\ $f(x) \not\backsimeq f(w_2)$ \\ \texttt{UNSAT}}}};
+
+    \node[rectangle, draw, fill=red!30, below=3cm of start] (final) {\textbf{Both branches UNSAT} \\ $\Rightarrow$ \textbf{Formula is UNSAT}};
+
+    \draw[->,thick,dashed] (r1) -- (final);
+    \draw[->,thick,dashed] (r2) -- (final);
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.5em}
+
+\textbf{Contrast with $\mathcal{T}_{\text{LRA}}$}:
+
+If we had used $\mathcal{T}_{\text{LRA}}$ (rationals) instead:
+\begin{itemize}
+    \item The constraint $1 \leq x \leq 2$ over rationals allows infinitely many values (e.g., $x = 1.5, 1.3, 1.7, \ldots$)
+    \item The rational arithmetic procedure would \textbf{not} deduce $x \backsimeq 1 \vee x \backsimeq 2$
+    \item No equality between shared variables would be propagated
+    \item The procedures would terminate without finding a contradiction
+    \item Result: \texttt{SAT} with assignment $x \leftarrow 1.5$ (or any value $\notin \{1, 2\}$ in the range)
+\end{itemize}
+
+This demonstrates the critical importance of \textbf{stable infiniteness} in theory combination: theories must agree on the cardinality of shared sorts, or unexpected results can occur.
+\end{tcolorbox}
+\end{example}
+
+\newpage
+
+\begin{example}[Non-Convex Theory: SAT with Three Branches]
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Example 4: Non-Convex $\mathcal{T}_{\text{LIA}}$ — One SAT Branch Suffices},breakable]
+\textbf{Given formula}:
+\[
+1 \leq x \quad \wedge \quad x \leq 3 \quad \wedge \quad f(x) \not\backsimeq f(1) \quad \wedge \quad f(x) \not\backsimeq f(3) \quad \wedge \quad f(1) \not\backsimeq f(2)
+\]
+
+\textbf{Question}: Is this formula satisfiable or unsatisfiable?
+
+\vspace{0.5em}
+
+\textbf{Key observation}: This example extends the previous one by allowing \textbf{three possible integer values} for $x$. Unlike Example 3, where both branches were UNSAT, here we will see that \textbf{one SAT branch is sufficient} to make the entire formula satisfiable.
+
+\vspace{0.5em}
+
+\textbf{Step 1: Identify the theories involved}
+
+\begin{itemize}
+    \item $\mathcal{T}_E$ (Theory of Equality with uninterpreted functions) — \textbf{convex}
+    \item $\mathcal{T}_{\text{LIA}}$ (Linear Integer Arithmetic) — \textbf{non-convex}
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Step 2: Separation Phase}
+
+We separate the formula into $F_E$ and $F_{\text{LIA}}$:
+
+\begin{align*}
+F_E &: f(x) \not\backsimeq f(w_1) \quad \wedge \quad f(x) \not\backsimeq f(w_3) \quad \wedge \quad f(w_1) \not\backsimeq f(w_2) \\
+F_{\text{LIA}} &: 1 \leq x \quad \wedge \quad x \leq 3 \quad \wedge \quad w_1 \backsimeq 1 \quad \wedge \quad w_2 \backsimeq 2 \quad \wedge \quad w_3 \backsimeq 3
+\end{align*}
+
+\textbf{Set of shared variables}:
+\[
+V = \{w_1, w_2, w_3, x\}
+\]
+
+\vspace{0.5em}
+
+\textbf{Step 3: Deterministic Nelson-Oppen for Non-Convex Theories}
+
+\textbf{Initial state}: $\mathcal{E}_0 = \emptyset$
+
+\vspace{0.3em}
+
+\textbf{Analysis by $\mathcal{P}_{\text{LIA}}$}:
+
+The arithmetic procedure analyzes the constraints:
+\[
+1 \leq x \quad \wedge \quad x \leq 3
+\]
+
+Since $x$ is an integer and $1 \leq x \leq 3$, the only possible values are:
+\[
+\mathcal{P}_{\text{LIA}}: \{1 \leq x \wedge x \leq 3\} \models_{\mathcal{T}_{\text{LIA}}} x \backsimeq 1 \vee x \backsimeq 2 \vee x \backsimeq 3
+\]
+
+Equivalently, using shared variables:
+\[
+\mathcal{P}_{\text{LIA}} \text{ deduces: } x \backsimeq w_1 \vee x \backsimeq w_2 \vee x \backsimeq w_3
+\]
+
+\vspace{0.3em}
+
+\textbf{Case Analysis}: We must explore all three branches:
+
+\begin{itemize}
+    \item \textbf{Branch 1}: $\mathcal{E}_1 = \{x \backsimeq w_1\}$ (i.e., $x \backsimeq 1$)
+    \item \textbf{Branch 2}: $\mathcal{E}_2 = \{x \backsimeq w_2\}$ (i.e., $x \backsimeq 2$)
+    \item \textbf{Branch 3}: $\mathcal{E}_3 = \{x \backsimeq w_3\}$ (i.e., $x \backsimeq 3$)
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Step 4: Branch 1 — Assume $x \backsimeq w_1$ (i.e., $x \backsimeq 1$)}
+
+The central manager sends $x \backsimeq w_1$ to both procedures.
+
+\textbf{Analysis by $\mathcal{P}_E$}:
+
+The congruence closure procedure receives $x \backsimeq w_1$ and processes:
+\begin{align*}
+x \backsimeq w_1 &\models_{\mathcal{T}_E} f(x) \backsimeq f(w_1) \quad \text{(by congruence)}
+\end{align*}
+
+But from $F_E$, we have:
+\[
+f(x) \not\backsimeq f(w_1)
+\]
+
+\textbf{Contradiction in Branch 1!}
+
+We have both $f(x) \backsimeq f(w_1)$ and $f(x) \not\backsimeq f(w_1)$.
+
+\textbf{Branch 1 result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Step 5: Branch 3 — Assume $x \backsimeq w_3$ (i.e., $x \backsimeq 3$)}
+
+The central manager sends $x \backsimeq w_3$ to both procedures.
+
+\textbf{Analysis by $\mathcal{P}_E$}:
+
+The congruence closure procedure receives $x \backsimeq w_3$ and processes:
+\begin{align*}
+x \backsimeq w_3 &\models_{\mathcal{T}_E} f(x) \backsimeq f(w_3) \quad \text{(by congruence)}
+\end{align*}
+
+But from $F_E$, we have:
+\[
+f(x) \not\backsimeq f(w_3)
+\]
+
+\textbf{Contradiction in Branch 3!}
+
+We have both $f(x) \backsimeq f(w_3)$ and $f(x) \not\backsimeq f(w_3)$.
+
+\textbf{Branch 3 result}: \texttt{UNSAT}
+
+\vspace{0.5em}
+
+\textbf{Step 6: Branch 2 — Assume $x \backsimeq w_2$ (i.e., $x \backsimeq 2$)}
+
+The central manager sends $x \backsimeq w_2$ to both procedures.
+
+\textbf{Analysis by $\mathcal{P}_E$}:
+
+The congruence closure procedure receives $x \backsimeq w_2$ and processes:
+\begin{align*}
+x \backsimeq w_2 &\models_{\mathcal{T}_E} f(x) \backsimeq f(w_2) \quad \text{(by congruence)}
+\end{align*}
+
+Let's check the constraints in $F_E$:
+\begin{itemize}
+    \item $f(x) \not\backsimeq f(w_1)$ — Still satisfied (we have $f(w_2) \not\backsimeq f(w_1)$ or they could be different)
+    \item $f(x) \not\backsimeq f(w_3)$ — Still satisfied (we have $f(w_2) \not\backsimeq f(w_3)$ or they could be different)
+    \item $f(w_1) \not\backsimeq f(w_2)$ — This is explicitly required in $F_E$, so it's satisfied
+\end{itemize}
+
+\textbf{No contradiction in Branch 2!}
+
+The congruence closure algorithm processes $F_E \cup \{x \backsimeq w_2\}$ and finds no inconsistency. The equality $f(x) \backsimeq f(w_2)$ does not conflict with any constraint in $F_E$.
+
+Neither procedure can deduce any new equalities or contradictions.
+
+\textbf{Branch 2 result}: \texttt{SAT}
+
+\vspace{0.5em}
+
+\textbf{Step 7: Final Verdict}
+
+Since \textbf{at least one branch} is satisfiable (Branch 2), the formula is satisfiable.
+
+\textbf{Key rule for non-convex theories}:
+\begin{itemize}
+    \item For the formula to be \texttt{UNSAT}: \textbf{ALL branches} must be \texttt{UNSAT}
+    \item For the formula to be \texttt{SAT}: \textbf{At least ONE branch} must be \texttt{SAT}
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Final Answer}: The formula is \texttt{SAT}.
+
+\vspace{0.5em}
+
+\textbf{Step 8: Satisfying Assignment}
+
+We can construct a satisfying assignment based on Branch 2 ($x \backsimeq 2$):
+
+\begin{align*}
+x &\leftarrow 2 \\
+w_1 &\leftarrow 1 \\
+w_2 &\leftarrow 2 \\
+w_3 &\leftarrow 3 \\
+f(1) &\leftarrow \alpha \quad \text{(some value)} \\
+f(2) &\leftarrow \beta \quad \text{(different from } \alpha \text{)} \\
+f(3) &\leftarrow \gamma \quad \text{(any value)}
+\end{align*}
+
+\textbf{Verification}:
+\begin{itemize}
+    \item $1 \leq x \wedge x \leq 3$: $1 \leq 2 \leq 3$ \checkmark
+    \item $f(x) \not\backsimeq f(1)$: $f(2) = \beta \neq \alpha = f(1)$ \checkmark
+    \item $f(x) \not\backsimeq f(3)$: $f(2) = \beta$ can be different from $f(3) = \gamma$ \checkmark
+    \item $f(1) \not\backsimeq f(2)$: $f(1) = \alpha \neq \beta = f(2)$ \checkmark
+\end{itemize}
+
+For example, we can set $\alpha = 10$, $\beta = 20$, $\gamma = 20$ (or any other values satisfying the disequalities).
+
+\vspace{0.5em}
+
+\textbf{Branching Visualization}:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.5cm and 2cm,
+    every node/.style={align=center},
+    level 1/.style={sibling distance=60mm},
+    level 2/.style={sibling distance=30mm}
+]
+    \node[rectangle, draw, fill=yellow!20] (start) {$\mathcal{P}_{\text{LIA}}$: \\ $x \backsimeq w_1 \vee x \backsimeq w_2 \vee x \backsimeq w_3$}
+        child {node[rectangle, draw, fill=blue!20] (b1) {Branch 1: \\ $x \backsimeq w_1$}
+            child {node[rectangle, draw, fill=red!20] (r1) {$f(x) \backsimeq f(w_1)$ \\ $f(x) \not\backsimeq f(w_1)$ \\ \texttt{UNSAT}}}}
+        child {node[rectangle, draw, fill=blue!20] (b2) {Branch 2: \\ $x \backsimeq w_2$}
+            child {node[rectangle, draw, fill=green!20] (r2) {No contradiction \\ \texttt{SAT}}}}
+        child {node[rectangle, draw, fill=blue!20] (b3) {Branch 3: \\ $x \backsimeq w_3$}
+            child {node[rectangle, draw, fill=red!20] (r3) {$f(x) \backsimeq f(w_3)$ \\ $f(x) \not\backsimeq f(w_3)$ \\ \texttt{UNSAT}}}};
+
+    \node[rectangle, draw, fill=green!30, below=3.5cm of start] (final) {\textbf{At least one branch SAT} \\ $\Rightarrow$ \textbf{Formula is SAT}};
+
+    \draw[->,thick,dashed] (r2) -- (final);
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.5em}
+
+\textbf{Key Insights}:
+
+\begin{enumerate}
+    \item This example demonstrates the \textbf{existential nature} of satisfiability in non-convex theories: we only need \textbf{one} satisfying assignment.
+
+    \item The constraint $f(w_1) \not\backsimeq f(w_2)$ in $F_E$ is crucial: it prevents Branch 2 from having a contradiction because $f(2)$ is explicitly required to be different from $f(1)$.
+
+    \item If the constraint $f(1) \not\backsimeq f(2)$ were not present, Branch 2 might still be SAT (depending on other constraints), but the reasoning would be different.
+
+    \item This illustrates a practical strategy: when dealing with non-convex theories, the decision procedure must explore \textbf{all branches} until either:
+    \begin{itemize}
+        \item One branch is found to be \texttt{SAT} → return \texttt{SAT}
+        \item All branches are found to be \texttt{UNSAT} → return \texttt{UNSAT}
+    \end{itemize}
+\end{enumerate}
+\end{tcolorbox}
+\end{example}
+
+\newpage
+
+\part{Beyond Conjunctions: Handling General Formulas}
+
+\section{From Sets of Literals to General Formulas}
+
+So far, we have studied decision procedures that work with \textbf{sets of literals} (conjunctions of atoms):
+
+\begin{itemize}
+    \item \textbf{Congruence Closure}: Handles sets of equality literals in $\mathcal{T}_E$
+    \item \textbf{Theory of Lists/Constructors}: Handles sets of literals involving list operations
+    \item \textbf{Theory of Arrays}: Handles sets of literals with $\textsf{select}$ and $\textsf{store}$
+    \item \textbf{Nelson-Oppen}: Combines theories by sharing equalities between procedures
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Key Question}]
+How do we handle more \textbf{general formulas} that contain \textbf{disjunctions}, not just conjunctions of literals?
+\end{tcolorbox}
+
+\subsection{The Challenge}
+
+Most decision procedures are designed to work with \textbf{conjunctions} of literals:
+\[
+L_1 \wedge L_2 \wedge \cdots \wedge L_n
+\]
+
+But in practice, we often need to check satisfiability of formulas with complex Boolean structure:
+\[
+(L_1 \vee L_2) \wedge (L_3 \vee \neg L_4 \vee L_5) \wedge \cdots
+\]
+
+\subsection{Solution Approach: SAT Solver Integration}
+
+The key idea is to combine:
+\begin{enumerate}
+    \item A \textbf{SAT solver} to handle the Boolean structure
+    \item \textbf{Theory decision procedures} to handle the theory constraints
+\end{enumerate}
+
+This approach is known as \textbf{SMT (Satisfiability Modulo Theories)}.
+
+\section{The Abstraction-Refinement Framework}
+
+\subsection{Step 1: Convert to CNF}
+
+Given a general first-order formula $F$, we first convert it to \textbf{Equisatisfiable Conjunctive Normal Form (ECNF)}:
+\[
+F \longrightarrow \text{ECNF} \longrightarrow S
+\]
+
+where $S$ is a \textbf{set of clauses} (CNF formula).
+
+\begin{example}[CNF Conversion]
+Original formula:
+\[
+f(x) \backsimeq y \rightarrow (x \backsimeq 1 \vee x \backsimeq 2)
+\]
+
+Convert to CNF:
+\[
+\neg(f(x) \backsimeq y) \vee x \backsimeq 1 \vee x \backsimeq 2
+\]
+
+This becomes a single clause:
+\[
+\{f(x) \not\backsimeq y, x \backsimeq 1, x \backsimeq 2\}
+\]
+\end{example}
+
+\subsection{Step 2: Abstraction Function}
+
+We define an \textbf{abstraction function} $\alpha$ that maps first-order atoms to propositional variables:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Abstraction Function}]
+\[
+\alpha: \text{First-order atoms} \longrightarrow \text{Propositional variables}
+\]
+
+\textbf{Examples}:
+\begin{align*}
+\alpha(f(x) \backsimeq y) &= P_1 \\
+\alpha(x \backsimeq 1) &= P_2 \\
+\alpha(x \backsimeq 2) &= P_3
+\end{align*}
+
+We also need the \textbf{inverse function}:
+\[
+\alpha^{-1}: \text{Propositional variables} \longrightarrow \text{First-order atoms}
+\]
+
+\textbf{Examples}:
+\begin{align*}
+\alpha^{-1}(P_1) &= f(x) \backsimeq y \\
+\alpha^{-1}(P_2) &= x \backsimeq 1 \\
+\alpha^{-1}(P_3) &= x \backsimeq 2
+\end{align*}
+\end{tcolorbox}
+
+\subsection{Step 3: The SMT Architecture}
+
+The integration between SAT solver and theory procedures works as follows:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=2cm,
+    thick,
+    box/.style={rectangle, draw, thick, minimum height=1cm, align=center},
+    result/.style={rectangle, draw, very thick, minimum height=0.8cm, minimum width=2.5cm, align=center}
+]
+    % Top flow - centered
+    \node[box, fill=yellow!20, minimum width=4cm] (F) {First-order formula $F$};
+    \node[box, fill=blue!20, minimum width=4cm, below=of F] (CNF) {CNF conversion \\ $S$ (set of clauses)};
+    \node[box, fill=green!20, minimum width=4.5cm, below=of CNF] (abs) {Abstraction $\alpha$ \\ Propositional formula};
+
+    % SAT and Theory solvers side by side - properly centered using xshift
+    \node[box, fill=purple!20, minimum width=4cm, minimum height=2cm, below=3cm of abs, xshift=-4.5cm] (sat) {\textbf{SAT Solver} \\ (Boolean reasoning)};
+    \node[box, fill=orange!20, minimum width=4cm, minimum height=2cm, below=3cm of abs, xshift=4.5cm] (theory) {\textbf{Theory Procedure} \\ ($\mathcal{T}$-solver) \\ (Theory reasoning)};
+
+    % Results at bottom - centered
+    \node[result, fill=red!20, below=3cm of sat] (unsat) {\Large\texttt{UNSAT}};
+    \node[result, fill=green!30, below=3cm of theory] (sat_result) {\Large\texttt{SAT}};
+
+    % Arrows - preprocessing flow
+    \draw[->, very thick] (F) -- (CNF);
+    \draw[->, very thick] (CNF) -- (abs);
+    \draw[->, very thick] (abs) |- ([yshift=-1cm]abs.south) -| node[near start, above] {$\alpha(S)$} (sat);
+    \draw[->, very thick] (abs) |- ([yshift=-1cm]abs.south) -| (theory);
+
+    % Interaction arrows
+    \draw[->, dashed, very thick, bend left=30] (sat.east) to node[above, sloped, pos=0.4, yshift=5mm] {proposes model $M$} (theory.west);
+    \draw[->, dashed, very thick, bend left=30] (theory.west) to node[below, sloped, pos=0.6, yshift=-5mm] {conflict clause / theory lemma} (sat.east);
+
+    % Result arrows
+    \draw[->, very thick] (sat) -- node[left, align=right] {if no model\\exists} (unsat);
+    \draw[->, very thick] (theory) -- node[right, align=left] {if $\alpha^{-1}(M)$ is \\ $\mathcal{T}$-consistent} (sat_result);
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.5em}
+
+\textbf{Key components}:
+\begin{itemize}
+    \item \textbf{SAT Solver}: Handles the Boolean/propositional structure
+    \item \textbf{Theory Procedure}: Checks theory-level consistency
+    \item \textbf{Interaction}: Iterative refinement through model proposals and conflict clauses
+\end{itemize}
+
+\subsection{Step 4: The SMT Loop}
+
+The SMT solver operates in a loop:
+
+\begin{enumerate}
+    \item The \textbf{SAT solver} works on the abstracted (propositional) formula
+
+    \item If SAT solver returns \texttt{UNSAT}: \\
+    → The original formula is \texttt{UNSAT} (we're done)
+
+    \item If SAT solver returns \texttt{SAT} and proposes a model $M$: \\
+    → Apply $\alpha^{-1}$ to get a set of theory literals \\
+    → Send these literals to the \textbf{theory procedure}
+
+    \item The theory procedure checks if the literals are $\mathcal{T}$-consistent:
+    \begin{itemize}
+        \item If \texttt{SAT}: Return \texttt{SAT} (we found a satisfying assignment)
+        \item If \texttt{UNSAT}: Generate a \textbf{conflict clause} and send it back to the SAT solver, which continues the search
+    \end{itemize}
+\end{enumerate}
+
+\begin{example}[Abstraction in Action]
+Consider the disjunction produced by a non-convex theory:
+\[
+x \backsimeq w_1 \vee x \backsimeq w_2 \vee x \backsimeq w_3
+\]
+
+We abstract this as:
+\[
+P_1 \vee P_2 \vee P_3
+\]
+
+where:
+\begin{align*}
+\alpha^{-1}(P_1) &= x \backsimeq w_1 \\
+\alpha^{-1}(P_2) &= x \backsimeq w_2 \\
+\alpha^{-1}(P_3) &= x \backsimeq w_3
+\end{align*}
+
+When the SAT solver decides that $P_1$ is true, we check if $x \backsimeq w_1$ is $\mathcal{T}_E$-consistent with the other constraints, and so on.
+\end{example}
+
+
+
+
 \end{document}
