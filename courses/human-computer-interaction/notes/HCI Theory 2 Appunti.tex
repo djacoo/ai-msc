@@ -967,17 +967,15 @@ The main objective of SIFT is to detect the \textbf{location} and \textbf{scale}
 The fundamental concept behind SIFT is the \textbf{scale space}, which is a multi-scale representation of an image. The scale space is created by convolving the input image with Gaussian filters at different scales (standard deviations). 
 
 The scale space function $L(x, y, \sigma)$ is defined as:
-
-\begin{equation}
+\begin{equation} \label{eq:scale_space}
     L(x, y, \sigma) = G(x, y, \sigma) * I(x, y)
 \end{equation}
-
 where:
 \begin{itemize}
     \item $G(x, y, \sigma)$ is the Gaussian filter (kernel) with standard deviation $\sigma$:
-    \[
+    \begin{equation} \label{eq:gaussian_filter}
         G(x, y, \sigma) = \frac{1}{2\pi\sigma^2} e^{-\frac{x^2 + y^2}{2\sigma^2}}
-    \]
+    \end{equation}
     \item $I(x, y)$ is the input image
     \item $*$ denotes the convolution operation
     \item $\sigma$ is the scale parameter (larger $\sigma$ means more blurring)
@@ -1001,14 +999,12 @@ To efficiently compute the scale space, SIFT uses an \textbf{image pyramid} stru
 \subsubsection{Difference of Gaussians (DoG)}
 
 Instead of directly computing the Laplacian of Gaussian (LoG), which is computationally expensive, SIFT uses the \textbf{Difference of Gaussians (DoG)} as an efficient approximation. The DoG is computed by subtracting two adjacent scale-space images:
-
-\begin{equation}
+\begin{equation} \label{eq:dog_definition}
     \text{DoG}(x, y, \sigma) = L(x, y, k\sigma) - L(x, y, \sigma)
 \end{equation}
 
 This can be rewritten using the convolution property:
-
-\begin{equation}
+\begin{equation} \label{eq:dog_convolution}
     \text{DoG}(x, y, \sigma) = (G(x, y, k\sigma) - G(x, y, \sigma)) * I(x, y)
 \end{equation}
 
@@ -1441,10 +1437,9 @@ The simplest geometric model is the \textbf{pinhole camera}, derived from the Re
 \subsubsection{Perspective Projection Equations}
 
 Given a 3D point $\mathbf{M} = [X, Y, Z]^T$ in the world coordinate system and its projection $\mathbf{m} = [u, v]^T$ on the image plane, the perspective projection equations are:
-
-\[
-u = -f \frac{X}{Z}, \quad v = -f \frac{Y}{Z}
-\]
+\begin{equation} \label{eq:perspective_projection}
+    u = -f \frac{X}{Z}, \quad v = -f \frac{Y}{Z}
+\end{equation}
 
 where:
 \begin{itemize}
@@ -1466,38 +1461,34 @@ where:
 By introducing \textbf{homogeneous coordinates}, the projection becomes a linear operation. A 3D point $\mathbf{M} = [X, Y, Z]^T$ is represented in homogeneous coordinates as $\mathbf{M} = [X, Y, Z, 1]^T$.
 
 The projection can then be written as:
-
-\[
-\mathbf{m} \simeq \mathbf{P} \mathbf{M}
-\]
-
+\begin{equation} \label{eq:homogeneous_projection}
+    \mathbf{m} \simeq \mathbf{P} \mathbf{M}
+\end{equation}
 where:
 \begin{itemize}
     \item $\mathbf{m} = [u, v, w]^T$ is the projection in homogeneous coordinates
-    \item $\mathbf{P}$ is the 3×4 projection matrix
+    \item $\mathbf{P}$ is the $3 \times 4$ projection matrix
     \item $\simeq$ means equality up to a scale factor
     \item The actual image coordinates are: $u_{img} = u/w$, $v_{img} = v/w$
 \end{itemize}
 
 In matrix form:
-
-\[
-\begin{pmatrix} u \\ v \\ w \end{pmatrix} = \begin{pmatrix}
-p_{11} & p_{12} & p_{13} & p_{14} \\
-p_{21} & p_{22} & p_{23} & p_{24} \\
-p_{31} & p_{32} & p_{33} & p_{34}
-\end{pmatrix} \begin{pmatrix} X \\ Y \\ Z \\ 1 \end{pmatrix}
-\]
+\begin{equation} \nonumber
+    \begin{pmatrix} u \\ v \\ w \end{pmatrix} = \begin{pmatrix}
+    p_{11} & p_{12} & p_{13} & p_{14} \\
+    p_{21} & p_{22} & p_{23} & p_{24} \\
+    p_{31} & p_{32} & p_{33} & p_{34}
+    \end{pmatrix} \begin{pmatrix} X \\ Y \\ Z \\ 1 \end{pmatrix}
+\end{equation}
 
 \subsubsection{Perspective vs Orthographic}
 
 When the depth variation of objects is negligible compared to their distance from the camera ($\Delta Z / Z_0 \ll 1$), we can approximate the perspective projection with a \textbf{scaled orthographic projection} (also called \textbf{weak perspective}).
 
 In weak perspective:
-\[
-u = -s \frac{X}{Z_0}, \quad v = -s \frac{Y}{Z_0}
-\]
-
+\begin{equation} \label{eq:weak_perspective}
+    u = -s \frac{X}{Z_0}, \quad v = -s \frac{Y}{Z_0}
+\end{equation}
 where $s = f/Z_0$ is a constant scale factor, and $Z_0$ is the average depth of the object.
 
 \begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Weak Perspective Approximation}]
@@ -1531,14 +1522,13 @@ The intrinsic parameters include:
 \end{itemize}
 
 The intrinsic matrix $\mathbf{K}$ is:
-
-\[
-\mathbf{K} = \begin{pmatrix}
-\alpha_u & s & u_0 \\
-0 & \alpha_v & v_0 \\
-0 & 0 & 1
-\end{pmatrix}
-\]
+\begin{equation} \label{eq:intrinsic_matrix}
+    \mathbf{K} = \begin{pmatrix}
+    \alpha_u & s & u_0 \\
+    0 & \alpha_v & v_0 \\
+    0 & 0 & 1
+    \end{pmatrix}
+\end{equation}
 
 \begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Intrinsic Parameters}]
 \begin{itemize}
@@ -1558,35 +1548,30 @@ Extrinsic parameters describe the camera's pose (position and orientation) in th
 \end{itemize}
 
 The transformation from world coordinates to camera coordinates is:
-
-\[
-\mathbf{M}_{cam} = \mathbf{R} \mathbf{M}_{world} + \mathbf{t}
-\]
+\begin{equation} \label{eq:world_to_camera}
+    \mathbf{M}_{cam} = \mathbf{R} \mathbf{M}_{world} + \mathbf{t}
+\end{equation}
 
 In homogeneous coordinates:
-
-\[
-\begin{pmatrix} X_{cam} \\ Y_{cam} \\ Z_{cam} \\ 1 \end{pmatrix} = \begin{pmatrix}
-\mathbf{R} & \mathbf{t} \\
-\mathbf{0}^T & 1
-\end{pmatrix} \begin{pmatrix} X_{world} \\ Y_{world} \\ Z_{world} \\ 1 \end{pmatrix}
-\]
+\begin{equation} \nonumber
+    \begin{pmatrix} X_{cam} \\ Y_{cam} \\ Z_{cam} \\ 1 \end{pmatrix} = \begin{pmatrix}
+    \mathbf{R} & \mathbf{t} \\
+    \mathbf{0}^T & 1
+    \end{pmatrix} \begin{pmatrix} X_{world} \\ Y_{world} \\ Z_{world} \\ 1 \end{pmatrix}
+\end{equation}
 
 \subsubsection{Full Projection Matrix (P)}
 
 The complete projection matrix $\mathbf{P}$ combines both intrinsic and extrinsic parameters:
-
-\[
-\mathbf{P} = \mathbf{K} [\mathbf{R} | \mathbf{t}]
-\]
-
-where $[\mathbf{R} | \mathbf{t}]$ is a 3×4 matrix formed by concatenating the rotation matrix and translation vector.
+\begin{equation} \label{eq:full_projection_matrix}
+    \mathbf{P} = \mathbf{K} [\mathbf{R} | \mathbf{t}]
+\end{equation}
+where $[\mathbf{R} | \mathbf{t}]$ is a $3 \times 4$ matrix formed by concatenating the rotation matrix and translation vector.
 
 The full projection equation is:
-
-\[
-\mathbf{m} \simeq \mathbf{P} \mathbf{M}_{world} = \mathbf{K} [\mathbf{R} | \mathbf{t}] \mathbf{M}_{world}
-\]
+\begin{equation} \label{eq:full_projection}
+    \mathbf{m} \simeq \mathbf{P} \mathbf{M}_{world} = \mathbf{K} [\mathbf{R} | \mathbf{t}] \mathbf{M}_{world}
+\end{equation}
 
 This matrix has 11 degrees of freedom (12 elements minus 1 scale factor) and encodes all information needed to project 3D world points to 2D image coordinates.
 
@@ -1597,17 +1582,14 @@ This section explains how to estimate the projection matrix $\mathbf{P}$ from kn
 \subsubsection{Problem Formulation}
 
 Given $n$ control points $\mathbf{M}_i$ in 3D space and their corresponding projections $\mathbf{m}_i$ in the image, we seek to find the projection matrix $\mathbf{P}$ such that:
+\begin{equation} \label{eq:calibration_projection}
+    \mathbf{m}_i \simeq \mathbf{P} \mathbf{M}_i \quad \text{for } i = 1, \ldots, n
+\end{equation}
 
-\[
-\mathbf{m}_i \simeq \mathbf{P} \mathbf{M}_i \quad \text{for } i = 1, \ldots, n
-\]
-
-Since this is an equality up to scale, we can write:
-
-\[
-\mathbf{m}_i \times (\mathbf{P} \mathbf{M}_i) = \mathbf{0}
-\]
-
+Since this is an equality up to scale, we can eliminate the scale factor by using the cross product:
+\begin{equation} \label{eq:calibration_cross_product}
+    \mathbf{m}_i \times (\mathbf{P} \mathbf{M}_i) = \mathbf{0}
+\end{equation}
 where $\times$ denotes the cross product. This eliminates the scale factor and gives us linear constraints.
 
 \subsubsection{Algebraic Tools}
@@ -1616,45 +1598,39 @@ where $\times$ denotes the cross product. This eliminates the scale factor and g
 
 The cross product $\mathbf{m}_i \times (\mathbf{P} \mathbf{M}_i) = \mathbf{0}$ gives us two independent linear equations (the third is a linear combination of the first two).
 
-For each correspondence, we can write:
-
-\[
-\begin{pmatrix}
-0 & -w_i & v_i \\
-w_i & 0 & -u_i \\
--v_i & u_i & 0
-\end{pmatrix} \mathbf{P} \mathbf{M}_i = \mathbf{0}
-\]
-
-where $\mathbf{m}_i = [u_i, v_i, w_i]^T$.
+For each correspondence, we can write the cross product in matrix form:
+\begin{equation} \nonumber
+    \begin{pmatrix}
+    0 & -w_i & v_i \\
+    w_i & 0 & -u_i \\
+    -v_i & u_i & 0
+    \end{pmatrix} \mathbf{P} \mathbf{M}_i = \mathbf{0}
+\end{equation}
+where $\mathbf{m}_i = [u_i, v_i, w_i]^T$ is the homogeneous representation of the image point.
 
 \textbf{Kronecker Product and Vec-Trick:}
 
 To transform the matrix equation into a linear system, we use the \textbf{vec-trick} (vectorization) and \textbf{Kronecker product}:
-
-\[
-\text{vec}(\mathbf{A} \mathbf{B} \mathbf{C}) = (\mathbf{C}^T \otimes \mathbf{A}) \text{vec}(\mathbf{B})
-\]
-
+\begin{equation} \label{eq:vec_trick}
+    \text{vec}(\mathbf{A} \mathbf{B} \mathbf{C}) = (\mathbf{C}^T \otimes \mathbf{A}) \text{vec}(\mathbf{B})
+\end{equation}
 where $\otimes$ denotes the Kronecker product and $\text{vec}(\cdot)$ vectorizes a matrix by stacking its columns.
 
 Applying this to our problem, we obtain a linear homogeneous system:
-
-\[
-\mathbf{A} \cdot \text{vec}(\mathbf{P}) = \mathbf{0}
-\]
-
+\begin{equation} \label{eq:calibration_linear_system}
+    \mathbf{A} \cdot \text{vec}(\mathbf{P}) = \mathbf{0}
+\end{equation}
 where $\mathbf{A}$ is a $2n \times 12$ matrix built from the correspondences, and $\text{vec}(\mathbf{P})$ is the 12-element vector formed by stacking the columns of $\mathbf{P}$.
 
 \subsubsection{Solution}
 
-The system $\mathbf{A} \cdot \text{vec}(\mathbf{P}) = \mathbf{0}$ is solved using \textbf{Singular Value Decomposition (SVD)}:
+The system in Eq. \eqref{eq:calibration_linear_system} is solved using \textbf{Singular Value Decomposition (SVD)}:
 
 \begin{enumerate}
-    \item Compute the SVD of $\mathbf{A}$: $\mathbf{A} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^T$
+    \item Compute the SVD of $\mathbf{A}$: $\mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T$
     \item The solution is the right singular vector corresponding to the smallest singular value
     \item This minimizes the least squares error: $\min \|\mathbf{A} \cdot \text{vec}(\mathbf{P})\|^2$
-    \item Reshape the solution vector back into a 3×4 matrix $\mathbf{P}$
+    \item Reshape the solution vector back into a $3 \times 4$ matrix $\mathbf{P}$
 \end{enumerate}
 
 \begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=\textbf{Calibration Requirements}]
@@ -1719,11 +1695,9 @@ Given a 3D point $\mathbf{M} = [X, Y, Z]^T$:
 \end{itemize}
 
 The depth $Z$ is inversely proportional to the disparity:
-
-\[
-Z = \frac{b \cdot f}{u' - u} = \frac{b \cdot f}{d}
-\]
-
+\begin{equation} \label{eq:triangulation_depth}
+    Z = \frac{b \cdot f}{u' - u} = \frac{b \cdot f}{d}
+\end{equation}
 where:
 \begin{itemize}
     \item $b$ is the \textbf{baseline} (distance between the two camera centers)
@@ -1732,10 +1706,9 @@ where:
 \end{itemize}
 
 Once $Z$ is known, the $X$ and $Y$ coordinates can be computed from either image:
-
-\[
-X = \frac{u \cdot Z}{f}, \quad Y = \frac{v \cdot Z}{f}
-\]
+\begin{equation} \nonumber
+    X = \frac{u \cdot Z}{f}, \quad Y = \frac{v \cdot Z}{f}
+\end{equation}
 
 \subsubsection{Triangulation (General Case - Linear Eigen)}
 
@@ -1748,31 +1721,28 @@ Given:
 \end{itemize}
 
 The projection equations are:
-\[
-\mathbf{m} \simeq \mathbf{P} \mathbf{M}, \quad \mathbf{m}' \simeq \mathbf{P}' \mathbf{M}
-\]
+\begin{equation} \label{eq:triangulation_projections}
+    \mathbf{m} \simeq \mathbf{P} \mathbf{M}, \quad \mathbf{m}' \simeq \mathbf{P}' \mathbf{M}
+\end{equation}
 
 Using the cross product to eliminate the scale factor:
+\begin{equation} \nonumber
+    \mathbf{m} \times (\mathbf{P} \mathbf{M}) = \mathbf{0}, \quad \mathbf{m}' \times (\mathbf{P}' \mathbf{M}) = \mathbf{0}
+\end{equation}
 
-\[
-\mathbf{m} \times (\mathbf{P} \mathbf{M}) = \mathbf{0}, \quad \mathbf{m}' \times (\mathbf{P}' \mathbf{M}) = \mathbf{0}
-\]
-
-This gives us 4 linear equations (2 from each view) in 4 unknowns (X, Y, Z, 1). We can write this as:
-
-\[
-\mathbf{A} \mathbf{M} = \mathbf{0}
-\]
-
-where $\mathbf{A}$ is a 4×4 matrix built from the projection equations.
+This gives us 4 linear equations (2 from each view) in 4 unknowns $(X, Y, Z, 1)$. We can write this as:
+\begin{equation} \label{eq:triangulation_system}
+    \mathbf{A} \mathbf{M} = \mathbf{0}
+\end{equation}
+where $\mathbf{A}$ is a $4 \times 4$ matrix built from the projection equations.
 
 \textbf{Least Squares Strategy:}
 
 To handle noise in measurements, we use a least squares approach. The solution is found by:
 
 \begin{enumerate}
-    \item Building the system $\mathbf{A} \mathbf{M} = \mathbf{0}$ from both views
-    \item Computing the SVD: $\mathbf{A} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^T$
+    \item Building the system $\mathbf{A} \mathbf{M} = \mathbf{0}$ from both views (as in Eq. \eqref{eq:triangulation_system})
+    \item Computing the SVD: $\mathbf{A} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T$
     \item The 3D point $\mathbf{M}$ is the right singular vector corresponding to the smallest singular value
     \item This minimizes the reprojection error in a least squares sense
 \end{enumerate}
@@ -1895,4 +1865,322 @@ Now we overlap the real scene and the synthetic object by creating a canvas as a
     \item Render the 3D model with the calibrated virtual camera and composite it with the captured scene.
 \end{enumerate}
 \end{tcolorbox}
+
+\section{Camera Pose Estimation}
+
+Camera pose estimation is the process of estimating the pose (position and orientation) 
+of a camera from a single image or a sequence of images.
+Given:
+\begin{itemize}
+    \item Two cameras observing the same scene.
+    \item The internal set of parameters of both cameras.
+    \item A set of conjugate points in the two images.
+\end{itemize}
+Our aim is to etimate the pose of one camera with respect to the other one.
+We can also consider the problem of motion estimation when rather than using two cameras,
+we move one camera from one position to another.
+
+\paragraph{Note}
+Once the pose (or motion) has been estimated, we can use it to obtain the full calibration matrix
+and estimate the 3D structure of the scene (using the triangulation procedure).
+This process is called \textbf{structure from motion} or \textbf{structure and motion}.
+
+\paragraph{Note}
+The triangulation component of the camera is estimated up to a scale factor.
+This is coherent with the principle of Depth-Speed ambiguity.
+"It is not possible to distinguish between a slower object moving closer
+to the camera and a faster object moving away from the camera".
+
+\subsection{Essential Matrix}
+
+Given:
+\begin{itemize}
+    \item A camera with known intrinsic parameters $\mathbf{K}$.
+    \item A camera with known intrinsic parameters $\mathbf{K}'$.
+    \item Two images of the same scene captured by the two cameras (or two time instants from the same camera).
+    \item A corresponding set of conjugate points $\mathbf{m}$ and $\mathbf{m}'$ in the two images.
+\end{itemize}
+
+We define the normalized coordinates of the points as:
+\begin{equation} \label{eq:norm_coords_def}
+    \mathbf{p}_i = \mathbf{K}^{-1} \mathbf{m}_i, \quad \mathbf{p}'_i = \mathbf{K}'^{-1} \mathbf{m}'_i
+\end{equation}
+
+Working with normalized coordinates and fixing the global reference system to the first camera, we can write the projection equations in their canonical form:
+\begin{equation} \label{eq:canonical_cameras}
+    \mathbf{P} = \mathbf{[I | 0]}, \quad \mathbf{P}' = \mathbf{[R | t]}
+\end{equation}
+where $\mathbf{R}$ is the rotation matrix and $\mathbf{t}$ is the translation vector.
+
+To proceed with our estimation, we need to derive the fundamental constraint for normalized coordinates.
+
+\subsubsection{Derivation of the Longuet-Higgins Equation}
+
+Let us consider two cameras defined by their general projection matrices $\mathbf{P}$ and $\mathbf{P'}$. We can express the decomposition of the camera matrices in terms of rotation matrices $\mathbf{Q}, \mathbf{Q'}$ and translation vectors $\mathbf{d}, \mathbf{d'}$:
+\begin{equation}
+    \mathbf{P}=\mathbf{[Q | d]}, \quad \mathbf{P'}=\mathbf{[Q' | d']}
+\end{equation}
+
+The geometric constraint relating corresponding image points $\mathbf{m}$ and $\mathbf{m'}$ (in pixel coordinates) is given by the general epipolar constraint:
+\begin{equation} \label{eq:epipolar_gen}
+    \mathbf{0} = \mathbf{m'}^{T} \mathbf{[e']}_{\times} \mathbf{Q'} \mathbf{Q}^{-1} \mathbf{m}
+\end{equation}
+where the term $\mathbf{[e']}_{\times}$ represents the skew-symmetric matrix of the epipole $\mathbf{e'}$. The epipole is defined by the relative geometry as:
+\begin{equation} \nonumber
+    \mathbf{e'} =\mathbf{d'} - \mathbf{Q'} \mathbf{Q}^{-1} \mathbf{d}
+\end{equation}
+Substituting this into Eq. \eqref{eq:epipolar_gen}, we identify the core components:
+\begin{equation} \nonumber
+    \mathbf{0} = \mathbf{m}'^{T} (\underbrace{\mathbf{d'} - \mathbf{Q'} \mathbf{Q}^{-1} \mathbf{d}}_{\text{Epipole vector } \mathbf{e'}} )_{\times}\mathbf{Q'} \mathbf{Q}^{-1} \mathbf{m}
+\end{equation}
+
+To derive the Longuet-Higgins equation, we transition from pixel coordinates to normalized camera coordinates $\mathbf{p}$ and $\mathbf{p'}$, using the intrinsic calibration matrices $\mathbf{K}$ and $\mathbf{K'}$ as defined in Eq. \eqref{eq:norm_coords_def}:
+\begin{equation} \nonumber
+    \mathbf{m} = \mathbf{K}\mathbf{p} \quad \text{and} \quad \mathbf{m'} = \mathbf{K'}\mathbf{p'}
+\end{equation}
+
+By defining the relative rotation $\mathbf{R} = \mathbf{Q'}\mathbf{Q}^{-1}$ and the relative translation $\mathbf{t} = \mathbf{e'}$, and substituting the normalized coordinates into the epipolar constraint, we obtain:
+\begin{equation} \nonumber
+    \mathbf{0} = \mathbf{m}'^{T} [\mathbf{K'}\mathbf{t}]_{\times} \mathbf{K'}\mathbf{R} \mathbf{K}^{-1} \mathbf{m}
+\end{equation}
+Substituting $\mathbf{m}$ and $\mathbf{m'}$:
+\begin{equation} \nonumber
+    \mathbf{0} = (\mathbf{K'}\mathbf{p'})^{T} [\mathbf{K'}\mathbf{t}]_{\times} \mathbf{K'}\mathbf{R} \underbrace{\mathbf{K}^{-1} \mathbf{K}}_{\mathbf{I}} \mathbf{p}
+\end{equation}
+Which simplifies to:
+\begin{equation} \label{eq:intermediate_step}
+    \mathbf{0} = \mathbf{p'}^{T} \mathbf{K'}^{T} [\mathbf{K'}\mathbf{t}]_{\times} \mathbf{K'}\mathbf{R} \mathbf{p}
+\end{equation}
+
+To simplify the term $[\mathbf{K'}\mathbf{t}]_{\times}$, we recall a fundamental algebraic property of the cross-product matrix. For any invertible matrix $\mathbf{M}$ and vector $\mathbf{v}$, the transformation is given by:
+\begin{equation} \label{eq:skew_identity}
+    [\mathbf{M}\mathbf{v}]_{\times} = \det(\mathbf{M}) \mathbf{M}^{-T} [\mathbf{v}]_{\times} \mathbf{M}^{-1}
+\end{equation}
+Since we are working with homogeneous equations, the scalar determinant factor can be ignored. Setting $\mathbf{M} = \mathbf{K'}$ and $\mathbf{v} = \mathbf{t}$ in Eq. \eqref{eq:skew_identity}, we obtain the projective equivalence:
+\begin{equation} \nonumber
+    [\mathbf{K'}\mathbf{t}]_{\times} \simeq \mathbf{K'}^{-T} [\mathbf{t}]_{\times} \mathbf{K'}^{-1}
+\end{equation}
+Substituting this back into Eq. \eqref{eq:intermediate_step}:
+\begin{equation} \nonumber
+    \mathbf{0} = \mathbf{p'}^{T} \mathbf{K'}^{T} \left( \mathbf{K'}^{-T} [\mathbf{t}]_{\times} \mathbf{K'}^{-1} \right) \mathbf{K'}\mathbf{R} \mathbf{p}
+\end{equation}
+Grouping the terms highlights the cancellation of the intrinsic matrices:
+\begin{equation} \nonumber
+    \mathbf{0} = \mathbf{p'}^{T} \underbrace{\left(\mathbf{K'}^{T} \mathbf{K'}^{-T}\right)}_{\mathbf{I}} [\mathbf{t}]_{\times} \underbrace{\left(\mathbf{K'}^{-1} \mathbf{K'}\right)}_{\mathbf{I}} \mathbf{R} \mathbf{p}
+\end{equation}
+
+We finally arrive at the \textbf{Longuet-Higgins equation}, which describes the epipolar constraint for calibrated cameras:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Longuet-Higgins Equation]
+\begin{equation} \label{eq:longuet_higgins_final}
+    \mathbf{p'}^{T} [\mathbf{t}]_{\times} \mathbf{R} \mathbf{p} = 0
+\end{equation}
+\end{tcolorbox}
+This is the bilinear-form for conjugate points in normalized coordinates.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=Essential Matrix]
+The matrix $\mathbf{E} = [\mathbf{t}]_{\times} \mathbf{R}$ is defined as the \textbf{Essential Matrix}.
+This matrix depends on 3 parameters for $\mathbf{R}$ and 2 parameters for $\mathbf{t}$.
+\end{tcolorbox}
+
+\[
+    \Longrightarrow \quad \text{This equation is homogeneous with respect to } \mathbf{t}, \text{ this reflects the \emph{depth-speed ambiguity}.}
+\]
+
+\subsection{Factorization of the Essential Matrix}
+
+We introduce a theorem that gives a characterization of the essential matrix.
+From this characterization we can factorize the matrix into rotation and translation components.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=Factorization Theorem]
+A real $3 \times 3$ matrix $\mathbf{E}$ can be factorized as a product of a non-zero skew-symmetric
+matrix and a rotation matrix if and only if $\mathbf{E}$ has two equal non-zero singular values
+and a zero singular value.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=Singular Value Decomposition]
+Given a matrix $\mathbf{A}$ of size $m \times n$, it exists a diagonal matrix
+$\mathbf{D}$ of size $n \times n$ with positive diagonal elements
+$\sigma_1 \geq \sigma_2 \geq ... \geq \sigma_n \geq 0$ and two orthogonal matrices $\mathbf{U}$ of size $m \times m$
+and $\mathbf{V}$ of size $n \times n$ such that:
+\[
+\mathbf{A} = \mathbf{U} \mathbf{D} \mathbf{V}^T \quad \text{or} \quad \mathbf{U}^T \mathbf{A} \mathbf{V} = \mathbf{D}
+\]
+The columns of $\mathbf{U}$ are the left singular vectors of $\mathbf{A}$ and the columns of $\mathbf{V}$
+are the right singular vectors of $\mathbf{A}$. The diagonal elements of $\mathbf{D}$ are the singular values of $\mathbf{A}$.
+
+\end{tcolorbox}
+\paragraph{Proof 1}
+We need to show that if $\mathbf{E}$ has two equal non-zero singular values and a zero singular value,
+ then it can be factorized as a product of a non-zero skew-symmetric matrix and a rotation matrix.
+
+Let us start with the singular value decomposition of $\mathbf{E}$:
+\begin{equation} \label{eq:svd_E}
+    \mathbf{E} = \mathbf{U} \mathbf{D} \mathbf{V}^T
+\end{equation}
+where $\mathbf{U}$ and $\mathbf{V}$ are orthogonal matrices. Since $\mathbf{E}$ is defined up to scale, the key observation is that the diagonal matrix $\mathbf{D}$ can be decomposed as:
+\begin{equation} \label{eq:D_decomposition}
+    \mathbf{D} = \begin{pmatrix}
+    \sigma_1 & 0 & 0 \\
+    0 & \sigma_1 & 0 \\
+    0 & 0 & 0
+    \end{pmatrix}
+    = \underbrace{\begin{pmatrix}
+        0 & 1 & 0 \\
+        -1 & 0 & 0 \\
+        0 & 0 & 0
+    \end{pmatrix}}_{\mathbf{S'}} \underbrace{
+    \begin{pmatrix}
+        0 & -1 & 0 \\
+        1 & 0 & 0 \\
+        0 & 0 & 1
+    \end{pmatrix}}_{\mathbf{R'}}
+\end{equation}
+where $\mathbf{S'}$ is a skew-symmetric matrix and $\mathbf{R'}$ is a rotation matrix (representing a rotation of -180 degrees around the z axis).
+
+Substituting this decomposition into Eq. \eqref{eq:svd_E}:
+\begin{equation} \nonumber
+    \mathbf{E} = \mathbf{U} \mathbf{S'} \mathbf{R'} \mathbf{V}^T
+\end{equation}
+We can insert the identity matrix $\mathbf{U}^T \mathbf{U} = \mathbf{I}$ between $\mathbf{S'}$ and $\mathbf{R'}$:
+\begin{equation} \nonumber
+    \mathbf{E} = \mathbf{U} \mathbf{S'} \mathbf{U}^T \mathbf{U} \mathbf{R'} \mathbf{V}^T
+\end{equation}
+Grouping the terms, we obtain:
+\begin{equation} \nonumber
+    \mathbf{E} = (\mathbf{U} \mathbf{S'} \mathbf{U}^T) (\mathbf{U} \mathbf{R'} \mathbf{V}^T)
+\end{equation}
+Since we are working with homogeneous equations, we can multiply by a scalar factor. We define:
+\begin{equation} \label{eq:S_R_def}
+    \mathbf{E} \simeq  \underbrace{(\mathbf{U} \mathbf{S'} \mathbf{U}^T)}_{\mathbf{S}} \underbrace{\det(\mathbf{U} \mathbf{V}^{T}) (\mathbf{U} \mathbf{R'} \mathbf{V}^T)}_{\mathbf{R}}
+\end{equation}
+where $\mathbf{S} = \mathbf{U} \mathbf{S'} \mathbf{U}^T$ and $\mathbf{R} = \det(\mathbf{U} \mathbf{V}^{T}) (\mathbf{U} \mathbf{R'} \mathbf{V}^T)$.
+
+To complete the proof, we need to verify that $\mathbf{S}$ is a skew-symmetric matrix and $\mathbf{R}$ is a rotation matrix. 
+
+First, we show that $\mathbf{S}$ is skew-symmetric by computing its transpose:
+\begin{equation} \label{eq:S_skew}
+    \mathbf{S}^T = (\mathbf{U} \mathbf{S'} \mathbf{U}^T)^T = \mathbf{U} (\mathbf{S'})^T \mathbf{U}^T = \mathbf{U} (-\mathbf{S'}) \mathbf{U}^T = -\mathbf{U} \mathbf{S'} \mathbf{U}^T = -\mathbf{S}
+\end{equation}
+where we used the fact that $(\mathbf{S'})^T = -\mathbf{S'}$ since $\mathbf{S'}$ is skew-symmetric.
+
+Next, we verify that $\mathbf{R}$ is a rotation matrix by showing that $\det(\mathbf{R}) = 1$:
+\begin{equation} \nonumber
+    \det(\mathbf{R}) = \det(\mathbf{U} \mathbf{V}^T) \det(\mathbf{U}) \det(\mathbf{R'}) \det(\mathbf{V}^T) 
+\end{equation}
+Since $\mathbf{U}$ and $\mathbf{V}$ are orthogonal matrices, we have $\det(\mathbf{U}) = \pm 1$ and $\det(\mathbf{V}^T) = \pm 1$. Grouping the terms:
+\begin{equation} \nonumber
+    = \textcolor{blue}{\underline{\det(\mathbf{U})}} \textcolor{red}{\underline{\det(\mathbf{V^T})}} \textcolor{blue}{\underline{\det(\mathbf{U})}} \textcolor{red}{\underline{\det(\mathbf{V}^T)}} \det(\mathbf{R'})
+\end{equation}
+which simplifies to:
+\begin{equation} \label{eq:R_rotation}
+    = \underbrace{\det(\mathbf{U})^{2}}_{=1} \underbrace{\det(\mathbf{V}^T)^{2}}_{=1} \underbrace{\det(\mathbf{R'})}_{=1} = 1
+\end{equation}
+Therefore, $\mathbf{S}$ is a skew-symmetric matrix and $\mathbf{R}$ is a rotation matrix, completing the proof.
+
+\paragraph{Proof 2}
+We now prove the converse: if $\mathbf{E} = \mathbf{S} \mathbf{R}$ where $\mathbf{S}$ is a skew-symmetric matrix and $\mathbf{R}$ is a rotation matrix, then $\mathbf{E}$ has two equal non-zero singular values and a zero singular value.
+
+By a well-known theorem, any skew-symmetric matrix can be written in the form $\mathbf{S} \simeq \mathbf{U} \mathbf{S'} \mathbf{U}^T$ where $\mathbf{U}$ is an orthogonal matrix and $\mathbf{S'}$ is a canonical skew-symmetric matrix. Moreover, we have the relation $\mathbf{S'} = \text{Diag}(1,1,0) \mathbf{R'}^T$ where $\mathbf{R'}$ is a rotation matrix.
+
+Starting from $\mathbf{E} = \mathbf{S} \mathbf{R}$ and substituting the decomposition of $\mathbf{S}$:
+\begin{equation} \nonumber
+    \mathbf{E} = \mathbf{S} \mathbf{R} = \mathbf{U} \mathbf{S'} \mathbf{U}^T \mathbf{R}
+\end{equation}
+Substituting $\mathbf{S'} = \text{Diag}(1,1,0) \mathbf{R'}^T$:
+\begin{equation} \nonumber
+    \mathbf{E} = \mathbf{U} \text{Diag}(1,1,0) \mathbf{R'}^T \mathbf{U}^T \mathbf{R}
+\end{equation}
+Rearranging the terms, we can identify the SVD structure:
+\begin{equation} \nonumber
+    \mathbf{E} = \mathbf{U} \underbrace{\text{Diag}(1,1,0)}_{\mathbf{D}} \underbrace{\mathbf{R'}^T \mathbf{U}^T \mathbf{R}}_{\mathbf{V}^T}
+\end{equation}
+Since $\mathbf{R'}^T \mathbf{U}^T \mathbf{R}$ is a product of orthogonal matrices, it is itself orthogonal. Therefore:
+\begin{equation} \label{eq:E_SVD_from_SR}
+    \mathbf{E} = \mathbf{U} \mathbf{D} \mathbf{V}^T
+\end{equation}
+This is the SVD of $\mathbf{E}$, where $\mathbf{D} = \text{Diag}(1,1,0)$ contains 2 equal non-zero singular values and a zero singular value, as required.
+
+\paragraph{Note}
+The factorization is not unique. It is possible to transpose $\mathbf{S'}$ and $\mathbf{R'}$, leading to 4 different combinations with sign changes:
+\begin{equation} \nonumber
+    \mathbf{S} = \pm \mathbf{U} \mathbf{S'} \mathbf{U}^T \quad \text{and} \quad \mathbf{R} = \det(\mathbf{U} \mathbf{V}^T) \{\mathbf{R'} \text{ or } \mathbf{R'}^T\}
+\end{equation}
+This ambiguity reflects the fact that the essential matrix can be decomposed in multiple equivalent ways, all corresponding to the same geometric configuration up to a sign change.
+
+A flip in the sign of $\mathbf{S}$ changes the right camera to the left camera and vice versa.
+The choice of $\mathbf{R}$ defines a rotation of 180 degrees around the axis of the camera around the baseline.
+
+\subsection{Estimation of the Essential Matrix}
+Given a set of corresponding points in normalized coordinates, we can estimate the essential matrix
+$\mathbf{E}$ such that:
+\begin{equation} \label{eq:epipolar_constraint_points}
+    \mathbf{{p}'_i}^T \mathbf{E} \mathbf{p}_i = 0
+\end{equation}
+for each corresponding pair $(\mathbf{p}_i, \mathbf{p}'_i)$.
+
+This constraint can be rewritten using the vectorization operator:
+\begin{equation} \nonumber
+    \mathbf{{p}'_i}^T \mathbf{E} \mathbf{p}_i = 0 \Leftrightarrow \text{vec}(\mathbf{{p}'_i}^T \mathbf{E} \mathbf{p}_i) = 0
+\end{equation}
+Using the Kronecker product property, this becomes:
+\begin{equation} \nonumber
+    (\mathbf{{p}_i}^T \otimes \mathbf{{p}'_i}^T) \text{vec}(\mathbf{E}) = 0
+\end{equation}
+Every corresponding pair generates one equation of a homogeneous linear system. Stacking all $N$ correspondences:
+\begin{equation} \label{eq:essential_linear_system}
+    \underbrace{
+    \begin{bmatrix}
+    \mathbf{{p}_1}^T \otimes \mathbf{{p}'_1}^T \\
+    \vdots \\
+    \mathbf{{p}_N}^T \otimes \mathbf{{p}'_N}^T
+    \end{bmatrix}
+    }_{\mathbf{A}}
+    \underbrace{\text{vec}(\mathbf{E})}_{\mathbf{x}} = \mathbf{0}
+\end{equation}
+Since $\mathbf{E}$ is defined up to scale, without loss of generality we can set the last element of $\mathbf{x}$ to 1.
+This means we just need to solve a system of 8 equations with 8 unknowns rather than 9 
+(we need 8 points to estimate the essential matrix). In practice we use more than 8 points
+and the solution is a least squares solution.
+
+\paragraph{Note: Enforcing the Essential Matrix Constraint}
+The matrix estimated with this procedure will not necessarily satisfy the theorem of the essential matrix (i.e., it may not have two equal non-zero singular values and a zero singular value).
+We can enforce this constraint by defining $\hat{\mathbf{E}}$ from the SVD of $\mathbf{E} = \mathbf{U} \mathbf{D} \mathbf{V}^T$.
+
+Let $\mathbf{D} = \text{diag}(r, s, t)$ with $r \geq s \geq t \geq 0$ be the singular values of $\mathbf{E}$.
+We define the corrected essential matrix as:
+\begin{equation} \label{eq:corrected_E}
+    \hat{\mathbf{E}} = \mathbf{U} \hat{\mathbf{D}} \mathbf{V}^T
+\end{equation}
+where $\hat{\mathbf{D}} = \text{diag}\left(\frac{r+s}{2}, \frac{r+s}{2}, 0\right)$.
+
+It is possible to show that $\hat{\mathbf{E}}$ is the closest matrix to $\mathbf{E}$ (in Frobenius norm) that satisfies the essential matrix theorem.
+This method is called the \textbf{normalized 8-point algorithm}.
+
+\subsection{Structure from Motion Algorithm}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Structure from Motion Algorithm]
+Given a set of corresponding points in normalized coordinates and the intrinsic parameters of the cameras, the goal is to estimate:
+\begin{itemize}
+    \item The 3D coordinates $\mathbf{M}_i$ of the points
+    \item The motion parameters: rotation matrix $\mathbf{R}$ and translation vector $\mathbf{t}$
+\end{itemize}
+\end{tcolorbox}
+
+The algorithm proceeds through the following steps:
+
+\begin{enumerate}
+    \item \textbf{Estimate the essential matrix} $\mathbf{E}$ using the 8-point algorithm (or normalized 8-point algorithm) from the set of corresponding points.
+    
+    \item \textbf{Factorize} $\mathbf{E}$ into $\mathbf{E} = [\mathbf{t}]_{\times} \mathbf{R}$ to extract the rotation matrix $\mathbf{R}$ and translation vector $\mathbf{t}$ (up to scale).
+    
+    \item \textbf{Define the projection matrices}:
+    \begin{equation} \nonumber
+        \mathbf{P}_1 = \mathbf{K}_1 [\mathbf{I} | \mathbf{0}], \quad \mathbf{P}_2 = \mathbf{K}_2 [\mathbf{R} | \mathbf{t}]
+    \end{equation}
+    where $\mathbf{K}_1$ and $\mathbf{K}_2$ are the intrinsic calibration matrices of the two cameras.
+    
+    \item \textbf{Estimate the 3D points} $\mathbf{M}_i$ by triangulation using the projection matrices $\mathbf{P}_1$ and $\mathbf{P}_2$ and the corresponding image points.
+\end{enumerate}
+
 \end{document}  
