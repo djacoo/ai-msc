@@ -97,3 +97,10 @@ quizzer-v2/user_data/
 
 # Dataset directories
 flowers102/
+
+# Conda/Miniconda installers and environments
+miniconda3/
+Miniconda*.sh
+Anaconda*.sh
+*.conda
+conda-meta/

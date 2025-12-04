@@ -4662,57 +4662,101 @@ For example, we can set $\alpha = 10$, $\beta = 20$, $\gamma = 20$ (or any other
 
 \newpage
 
+
+
 \part{Beyond Conjunctions: Handling General Formulas}
+
+
 
 \section{From Sets of Literals to General Formulas}
 
+
+
 So far, we have studied decision procedures that work with \textbf{sets of literals} (conjunctions of atoms):
 
+
+
 \begin{itemize}
+
     \item \textbf{Congruence Closure}: Handles sets of equality literals in $\mathcal{T}_E$
+
     \item \textbf{Theory of Lists/Constructors}: Handles sets of literals involving list operations
+
     \item \textbf{Theory of Arrays}: Handles sets of literals with $\textsf{select}$ and $\textsf{store}$
+
     \item \textbf{Nelson-Oppen}: Combines theories by sharing equalities between procedures
+
 \end{itemize}
 
+
+
 \begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Key Question}]
+
 How do we handle more \textbf{general formulas} that contain \textbf{disjunctions}, not just conjunctions of literals?
+
 \end{tcolorbox}
 
+
+
 \subsection{The Challenge}
+
+
 
 Most decision procedures are designed to work with \textbf{conjunctions} of literals:
 \[
 L_1 \wedge L_2 \wedge \cdots \wedge L_n
 \]
 
+
+
 But in practice, we often need to check satisfiability of formulas with complex Boolean structure:
 \[
 (L_1 \vee L_2) \wedge (L_3 \vee \neg L_4 \vee L_5) \wedge \cdots
 \]
 
+
+
 \subsection{Solution Approach: SAT Solver Integration}
 
+
+
 The key idea is to combine:
+
 \begin{enumerate}
+
     \item A \textbf{SAT solver} to handle the Boolean structure
+
     \item \textbf{Theory decision procedures} to handle the theory constraints
+
 \end{enumerate}
+
+
 
 This approach is known as \textbf{SMT (Satisfiability Modulo Theories)}.
 
+
+
 \section{The Abstraction-Refinement Framework}
 
+
+
 \subsection{Step 1: Convert to CNF}
+
+
 
 Given a general first-order formula $F$, we first convert it to \textbf{Equisatisfiable Conjunctive Normal Form (ECNF)}:
 \[
 F \longrightarrow \text{ECNF} \longrightarrow S
 \]
 
+
+
 where $S$ is a \textbf{set of clauses} (CNF formula).
 
+
+
 \begin{example}[CNF Conversion]
+
 Original formula:
 \[
 f(x) \backsimeq y \rightarrow (x \backsimeq 1 \vee x \backsimeq 2)
@@ -4723,20 +4767,31 @@ Convert to CNF:
 \neg(f(x) \backsimeq y) \vee x \backsimeq 1 \vee x \backsimeq 2
 \]
 
+
+
 This becomes a single clause:
 \[
 \{f(x) \not\backsimeq y, x \backsimeq 1, x \backsimeq 2\}
 \]
+
 \end{example}
+
+
 
 \subsection{Step 2: Abstraction Function}
 
+
+
 We define an \textbf{abstraction function} $\alpha$ that maps first-order atoms to propositional variables:
+
+
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Abstraction Function}]
 \[
 \alpha: \text{First-order atoms} \longrightarrow \text{Propositional variables}
 \]
+
+
 
 \textbf{Examples}:
 \begin{align*}
@@ -4744,6 +4799,8 @@ We define an \textbf{abstraction function} $\alpha$ that maps first-order atoms 
 \alpha(x \backsimeq 1) &= P_2 \\
 \alpha(x \backsimeq 2) &= P_3
 \end{align*}
+
+
 
 We also need the \textbf{inverse function}:
 \[
@@ -4756,11 +4813,18 @@ We also need the \textbf{inverse function}:
 \alpha^{-1}(P_2) &= x \backsimeq 1 \\
 \alpha^{-1}(P_3) &= x \backsimeq 2
 \end{align*}
+
 \end{tcolorbox}
+
+
 
 \subsection{Step 3: The SMT Architecture}
 
+
+
 The integration between SAT solver and theory procedures works as follows:
+
+
 
 \begin{center}
 \begin{tikzpicture}[
@@ -4773,62 +4837,90 @@ The integration between SAT solver and theory procedures works as follows:
     \node[box, fill=yellow!20, minimum width=4cm] (F) {First-order formula $F$};
     \node[box, fill=blue!20, minimum width=4cm, below=of F] (CNF) {CNF conversion \\ $S$ (set of clauses)};
     \node[box, fill=green!20, minimum width=4.5cm, below=of CNF] (abs) {Abstraction $\alpha$ \\ Propositional formula};
-
     % SAT and Theory solvers side by side - properly centered using xshift
     \node[box, fill=purple!20, minimum width=4cm, minimum height=2cm, below=3cm of abs, xshift=-4.5cm] (sat) {\textbf{SAT Solver} \\ (Boolean reasoning)};
     \node[box, fill=orange!20, minimum width=4cm, minimum height=2cm, below=3cm of abs, xshift=4.5cm] (theory) {\textbf{Theory Procedure} \\ ($\mathcal{T}$-solver) \\ (Theory reasoning)};
-
     % Results at bottom - centered
     \node[result, fill=red!20, below=3cm of sat] (unsat) {\Large\texttt{UNSAT}};
     \node[result, fill=green!30, below=3cm of theory] (sat_result) {\Large\texttt{SAT}};
-
     % Arrows - preprocessing flow
     \draw[->, very thick] (F) -- (CNF);
     \draw[->, very thick] (CNF) -- (abs);
     \draw[->, very thick] (abs) |- ([yshift=-1cm]abs.south) -| node[near start, above] {$\alpha(S)$} (sat);
     \draw[->, very thick] (abs) |- ([yshift=-1cm]abs.south) -| (theory);
-
     % Interaction arrows
     \draw[->, dashed, very thick, bend left=30] (sat.east) to node[above, sloped, pos=0.4, yshift=5mm] {proposes model $M$} (theory.west);
     \draw[->, dashed, very thick, bend left=30] (theory.west) to node[below, sloped, pos=0.6, yshift=-5mm] {conflict clause / theory lemma} (sat.east);
-
     % Result arrows
     \draw[->, very thick] (sat) -- node[left, align=right] {if no model\\exists} (unsat);
     \draw[->, very thick] (theory) -- node[right, align=left] {if $\alpha^{-1}(M)$ is \\ $\mathcal{T}$-consistent} (sat_result);
 \end{tikzpicture}
 \end{center}
 
+
+
 \vspace{0.5em}
 
+
+
 \textbf{Key components}:
+
 \begin{itemize}
+
     \item \textbf{SAT Solver}: Handles the Boolean/propositional structure
+
     \item \textbf{Theory Procedure}: Checks theory-level consistency
+
     \item \textbf{Interaction}: Iterative refinement through model proposals and conflict clauses
+
 \end{itemize}
+
+
 
 \subsection{Step 4: The SMT Loop}
 
+
+
 The SMT solver operates in a loop:
 
+
+
 \begin{enumerate}
+
     \item The \textbf{SAT solver} works on the abstracted (propositional) formula
 
+
+
     \item If SAT solver returns \texttt{UNSAT}: \\
+
     → The original formula is \texttt{UNSAT} (we're done)
 
+
+
     \item If SAT solver returns \texttt{SAT} and proposes a model $M$: \\
+
     → Apply $\alpha^{-1}$ to get a set of theory literals \\
+
     → Send these literals to the \textbf{theory procedure}
 
+
+
     \item The theory procedure checks if the literals are $\mathcal{T}$-consistent:
+
     \begin{itemize}
+
         \item If \texttt{SAT}: Return \texttt{SAT} (we found a satisfying assignment)
+
         \item If \texttt{UNSAT}: Generate a \textbf{conflict clause} and send it back to the SAT solver, which continues the search
+
     \end{itemize}
+
 \end{enumerate}
 
+
+
 \begin{example}[Abstraction in Action]
+
 Consider the disjunction produced by a non-convex theory:
 \[
 x \backsimeq w_1 \vee x \backsimeq w_2 \vee x \backsimeq w_3
@@ -4846,9 +4938,721 @@ where:
 \alpha^{-1}(P_3) &= x \backsimeq w_3
 \end{align*}
 
+
+
 When the SAT solver decides that $P_1$ is true, we check if $x \backsimeq w_1$ is $\mathcal{T}_E$-consistent with the other constraints, and so on.
+
 \end{example}
 
+
+
+\newpage
+
+
+
+\part{SMT and ATP}
+
+
+
+\section{Theory Propagation and Conflict}
+
+
+
+Instead of a simple generate-and-test approach, a tighter integration between the SAT solver and the theory solver is used, based on two main mechanisms: \textbf{theory propagation} and \textbf{theory conflict}.
+
+
+
+Let's assume:
+
+\begin{center}
+
+\begin{tikzpicture}[node distance=2cm, auto]
+
+    \node (sat) {SAT Solver};
+
+    \node (tsolver) [right=of sat, node distance=5cm] {T-solver};
+
+    \draw[->, thick] (sat) to[bend left] node[above] {$\alpha$} (tsolver);
+
+    \draw[->, thick] (tsolver) to[bend left] node[below] {$\alpha^{-1}$} (sat);
+
+\end{tikzpicture}
+
+\end{center}
+
+
+
+\begin{itemize}
+
+    \item \textbf{SAT Solver}: A tool that implements a procedure to decide the satisfiability of a set of clauses in propositional logic.
+
+    \item \textbf{T-solver}: A tool that implements a procedure to decide the satisfiability of a set of $\mathcal{T}$-literals (e.g., for $\mathcal{T}_E, \mathcal{T}_{CONS}, \mathcal{T}_A$, or a combination).
+
+    \item \textbf{$\alpha$}: The abstraction function that maps first-order atoms to propositional variables.
+
+    \item \textbf{$\alpha^{-1}$}: The inverse of $\alpha$.
+
+\end{itemize}
+
+
+
+A tighter interaction involves two key ideas:
+
+
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Theory Propagation}]
+
+Assume we have the trail $\mathcal{M}$ (the current partial assignment) and the set of clauses $\mathcal{S}$ that we need to satisfy.
+\[
+\mathcal{M} \parallel \mathcal{S} \quad \longrightarrow \quad \mathcal{M}L_C \parallel \mathcal{S} \cup \{C\}
+\]
+
+if there exist literals $L_1, \dots, L_n \in \mathcal{M}$ such that $\{L_1, \dots, L_n\} \models_T L$, and $C = \neg L_1 \vee \dots \vee \neg L_n \vee L$. The atom of $L$ must occur in the input.
+
+\end{tcolorbox}
+
+
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Theory Conflict}]
+\[
+\mathcal{M} \parallel \mathcal{S} \quad \longrightarrow \quad \mathcal{M} \parallel \mathcal{S} \cup \{C\}
+\]
+
+if there are literals $L_1, \dots, L_n \in \mathcal{M}$ such that $\{L_1, \dots, L_n\}$ is $\mathcal{T}$-unsatisfiable (i.e., $\{L_1, \dots, L_n\} \models_T \bot$), and $C = \neg L_1 \vee \dots \vee \neg L_n$.
+
+\end{tcolorbox}
+
+
+
+With this, we conclude the part on satisfiability modulo theories.
+
+
+
+\newpage
+
+
+
+\part{Automated Theorem Proving in First-Order Logic}
+
+
+
+\section{Dealing with Quantifiers}
+
+
+
+We have seen satisfiability modulo theories, which covers:
+
+\begin{itemize}
+
+    \item Decision procedures for the satisfiability of sets of literals in single theories and in combination of theories.
+
+    \item CDCL($\mathcal{T}$) to decide the satisfiability of ground clauses.
+
+\end{itemize}
+
+However, basic SMT methods do not handle quantifiers. Automated Theorem Proving (ATP) in first-order logic addresses this.
+
+
+
+\textbf{Automated theorem proving in first-order logic}:
+
+\begin{itemize}
+
+    \item Involves quantifier reasoning.
+
+    \item Basic ATP methods do not handle defined symbols other than equality, unless by adding the axioms defining the symbol to the input problem (e.g., for symbols a, b, c, f, g, h, ..., P, Q, R, ...).
+
+\end{itemize}
+
+
+
+\section{The ATP Problem and Skolemization}
+
+
+
+The ATP problem is to determine if $H \models \phi$, which is equivalent to checking if $H \cup \{\neg \phi\}$ is unsatisfiable. The set of formulas is then converted to a clausal form $S$. The question is: is $S$ unsatisfiable?
+
+
+
+A key issue in ATP is \textbf{Skolemization}, which does not preserve logical equivalence, but only equisatisfiability.
+
+\begin{itemize}
+
+    \item $\exists x F \longrightarrow F[x \leftarrow a]$ for $a$ a new constant symbol.
+
+    \item $\forall y \exists x F \longrightarrow \forall y F[x \leftarrow f(y)]$ for $f$ a new function symbol.
+
+\end{itemize}
+
+
+
+\section{Herbrand Interpretations}
+
+
+
+\subsection{Herbrand Universe}
+
+The \textbf{Herbrand universe} $\mathcal{U}$ is the set of all ground terms in the signature of the input problem.
+
+\begin{itemize}
+
+    \item For $S = \{ P(a), \neg P(x) \vee P(f(x)) \}$, the Herbrand universe is $\mathcal{U} = \{ a, f(a), f(f(a)), \dots \} = \{ f^n(a) \mid n \geq 0 \}$.
+
+    \item For $S = \{ P(a), \neg P(x) \vee P(f(x)), \neg R(x, y) \vee R(g(x, b), y) \}$, the Herbrand universe is $\mathcal{U} = \{ a, b, f(a), f(b), g(a, a), g(a, b), \dots \}$.
+
+\end{itemize}
+
+
+
+\subsection{Herbrand Base}
+
+The \textbf{Herbrand base} $\mathcal{B}$ is the set of all ground atoms in the signature of the input problem.
+
+\begin{itemize}
+
+    \item For $S = \{ P(a), \neg Q(b), P(x) \vee \neg R(x) \}$, the Herbrand base is $\mathcal{B} = \{ P(a), P(b), Q(a), Q(b), R(a), R(b) \}$.
+
+\end{itemize}
+
+
+
+\subsection{Herbrand Interpretation}
+
+A \textbf{Herbrand interpretation} $\mathcal{I}_H$ is an interpretation such that:
+
+\begin{itemize}
+
+    \item The domain $\mathcal{D}$ is the Herbrand universe $\mathcal{U}$.
+
+    \item The interpretation function $\Phi$ is defined as:
+
+    \begin{itemize}
+
+        \item For all constant symbols $c$, $\Phi(c) = c$.
+
+        \item For all function symbols $f$ of arity $n$, $\Phi(f)(t_1, \dots, t_n) = f(t_1, \dots, t_n)$.
+
+    \end{itemize}
+
+    \item A Herbrand interpretation is a subset of the Herbrand base, i.e., $\mathcal{I}_H \subseteq \mathcal{B}$. It is the set of all ground atoms that it makes true.
+
+\end{itemize}
+
+For example, for $S = \{ \neg P(x) \vee \neg P(f(x)) \}$, if we add a constant symbol $a$, the Herbrand Universe is $\mathcal{U} = \{ f^n(a) \mid n \geq 0 \}$. An interpretation that satisfies this clause over the natural numbers $\mathbb{N}$ could be $\mathcal{I} = \langle \mathbb{N}, \Phi \rangle$ where $\Phi(f)(n) = n+1$ and $\Phi(P) = \{ 2k \mid k \in \mathbb{N} \}$.
+
+This is because $P(x) \rightarrow \neg P(f(x))$.
+
+
+
+\subsection{Associated Herbrand Interpretation}
+
+Given an interpretation $\mathcal{I}$, the associated Herbrand interpretation $\mathcal{I}_H$ is defined as $\mathcal{I}_H = \{ L \mid L \text{ is a ground literal and } \mathcal{I} \models L \}$.
+
+The Herbrand interpretation $\mathcal{I}_H$ for a given interpretation $\mathcal{I}$ is unique unless we had to add a constant symbol.
+
+
+
+For $S = \{ \neg P(x) \vee \neg P(f(x)) \}$, with no constant symbol, we add a new constant $a$. $\mathcal{U} = \{f^n(a) \mid n \ge 0\}$.
+
+An interpretation satisfying this clause is $\mathcal{I} = \langle \mathbb{N}, \Phi \rangle$ with $\Phi(f)(n) = n+1$ and $\Phi(P) = \{2k \mid k \in \mathbb{N} \}$.
+
+There exist two Herbrand interpretations associated to $\mathcal{I}$:
+
+\begin{itemize}
+
+    \item $\mathcal{I}_H^1 = \{ P(a), \neg P(f(a)), P(f^2(a)), \dots \} = \{ P(f^n(a)) \mid n=2k \} \cup \{ \neg P(f^n(a)) \mid n=2k+1 \}$
+
+    \item $\mathcal{I}_H^2 = \{ \neg P(a), P(f(a)), \neg P(f^2(a)), \dots \} = \{ \neg P(f^n(a)) \mid n=2k \} \cup \{ P(f^n(a)) \mid n=2k+1 \}$
+
+\end{itemize}
+
+
+
+\subsection{Herbrand's Theorem}
+
+\begin{itemize}
+
+    \item Let $F$ be a formula and $S$ its clausal form.
+
+    \item If $\mathcal{I} \models F$, then $\mathcal{I}_H \models S$ for all associated Herbrand interpretations $\mathcal{I}_H$.
+
+    \item A set of clauses $S$ is unsatisfiable if and only if it is false in all Herbrand interpretations.
+
+    ($\Rightarrow$) Trivial.
+
+    ($\Leftarrow$) By contradiction: assume $\mathcal{I} \models S$. Then $\mathcal{I}_H \models S$, which is a contradiction.
+
+\end{itemize}
+
+
+
+\newpage
+
+
+
+\part{Fundamentals of Theorem Proving}
+
+\section{Introduction}
+
+Automated theorem proving in first-order logic aims to mechanically determine whether a given formula is a logical consequence of a set of axioms. This is fundamentally different from the decision procedures we have studied for specific theories (such as equality or linear arithmetic), as first-order logic with quantifiers is only semi-decidable.
+
+\section{Proof Procedures}
+
+A \textbf{semi-decision procedure} for unsatisfiability in First-Order Logic (FOL) is called a \textbf{theorem-proving strategy} or \textbf{proof procedure}. Unlike decision procedures, which always terminate with a definite answer, a semi-decision procedure is guaranteed to terminate only when the input is unsatisfiable.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!75!black,title=\textbf{Semi-Decidability of First-Order Logic}]
+\textbf{Key Properties}:
+\begin{itemize}
+    \item If a formula is \textbf{unsatisfiable}, the procedure will eventually detect this and terminate with "UNSAT"
+    \item If a formula is \textbf{satisfiable}, the procedure may run forever without reaching a conclusion
+    \item This asymmetry is inherent to first-order logic (consequence of Church-Turing undecidability results)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Structure of a Proof Procedure}
+
+Every proof procedure consists of two essential components that work together to explore the space of possible proofs.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Components of a Proof Procedure}]
+A proof procedure $P$ can be formally described as an ordered pair:
+\[ P = \langle I, E \rangle \]
+where:
+\begin{itemize}
+    \item $I$: \textbf{Inference System} --- A set of inference rules that define valid logical deductions
+
+    \textit{Examples}: Resolution, Paramodulation, Superposition
+
+    \item $E$: \textbf{Search Plan} (or \textbf{Search Strategy}) --- The strategy used to select which inference rules to apply and in what order
+
+    \textit{Examples}: Breadth-first search, set-of-support strategy, ordered resolution
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Design considerations}:
+\begin{enumerate}
+    \item The inference system must be \textbf{sound} (derive only valid consequences) and \textbf{refutation-complete} (able to derive a contradiction from any unsatisfiable set)
+    \item The search plan must be \textbf{fair} (eventually consider all possible inferences) to ensure completeness
+    \item Practical efficiency requires careful design of the search strategy to avoid exploring irrelevant parts of the search space
+\end{enumerate}
+
+
+
+\section{Herbrand's Theorem}
+
+The fundamental problem in Automated Reasoning is determining whether a set of clauses $S$ is unsatisfiable (a logical contradiction). Herbrand's Theorem bridges the gap between general unsatisfiability and unsatisfiability within a restricted domain---the Herbrand universe.
+
+\subsection{Statement of Herbrand's Theorem}
+
+Herbrand's Theorem is one of the most important results in automated theorem proving. It justifies the approach of reasoning about first-order formulas using only ground terms.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Herbrand's Theorem}]
+\begin{theorem}[Herbrand's Theorem]
+A set of clauses $S$ is unsatisfiable if and only if $S$ is \textbf{H-unsatisfiable}, meaning $S$ is unsatisfiable under all Herbrand interpretations.
+\end{theorem}
+\end{tcolorbox}
+
+\textbf{Significance}: This theorem allows us to restrict our attention to Herbrand interpretations when checking unsatisfiability. Instead of considering all possible interpretations over arbitrary domains, we only need to consider interpretations over the Herbrand universe (the set of all ground terms).
+
+\subsection{Refined Herbrand's Theorem}
+
+The refined version of Herbrand's Theorem is even more powerful for practical theorem proving, as it guarantees the existence of a \textit{finite} witness for unsatisfiability.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Refined Herbrand's Theorem}]
+\begin{theorem}[Refined Herbrand's Theorem]
+A set of clauses $S$ is unsatisfiable if and only if there exists a \textbf{finite} set $S'$ of ground instances of clauses in $S$ such that $S'$ is unsatisfiable.
+\end{theorem}
+\end{tcolorbox}
+
+\textbf{Implications for theorem proving}:
+\begin{enumerate}
+    \item This theorem provides a semi-decision procedure: systematically generate ground instances and check for propositional unsatisfiability
+    \item If $S$ is unsatisfiable, we will eventually find a finite unsatisfiable subset of ground instances
+    \item If $S$ is satisfiable, the procedure may generate ground instances indefinitely
+    \item This is the theoretical foundation for many automated theorem provers
+\end{enumerate}
+
+
+
+\subsection{The "Clause" Constraint \& Counter-Example}
+
+It is crucial that Herbrand's Theorem applies specifically to \textbf{clauses} (formulas in conjunctive normal form with implicit universal quantification) and \textit{not} to arbitrary formulas containing existential quantifiers. This restriction is essential for the theorem's validity.
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Important Restriction}]
+Herbrand's Theorem requires the input to be in \textbf{clause normal form} (CNF). For formulas with existential quantifiers, Skolemization must be applied first to eliminate existential quantifiers before applying Herbrand's Theorem.
+\end{tcolorbox}
+
+The following counter-example demonstrates why this restriction is necessary.
+
+
+
+\begin{example}[Counter-Example]
+
+Consider the set $S = \{ \exists x P(x), \neg P(a) \}$.
+
+\begin{itemize}
+
+    \item \textbf{Analysis in the Herbrand universe (H):}
+
+    \begin{itemize}
+
+        \item Universe: $\mathcal{U}_H = \{a\}$
+
+        \item Base: $\mathcal{B}_H = \{P(a)\}$
+
+        \item Possible Herbrand interpretations:
+
+        \begin{enumerate}
+
+            \item $I = \emptyset$: $\neg P(a)$ is true. $\exists x P(x)$ fails (since $P(a)$ is false).
+
+            \item $I = \{ P(a) \}$: $\neg P(a)$ is false.
+
+        \end{enumerate}
+
+        Result: $S$ is H-unsatisfiable.
+
+    \end{itemize}
+
+    \item \textbf{Analysis in general interpretations ($\mathcal{M}$):}
+
+    Consider a model $\mathcal{M} = \langle D, I \rangle$ with:
+
+    \begin{itemize}
+
+        \item $D = \{1, 2\}$
+
+        \item $I(a) = 1$
+
+        \item $I(P) = \{2\}$
+
+    \end{itemize}
+
+    Then $\neg P(a)$ is true (since $1 \notin I(P)$) and $\exists x P(x)$ is true (since $2 \in I(P)$).
+
+    Result: $S$ is satisfiable.
+
+\end{itemize}
+
+Conclusion: H-unsatisfiability only implies general unsatisfiability if the formula is in clause normal form (Skolemized).
+
+\end{example}
+
+
+
+\subsection{Practical Demonstrations}
+
+
+
+\begin{example}[Proof of Validity]
+
+\textbf{Problem}: Demonstrate that $F = \forall x A(x) \rightarrow A(b)$ is valid.
+
+
+
+\textbf{Method}: Proof by refutation (show $\neg F$ is unsatisfiable).
+
+
+
+\begin{enumerate}
+
+    \item \textbf{Negation and CNF}:
+
+    $\neg F = \neg (\forall x A(x) \rightarrow A(b)) \equiv \forall x A(x) \wedge \neg A(b)$.
+
+    Clauses $S$: $\{A(x)\}, \{\neg A(b)\}$.
+
+    \item \textbf{Universe and Base}:
+
+    Herbrand Universe $\mathcal{U}_H = \{b\}$, Herbrand Base $\mathcal{B}_H = \{A(b)\}$.
+
+    \item \textbf{Analysis of Interpretations}:
+
+    \begin{itemize}
+
+        \item If $I = \emptyset$: $A(b)$ is false. Clause $A(x)$ (grounded to $A(b)$) is falsified.
+
+        \item If $I = \{A(b)\}$: $A(b)$ is true. Clause $\{\neg A(b)\}$ is falsified.
+
+    \end{itemize}
+
+    \item \textbf{Conclusion}: The set of ground instances $\{A(b), \neg A(b)\}$ is contradictory. Thus, $\neg F$ is unsatisfiable, and $F$ is valid.
+
+\end{enumerate}
+
+\end{example}
+
+
+
+\begin{example}[Satisfiability Check]
+
+\textbf{Problem}: Determine if $S' = \{P(b), \neg P(a)\}$ is satisfiable.
+
+\begin{itemize}
+
+    \item Universe $\mathcal{U} = \{a, b\}$
+
+    \item Base $\mathcal{B} = \{P(a), P(b)\}$
+
+\end{itemize}
+
+\textbf{Analysis}: We look for an interpretation $I \subseteq \mathcal{B}$ that satisfies both clauses.
+
+Let the interpretation be $I = \{P(b)\}$. Then $P(a)$ is false.
+
+\begin{itemize}
+
+    \item $P(b)$ is true.
+
+    \item $\neg P(a)$ is true.
+
+\end{itemize}
+
+Result: $S'$ is satisfiable.
+
+\end{example}
+
+
+
+\subsection{Formal Mechanics: Substitutions and Grounding}
+
+To rigorously apply Herbrand's theorem, we rely on substitutions to create ground instances.
+
+
+
+\begin{definition}[Substitution]
+
+A substitution $\sigma$ is a map from variables to terms, different from the identity only on a finite set of variables (the domain).
+
+\[ \sigma = \{ x_1 \leftarrow t_1, \dots, x_n \leftarrow t_n \} \]
+
+Constraints:
+
+\begin{itemize}
+
+    \item $x_i \neq x_j$ for $i \neq j$ (distinct variables).
+
+    \item $x_i \neq t_i$ (no circular trivial assignments).
+
+\end{itemize}
+
+\end{definition}
+
+
+
+\begin{example}
+
+$\sigma = \{ x \leftarrow a, y \leftarrow b, z \leftarrow f(a), w \leftarrow g(x), v \leftarrow f(x') \}$.
+
+(Note: $a, b$ are constants: f, g are functions; x, y, z, w, v, x' are variables).
+
+\end{example}
+
+
+
+\subsubsection{Application of Substitution}
+
+Application of a substitution $\sigma$ to a term $t$, denoted $t\sigma$:
+\[
+t\sigma = \begin{cases}
+    s & \text{if } t \text{ is a variable } x \in \text{Dom}(\sigma) \text{ and } (x \leftarrow s) \in \sigma \\
+    t & \text{if } t \text{ is a variable } y \notin \text{Dom}(\sigma) \\
+    c & \text{if } t \text{ is a constant } c \\
+    f(t_1\sigma, \dots, t_n\sigma) & \text{if } t = f(t_1, \dots, t_n)
+\end{cases}
+\]
+
+Application to literals and clauses:
+\begin{itemize}
+    \item Literal: $L\sigma = P(t_1\sigma, \dots, t_n\sigma)$
+    \item Clause: $C\sigma = L_1\sigma \lor \dots \lor L_k\sigma$
+\end{itemize}
+
+
+
+\subsubsection{Grounding and Satisfaction}
+
+A \textbf{Ground Instance} of a clause $C$ is a substituted clause $C\sigma$ that contains no variables.
+
+
+
+\textbf{Satisfaction Criteria}:
+
+\begin{enumerate}
+
+    \item \textbf{Clause Satisfaction}: A Herbrand interpretation $\mathcal{I}_H$ satisfies a clause $C$ if $\mathcal{I}_H$ satisfies all ground instances of $C$.
+
+    \item \textbf{Ground Instance Satisfaction}: $\mathcal{I}_H$ satisfies a ground clause $C\sigma = L_1\sigma \lor \dots \lor L_k\sigma$ if it satisfies at least one literal $L_i\sigma$.
+
+\end{enumerate}
+
+
+
+\begin{example}[Grounding Sequence]
+
+Consider $C = \neg P(x) \lor P(f(x))$ and Universe $\mathcal{U} = \{a, f(a), f^2(a), \dots\}$.
+
+\begin{itemize}
+
+    \item $\sigma_0 = \{x \leftarrow a\} \implies C\sigma_0 = \neg P(a) \lor P(f(a))$
+
+    \item $\sigma_1 = \{x \leftarrow f(a)\} \implies C\sigma_1 = \neg P(f(a)) \lor P(f^2(a))$
+
+    \item \dots
+
+    \item $\sigma_n = \{x \leftarrow f^n(a)\} \implies C\sigma_n = \neg P(f^n(a)) \lor P(f^{n+1}(a))$
+
+\end{itemize}
+
+For $\mathcal{I}_H$ to satisfy the original clause $C$, it must satisfy every instance in this infinite sequence.
+
+\end{example}
+
+
+
+\newpage
+
+
+
+\part{Theorem Proving Strategies}
+
+\section{Introduction to Theorem-Proving Strategies}
+
+A \textbf{proof procedure} or \textbf{theorem-proving strategy} is a systematic method for determining the unsatisfiability of sets of first-order clauses. Each strategy consists of two key components that work together to explore the search space of possible proofs.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Structure of a Proof Procedure}]
+\begin{definition}[Proof Procedure]
+A proof procedure $P$ is formally described as an ordered pair:
+\[ P = \langle I, \Sigma \rangle \]
+where:
+\begin{itemize}
+    \item $I$: \textbf{Inference System} --- A set of inference rules that define valid logical deductions (e.g., Resolution, Paramodulation)
+    \item $\Sigma$: \textbf{Search Plan} --- The strategy used to explore the search space and select which inferences to apply
+\end{itemize}
+\end{definition}
+\end{tcolorbox}
+
+The effectiveness of a proof procedure depends on both components: the inference system must be sound and complete, while the search plan must efficiently guide the proof search.
+
+\section{Families of Theorem-Proving Strategies}
+
+Theorem-proving strategies can be broadly classified into two main families, each with distinct approaches to handling first-order formulas.
+
+\subsection{Instance-Based Strategies}
+
+\textbf{Instance-based strategies} operate by generating ground instances of clauses and reducing the first-order problem to propositional logic.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Instance-Based Approach}]
+These strategies:
+\begin{itemize}
+    \item Define inference rules to systematically generate ground instances of clauses
+    \item Follow a scheme that directly implements Herbrand's Theorem
+    \item Reduce the First-Order Logic problem to a sequence of propositional satisfiability problems
+    \item Use SAT solvers to check the satisfiability of the generated ground instances
+\end{itemize}
+
+\textbf{Key advantage}: Leverages efficient propositional SAT solving techniques.
+
+\textbf{Examples}: DPLL(T), SMT solvers with instantiation.
+\end{tcolorbox}
+
+The process can be visualized as follows: given a set of first-order clauses $S$, the strategy generates an increasing sequence of ground instances $S_0 \subseteq S_1 \subseteq S_2 \subseteq \cdots$ until either:
+\begin{enumerate}
+    \item A contradiction is found in some $S_i$ (proving unsatisfiability), or
+    \item The procedure continues indefinitely (which may happen for satisfiable sets)
+\end{enumerate}
+
+\subsection{Ordering-Based Strategies}
+
+\textbf{Ordering-based strategies} work directly with first-order clauses without necessarily grounding them.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Ordering-Based Approach}]
+These strategies:
+\begin{itemize}
+    \item Define inference rules that operate directly on First-Order clauses
+    \item Instantiate variables in clauses through \textbf{matching} or \textbf{unifying} substitutions
+    \item Use term orderings to guide and restrict inference steps
+    \item Generate new clauses by combining existing clauses according to inference rules
+\end{itemize}
+
+\textbf{Key advantage}: More general, can handle infinite domains without explicit grounding.
+
+\textbf{Examples}: Resolution, Superposition, Paramodulation.
+\end{tcolorbox}
+
+The distinction between these two families is fundamental: instance-based strategies explicitly enumerate ground terms, while ordering-based strategies manipulate first-order clauses symbolically.
+
+\section{Substitutions}
+
+Substitutions are the fundamental mechanism for instantiating variables in first-order logic. They play a central role in both families of theorem-proving strategies.
+
+\subsection{Basic Definition}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Substitution}]
+\begin{definition}[Substitution]
+A \textbf{substitution} is a mapping from variables to terms:
+\[ \alpha: X \to T(\mathcal{F}, X) \]
+where:
+\begin{itemize}
+    \item $X$ is the set of variables
+    \item $T(\mathcal{F}, X)$ is the set of terms over function symbols $\mathcal{F}$ and variables $X$
+\end{itemize}
+
+A substitution differs from the identity mapping on only a \textbf{finite} set of variables.
+\end{definition}
+\end{tcolorbox}
+
+\textbf{Notation}: A substitution is typically written as a finite set of variable-term pairs:
+\[ \alpha = \{ x_1 \leftarrow t_1, \dots, x_n \leftarrow t_n \} \]
+where each $x_i$ is a variable and each $t_i$ is a term. This means that $\alpha(x_i) = t_i$ for $i = 1, \dots, n$, and $\alpha(x) = x$ for all other variables $x \notin \{x_1, \dots, x_n\}$.
+
+\subsection{Components of a Substitution}
+
+Every substitution has two important associated sets:
+
+\begin{itemize}
+    \item \textbf{Domain}: $\text{Dom}(\alpha) = \{ x_1, \dots, x_n \}$ --- the set of variables that are mapped to different terms
+    \item \textbf{Rank}: $\text{Rank}(\alpha) = \bigcup_{i=1}^{n} \text{Var}(t_i)$ --- the set of all variables appearing in the target terms, where $\text{Var}(t_i)$ denotes the set of variables occurring in term $t_i$
+\end{itemize}
+
+\subsection{Idempotent Substitutions}
+
+A special class of substitutions that behave particularly well under repeated application are the idempotent substitutions.
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Idempotence}]
+\begin{definition}[Idempotent Substitution]
+A substitution $\alpha$ is \textbf{idempotent} if and only if:
+\[ \text{Dom}(\alpha) \cap \text{Rank}(\alpha) = \emptyset \]
+
+Equivalently, $\alpha$ is idempotent if applying it twice gives the same result as applying it once: $\alpha\alpha = \alpha$.
+\end{definition}
+\end{tcolorbox}
+
+\textbf{Intuition}: An idempotent substitution does not map any variable to a term containing variables in its domain. This ensures that once applied, no further changes occur.
+
+\begin{example}[Non-Idempotent Substitution]
+Consider the substitution $\alpha = \{x \leftarrow f(y), y \leftarrow c\}$.
+
+\textbf{Analysis}:
+\begin{itemize}
+    \item $\text{Dom}(\alpha) = \{x, y\}$
+    \item $\text{Rank}(\alpha) = \text{Var}(f(y)) \cup \text{Var}(c) = \{y\} \cup \emptyset = \{y\}$
+    \item $\text{Dom}(\alpha) \cap \text{Rank}(\alpha) = \{x, y\} \cap \{y\} = \{y\} \neq \emptyset$
+\end{itemize}
+
+Therefore, $\alpha$ is \textbf{not idempotent}.
+
+\textbf{Demonstration}: Applying $\alpha$ to $x$:
+\begin{align*}
+x\alpha &= f(y) \\
+(x\alpha)\alpha &= f(y)\alpha = f(y\alpha) = f(c)
+\end{align*}
+
+Since $x\alpha \neq (x\alpha)\alpha$, we confirm that $\alpha$ is not idempotent. The substitution continues to have effect when applied repeatedly because the domain variable $y$ appears in the range of the substitution.
+\end{example}
+
+\begin{remark}
+Idempotent substitutions are important in automated reasoning because they simplify the theoretical analysis and implementation of unification algorithms. Many theorem provers normalize substitutions to idempotent form to avoid the complications of repeated application.
+\end{remark}
 
 
 
