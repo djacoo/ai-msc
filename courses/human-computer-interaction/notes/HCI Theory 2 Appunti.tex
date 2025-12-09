@@ -1939,7 +1939,10 @@ To derive the Longuet-Higgins equation, we transition from pixel coordinates to 
     \mathbf{m} = \mathbf{K}\mathbf{p} \quad \text{and} \quad \mathbf{m'} = \mathbf{K'}\mathbf{p'}
 \end{equation}
 
-By defining the relative rotation $\mathbf{R} = \mathbf{Q'}\mathbf{Q}^{-1}$ and the relative translation $\mathbf{t} = \mathbf{e'}$, and substituting the normalized coordinates into the epipolar constraint, we obtain:
+By defining the relative rotation $\mathbf{R} = \mathbf{Q'}\mathbf{Q}^{-1}$ and the relative translation $\mathbf{t} = \mathbf{e'}$, and substituting the normalized coordinates into the epipolar constraint, meaning
+$\mathbf{e' = K't}$,
+    
+we obtain:
 \begin{equation} \nonumber
     \mathbf{0} = \mathbf{m}'^{T} [\mathbf{K'}\mathbf{t}]_{\times} \mathbf{K'}\mathbf{R} \mathbf{K}^{-1} \mathbf{m}
 \end{equation}
@@ -2182,5 +2185,206 @@ The algorithm proceeds through the following steps:
     
     \item \textbf{Estimate the 3D points} $\mathbf{M}_i$ by triangulation using the projection matrices $\mathbf{P}_1$ and $\mathbf{P}_2$ and the corresponding image points.
 \end{enumerate}
+
+\section{Absolute Pose Orientation}
+
+The problem of \textbf{absolute pose orientation} consists in determining the transformation that aligns two sets of corresponding points in 3D space. Specifically, given:
+
+\begin{itemize}
+    \item A set of points $\{y_i\}_{i=1}^{n}$ in one coordinate system
+    \item A set of corresponding points $\{X_i\}_{i=1}^{n}$ in another coordinate system
+\end{itemize}
+
+we seek to find the rotation matrix $\mathbf{R}$, translation vector $\mathbf{t}$, and scale factor $s$ that best align these point sets.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Problem Formulation}]
+We have the following relation:
+\begin{equation} \nonumber
+    X_i = s (R y_i + t) \quad \text{for each } i = 1, \ldots, n
+\end{equation}
+where:
+\begin{itemize}
+    \item $\mathbf{R}$ is the rotation matrix
+    \item $\mathbf{t}$ is the translation vector
+    \item $s$ is the scale factor
+\end{itemize}
+Our objective is to solve the following optimization problem:
+\begin{equation} \nonumber
+    \min_{R, t, s} \sum_{i=1}^{n} ||X_i - s (R y_i + t)||^2
+\end{equation}
+\end{tcolorbox}
+
+To solve this problem, we employ the \textbf{Procrustes method}, which provides an analytical solution by decomposing the problem into simpler subproblems.
+
+\subsection{Procrustes Method}
+
+The Procrustes method proceeds by systematically isolating the unknown variables. We start from the fundamental equation:
+\begin{equation} \nonumber
+    X_i = s (R y_i + t)
+\end{equation}
+
+\subsubsection{Isolating the Translation}
+
+To isolate the translation vector $\mathbf{t}$, we first compute the mean of both sides of the equation:
+\begin{equation} \nonumber
+    \frac{1}{n}\sum_{i=1}^{n} X_i = \frac{1}{n}\sum_{i=1}^{n} s (R y_i + t)
+\end{equation}
+
+Expanding the right-hand side and factoring out the scale factor, we obtain:
+\begin{equation} \nonumber
+    \frac{1}{n}\sum_{i=1}^{n} X_i = s \frac{1}{n}\sum_{i=1}^{n} R y_i + s t
+\end{equation}
+
+From this, it follows that the translation vector can be expressed as:
+\begin{equation} \nonumber
+    t = \frac{1}{s} \left( \frac{1}{n}\sum_{i=1}^{n} X_i - s \frac{1}{n}\sum_{i=1}^{n} R y_i \right)
+\end{equation}
+
+Substituting this expression back into the original equation for $X_i$, we get:
+\begin{equation} \nonumber
+    X_i = s \left(R y_i + \frac{1}{s} \left( \frac{1}{n}\sum_{i=1}^{n} X_i - s \frac{1}{n}\sum_{i=1}^{n} R y_i \right)\right)
+\end{equation}
+
+Expanding and rearranging terms, we arrive at:
+\begin{equation} \nonumber
+    X_i = s R y_i + \frac{1}{n}\sum_{i=1}^{n} X_i - s \frac{1}{n}\sum_{i=1}^{n} R y_i
+\end{equation}
+
+By grouping terms and introducing centered coordinates, we obtain:
+\begin{equation} \nonumber
+    X_i - \underbrace{\frac{1}{n}\sum_{i=1}^{n} X_i}_{\bar{X}} = s R \left(y_i - \underbrace{\frac{1}{n}\sum_{i=1}^{n} y_i}_{\bar{y}}\right)
+\end{equation}
+
+where $\bar{X}$ and $\bar{y}$ denote the centroids of the respective point sets.
+
+\subsubsection{Centered Coordinates}
+
+Defining the centered coordinates as:
+\begin{align}
+    \hat{X}_i &= X_i - \bar{X} = X_i - \frac{1}{n}\sum_{i=1}^{n} X_i \nonumber \\
+    \hat{y}_i &= y_i - \bar{y} = y_i - \frac{1}{n}\sum_{i=1}^{n} y_i \nonumber
+\end{align}
+
+we obtain the simplified equation:
+\begin{equation} \nonumber
+    \hat{X}_i = s R \hat{y}_i
+\end{equation}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Centered Coordinates}]
+By centering both point sets at their respective centroids, we eliminate the translation component from the problem. This reduces the original problem to finding only the rotation matrix $\mathbf{R}$ and scale factor $s$, which significantly simplifies the optimization.
+\end{tcolorbox}
+
+\subsubsection{Estimating the Scale Factor}
+
+To isolate the scale factor $s$, we exploit the algebraic properties of the equation. Since an orthogonal matrix preserves vector lengths, we can write:
+\begin{equation} \nonumber
+    ||\hat{X}_i|| = ||s R \hat{y}_i||
+\end{equation}
+
+Since $s$ is a scalar, we can factor it out:
+\begin{equation} \nonumber
+    ||\hat{X}_i|| = |s| \, ||R \hat{y}_i||
+\end{equation}
+
+Furthermore, since $\mathbf{R}$ is an orthogonal matrix and does not change the length of a vector, we have:
+\begin{equation} \nonumber
+    ||\hat{X}_i|| = |s| \, ||\hat{y}_i||
+\end{equation}
+
+Therefore, the scale factor can be computed as:
+\begin{equation} \nonumber
+    |s| = \frac{||\hat{X}_i||}{||\hat{y}_i||}
+\end{equation}
+
+In practice, to obtain a more robust estimate, we typically compute the scale factor using all points:
+\begin{equation} \nonumber
+    s = \frac{\sum_{i=1}^{n} ||\hat{X}_i||}{\sum_{i=1}^{n} ||\hat{y}_i||}
+\end{equation}
+
+\subsubsection{Estimating the Rotation Matrix}
+
+Now we need to estimate the rotation matrix $\mathbf{R}$. To do this efficiently, we adopt a matrix notation by stacking all centered coordinates into matrices:
+\begin{equation} \nonumber
+    \hat{\mathbf{X}}^{3 \times n} = \begin{bmatrix}
+    \vert & \vert & & \vert \\
+    \hat{\mathbf{x}}_1 & \hat{\mathbf{x}}_2 & \dots & \hat{\mathbf{x}}_n \\
+    \vert & \vert & & \vert
+    \end{bmatrix}
+\end{equation}
+\begin{equation} \nonumber
+    \hat{\mathbf{Y}}^{3 \times n} = \begin{bmatrix}
+    \vert & \vert & & \vert \\
+    \hat{\mathbf{y}}_1 & \hat{\mathbf{y}}_2 & \dots & \hat{\mathbf{y}}_n \\
+    \vert & \vert & & \vert
+    \end{bmatrix}
+\end{equation}
+
+These matrices are obtained by concatenating the centered vectors $\hat{\mathbf{X}}_i$ and $\hat{\mathbf{y}}_i$, respectively.
+
+Using this matrix notation, we can rewrite the optimization problem as:
+\begin{equation} \nonumber
+    \min_{R} \sum_{i=1}^{n} ||\hat{X}_i - s R \hat{y}_i||^2
+\end{equation}
+
+This is equivalent to minimizing the Frobenius norm:
+\begin{equation} \nonumber
+    ||\hat{\mathbf{X}} - s \mathbf{R} \hat{\mathbf{Y}} ||_F^2
+\end{equation}
+
+Since we have already estimated the scale factor $s$, we can normalize the problem by dividing both sides by $s$, leading to:
+\begin{equation} \nonumber
+    \min_{R} ||\hat{\mathbf{X}} - \mathbf{R} \hat{\mathbf{Y}} ||_F^2
+\end{equation}
+
+This formulation corresponds to a well-known problem in linear algebra: the \textbf{orthogonal Procrustes problem}.
+
+\subsection{Orthogonal Procrustes Problem}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Orthogonal Procrustes Problem}]
+Given two matrices $\mathbf{A}$ and $\mathbf{B}$ of the same dimensions, we want to find the orthogonal matrix $\mathbf{W}$ that minimizes the Frobenius norm of the difference between $\mathbf{A}$ and $\mathbf{W} \mathbf{B}$:
+\begin{equation} \nonumber
+    \min_{\mathbf{W}} ||\mathbf{A} - \mathbf{W} \mathbf{B}||_F^2
+\end{equation}
+subject to the constraint that $\mathbf{W}$ is an orthogonal matrix, meaning $\mathbf{W}^T \mathbf{W} = \mathbf{I}$.
+\end{tcolorbox}
+
+This problem has a unique solution that can be obtained through the \textbf{Singular Value Decomposition (SVD)}. Specifically, if we compute the SVD of $\mathbf{B} \mathbf{A}^T$:
+\begin{equation} \nonumber
+    \mathbf{B} \mathbf{A}^T = \mathbf{U} \mathbf{D} \mathbf{V}^T
+\end{equation}
+
+then the optimal orthogonal matrix is given by:
+\begin{equation} \nonumber
+    \mathbf{W} = \mathbf{V} \mathbf{U}^T
+\end{equation}
+
+\subsubsection{Ensuring Proper Rotation}
+
+In our specific case, $\mathbf{R}$ is not just an orthogonal matrix, but it must be a \textbf{rotation matrix}, which requires that $\det(\mathbf{R}) = 1$ (i.e., it preserves orientation). The solution $\mathbf{V} \mathbf{U}^T$ obtained from the SVD may have determinant $-1$, which would correspond to a reflection rather than a rotation.
+
+To guarantee a proper rotation, we modify the solution as follows:
+\begin{equation} \nonumber
+    \mathbf{R} = \mathbf{V} \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & \det(\mathbf{V} \mathbf{U}^T) \end{bmatrix} \mathbf{U}^T
+\end{equation}
+
+where the SVD is computed as:
+\begin{equation} \nonumber
+    \mathbf{U} \mathbf{D} \mathbf{V}^T = \hat{\mathbf{Y}} \hat{\mathbf{X}}^T
+\end{equation}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Rotation vs. Reflection}]
+The modification ensures that the determinant of $\mathbf{R}$ is exactly $1$, guaranteeing that the transformation represents a proper rotation rather than a reflection. This is crucial for applications where orientation must be preserved.
+\end{tcolorbox}
+
+\subsubsection{Final Solution}
+
+Once we have computed the rotation matrix $\mathbf{R}$ and the scale factor $s$, we can substitute them back into the equation for the translation vector $\mathbf{t}$:
+\begin{equation} \nonumber
+    \mathbf{t} = \frac{1}{s} \left( \frac{1}{n}\sum_{i=1}^{n} \mathbf{X}_i - s \mathbf{R} \frac{1}{n}\sum_{i=1}^{n} \mathbf{y}_i \right) = \bar{\mathbf{X}} - s \mathbf{R} \bar{\mathbf{y}}
+\end{equation}
+
+where $\bar{\mathbf{X}}$ and $\bar{\mathbf{y}}$ are the centroids of the respective point sets.
+
+This completes the solution to the absolute pose orientation problem, providing estimates for all three unknown parameters: rotation $\mathbf{R}$, translation $\mathbf{t}$, and scale $s$.
 
 \end{document}  
