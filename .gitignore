@@ -24,43 +24,15 @@
 *.nav
 *.snm
 *.vrb
-
-# Additional LaTeX files
 *.xdv
 *.pdf_tex
 *.brf
-*.cb
-*.cb2
-*.glo
-*.glg
-*.gls
-*.glsdefs
-*.ist
-*.acn
-*.acr
-*.alg
 *.dvi
 *.ps
-*.thm
-*.pyg
-*.nlo
-*.nls
-*.nlg
-*.sagetex.sage
-*.sagetex.py
-*.sagetex.scmd
-*.sout
-*.sympy
-*.upa
-*.upb
-*.pytxcode
-pythontex-files-*/
-*.auxlock
 
 # LaTeX build directories
 _minted-*/
 auto/
-*.synctex(busy)
 
 # Editor files
 *.swp
@@ -74,7 +46,7 @@ auto/
 *.temp
 *.bak
 
-# Python (if any scripts are added)
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -83,24 +55,23 @@ venv/
 ENV/
 env/
 
-# Environment variables and secrets
+# Environment variables
 .env
 .env.local
 
-# Node modules (if any web tools are added)
-node_modules/
-
-# Quizzer V2 user data (protected)
-quizzer-v2/user_data/
-*.db
-*.db-journal
-
-# Dataset directories
-flowers102/
-
-# Conda/Miniconda installers and environments
+# Conda/Miniconda
 miniconda3/
 Miniconda*.sh
 Anaconda*.sh
 *.conda
 conda-meta/
+
+# Node
+node_modules/
+
+# Databases
+*.db
+*.db-journal
+
+# Datasets
+flowers102/

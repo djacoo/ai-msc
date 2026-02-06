@@ -5656,4 +5656,76 @@ Idempotent substitutions are important in automated reasoning because they simpl
 
 
 
+\newpage
+
+\part{}
+
+\section{}
+
+We have seen substitutions \sigma 
+We are interested in Idempotent substitutions: one such that
+forall i, j 1 <= i, j <= n    x_i not in Var(t_j)     Dom(\sigma) not intersected with Rank(\alpha)
+
+where Var(t_j) are the variables in t_j 
+
+if we apply substitution twice, we get the same result as applying it once 
+
+we define Composition of substitutions \Theta = { y <-- s_1, ..., y_m <-- s_m }
+How do we define \sigma composition \Theta?
+t(\sigma \dot \Theta) = (t\sigma)\Theta 
+
+\sigma \dot \Theta = { x_1 <-- t_1\Theta, x_2 <-- t_2\Theta, ..., x_n <-- t_n\Theta | x_i =/= t_1\Theta 1 <= i <= n } U { y_j <-- s_j | y_j not in Dom(\sigma) }
+
+
+
+
+\section{}
+
+How are we going to use these substitutions?
+
+Two uses of substitution in interence rules:
+1) Matching substitutions    t\sigma = s     s is an instance of t 
+t = f(x, y)     s = f(a, b)
+\sigma = { x <-- a, y <-- b }
+
+2) Unifying substitution or unifier:     s\sigma = t\sigma
+P(x, b)     P(z, y)
+\sigma = { x <-- z, y <-- b } is the common instance 
+\sigma = { z <-- x, y <-- b } "   "    "     "
+
+
+Unification problem: E = { s_i =?= t_i }^n _{i = 1}
+
+Solution (a unifier): substitution \sigma such that s_i\sigma = t_i\sigma forall i 1 <= i <= n 
+
+Better solution: a most general unifier 
+
+most general:
+
+\sigma <= (more general, with a dot inside) \Theta if E \rho \sigma \dot \rho = \Theta    \sigma is more general than \Theta
+
+\sigma <= \Theta if \sigma <= \Theta and \Theta </= \sigma
+
+
+
+Variable renaming: it's a substitution that maps variables to variables and is injective.
+
+
+
+So, known this, what is a most general unifier?
+
+A most general unifier is a substitution \sigma which is a unifier and for all other unifiers \Theta it is \sigma more general than \Theta.
+
+The most general unifier (m.g.u.) is unique up to variable renaming (i.e., if there are two MGUs \sigma_1 and \sigma_2, then they are in disequivalence relation because one is more general than the other).
+
+
+How to compute a MGU --> there are algorithms, in particolar Robinson's algorithm.
+
+Robinson's Algorithm: it procudes an idempotent most general unifier 
+(explain)
+
+
+
+
+
 \end{document}
