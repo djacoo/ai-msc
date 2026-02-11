@@ -7021,10 +7021,2280 @@ Then:
 
 \newpage 
 
-\part{}
+\part{Linear Transformations and Dimensionality Reduction}
 
-\section{}
+\section{Problems of High-Dimensional Data}
+
+In practical problems, training data can appear in various forms:
+\begin{itemize}
+    \item Few samples
+    \item Few samples and many features
+    \item Fixed features that cannot be selected
+    \item Not-independent features
+\end{itemize}
+
+There are two important things to consider when designing a classifier:
+\begin{enumerate}
+    \item \textbf{Computational complexity} of the system
+    \item The \textbf{influence of the dimensionality} (the number of features) of the training set on the performance of the classifier
+\end{enumerate}
+
+If the features are statistically \textbf{independent}, then it is more likely to achieve optimal performance. In general, if the performance is not at the desired level, one can add features, but this increases the complexity of both the classifier and the feature extractor.
+
+If adding features leads to \textbf{worse} performance, then this could be because:
+\begin{itemize}
+    \item Choosing an \textbf{incorrect model} (e.g., Gaussian hypothesis or conditional probability hypothesis)
+    \item \textbf{Insufficient number of samples}
+\end{itemize}
+
+\subsection{Computational Complexity}
+
+Complexity (in terms of running time) increases when the number of features, i.e., dimensionality $d$, increases. Many methods already have at least $O(nd^2)$ complexity, where $n$ is the number of samples (e.g., covariance matrix calculation). As $d$ increases, this cost may become prohibitive.
+
+\subsection{Curse of Dimensionality}
+
+\begin{definition}[Curse of Dimensionality]
+If the dimensionality $d$ is large and the number of samples $n$ is too small, the problem of the \textbf{curse of dimensionality} appears: we cannot perform accurate parameter estimation, classification, etc.
+\end{definition}
+
+For example, in the case of covariance matrix calculation, for accurate estimation, $n$ should be much bigger than $d^2$. Otherwise, the model would be too complicated for the data and \textbf{overfitting} occurs.
+
+\textbf{Example with $k$-NN ($k=1$):}
+\begin{itemize}
+    \item Suppose we have 1 feature and 9 samples. The feature may not be discriminative.
+    \item If we add a 2nd feature (same 9 samples), the feature space becomes too sparse for 1-NN to work well. To maintain the same density as in 1D, we would need $9^2 = 81$ samples.
+    \item With 3 features, we would need $9^3 = 729$ samples!
+\end{itemize}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Key Rule}]
+If $n$ samples is dense enough in 1D, then in $d$ dimensions we need $n^d$ samples to maintain the same density. The quantity $n^d$ grows extremely fast as a function of $d$.
+\end{tcolorbox}
+
+\subsection{Overfitting in High Dimensions}
+
+Overfitting occurs when a model learns to \textbf{perform well on the training data} but \textbf{fails to generalize to unseen data}. When $d$ is high, the data become increasingly sparse and spread out in the high-dimensional space. This can lead to overfitting because:
+\begin{itemize}
+    \item The model may learn patterns that are specific to the training data
+    \item The model has more freedom to fit the noise (e.g., irrelevant features) rather than the underlying patterns
+\end{itemize}
+
+For a fixed number of samples, as we add features, the training error keeps decreasing but the validation error eventually increases --- this is overfitting.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Mitigating Overfitting and the Curse of Dimensionality}]
+\begin{itemize}
+    \item \textbf{Reduce the dimensionality} of features (this lecture)
+    \item Combine features: \textbf{feature extraction}
+    \item Apply \textbf{feature selection}
+    \item Apply \textbf{regularization}
+\end{itemize}
+It is important to \textbf{reduce the dependence} between features.
+\end{tcolorbox}
+
+\section{Dimensionality Reduction}
+
+\textbf{Aim:} Represent samples with fewer features, while preserving the structure of the data as much as possible.
+\begin{itemize}
+    \item \textbf{Discriminative:} Keep only the structure that affects class separability
+    \item We construct a new set of dimensions, e.g., by the \textbf{linear combination} of original dimensions
+    \item Ideally the new feature vector should retain all important information from the old feature vector
+\end{itemize}
+
+\begin{definition}[Dimensionality Reduction --- Formal Definition]
+We look for a transformation $\mathbf{W}$ that maps the original features $\mathbf{y}$ into a new simpler, but more discriminant feature set $\mathbf{x}$ for classification:
+\[
+\mathbf{x} = \mathbf{W} \, \mathbf{y}
+\]
+where:
+\begin{itemize}
+    \item $\mathbf{X}$ represents the new features with $k$ data points ($k \times m$)
+    \item $\mathbf{Y}$ represents the original features with $k$ data points ($k \times n$)
+    \item $n \gg m$
+\end{itemize}
+\end{definition}
+
+% ============================================
+% PCA
+% ============================================
+
+\section{Principal Component Analysis (PCA)}
+
+PCA is perhaps the most frequently used method to reduce the dimensionality.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{PCA --- Core Idea}]
+PCA defines a set of \textbf{principal components}:
+\begin{enumerate}
+    \item \textbf{1st component:} Direction of the greatest variability (largest variance) in the data
+    \item \textbf{2nd component:} Perpendicular to 1st, greatest variability of what is left
+    \item \ldots and so on until the original dimensionality
+\end{enumerate}
+Once the new feature representations (new dimensions) are obtained:
+\begin{itemize}
+    \item Change the coordinates of every data point to these new dimensions, then apply the ML algorithm
+    \item The new features have the same total variance as the old features. \textit{PCA preserves the largest variances in the data.}
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{When to Apply PCA?}
+
+PCA is a good method to use if you answer ``yes'' to all three questions:
+\begin{enumerate}
+    \item Do you want to reduce the number of variables, but aren't able to identify variables to completely remove from consideration?
+    \item Do you want to ensure your variables are independent of one another?
+    \item Are you comfortable making your independent variables less interpretable?
+\end{enumerate}
+
+If you answered ``no'' to question 3, you \textbf{should not} use PCA.
+
+\subsection{PCA: Direction of Largest Variance}
+
+What is the direction of largest variance in data?
+
+\begin{itemize}
+    \item If $\mathbf{x}$ has multivariate distribution $\mathcal{N}(\boldsymbol{\mu}, \boldsymbol{\Sigma})$, the direction of largest variance is given by the \textbf{eigenvector} corresponding to the \textbf{largest eigenvalue} of $\boldsymbol{\Sigma}$.
+    \item Therefore, we need to look at the \textbf{covariance matrix} of the data.
+    \item PCA can be applied to distributions also other than Gaussian.
+\end{itemize}
+
+\subsection{PCA Algorithm}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{PCA Algorithm --- Step by Step}]
+\begin{enumerate}
+    \item \textbf{Standardize} the given data: subtract the mean of each feature from the data (the new data has zero mean).
+    \item \textbf{Calculate the covariance matrix} of the standardized data.
+    \item \textbf{Compute the eigenvectors and eigenvalues} of the covariance matrix.
+    \item \textbf{Sort} the eigenvalues in descending order and choose the top $k$ eigenvectors as principal components.
+    \item \textbf{Project}: Multiply the standardized data matrix (from Step 1) by the selected principal components matrix. This yields the new features with $k$ dimensions.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{PCA: Mathematical Formulation}
+
+Given training data $\mathbf{x} = \{\mathbf{x}_1^T, \mathbf{x}_2^T, \ldots, \mathbf{x}_M^T\}$ with $M$ samples in $n$ dimensions.
+
+\textbf{Mean:}
+\[
+\mathbf{m}_x = E\{\mathbf{x}\} = \frac{1}{M} \sum_{k=1}^{M} \mathbf{x}_k
+\]
+
+\textbf{Covariance matrix:}
+\[
+\mathbf{C}_x = E\{(\mathbf{x} - \mathbf{m}_x)(\mathbf{x} - \mathbf{m}_x)^T\} = \frac{1}{M} \sum_{k=1}^{M} (\mathbf{x}_k - \mathbf{m}_x)(\mathbf{x}_k - \mathbf{m}_x)^T = \frac{1}{M} \sum_{k=1}^{M} \mathbf{x}_k \mathbf{x}_k^T - \mathbf{m}_x \mathbf{m}_x^T
+\]
+
+\begin{itemize}
+    \item $\mathbf{C}_x$ has size $n \times n$
+    \item Diagonal elements $c_{ii}$ are the \textbf{variance} of the $i$-th component
+    \item Off-diagonal elements $c_{ij}$ are the \textbf{covariances} between components $i$ and $j$
+\end{itemize}
+
+\textbf{Properties of $\mathbf{C}_x$:}
+\begin{itemize}
+    \item $\mathbf{C}_x$ is \textbf{real and symmetrical}
+    \item If $x_i$ and $x_j$ are unrelated, then $c_{ij} = c_{ji} = 0$
+    \item Since $\mathbf{C}_x$ is real and symmetrical, one can always find a set of $n$ \textbf{orthonormal eigenvectors}
+\end{itemize}
+
+Let $\mathbf{e}_i$ and $\lambda_i$, $i = 1, 2, \ldots, n$, be the eigenvectors and eigenvalues of $\mathbf{C}_x$, ordered in descending order: $\lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_n$.
+
+\subsection{PCA: The Transformation}
+
+Let $\mathbf{A}$ be a matrix whose rows are the eigenvectors of $\mathbf{C}_x$ ordered as above. The transformation is:
+\[
+\mathbf{y} = \mathbf{A}(\mathbf{x} - \mathbf{m}_x)
+\]
+
+The resulting vectors $\mathbf{y}$ have:
+\begin{itemize}
+    \item \textbf{Zero mean:} $\mathbf{m}_y = \mathbf{0}$
+    \item \textbf{Diagonal covariance matrix:} $\mathbf{C}_y = \mathbf{A} \, \mathbf{C}_x \, \mathbf{A}^T = \begin{bmatrix} \lambda_1 & 0 & \cdots & 0 \\ 0 & \lambda_2 & & \vdots \\ \vdots & & \ddots & 0 \\ 0 & \cdots & 0 & \lambda_n \end{bmatrix}$
+\end{itemize}
+
+The elements of $\mathbf{y}$ are therefore \textbf{decorrelated}.
+
+Since the rows of $\mathbf{A}$ are orthonormal, $\mathbf{A}^{-1} = \mathbf{A}^T$, and we can reconstruct $\mathbf{x}$:
+\[
+\mathbf{y} = \mathbf{A}(\mathbf{x} - \mathbf{m}_x) \quad \Rightarrow \quad \mathbf{x} = \mathbf{A}^T \mathbf{y} + \mathbf{m}_x
+\]
+
+\subsection{PCA: Dimensionality Reduction}
+
+Suppose we build $\mathbf{A}_k$ with only the first $k$ (largest) eigenvectors, where $k < n$. Then:
+\begin{itemize}
+    \item $\mathbf{A}_k$ is a matrix of dimension $k \times n$
+    \item Vectors $\mathbf{y}$ have dimension $k$
+    \item Reconstructed vectors $\hat{\mathbf{x}}$ will no longer be exact and are given by:
+\end{itemize}
+\[
+\hat{\mathbf{x}} = \mathbf{A}_k^T \mathbf{y} + \mathbf{m}_x
+\]
+
+The smaller eigenvalues carry less significance; by discarding them we lose some information, but not much if the retained eigenvalues capture most of the total variance.
+
+\subsection{How Many Principal Components?}
+
+\begin{itemize}
+    \item Depends on the goal and the application
+    \item No means of validating it, unless we use it in the context of a supervised method (e.g., reduce the input dimensionality for a supervised algorithm)
+    \item We can compute the \textbf{cumulative proportion of eigenvalues} for the first $k$ principal components to estimate the amount of information loss:
+\end{itemize}
+\[
+\text{Explained variance ratio} = \frac{\sum_{i=1}^{k} \lambda_i}{\sum_{i=1}^{n} \lambda_i}
+\]
+
+As a threshold, one can use 90\%, 95\%, etc.
+
+\subsection{PCA Drawbacks}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{PCA Drawbacks}]
+\begin{itemize}
+    \item It assumes that the variables are \textbf{linearly correlated}; in many cases, we already know that they are not
+    \item Only the axes with the \textbf{greatest variance} are considered; there are some cases in which this involves huge mistakes (e.g., when variance does not correspond to discriminative power)
+    \item PCA is \textbf{unsupervised}: it does not take class labels into account
+\end{itemize}
+\end{tcolorbox}
+
+% ============================================
+% Fisher Linear Discriminant
+% ============================================
+
+\section{Fisher Linear Discriminant (LDA)}
+
+Also called \textbf{Linear Discriminant Analysis (LDA)}.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{FDA --- Core Idea}]
+\textbf{Main idea:} Find a projection to a line such that data samples from different classes are \textbf{well separated}.
+
+Unlike PCA (which maximizes variance of the whole set), LDA maximizes the \textbf{distance between groups}.
+\end{tcolorbox}
+
+\subsection{Setup}
+
+Suppose we have 2 classes and $d$-dimensional samples $\mathbf{x}_1, \ldots, \mathbf{x}_n$ where:
+\begin{itemize}
+    \item $n_1$ samples come from the first class $\omega_1$
+    \item $n_2$ samples come from the second class $\omega_2$
+\end{itemize}
+
+Consider projection on a line with direction given by the unit vector $\mathbf{w}$. The scalar $\mathbf{w}^T \mathbf{x}_i$ is the projection of $\mathbf{x}_i$ onto the line (a one-dimensional subspace).
+
+\subsection{Separation Measure}
+
+We need to measure the separation between projections of different classes. Consider the class means \textbf{before} and \textbf{after} the transformation:
+
+\textbf{Before transformation (original space):}
+\[
+\mathbf{m}_1 = \frac{1}{N_1} \sum_{i=1}^{N_1} \mathbf{x}_i^{(1)}, \qquad \mathbf{m}_2 = \frac{1}{N_2} \sum_{i=1}^{N_2} \mathbf{x}_i^{(2)}
+\]
+
+\textbf{After transformation (projected):}
+\[
+\tilde{m}_1 = \mathbf{w}^T \mathbf{m}_1, \qquad \tilde{m}_2 = \mathbf{w}^T \mathbf{m}_2
+\]
+
+A first idea: use $|\tilde{m}_1 - \tilde{m}_2|$ as a measure of separation. The larger this value, the better the expected separation.
+
+\textbf{Problem:} $|\tilde{m}_1 - \tilde{m}_2|$ does not consider the \textbf{variance} (spread) of the classes! Two classes can have well-separated means but still heavily overlap if their variances are large.
+
+\subsection{Fisher's Criterion Function}
+
+We want the difference between the means of the two projected classes to be \textbf{large} compared to the \textbf{standard deviation} of each class. This leads to the Fisher criterion:
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Fisher's Criterion}]
+\[
+J(\mathbf{w}) = \frac{|\tilde{m}_1 - \tilde{m}_2|}{\tilde{s}_1^2 + \tilde{s}_2^2}
+\]
+where $\tilde{s}_i^2$ is the \textbf{scatter} of class $i$ after projection:
+\[
+\tilde{s}_i^2 = \sum_{j=1}^{N_i} \left( y_j^{(i)} - \tilde{m}_i \right)^2
+\]
+and $y_j^{(i)} = \mathbf{w}^T \mathbf{x}_j^{(i)}$ is the projected data point from class $i$.
+
+\textbf{Goal:} Maximize $J(\mathbf{w})$, i.e.:
+\begin{itemize}
+    \item \textbf{Numerator:} Projected means should be far apart
+    \item \textbf{Denominator:} Scatter within each class should be as small as possible (samples cluster tightly around their projected mean)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Scatter Matrices}
+
+To express $J$ as a function of $\mathbf{w}$, we define scatter matrices:
+
+\textbf{Within-class scatter matrix for class $i$:}
+\[
+S_i = \sum_{j=1}^{N_i} \left( \mathbf{x}_j^{(i)} - \mathbf{m}_i \right)\left( \mathbf{x}_j^{(i)} - \mathbf{m}_i \right)^T
+\]
+
+\textbf{Total within-class scatter matrix:}
+\[
+S_w = S_1 + S_2
+\]
+
+\begin{remark}
+The scatter is just the sample variance multiplied by $n$. It measures the spread of data around the mean.
+\end{remark}
+
+\textbf{Between-class scatter matrix:}
+\[
+S_B = (\mathbf{m}_1 - \mathbf{m}_2)(\mathbf{m}_1 - \mathbf{m}_2)^T
+\]
+
+$S_B$ measures the separation between the means of the two classes \textbf{before} projection.
+
+\subsection{Expressing $J(\mathbf{w})$ in Terms of Scatter Matrices}
+
+Using the identity $({\mathbf{w}^T \mathbf{v}})^2 = \mathbf{w}^T \mathbf{v} \mathbf{v}^T \mathbf{w}$:
+
+\textbf{Denominator:}
+\[
+\tilde{s}_i^2 = \sum_{j=1}^{N_i} \left( \mathbf{w}^T \mathbf{x}_j^{(i)} - \mathbf{w}^T \mathbf{m}_i \right)^2 = \mathbf{w}^T S_i \mathbf{w}
+\]
+\[
+\tilde{s}_1^2 + \tilde{s}_2^2 = \mathbf{w}^T S_1 \mathbf{w} + \mathbf{w}^T S_2 \mathbf{w} = \mathbf{w}^T S_w \mathbf{w}
+\]
+
+\textbf{Numerator:}
+\[
+(\tilde{m}_1 - \tilde{m}_2)^2 = (\mathbf{w}^T \mathbf{m}_1 - \mathbf{w}^T \mathbf{m}_2)^2 = \mathbf{w}^T (\mathbf{m}_1 - \mathbf{m}_2)(\mathbf{m}_1 - \mathbf{m}_2)^T \mathbf{w} = \mathbf{w}^T S_B \mathbf{w}
+\]
+
+\textbf{Therefore:}
+\[
+\boxed{J(\mathbf{w}) = \frac{\mathbf{w}^T S_B \mathbf{w}}{\mathbf{w}^T S_w \mathbf{w}}}
+\]
+
+\subsection{The Fisher Transform (Solution)}
+
+By taking the derivative $\frac{\partial J}{\partial \mathbf{w}} = 0$, we obtain the \textbf{Fisher transform}:
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Fisher Transform}]
+\[
+\mathbf{w} = S_w^{-1}(\mathbf{m}_1 - \mathbf{m}_2)
+\]
+This gives the optimal projection direction that maximizes the Fisher criterion $J(\mathbf{w})$.
+\end{tcolorbox}
+
+\subsection{FDA: Worked Example}
+
+\begin{example}
+Class 1 has 5 samples: $\mathbf{x}_1 = \{(1,2),(2,3),(3,3),(4,5),(5,5)\}$\\
+Class 2 has 6 samples: $\mathbf{x}_2 = \{(1,0),(2,1),(3,1),(3,2),(5,3),(6,5)\}$
+
+\textbf{Step 1 --- Compute class means:}
+\[
+\mathbf{m}_1 = [3, \; 3.6], \qquad \mathbf{m}_2 = [3.3, \; 2]
+\]
+
+\textbf{Step 2 --- Compute scatter matrices:}
+\[
+S_1 = \begin{bmatrix} 10 & 8 \\ 8 & 7.2 \end{bmatrix}, \qquad S_2 = \begin{bmatrix} 17.3 & 16 \\ 16 & 16 \end{bmatrix}
+\]
+\[
+S_w = S_1 + S_2 = \begin{bmatrix} 27.3 & 24 \\ 24 & 23.2 \end{bmatrix}
+\]
+
+\textbf{Step 3 --- Compute inverse of $S_w$:}
+\[
+S_w^{-1} = \begin{bmatrix} 0.39 & -0.41 \\ -0.41 & 0.47 \end{bmatrix}
+\]
+
+\textbf{Step 4 --- Compute $\mathbf{w}$:}
+\[
+\mathbf{w} = S_w^{-1}(\mathbf{m}_1 - \mathbf{m}_2) = [-0.79, \; 0.89]
+\]
+
+\textbf{Step 5 --- Project data:}
+\[
+\mathbf{y}_1 = \mathbf{w}^T \mathbf{X}_1 = [-0.79 \;\; 0.89] \begin{bmatrix} 1 & 2 & 3 & 4 & 5 \\ 2 & 3 & 3 & 5 & 5 \end{bmatrix} = [0.99, \; 1.09, \; -0.70, \; 1.29, \; 0.50]
+\]
+\[
+\mathbf{y}_2 = \mathbf{w}^T \mathbf{X}_2 = [-0.79 \;\; 0.89] \begin{bmatrix} 1 & 2 & 3 & 3 & 5 & 6 \\ 0 & 1 & 1 & 2 & 3 & 5 \end{bmatrix} = [-0.79, \; -0.69, \; -1.48, \; -0.59, \; -1.28, \; -0.29]
+\]
+
+The two classes are now well separated in 1D.
+\end{example}
+
+\subsection{FDA Drawbacks}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{FDA Drawbacks}]
+\begin{itemize}
+    \item Reduces dimensionality only to $d - 1$ (for 2 classes, projects to a single line)
+    \item For complex data, projection to even the best line may result in inseparable projected samples
+    \item $J(\mathbf{w})$ is always 0 if $\mathbf{m}_1 = \mathbf{m}_2$ (e.g., concentric classes)
+    \item When $J(\mathbf{w})$ is always large: classes have large overlap when projected to any line. Such cases are also problematic for PCA.
+\end{itemize}
+\end{tcolorbox}
+
+% ============================================
+% PCA vs FDA Summary
+% ============================================
+
+\section{Summary: PCA vs.\ FDA}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Benefits of Dimensionality Reduction}]
+Dimensionality reduction with linear methods like PCA and FDA allows us to:
+\begin{itemize}
+    \item Visualize the training set and then work on it
+    \item Reduce the time and space complexity
+    \item Remove multi-collinearity (can be helpful to handle overfitting)
+    \item Remove irrelevant features from the data
+    \item Handle the curse of dimensionality
+\end{itemize}
+Once dimensionality reduction is applied, we typically apply classification or other tasks using the new feature space. FDA is particularly suitable for classification tasks since it focuses on discrimination of classes.
+\end{tcolorbox}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Property} & \textbf{PCA} & \textbf{FDA (LDA)} \\
+\hline
+Type & Unsupervised & Supervised \\
+\hline
+Objective & Maximize variance & Maximize class separability \\
+\hline
+Uses class labels & No & Yes \\
+\hline
+Max components & $n$ (original dims) & $C - 1$ ($C$ = number of classes) \\
+\hline
+Best for & General dim.\ reduction & Classification preprocessing \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+
+\part{Kernel-Based Learning and Support Vector Machines}
+
+\section{Binary Classification Recap}
+
+Given training data $(\mathbf{x}_i, y_i)$ for $i = 1, \ldots, N$ with $\mathbf{x}_i \in \R^n$ and $y_i \in \{+1, -1\}$, learn a classifier $f(\mathbf{x})$ such that it correctly predicts the class of unseen data.
+
+\section{Linear SVM}
+
+\begin{itemize}
+    \item Binary classification setting
+    \item Assumes that data is linearly separable: there exists a hyperplane that divides the classes into positives and negatives
+\end{itemize}
+\[
+y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1, \quad i \in \{1, \ldots, m\}
+\]
+where $\mathbf{w} \in \R^n$, $\mathbf{x}_i \in \R^n$, $b \in \R$, $y_i \in \{+1, -1\}$.
+
+\subsection{Large Margin Classifiers}
+
+\begin{definition}[Margin]
+The \textbf{margin} of a classifier is the distance to the closest points of either class. Large margin classifiers attempt to maximize this distance.
+\end{definition}
+
+SVMs maximize the margin $d = d_+ + d_-$, where $d_+$ and $d_-$ are the distances from the separating hyperplane to the nearest positive and negative samples, respectively.
+
+\subsection{Support Vectors}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Support Vectors}]
+For any separating hyperplane, there exists a set of ``closest points'' called \textbf{support vectors}:
+\begin{itemize}
+    \item For $n$ dimensions, there will be at least $n + 1$ support vectors
+    \item The samples that lie exactly on the two boundary hyperplanes $H_1$ and $H_2$ are the support vectors
+    \item They are the \textbf{critical points} that determine the position and orientation of the separating hyperplane
+    \item If you moved or removed any other points, the boundary wouldn't change, but moving a support vector would change it
+\end{itemize}
+\end{tcolorbox}
+
+Maximizing the margin is good since it implies that \textbf{only support vectors matter}; other training examples are ignorable.
+
+\subsection{Finding the Hyperplane}
+
+The margin is the distance to the support vectors on either side of the hyperplane. Computing the distance from the separating hyperplane $\mathbf{w}^T \mathbf{x} + b = 0$ to one side of the margin (e.g., to $\mathbf{w}^T \mathbf{x} + b = 1$):
+
+The distance from a point to the hyperplane is $\frac{1}{\|\mathbf{w}\|}$, so the full margin width is:
+\[
+\text{margin} = \frac{2}{\|\mathbf{w}\|}
+\]
+
+\subsection{Maximizing the Margin}
+
+Select the hyperplane with the largest margin where all points are classified correctly and outside the margin. This is a \textbf{constrained optimization problem}.
+
+Maximizing the margin $\frac{2}{\|\mathbf{w}\|}$ is equivalent to \textbf{minimizing} $\|\mathbf{w}\|$ (or equivalently $\frac{1}{2}\|\mathbf{w}\|^2$) subject to the separating constraints.
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Hard Margin SVM Formulation}]
+\[
+\min_{\mathbf{w}, b} \quad \frac{1}{2} \|\mathbf{w}\|^2
+\]
+subject to:
+\[
+y_i(\mathbf{w}^T \mathbf{x}_i + b) \geq 1, \quad \forall \, i = 1, \ldots, m
+\]
+
+\begin{itemize}
+    \item The \textbf{minimization criterion} wants $\mathbf{w}$ to be as small as possible (large margin)
+    \item The \textbf{constraint} ensures that the data is correctly separated
+\end{itemize}
+
+We minimize $\frac{1}{2}\|\mathbf{w}\|^2$ rather than $\|\mathbf{w}\|$ because the square is differentiable and easier to handle mathematically, while still achieving the same optimum.
+\end{tcolorbox}
+
+% ============================================
+% Soft Margin SVM
+% ============================================
+
+\section{Soft Margin SVM}
+
+\subsection{Motivation}
+
+What if the dataset is \textbf{not linearly separable}? The hard margin quadratic optimization does not converge for non-linearly separable datasets. We need to allow some misclassifications.
+
+\subsection{Slack Variables}
+
+We modify the constraints by adding \textbf{slack variables} $\xi_i \geq 0$, which enable vectors to cross the margin:
+\[
+y_i(\mathbf{w} \cdot \mathbf{x}_i + b) \geq 1 - \xi_i
+\]
+
+The value of $\xi_i$ indicates the position of the vector with respect to the hyperplane.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Soft Margin SVM Formulation}]
+\[
+\min_{\mathbf{w}, b, \boldsymbol{\xi}} \quad \frac{1}{2} \|\mathbf{w}\|^2 + C \sum_{i=1}^{m} \xi_i
+\]
+subject to:
+\[
+y_i(\mathbf{w}^T \mathbf{x}_i + b) \geq 1 - \xi_i, \quad \xi_i \geq 0, \quad \forall \, i
+\]
+
+where $C > 0$ is a \textbf{regularization parameter}.
+\end{tcolorbox}
+
+\subsection{The Role of $C$}
+
+\begin{itemize}
+    \item \textbf{Small $C$} (large margin): constraints can be easily ignored; more misclassifications tolerated; better generalization but possibly underfitting
+    \item \textbf{Large $C$} (narrow margin): constraints are hard to ignore; fewer misclassifications; risk of overfitting
+    \item $C = \infty$: enforces all constraints $\Rightarrow$ reduces to the \textbf{hard margin} SVM
+\end{itemize}
+
+$C$ determines the \textbf{trade-off} between maximizing the margin and minimizing the classification error.
+
+\subsection{Understanding Slack Variables}
+
+Given the constraint $y_i(\mathbf{w}^T \mathbf{x}_i + b) \geq 1 - \xi_i$, equivalently $\xi_i \geq 1 - y_i(\mathbf{w}^T \mathbf{x}_i + b)$:
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Interpretation of Slack Variable Values}]
+\begin{itemize}
+    \item $\xi_i = 0$: the data point is \textbf{correctly classified} and on or outside the margin
+    \item $0 < \xi_i < 1$: \textbf{correctly classified} but inside the margin (between the hyperplane and the margin boundary)
+    \item $\xi_i \geq 1$: \textbf{incorrectly classified} (misclassification error)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Hinge Loss}
+
+The soft margin SVM can also be expressed as an \textbf{unconstrained} optimization using the \textbf{hinge loss}:
+\[
+\min_{\mathbf{w}, b} \quad \frac{1}{2} \|\mathbf{w}\|^2 + C \sum_{i=1}^{m} \max\!\big(0, \; 1 - y_i(\mathbf{w}^T \mathbf{x}_i + b)\big)
+\]
+
+The hinge loss $\max(0, 1 - y_i f(\mathbf{x}_i))$ penalizes points by how far they are from ``correct'' (i.e., from lying on the correct side of the margin).
+
+\subsection{Support Vectors in the Non-Linear (Soft Margin) Case}
+
+\begin{itemize}
+    \item Support vectors are all points for which a slack variable exists (i.e., $\xi_i > 0$, or points lying exactly on the margin)
+    \item Points correctly classified and outside the margin ($\xi_i = 0$) are \textbf{not} support vectors
+    \item Thus, support vectors lie \textbf{on the margin} (correctly classified) or \textbf{inside the margin / misclassified}
+\end{itemize}
+
+% ============================================
+% Non-Linear SVM and Kernels
+% ============================================
+
+\section{Non-Linear SVM}
+
+\subsection{Motivation}
+
+Datasets that are linearly separable (with some noise) work well with linear SVMs. However, what if the dataset is too hard to separate with a hyperplane?
+
+\textbf{Key idea:} Map data to a \textbf{higher-dimensional space} where the training set becomes linearly separable.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Non-Linear SVM --- Core Idea}]
+The original feature space can always be mapped to some higher-dimensional feature space where the training set is linearly separable.
+
+A \textbf{linear classifier} in the higher-dimensional space corresponds to a \textbf{non-linear} boundary in the original space.
+\end{tcolorbox}
+
+\subsection{Example: Mapping to Higher Dimensions}
+
+Let $\mathbf{X} = (x, y, z)$ be a 3D feature space. We can map to a 9-dimensional space $\mathbf{Z}$:
+\[
+\mathbf{Z} = \big(\phi_1(\mathbf{X}), \ldots, \phi_9(\mathbf{X})\big) = \big(x, \; y, \; z, \; x^2, \; y^2, \; z^2, \; xy, \; xz, \; yz\big)
+\]
+
+A linear classifier in $\mathbf{Z}$ corresponds to a \textbf{polynomial} classifier in the original space $\mathbf{X}$.
+
+\textbf{Problems with explicit mapping:}
+\begin{itemize}
+    \item The transformed space can have huge dimensionality (even infinite)
+    \item Mappings are in general difficult to compute explicitly
+    \item It is not clear how to find the proper mapping that will separate the data
+\end{itemize}
+
+\subsection{The Kernel Trick}
+
+Instead of computing the transformation $\Phi$ explicitly, we use the \textbf{kernel trick}.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{The Kernel Trick}]
+The linear classifier relies on the inner product between vectors:
+\[
+K(\mathbf{x}_i, \mathbf{x}_j) = \mathbf{x}_i^T \mathbf{x}_j
+\]
+
+If every datapoint is mapped into a high-dimensional space via some transformation $\Phi: \mathbf{x} \to \phi(\mathbf{x})$, the inner product becomes:
+\[
+K(\mathbf{x}_i, \mathbf{x}_j) = \phi(\mathbf{x}_i)^T \phi(\mathbf{x}_j)
+\]
+
+A \textbf{kernel function} is a function that is equivalent to an inner product in some feature space, allowing us to train the classifier \textbf{without ever explicitly computing} the mapping $\Phi$.
+
+\textbf{Important:} Since the classification algorithm is independent from the size of the target space, we \textbf{avoid the curse of dimensionality}.
+\end{tcolorbox}
+
+\subsection{Kernel Trick: Example}
+
+For 2-dimensional vectors $\mathbf{x} = [x_1, x_2]$, let $K(\mathbf{x}_i, \mathbf{x}_j) = (1 + \mathbf{x}_i^T \mathbf{x}_j)^2$.
+
+Expanding:
+\begin{align*}
+K(\mathbf{x}_i, \mathbf{x}_j) &= (1 + \mathbf{x}_i^T \mathbf{x}_j)^2 \\
+&= 1 + x_{i1}^2 x_{j1}^2 + 2x_{i1}x_{j1}x_{i2}x_{j2} + x_{i2}^2 x_{j2}^2 + 2x_{i1}x_{j1} + 2x_{i2}x_{j2} \\
+&= \phi(\mathbf{x}_i)^T \phi(\mathbf{x}_j)
+\end{align*}
+
+where:
+\[
+\phi(\mathbf{x}) = \big[1, \; x_1^2, \; \sqrt{2}\,x_1 x_2, \; x_2^2, \; \sqrt{2}\,x_1, \; \sqrt{2}\,x_2\big]
+\]
+
+The kernel function implicitly maps data to a 6-dimensional space without computing $\phi(\mathbf{x})$ explicitly.
+
+\subsection{Standard Kernels}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Kernel} & \textbf{Formula} \\
+\hline
+Linear & $K(\mathbf{x}_i, \mathbf{x}_j) = \mathbf{x}_i^T \mathbf{x}_j$ \\
+\hline
+Polynomial & $K(\mathbf{x}_i, \mathbf{x}_j) = (\mathbf{x}_i^T \mathbf{x}_j + 1)^p$ \\
+\hline
+RBF (Gaussian) & $K(\mathbf{x}_i, \mathbf{x}_j) = \exp\!\left(-\dfrac{\|\mathbf{x}_i - \mathbf{x}_j\|^2}{2\sigma^2}\right)$ \\[8pt]
+\hline
+Sigmoid & $K(\mathbf{x}_i, \mathbf{x}_j) = \tanh(a \, \mathbf{x}_i^T \mathbf{x}_j + b)$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Kernel Selection}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Kernel Selection Guidelines}]
+\textbf{Linear kernel:}
+\begin{itemize}
+    \item Used when the feature space is huge (e.g., text classification with word counts)
+    \item Special case of the RBF kernel; no additional parameters
+\end{itemize}
+
+\textbf{Polynomial kernel:}
+\begin{itemize}
+    \item Can have numerical difficulties (values approaching 0 or infinity)
+    \item Good choice for well-known and well-conditioned tasks
+    \item One additional parameter: degree $p$
+\end{itemize}
+
+\textbf{RBF (Radial Basis Function) kernel:}
+\begin{itemize}
+    \item Generally indicated as the \textbf{best choice} in the literature
+    \item One additional parameter: $\sigma$ (or equivalently $\gamma = \frac{1}{2\sigma^2}$)
+\end{itemize}
+
+\textbf{Sigmoid kernel:}
+\begin{itemize}
+    \item Two additional parameters ($a$ and $b$); comes from neural networks
+    \item Not much recommended in the literature
+\end{itemize}
+\end{tcolorbox}
+
+\begin{remark}
+Kernel selection and parameter tuning are critical. Lowering the degree for polynomial kernels or using larger $\sigma$ for RBF kernels can help avoid overfitting. The number of support vectors is a measure of generalization performance.
+\end{remark}
+
+% ============================================
+% Practical Implementation
+% ============================================
+
+\section{Typical SVM Implementation}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{SVM Implementation Pipeline}]
+\begin{enumerate}
+    \item \textbf{Apply scaling/normalization} on the data
+    \item \textbf{Consider the RBF kernel} as default
+    \item \textbf{Use cross-validation} to find the best parameters $C$ and $\sigma$ (or $\gamma$)
+    \item \textbf{Train the model} with the best $C$ and $\sigma$ using the whole training set
+    \item \textbf{Apply} the trained model on unseen data (test data)
+\end{enumerate}
+\end{tcolorbox}
+
+\textbf{Common problems and solutions:}
+\begin{itemize}
+    \item \textbf{Parameter search can be time-consuming} $\rightarrow$ conduct parameter search hierarchically
+    \item \textbf{Search ranges are tricky to choose} $\rightarrow$ use exponentially growing values, e.g., $C = 2^{[-5, \ldots, 15]}$ and $\gamma = 2^{[-15, \ldots, 5]}$
+    \item \textbf{RBF kernels can overfit} $\rightarrow$ consider high-degree polynomial kernels as alternative
+    \item \textbf{Parameter search must be repeated for every feature set} $\rightarrow$ compare features on random subsets to contain computational cost
+\end{itemize}
+
+% ============================================
+% Summary
+% ============================================
+
+\section{SVM Summary}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{SVM Key Concepts at a Glance}]
+\begin{itemize}
+    \item \textbf{Hard margin SVM:} Finds the hyperplane with the maximum margin; requires linearly separable data
+    \item \textbf{Soft margin SVM:} Introduces slack variables $\xi_i$ and regularization parameter $C$ to handle non-separable data
+    \item \textbf{Support vectors:} The critical training points that lie on or within the margin; they alone determine the decision boundary
+    \item \textbf{Kernel trick:} Allows SVMs to learn non-linear boundaries by implicitly mapping data to higher-dimensional spaces without computing the mapping explicitly
+    \item \textbf{Key parameters:} $C$ (regularization) and kernel parameters ($\sigma$, degree $p$, etc.)
+\end{itemize}
+\end{tcolorbox}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Property} & \textbf{Hard Margin SVM} & \textbf{Soft Margin SVM} \\
+\hline
+Linearly separable data required & Yes & No \\
+\hline
+Slack variables & No & Yes ($\xi_i$) \\
+\hline
+Regularization parameter & None & $C$ \\
+\hline
+Allows misclassifications & No & Yes \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{SVM Facts:}
+\begin{itemize}
+    \item Originally proposed by Boser, Guyon and Vapnik in 1992
+    \item Still among the best performers for several classification tasks (text, genomics, images)
+    \item Can be applied to complex data types beyond feature vectors (graphs, sequences) by designing appropriate kernel functions
+    \item Have been extended to regression, PCA, and other tasks
+\end{itemize}
 
 
-tutto pacco di slide 16 da aggiungere
+\newpage
+
+\part{Clustering}
+
+\section{Supervised vs.\ Unsupervised Learning}
+
+Up to now we considered \textbf{supervised learning} scenarios, where we are given:
+\begin{itemize}
+    \item Samples $\mathbf{x}_1, \ldots, \mathbf{x}_n$
+    \item Class labels for all samples $\omega_1, \ldots, \omega_n$
+\end{itemize}
+
+In \textbf{unsupervised learning}, and particularly in \textbf{clustering}, we have only:
+\begin{itemize}
+    \item Samples $\mathbf{x}_1, \ldots, \mathbf{x}_n$
+    \item \textbf{No class labels}
+\end{itemize}
+
+\subsection{Unsupervised Learning Approaches}
+
+\begin{itemize}
+    \item \textbf{Parametric approach:} Assume a parametric distribution of data and estimate its parameters. Much ``harder'' than supervised parametric approaches.
+    \item \textbf{Non-parametric approach:} Group the data into clusters, each cluster hopefully corresponding to categories (classes) present in the data.
+\end{itemize}
+
+\section{Clustering}
+
+\begin{definition}[Clustering]
+Clustering is an area of unsupervised learning in which we find ``clusters'' or groups of similar points within the data \textbf{without having labels}.
+\end{definition}
+
+\textbf{Why Clustering?}
+\begin{itemize}
+    \item \textbf{Pattern recognition:} Discover inherent groupings, revealing relationships that might not be apparent through other means
+    \item \textbf{No labels needed:} In many real-world scenarios, obtaining labeled data is time-consuming and expensive
+    \item \textbf{Data preprocessing:} Segmenting data into meaningful groups makes subsequent tasks (classification, regression) easier
+\end{itemize}
+
+\subsection{What Is Good Clustering?}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Good Clustering Criteria}]
+\begin{itemize}
+    \item \textbf{Internal} (within-cluster) distances should be \textbf{small} / similarities should be \textbf{high}
+    \item \textbf{External} (inter-cluster) distances should be \textbf{large} / similarities should be \textbf{low}
+\end{itemize}
+We typically need:
+\begin{itemize}
+    \item A \textbf{similarity measure} $s(\mathbf{x}_i, \mathbf{x}_k)$: large if $\mathbf{x}_i, \mathbf{x}_k$ are similar; or a \textbf{dissimilarity (distance) measure} $d(\mathbf{x}_i, \mathbf{x}_k)$: small if $\mathbf{x}_i, \mathbf{x}_k$ are similar
+    \item A \textbf{criterion function} to evaluate a clustering
+    \item An \textbf{algorithm} to compute the clustering (e.g., by optimizing the criterion function)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{How Many Clusters?}
+
+\begin{itemize}
+    \item Some approaches \textbf{fix} the number of clusters (e.g., $k$-means requires $k$ as input)
+    \item Some find the best clustering according to a criterion function; therefore, the number of clusters may vary (e.g., DBSCAN)
+\end{itemize}
+
+% ============================================
+% Distance Measures
+% ============================================
+
+\section{Proximity / Distance Measures}
+
+The choice of distance function depends on the application (e.g., rotation invariance for object recognition, but not for character recognition where ``6'' and ``9'' must be distinguished).
+
+\subsection{Dissimilarity Measures}
+
+\textbf{Euclidean distance} (numerical attributes):
+\[
+\text{Dist}(\mathbf{x}, \mathbf{x}') = \sqrt{\sum_{d} (x_d - x_d')^2}
+\]
+\begin{itemize}
+    \item Translation invariant, symmetric, spherical, all dimensions equally treated
+    \item Sensitive to large differences in single attributes
+\end{itemize}
+
+\textbf{Manhattan (city block) distance:}
+\[
+\text{Dist}(\mathbf{x}, \mathbf{x}') = \sum_{d} |x_d - x_d'|
+\]
+An approximation to Euclidean distance, cheaper to compute.
+
+\textbf{Hamming distance} (categorical attributes):
+\[
+\text{Dist}(\mathbf{x}, \mathbf{x}') = \sum_{d} \mathbf{1}_{x_d \neq x_d'}
+\]
+Counts the number of attributes where $x_d \neq x_d'$.
+
+\subsection{Cosine Similarity}
+
+\[
+\text{CosSim}(\mathbf{x}, \mathbf{x}') = \frac{\mathbf{x}^T \mathbf{x}'}{\|\mathbf{x}\|_2 \, \|\mathbf{x}'\|_2}
+\]
+
+\begin{itemize}
+    \item The smaller the angle between vectors, the larger the similarity
+    \item \textbf{Scale invariant} measure (very popular, also in deep learning)
+    \item Ranges from $-1$ (complete dissimilarity) to $+1$ (identical direction); $0$ means orthogonal (no similarity)
+\end{itemize}
+
+% ============================================
+% Clustering Approaches Overview
+% ============================================
+
+\section{Clustering Approaches}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Taxonomy of Clustering Methods}]
+\begin{enumerate}
+    \item \textbf{Hard vs.\ Soft Clustering:}
+    \begin{itemize}
+        \item \textbf{Hard:} Each data point belongs to exactly one cluster (no overlap)
+        \item \textbf{Soft (Fuzzy):} Data points can belong to more than one cluster with varying degrees of membership
+    \end{itemize}
+
+    \item \textbf{Partitioning Clustering:} Data divided into non-overlapping subsets (e.g., $k$-means, $k$-medoids)
+
+    \item \textbf{Hierarchical Clustering:} Creates a tree of clusters (dendrogram); agglomerative (bottom-up) or divisive (top-down)
+
+    \item \textbf{Density-Based Clustering:} Clusters are dense regions separated by regions of lower density (e.g., DBSCAN)
+
+    \item \textbf{Centroid-Based Clustering:} Clusters represented by a central vector (centroid); points assigned to the nearest centroid (e.g., $k$-means)
+
+    \item \textbf{Distribution-Based Clustering:} Clusters modeled using statistical distributions (e.g., Gaussian Mixture Models)
+
+    \item \textbf{Graph-Based Clustering:} Data points as nodes in a graph; clusters as connected components (e.g., spectral clustering)
+
+    \item \textbf{Subspace Clustering:} Identifies clusters in subspaces considering only a subset of features per cluster; useful for high-dimensional data
+
+    \item \textbf{Self-Organizing Maps (SOM):} Neural network-based clustering that projects high-dimensional data onto a lower-dimensional grid
+\end{enumerate}
+\end{tcolorbox}
+
+% ============================================
+% K-Means
+% ============================================
+
+\section{$K$-Means Clustering}
+
+\begin{itemize}
+    \item The most well-known and popular clustering algorithm
+    \item We must know \textbf{a priori} how many clusters we need ($k$)
+    \item Works with numerical attributes, but not with categorical ones
+    \item \textbf{Fast:} $O(\text{\#iterations} \times k \times n \times d)$
+    \item $K$-means is a \textbf{greedy algorithm} that converges to a \textbf{local minimum}
+    \item Results can vary drastically based on centroid initialization
+\end{itemize}
+
+\subsection{Problem Formulation}
+
+Given a data set $\{\mathbf{x}_1, \ldots, \mathbf{x}_N\}$ of $N$ observations of a $D$-dimensional variable $\mathbf{x}$, the goal is to partition the data set into $K$ clusters.
+
+For each data point $\mathbf{x}_n$, a set of binary indicator variables $r_{nk} \in \{0, 1\}$, $k = 1, \ldots, K$, describes which cluster $\mathbf{x}_n$ is assigned to (\textbf{hard clustering}).
+
+\textbf{Objective function:}
+\[
+J = \sum_{n=1}^{N} \sum_{k=1}^{K} r_{nk} \, \|\mathbf{x}_n - \boldsymbol{\mu}_k\|^2
+\]
+
+where $\boldsymbol{\mu}_k$ is the centroid of cluster $k$. The goal is to find $r_{nk}$ and $\boldsymbol{\mu}_k$ that \textbf{minimize} $J$.
+
+\subsection{$K$-Means Algorithm}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{$K$-Means Algorithm}]
+\textbf{Initialization:} Randomly select $K$ centroids $\boldsymbol{\mu}_k$, $k = 1, \ldots, K$.
+
+\textbf{Repeat:}
+\begin{enumerate}
+    \item \textbf{Assignment step} (minimize $J$ w.r.t.\ $r_{nk}$, keeping $\boldsymbol{\mu}_k$ fixed):
+
+    For each data point $\mathbf{x}_n$, assign it to the nearest centroid:
+    \[
+    r_{nk} = \begin{cases} 1 & \text{if } k = \arg\min_j \|\mathbf{x}_n - \boldsymbol{\mu}_j\|^2 \\ 0 & \text{otherwise} \end{cases}
+    \]
+
+    \item \textbf{Update step} (minimize $J$ w.r.t.\ $\boldsymbol{\mu}_k$, keeping $r_{nk}$ fixed):
+
+    Recompute each centroid as the mean of assigned points:
+    \[
+    \boldsymbol{\mu}_k = \frac{\sum_{n} r_{nk} \, \mathbf{x}_n}{\sum_{n} r_{nk}} = \frac{1}{|C_k|} \sum_{\mathbf{x}_n \in C_k} \mathbf{x}_n
+    \]
+\end{enumerate}
+
+\textbf{Termination:} Stop when there is no further change in assignments or after a maximum number of iterations.
+\end{tcolorbox}
+
+\subsection{Initialization Strategies}
+
+Results can vary drastically based on centroid selection. Common heuristics:
+\begin{itemize}
+    \item Choose random points (not necessarily data examples)
+    \item Choose data points least similar to any existing center (\textbf{furthest centers heuristic})
+    \item Try out \textbf{multiple starting points} (run $k$-means several times)
+    \item Initialize cluster centers with results from another clustering method
+\end{itemize}
+
+\subsection{Choosing the Number of Clusters}
+
+\begin{itemize}
+    \item \textbf{Domain knowledge:} e.g., digit clustering $\Rightarrow$ $K = 10$
+    \item \textbf{Data visualization} (for low-dimensional data)
+    \item Run $k$-means with different $k$ values and evaluate with metrics
+\end{itemize}
+
+\textbf{Elbow Rule:} Plot the \textbf{Within-Cluster Sum of Squares} (WCSS) as a function of $k$:
+\[
+\text{WCSS} = \sum_{i=1}^{k} \sum_{\mathbf{x}_j \in C_i} \|\mathbf{x}_j - \mathbf{c}_i\|^2
+\]
+
+The ``elbow'' point is the value of $k$ where adding more clusters provides \textbf{diminishing returns} in reducing WCSS. It represents a balance between model simplicity and capturing meaningful patterns.
+
+\subsection{$K$-Means Drawbacks}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{$K$-Means Drawbacks}]
+\begin{itemize}
+    \item Does not perform well when clusters are \textbf{not spherical} and/or have varying sizes
+    \item Struggles with clusters of \textbf{different densities}
+    \item \textbf{Outliers} can significantly influence centroid calculation, leading to suboptimal assignments
+    \item Converges to a \textbf{local minimum} (not guaranteed to find global optimum)
+    \item Number of clusters $k$ must be specified \textbf{a priori}
+\end{itemize}
+\end{tcolorbox}
+
+% ============================================
+% Hierarchical Clustering
+% ============================================
+
+\section{Hierarchical Clustering}
+
+$K$-means is a \textbf{flat} clustering method. For some data, \textbf{hierarchical clustering} is more appropriate, e.g., when there is a natural taxonomy in the data.
+
+\subsection{Dendrograms}
+
+Hierarchical clustering is represented through a \textbf{dendrogram} (binary tree-like diagram) that shows the similarities of grouped clusters:
+\begin{itemize}
+    \item Level $k$ corresponds to a partitioning with $n - k + 1$ clusters
+    \item If you need $k$ clusters, take the clustering from level $n - k + 1$
+    \item If samples are in the same cluster at level $k$, they remain in the same cluster at higher levels
+\end{itemize}
+
+\subsection{Agglomerative vs.\ Divisive}
+
+\begin{itemize}
+    \item \textbf{Agglomerative (bottom-up):} Start with each point as a singleton cluster and iteratively merge the two closest clusters
+    \item \textbf{Divisive (top-down):} Start with all data points in one cluster and iteratively split into smaller groups
+\end{itemize}
+
+\subsection{Agglomerative Hierarchical Clustering}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Agglomerative Algorithm}]
+\begin{enumerate}
+    \item Initialize $n$ clusters, each containing one data point
+    \item Compute the pairwise distance matrix $D$ between all data points
+    \item \textbf{For} $k = 1$ to $n - 1$:
+    \begin{enumerate}
+        \item Identify the two closest clusters $C_i$ and $C_j$ based on $D$
+        \item Merge $C_i$ and $C_j$ into a single cluster $C_{ij}$
+        \item Update $D$ to reflect distances between $C_{ij}$ and remaining clusters using the chosen \textbf{linkage criterion}
+    \end{enumerate}
+    \item Continue until the desired number of clusters $c$ is reached
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Linkage Criteria}
+
+Four ways to calculate cluster distance between clusters $D_i$ and $D_j$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Single linkage} (nearest neighbor) & $d_{\min}(D_i, D_j) = \displaystyle\min_{\mathbf{x} \in D_i, \mathbf{x}' \in D_j} \|\mathbf{x} - \mathbf{x}'\|$ \\
+\hline
+\textbf{Complete linkage} (farthest neighbor) & $d_{\max}(D_i, D_j) = \displaystyle\max_{\mathbf{x} \in D_i, \mathbf{x}' \in D_j} \|\mathbf{x} - \mathbf{x}'\|$ \\
+\hline
+\textbf{Average linkage} & $d_{\text{avg}}(D_i, D_j) = \dfrac{1}{n_i n_j} \displaystyle\sum_{\mathbf{x} \in D_i} \sum_{\mathbf{x}' \in D_j} \|\mathbf{x} - \mathbf{x}'\|$ \\
+\hline
+\textbf{Mean linkage} (centroid) & $d_{\text{mean}}(D_i, D_j) = \|\mathbf{m}_i - \mathbf{m}_j\|$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Properties:}
+\begin{itemize}
+    \item \textbf{Single linkage:} Generates minimum spanning tree; encourages elongated clusters; very sensitive to noise/outliers
+    \item \textbf{Complete linkage:} Results in compact clusters; does not work well with elongated clusters
+    \item \textbf{Average / Mean linkage:} More robust; mean distance is cheaper to compute
+\end{itemize}
+
+All linkage methods behave similarly when clusters are hyperspherical and well separated.
+
+\subsection{Divisive Hierarchical Clustering}
+
+\begin{enumerate}
+    \item Split data into clusters using any flat-clustering method (e.g., $k$-means)
+    \item Choose the cluster with the \textbf{largest Sum of Squared Error} (SSE) to split further:
+    \[
+    \text{SSE}_k = \sum_{\mathbf{x}_j \in C_i} \|\mathbf{x}_j - \mathbf{c}_i\|^2
+    \]
+    \item Repeat until a single cluster is formed (or the desired number of clusters is reached)
+\end{enumerate}
+
+\subsection{Hierarchical Clustering: Limitations}
+
+\begin{itemize}
+    \item \textbf{High computational complexity:} Computing the proximity matrix is $O(N^2)$; total time complexity is $O(N^3)$
+    \item There is \textbf{no objective function} being optimized
+    \item Cannot be used for very large datasets due to complexity
+    \item Sensitive to noise and outliers
+    \item Difficulty handling large clusters
+\end{itemize}
+
+% ============================================
+% DBSCAN
+% ============================================
+
+\section{DBSCAN}
+
+\begin{definition}[DBSCAN]
+\textbf{Density-Based Spatial Clustering of Applications with Noise} is a density-based clustering algorithm that finds clusters by grouping data points that are closely packed together, based on a specified distance and density threshold. It is particularly useful for identifying clusters of \textbf{arbitrary shapes} and for detecting \textbf{noise (outliers)}.
+\end{definition}
+
+\subsection{Parameters and Point Types}
+
+\textbf{Two parameters:}
+\begin{itemize}
+    \item $\varepsilon$ (\textbf{eps}): The radius defining the neighborhood around a data point
+    \item \textbf{MinPts}: The minimum number of data points required to form a dense region (core point)
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Three Types of Points}]
+\begin{itemize}
+    \item \textbf{Core points:} Have at least MinPts points within radius $\varepsilon$
+    \item \textbf{Border points:} Within the $\varepsilon$-neighborhood of a core point, but do not themselves have enough neighbors to be a core point
+    \item \textbf{Noise points (outliers):} Neither core points nor border points
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{DBSCAN Algorithm}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{DBSCAN Algorithm}]
+\begin{enumerate}
+    \item For each unvisited data point, determine its neighborhood based on $\varepsilon$
+    \item If the number of neighbors $\geq$ MinPts, create a new cluster and add the point and its neighbors
+    \item \textbf{Expand} the cluster by recursively checking the neighbors' neighbors (following the same MinPts criterion)
+    \item Repeat for all unvisited data points
+\end{enumerate}
+Points not assigned to any cluster are labeled as \textbf{noise}.
+\end{tcolorbox}
+
+\subsection{DBSCAN: Advantages and Limitations}
+
+\begin{center}
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\textbf{Advantages} & \textbf{Limitations} \\
+\hline
+Can find clusters of \textbf{arbitrary shapes} & Sensitive to the choice of $\varepsilon$ and MinPts \\
+\hline
+Can identify \textbf{outliers/anomalies} & Struggles with clusters of \textbf{varying densities} \\
+\hline
+\textbf{No need} to specify the number of clusters a priori & Performance may degrade with \textbf{high-dimensional} data \\
+\hline
+& Performance degrades as dataset size increases \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================
+% Clustering Evaluation
+% ============================================
+
+\section{Clustering Evaluation}
+
+\subsection{Extrinsic Measures}
+
+Extrinsic measures evaluate clustering by how well it helps solve another problem (e.g., classification).
+
+\textbf{Purity:} The proportion of the dominant class in each cluster.
+\begin{itemize}
+    \item Good for \textbf{comparing} two algorithms, but not for understanding how well a single algorithm is doing
+    \item \textbf{Caveat:} Increasing the number of clusters always increases purity (trivially, $n$ clusters $\Rightarrow$ purity $= 1$)
+\end{itemize}
+
+\subsection{Intrinsic Measures}
+
+Intrinsic measures evaluate clustering quality based on internal structure alone.
+
+\subsubsection{Davies-Bouldin Index (DBI)}
+
+Measures the compactness and separation between clusters:
+\[
+\text{DBI} = \frac{1}{n} \sum_{i=1}^{n} \max_{j \neq i} \frac{\sigma_i + \sigma_j}{d(\mathbf{c}_i, \mathbf{c}_j)}
+\]
+
+where $\sigma_i$ is the average distance between points in cluster $C_i$ and its centroid $\mathbf{c}_i$, and $d(\mathbf{c}_i, \mathbf{c}_j)$ is the distance between centroids.
+
+\begin{itemize}
+    \item \textbf{Lower DBI} $\Rightarrow$ better clustering (more compact and well-separated)
+    \item \textbf{Higher DBI} $\Rightarrow$ poorer clustering (more overlap or spread out)
+\end{itemize}
+
+\subsubsection{Silhouette Index}
+
+Measures how well-separated clusters are and how similar each point is to its own cluster vs.\ other clusters.
+
+For each data point $i$:
+\begin{itemize}
+    \item $a(i)$: Average distance from point $i$ to other points in the \textbf{same} cluster (intra-cluster cohesion)
+    \item $b(i)$: Smallest average distance from point $i$ to points in a \textbf{different} cluster, minimized over all other clusters (inter-cluster separation)
+\end{itemize}
+
+\[
+s(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}}
+\]
+
+The overall silhouette score is the average over all data points:
+\[
+\bar{s} = \frac{1}{N} \sum_{i=1}^{N} s(i)
+\]
+
+\begin{itemize}
+    \item Ranges from $-1$ to $+1$
+    \item \textbf{High value}: point is well-matched to its own cluster and poorly matched to neighbors
+    \item \textbf{Low or negative value}: clustering may have too many or too few clusters
+\end{itemize}
+
+\subsubsection{Dunn Index}
+
+Measures compactness (intra-cluster) and separation (inter-cluster):
+\[
+\text{Dunn} = \frac{\displaystyle\min_{i \neq j} \, d(\mathbf{c}_i, \mathbf{c}_j)}{\displaystyle\max_{k} \, \max_{\mathbf{x}, \mathbf{y} \in C_k} d(\mathbf{x}, \mathbf{y})}
+\]
+
+A \textbf{higher} Dunn index indicates better clustering (large inter-cluster distance relative to intra-cluster spread).
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Clustering Evaluation Summary}]
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Metric} & \textbf{Type} & \textbf{Better when} \\
+\hline
+Purity & Extrinsic & Higher \\
+\hline
+Davies-Bouldin Index & Intrinsic & Lower \\
+\hline
+Silhouette Index & Intrinsic & Higher (close to $+1$) \\
+\hline
+Dunn Index & Intrinsic & Higher \\
+\hline
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+%% ====================================================================
+%%  PART IX - Parametric Unsupervised Learning
+%% ====================================================================
+\newpage
+\part{Parametric Unsupervised Learning}
+
+\section{Parametric vs Non-Parametric Unsupervised Learning}
+
+Unsupervised learning can be divided into two main paradigms:
+
+\begin{itemize}
+    \item \textbf{Non-parametric approaches} (e.g., clustering): no assumptions are made about the underlying data densities. Instead, we seek a partition of the data into clusters based on similarity measures.
+    \item \textbf{Parametric approaches}: we \emph{assume} the data was generated by a model with a known functional form but unknown parameters. The goal is to estimate these parameters from the observed data.
+\end{itemize}
+
+\begin{definition}[Parametric Unsupervised Learning]
+In parametric unsupervised learning, we model the underlying class-conditional densities with a \textbf{mixture of parametric densities}. The objective is to find the model parameters that best explain the observed data, without knowing the class labels.
+\end{definition}
+
+\subsection{Advantages of Having a Parametric Model}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Why Use a Parametric Model?}]
+\begin{itemize}
+    \item We can adjust the parameters to \textbf{maximise the probability} that the model produced the observed data (maximum likelihood).
+    \item We can \textbf{compute the likelihood} of new data under the model.
+    \item We can \textbf{compare algorithms}: whichever model gives the highest likelihood for the observed data is preferred.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Comparison with Supervised Learning}
+
+In \textbf{parametric supervised learning}:
+\begin{itemize}
+    \item Given $m$ classes with samples $\mathbf{x}_1, \dots, \mathbf{x}_n$ each labelled as class $1, 2, \dots, m$.
+    \item $\mathcal{D}_i$ contains samples from class $i$.
+    \item The probability distribution for class $i$ is $p_i(\mathbf{x} \mid \boldsymbol{\theta}_i)$.
+    \item Use Maximum Likelihood to estimate parameters $\boldsymbol{\theta}_i$.
+\end{itemize}
+
+In \textbf{parametric unsupervised learning}:
+\begin{itemize}
+    \item We still know we have $m$ classes.
+    \item We have samples $\mathbf{x}_1, \dots, \mathbf{x}_n$ each of \textbf{unknown class}.
+    \item The probability distribution for class $i$ is still $p_i(\mathbf{x} \mid \boldsymbol{\theta}_i)$.
+    \item The task is to determine both the \textbf{class assignments} and the \textbf{parameters simultaneously}.
+\end{itemize}
+
+\begin{remark}
+\textbf{Example application --- MRI brain segmentation.} Different brain tissues have different intensity distributions. There are 6 major tissue types, each modelled by a Gaussian distribution with unknown mean and standard deviation. The task is to simultaneously segment (classify) each pixel \emph{and} estimate the Gaussian parameters, without knowing the ground-truth labels.
+\end{remark}
+
+%% ====================================================================
+\section{Gaussian Mixture Models (GMM)}
+
+\begin{definition}[Gaussian Mixture Model]
+A Gaussian Mixture Model with $K$ components is a probabilistic model that represents the data distribution as a weighted sum of $K$ Gaussian densities:
+\[
+p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
+\]
+where $\pi_k$ are the \textbf{mixing coefficients}, $\boldsymbol{\mu}_k$ are the \textbf{means}, and $\boldsymbol{\Sigma}_k$ are the \textbf{covariance matrices} of each component.
+\end{definition}
+
+\subsection{Latent Variables}
+
+GMM introduces a \textbf{latent variable} $\mathbf{z}$ (not observed, but inferred) to indicate which Gaussian component a data point belongs to.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Latent Variable $\mathbf{z}$}]
+\begin{itemize}
+    \item $\mathbf{z} = (z_1, \dots, z_K)$ is a \textbf{binary one-hot vector}: $z_k \in \{0, 1\}$ and $\sum_{k} z_k = 1$.
+    \item Only one component of $\mathbf{z}$ is active (equal to 1) at a time.
+    \item There are $K$ possible states of $\mathbf{z}$, one for each component.
+    \item Example: $\mathbf{z} = [0, 0, 1, 0, 0]$ indicates the data point belongs to the 3rd Gaussian component.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{GMM Parameters}
+
+The aim is to find the maximum likelihood parameters:
+\begin{itemize}
+    \item $\pi_k$: mixing coefficients (prior probability that a point belongs to component $k$).
+    \item $\boldsymbol{\mu}_k$: mean of each Gaussian component.
+    \item $\boldsymbol{\Sigma}_k$: covariance matrix of each Gaussian component.
+\end{itemize}
+
+\subsection{Joint and Marginal Distributions}
+
+\subsubsection{Prior Distribution $p(\mathbf{z})$}
+
+Each component $z_k$ is assigned a prior probability:
+\[
+p(z_k = 1) = \pi_k, \quad \text{where} \quad 0 \leq \pi_k \leq 1 \quad \text{and} \quad \sum_{k=1}^{K} \pi_k = 1
+\]
+
+Because $\mathbf{z}$ uses a 1-of-$K$ (one-hot) encoding:
+\[
+p(\mathbf{z}) = \prod_{k=1}^{K} \pi_k^{z_k}
+\]
+
+Since $z_k \in \{0,1\}$ and the components are mutually exclusive, only the term corresponding to the active component contributes.
+
+\subsubsection{Conditional Distribution $p(\mathbf{x} \mid \mathbf{z})$}
+
+For a particular component (value of $\mathbf{z}$):
+\[
+p(\mathbf{x} \mid z_k = 1) = \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
+\]
+
+Thus $p(\mathbf{x} \mid \mathbf{z})$ can be written as:
+\[
+p(\mathbf{x} \mid \mathbf{z}) = \prod_{k=1}^{K} \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)^{z_k}
+\]
+
+Using the one-hot property of $\mathbf{z}$, only the term corresponding to the active component ($z_k = 1$) contributes to the product.
+
+\subsubsection{Joint Distribution $p(\mathbf{x}, \mathbf{z})$}
+
+The joint distribution factorises as:
+\[
+p(\mathbf{x}, \mathbf{z}) = p(\mathbf{z}) \, p(\mathbf{x} \mid \mathbf{z})
+\]
+
+\subsubsection{Marginal Distribution $p(\mathbf{x})$}
+
+By the law of total probability, the marginal is obtained by summing over all possible states of $\mathbf{z}$:
+\[
+p(\mathbf{x}) = \sum_{\mathbf{z}} p(\mathbf{x}, \mathbf{z}) = \sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
+\]
+
+This is the standard form of a Gaussian Mixture.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Graphical Model for GMM}]
+The relationship between the latent variable $\mathbf{z}$ and the observed variable $\mathbf{x}$ can be represented as a directed graphical model:
+\[
+\mathbf{z} \longrightarrow \mathbf{x}
+\]
+\begin{itemize}
+    \item $\mathbf{z}$: latent variable representing the subclass (component membership).
+    \item $\mathbf{x}$: observed variable (data point).
+\end{itemize}
+For $N$ observations $\mathbf{x}_1, \dots, \mathbf{x}_N$, every observed data point $\mathbf{x}_n$ has a corresponding latent vector $\mathbf{z}_n$ indicating its sub-class.
+\end{tcolorbox}
+
+\subsection{Responsibilities}
+
+\begin{definition}[Responsibility]
+The \textbf{responsibility} $\gamma(z_{nk})$ is the posterior probability that data point $\mathbf{x}_n$ belongs to component $k$:
+\[
+\gamma(z_{nk}) \equiv p(z_k = 1 \mid \mathbf{x}_n) = \frac{\pi_k \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)}{\displaystyle\sum_{j=1}^{K} \pi_j \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_j, \boldsymbol{\Sigma}_j)}
+\]
+obtained via \textbf{Bayes' theorem}.
+\end{definition}
+
+\begin{itemize}
+    \item $\pi_k$ can be viewed as the \textbf{prior probability} of $z_k = 1$.
+    \item $\gamma(z_{nk})$ can be interpreted as the responsibility that component $k$ takes for ``explaining'' the observation $\mathbf{x}_n$.
+\end{itemize}
+
+\subsection{Generating Synthetic Data from a GMM}
+
+There are two ways to generate data from a GMM:
+\begin{enumerate}
+    \item \textbf{Ancestral sampling}: generate a value $\mathbf{z}^*$ from $p(\mathbf{z})$ (i.e., select a component), then generate $\mathbf{x}$ from $p(\mathbf{x} \mid \mathbf{z}^*)$.
+    \item \textbf{Marginal sampling}: generate directly from $p(\mathbf{x})$ by ignoring the values of $\mathbf{z}$.
+\end{enumerate}
+
+Synthetic data generation is useful for evaluating model performance, diagnosing issues, and fine-tuning parameters.
+
+%% ====================================================================
+\section{Maximum Likelihood for GMM}
+
+\subsection{Data Representation}
+
+Given a dataset $\{\mathbf{x}_1, \dots, \mathbf{x}_N\}$ of $N$ items each of dimension $D$:
+\begin{itemize}
+    \item $\mathbf{X}$ is an $N \times D$ matrix, where the $n$-th row is $\mathbf{x}_n^\top$.
+    \item $\mathbf{Z}$ is an $N \times K$ matrix of latent variables, where the $n$-th row is $\mathbf{z}_n^\top$.
+\end{itemize}
+
+The goal is to estimate $\boldsymbol{\mu}_k$, $\boldsymbol{\Sigma}_k$, and $\pi_k$ by maximising the likelihood of observing the dataset $\mathbf{X}$.
+
+\subsection{Likelihood and Log-Likelihood}
+
+The joint likelihood for the dataset $\mathbf{X}$ (assuming i.i.d.\ samples) is:
+\[
+p(\mathbf{X} \mid \boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\Sigma}) = \prod_{n=1}^{N} p(\mathbf{x}_n) = \prod_{n=1}^{N} \left[ \sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k) \right]
+\]
+
+The \textbf{log-likelihood} function is:
+\[
+\ln p(\mathbf{X} \mid \boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\Sigma}) = \sum_{n=1}^{N} \ln \left\{ \sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k) \right\}
+\]
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Why No Closed-Form Solution?}]
+The log-likelihood has \textbf{no closed-form solution} because:
+\begin{itemize}
+    \item The summation over $K$ components appears \emph{inside} the logarithm.
+    \item The logarithm does not directly operate on the individual Gaussian terms.
+    \item Taking derivatives with respect to $\boldsymbol{\mu}_k$, $\boldsymbol{\Sigma}_k$, or $\pi_k$ leads to coupled, non-linear equations.
+\end{itemize}
+While gradient-based optimisation is possible, the standard approach is the iterative \textbf{EM algorithm}.
+\end{tcolorbox}
+
+%% ====================================================================
+\section{Technical Issues}
+
+Before applying the EM algorithm, two important technical problems must be considered.
+
+\subsection{Singularity Problem}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Singularity Problem}]
+Consider a GMM with isotropic covariance matrices $\boldsymbol{\Sigma}_k = \sigma_k^2 \mathbf{I}$.
+
+If a data point $\mathbf{x}_n$ falls exactly on the mean $\boldsymbol{\mu}_j$ of component $j$, then $\exp\left(-\frac{(\mathbf{x}_n - \boldsymbol{\mu}_j)^2}{2\sigma_j^2}\right) = 1$, and the likelihood contribution becomes:
+\[
+\mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_j, \sigma_j^2 \mathbf{I}) = \frac{1}{(2\pi)^{D/2} \, |\boldsymbol{\Sigma}_j|^{1/2}}
+\]
+
+As $\sigma_j \to 0$, this term goes to \textbf{infinity}. The log-likelihood becomes unbounded, making maximisation \textbf{ill-posed}.
+\end{tcolorbox}
+
+\textbf{Solution}: if a component collapses ($\sigma_k \to 0$), reset its mean or covariance to a small but non-zero value.
+
+\subsection{Identifiability Problem}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Identifiability Problem}]
+A density $p(\mathbf{x} \mid \boldsymbol{\theta})$ is \textbf{identifiable} if $\boldsymbol{\theta} \neq \boldsymbol{\theta}'$ implies there exists an $\mathbf{x}$ for which $p(\mathbf{x} \mid \boldsymbol{\theta}) \neq p(\mathbf{x} \mid \boldsymbol{\theta}')$.
+
+A $K$-component mixture has $K!$ \textbf{equivalent solutions}, corresponding to the $K!$ ways of assigning $K$ sets of parameters to $K$ components.
+
+\begin{itemize}
+    \item For $K=3$: $K! = 6$ equivalent permutations (123, 132, 213, 231, 312, 321).
+    \item For any point in parameter space, there are $K! - 1$ additional points giving the same distribution.
+\end{itemize}
+However, any of the equivalent solutions is equally valid.
+\end{tcolorbox}
+
+\textbf{Solution}: initialise GMM parameters using \textbf{K-means clustering}, providing a better and more stable starting point for EM.
+
+%% ====================================================================
+\section{Expectation-Maximisation (EM) Algorithm for GMM}
+
+\begin{definition}[EM Algorithm]
+The Expectation-Maximisation (EM) algorithm is an iterative method for finding maximum likelihood solutions for models with \textbf{latent variables}. It alternates between:
+\begin{itemize}
+    \item \textbf{E-step}: compute posterior probabilities (responsibilities) using current parameters.
+    \item \textbf{M-step}: re-estimate the parameters using these responsibilities.
+\end{itemize}
+\end{definition}
+
+\subsection{Deriving the Parameter Updates}
+
+We want to find $\pi_k$, $\boldsymbol{\mu}_k$, $\boldsymbol{\Sigma}_k$ that maximise the log-likelihood. Taking derivatives one by one:
+
+\subsubsection{Update for $\boldsymbol{\mu}_k$}
+
+Taking the derivative of $\ln p(\mathbf{X} \mid \boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\Sigma})$ w.r.t.\ $\boldsymbol{\mu}_k$ and setting to zero, we obtain:
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Mean Update}]
+\[
+\boldsymbol{\mu}_k = \frac{1}{N_k} \sum_{n=1}^{N} \gamma(z_{nk}) \, \mathbf{x}_n
+\]
+The mean of the $k$-th component is the \textbf{weighted mean of all data points}, where each point $\mathbf{x}_n$ is weighted by the posterior probability (responsibility) $\gamma(z_{nk})$ that component $k$ generated $\mathbf{x}_n$.
+\end{tcolorbox}
+
+\subsubsection{Update for $\boldsymbol{\Sigma}_k$}
+
+Taking the derivative w.r.t.\ $\boldsymbol{\Sigma}_k$ and setting to zero:
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Covariance Update}]
+\[
+\boldsymbol{\Sigma}_k = \frac{1}{N_k} \sum_{n=1}^{N} \gamma(z_{nk}) \, (\mathbf{x}_n - \boldsymbol{\mu}_k)(\mathbf{x}_n - \boldsymbol{\mu}_k)^\top
+\]
+Each data point is weighted by the corresponding posterior probability. The denominator $N_k$ is the same effective number of points as in the mean update.
+\end{tcolorbox}
+
+\subsubsection{Update for $\pi_k$}
+
+Maximising w.r.t.\ $\pi_k$ subject to the constraint $\sum_k \pi_k = 1$ (using a \textbf{Lagrange multiplier}):
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Mixing Coefficient Update}]
+\[
+\pi_k = \frac{N_k}{N}
+\]
+The mixing coefficient for component $k$ is the fraction of the effective number of points assigned to that component.
+\end{tcolorbox}
+
+\subsubsection{Effective Number of Points $N_k$}
+
+In all three updates above, $N_k$ denotes:
+\[
+N_k = \sum_{n=1}^{N} \gamma(z_{nk})
+\]
+
+This represents the \textbf{effective number of data points} assigned to cluster $k$ (a soft count based on responsibilities).
+
+\begin{remark}
+All three parameter estimates depend on the responsibilities $\gamma(z_{nk})$, which in turn depend on the parameters. Therefore, these are \textbf{not closed-form solutions} --- they must be solved \textbf{iteratively} via the EM algorithm.
+\end{remark}
+
+\subsection{The EM Algorithm --- Step by Step}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{EM Algorithm for GMM}]
+\begin{enumerate}
+    \item \textbf{Initialisation}: set initial values for $\pi_k$, $\boldsymbol{\mu}_k$, $\boldsymbol{\Sigma}_k$ and evaluate the initial log-likelihood.
+
+    \item \textbf{E-step}: evaluate responsibilities using the current parameter values:
+    \[
+    \gamma(z_{nk}) = \frac{\pi_k \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)}{\displaystyle\sum_{j=1}^{K} \pi_j \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_j, \boldsymbol{\Sigma}_j)}
+    \]
+
+    \item \textbf{M-step}: re-estimate parameters using current responsibilities:
+    \[
+    \boldsymbol{\mu}_k^{\text{new}} = \frac{1}{N_k} \sum_{n=1}^{N} \gamma(z_{nk}) \, \mathbf{x}_n
+    \]
+    \[
+    \boldsymbol{\Sigma}_k^{\text{new}} = \frac{1}{N_k} \sum_{n=1}^{N} \gamma(z_{nk}) \, (\mathbf{x}_n - \boldsymbol{\mu}_k^{\text{new}})(\mathbf{x}_n - \boldsymbol{\mu}_k^{\text{new}})^\top
+    \]
+    \[
+    \pi_k^{\text{new}} = \frac{N_k}{N}
+    \]
+    where $N_k = \sum_{n=1}^{N} \gamma(z_{nk})$.
+
+    \item \textbf{Convergence check}: evaluate the log-likelihood
+    \[
+    \ln p(\mathbf{X} \mid \boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\Sigma}) = \sum_{n=1}^{N} \ln \left\{ \sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x}_n \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k) \right\}
+    \]
+    Check convergence of either the parameters or the log-likelihood. If not converged, \textbf{go to Step 2}.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Visualising EM Iterations}
+
+The EM algorithm proceeds iteratively:
+\begin{enumerate}
+    \item Start with data points and an initial mixture model (random or K-means initialised).
+    \item \textbf{Initial E-step}: determine responsibilities (soft assignments of points to components).
+    \item \textbf{First M-step}: re-evaluate parameters --- the Gaussian components shift and reshape.
+    \item After 2, 5, 20 cycles, the model converges to a stable solution.
+\end{enumerate}
+
+%% ====================================================================
+\section{Properties of EM for GMM}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Key Properties of EM}]
+\begin{itemize}
+    \item EM takes \textbf{many more iterations} than K-means, and each cycle requires significantly more computation.
+    \item It is common to run \textbf{K-means first} to find a suitable initialisation for the means.
+    \item Covariance matrices can be initialised to the covariances of clusters found by K-means.
+    \item EM is \textbf{not guaranteed} to find the global maximum of the log-likelihood --- it can converge to local maxima.
+    \item The log-likelihood is guaranteed to be \textbf{non-decreasing} at each iteration.
+\end{itemize}
+\end{tcolorbox}
+
+%% ====================================================================
+\section{GMM Summary}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{GMM Summary}]
+\begin{itemize}
+    \item GMM provides a \textbf{probabilistic view} of unsupervised learning (and clustering).
+    \item Each cluster corresponds to a different Gaussian component.
+    \item The model uses \textbf{latent variables} to represent component membership.
+    \item It is a \textbf{general approach}: Gaussians can be replaced with other distributions (continuous or discrete).
+    \item Mixture models are very powerful --- they are \textbf{universal approximators}.
+    \item Parameter optimisation is performed using the \textbf{EM algorithm}.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Aspect} & \textbf{K-Means} & \textbf{GMM + EM} \\
+\hline
+Assignment & Hard (each point to one cluster) & Soft (probabilities) \\
+\hline
+Cluster shape & Spherical (Voronoi cells) & Arbitrary (full covariance) \\
+\hline
+Output & Cluster labels & Posterior probabilities \\
+\hline
+Parameters & Centroids only & $\boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k, \pi_k$ \\
+\hline
+Convergence & Fast & Slower (more computation/iter) \\
+\hline
+Likelihood & Not modelled & Explicit probabilistic model \\
+\hline
+Initialisation & Random or K-means++ & K-means recommended \\
+\hline
+\end{tabular}
+\end{center}
+
+%% ====================================================================
+%%  PART X - Hidden Markov Models
+%% ====================================================================
+\newpage
+\part{Hidden Markov Models}
+
+\section{Sequential Data}
+
+Many real-world problems involve \textbf{sequential data} --- observations ordered in time where the order carries important information.
+
+\begin{itemize}
+    \item \textbf{Speech recognition}: acoustic features at successive time frames.
+    \item \textbf{Natural language processing}: sequences of characters, words, or sentences.
+    \item \textbf{Weather forecasting}: data of successive days.
+    \item \textbf{Financial series}: daily values of currency exchange rates.
+    \item \textbf{Biomedical data}: EEG, ECG, and other time-series signals.
+    \item \textbf{Gesture recognition}: body pose sequences over time.
+\end{itemize}
+
+%% ====================================================================
+\section{Markov Models (Markov Chains)}
+
+\begin{definition}[Markov Chain]
+A \textbf{Markov chain} is a stochastic model describing a sequence of possible events in which the probability of each event depends \textbf{only on the state attained in the previous event}. It is a process in time where the state at time $t$ is influenced only by the state at time $t-1$.
+\end{definition}
+
+The key motivation is that it is impractical to consider a general dependence of future observations on \emph{all} previous observations, since complexity grows with the number of observations. Markov models restrict dependence to only the most recent observations.
+
+\subsection{Independence Model (Baseline)}
+
+The simplest model assumes all observations are \textbf{independent}:
+\begin{itemize}
+    \item Graph without links between states.
+    \item Example: predicting rain for tomorrow based only on the relative frequency of rainy days, ignoring whether it rained today.
+\end{itemize}
+
+\subsection{First-Order Markov Model}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{First-Order Markov Property}]
+The distribution of the next state depends \textbf{only on the current state}:
+\[
+P(q_{t+1} = S_j \mid q_t = S_i, q_{t-1} = S_k, \dots, q_1 = S_l) = P(q_{t+1} = S_j \mid q_t = S_i)
+\]
+If the model is used to predict the next observation, the distribution of the prediction depends only on the preceding observation and is independent of all earlier observations.
+\end{tcolorbox}
+
+\subsection{Markov Model Ingredients}
+
+A Markov model is characterised by:
+
+\begin{enumerate}
+    \item \textbf{State set}: $\mathcal{S} = \{S_1, S_2, \dots, S_N\}$ --- a set of $N$ states.
+    \item \textbf{State sequence}: $\mathcal{Q} = \{q_1, q_2, \dots, q_T\}$ --- at each discrete time step $t$, the process is in exactly one state $q_t \in \mathcal{S}$.
+    \item \textbf{Transition probability matrix}: $\mathbf{A} = \{a_{ij}\}$ where
+    \[
+    a_{ij} = P(q_t = S_j \mid q_{t-1} = S_i), \quad \sum_{j=1}^{N} a_{ij} = 1 \;\; \forall \, i
+    \]
+    \item \textbf{Initial state distribution}: $\boldsymbol{\Pi} = \{\pi_i\}$ where
+    \[
+    \pi_i = P(q_1 = S_i), \quad \sum_{i=1}^{N} \pi_i = 1
+    \]
+\end{enumerate}
+
+\begin{example}
+Consider a weather model with states $\{$sunny, rainy, snowy$\}$:
+\[
+\mathbf{A} = \begin{pmatrix} 0.8 & 0.15 & 0.05 \\ 0.38 & 0.6 & 0.02 \\ 0.75 & 0.05 & 0.2 \end{pmatrix}, \quad \boldsymbol{\Pi} = (0.7, \; 0.25, \; 0.05)
+\]
+
+The probability of the sequence \emph{Sunny $\to$ Rainy $\to$ Rainy $\to$ Rainy $\to$ Snowy $\to$ Snowy}:
+\begin{align*}
+P &= P(\text{Su}) \cdot P(\text{R}\mid\text{Su}) \cdot P(\text{R}\mid\text{R}) \cdot P(\text{R}\mid\text{R}) \cdot P(\text{Sn}\mid\text{R}) \cdot P(\text{Sn}\mid\text{Sn}) \\
+  &= 0.7 \times 0.15 \times 0.6 \times 0.6 \times 0.02 \times 0.2 = 0.0001512
+\end{align*}
+\end{example}
+
+\subsection{Higher-Order Markov Models}
+
+\begin{itemize}
+    \item \textbf{2nd order}: each observation depends on the previous \emph{two} observations.
+    \item \textbf{$M$-th order}: the conditional distribution depends on the previous $M$ variables.
+    \item \textbf{Number of parameters}:
+    \begin{itemize}
+        \item First order: $K(K-1)$ parameters (where $K$ is the number of states).
+        \item $M$-th order: $K^{M-1}(K-1)$ parameters --- grows exponentially with $M$.
+    \end{itemize}
+\end{itemize}
+
+%% ====================================================================
+\section{Hidden Markov Models (HMM)}
+
+Markov models are computationally tractable but limited: the states are directly observed. To build a more general framework, we introduce \textbf{latent variables}.
+
+\begin{definition}[Hidden Markov Model]
+When the latent variables are discrete, the model is called a \textbf{Hidden Markov Model (HMM)}. Each hidden state is associated with a probability function describing the probability that a certain output (observation symbol) is emitted by that state. The states are \emph{not} directly observed --- only the emissions are.
+\end{definition}
+
+\subsection{Formal Definition}
+
+An HMM is denoted by the triple $\lambda = (\mathbf{A}, \mathbf{B}, \boldsymbol{\pi})$:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{HMM Components}]
+\begin{enumerate}
+    \item \textbf{Hidden states}: $\mathcal{S} = \{S_1, S_2, \dots, S_N\}$.
+    \item \textbf{Transition matrix}: $\mathbf{A} = \{a_{ij}\}$ where $a_{ij} = P(q_t = S_j \mid q_{t-1} = S_i)$.
+    \item \textbf{Initial distribution}: $\boldsymbol{\pi} = \{\pi_i\}$ where $\pi_i = P(q_1 = S_i)$.
+    \item \textbf{Observation symbols}: $\mathcal{V} = \{v_1, v_2, \dots, v_M\}$.
+    \item \textbf{Emission probability matrix}: $\mathbf{B} = \{b_{jk}\}$ where $b_{jk} = P(o_t = v_k \mid q_t = S_j)$, i.e., the probability of emitting symbol $v_k$ when in state $S_j$.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{example}
+\textbf{Weather--ice cream HMM.} A climatologist in 2799 wants to reconstruct the weather in Verona during the summer of 2008. The only record is a diary listing how many ice creams someone ate each day.
+\begin{itemize}
+    \item \textbf{Hidden states}: $\{$Hot, Cold$\}$ (the unknown weather).
+    \item \textbf{Observations}: $\{1, 2, 3\}$ (number of ice creams eaten --- the known data).
+    \item \textbf{Task}: given the ice cream observation sequence, determine the most likely weather sequence.
+\end{itemize}
+\end{example}
+
+\subsection{Conditional Independence in HMMs}
+
+The graphical model structure of an HMM implies important \textbf{conditional independence} properties:
+
+\begin{center}
+$s_1 \to s_2 \to s_3 \to s_4 \to \cdots$
+
+$\downarrow \quad\;\; \downarrow \quad\;\; \downarrow \quad\;\; \downarrow$
+
+$O_1 \quad O_2 \quad O_3 \quad O_4$
+\end{center}
+
+\begin{itemize}
+    \item $O_t$ is conditionally independent of everything else given $s_t$.
+    \item $s_{t+1}$ is conditionally independent of everything else given $s_t$.
+\end{itemize}
+
+\subsection{Types of HMM Structure}
+
+\begin{itemize}
+    \item \textbf{Fully connected (ergodic)}: every state can transition to every other state.
+    \item \textbf{Left-to-right}: restrictions on $\mathbf{A}$ such that $a_{jk} = 0$ if $k < j$. Once a state is vacated, it cannot be re-entered. Common in speech recognition.
+\end{itemize}
+
+%% ====================================================================
+\section{The Three Key Tasks of HMMs}
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Three Fundamental HMM Problems}]
+\begin{enumerate}
+    \item \textbf{Task 1 --- Evaluation (Likelihood)}: given $\lambda$ and observation sequence $O = (O_1, \dots, O_T)$, compute $P(O \mid \lambda)$.
+    \begin{itemize}
+        \item Solved by the \textbf{Forward algorithm}.
+    \end{itemize}
+    \item \textbf{Task 2 --- Decoding}: given $O$ and $\lambda$, find the most likely hidden state sequence $S_1, \dots, S_T$.
+    \begin{itemize}
+        \item Solved by the \textbf{Viterbi algorithm}.
+    \end{itemize}
+    \item \textbf{Task 3 --- Training (Learning)}: given observations $\{O\}$, find the model $\lambda = (\boldsymbol{\pi}, \mathbf{A}, \mathbf{B})$ that maximises $P(O \mid \lambda)$.
+    \begin{itemize}
+        \item Solved by the \textbf{Baum-Welch algorithm} (forward-backward), a special case of EM.
+    \end{itemize}
+\end{enumerate}
+\end{tcolorbox}
+
+%% ====================================================================
+\section{Task 1: Computing the Observation Likelihood}
+
+\subsection{Problem Statement}
+
+Given an HMM $\lambda$ and an observation sequence $O = (O_1, O_2, \dots, O_T)$, determine the likelihood $P(O \mid \lambda)$.
+
+\subsection{Na\"ive Approach}
+
+For a \emph{known} hidden state sequence $Q$, the observation likelihood is:
+\[
+P(O \mid Q) = \prod_{i=1}^{T} P(o_i \mid q_i)
+\]
+
+The joint probability of observations and a specific state sequence is:
+\[
+P(O, Q) = P(O \mid Q) \cdot P(Q) = \prod_{i=1}^{T} P(o_i \mid q_i) \cdot \prod_{i=1}^{T} P(q_i \mid q_{i-1})
+\]
+
+The total likelihood requires summing over \emph{all} possible state sequences:
+\[
+P(O) = \sum_{Q} P(O, Q) = \sum_{Q} P(O \mid Q) \, P(Q)
+\]
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\textbf{Complexity Problem}]
+For an HMM with $N$ hidden states and an observation sequence of length $T$, there are $N^T$ possible hidden state sequences. This makes the na\"ive approach \textbf{computationally intractable} for any realistic problem.
+\end{tcolorbox}
+
+\subsection{The Forward Algorithm}
+
+The Forward algorithm computes $P(O \mid \lambda)$ efficiently using \textbf{dynamic programming}.
+
+\begin{definition}[Forward Variable]
+The forward variable $\alpha_t(j)$ represents the probability of being in state $j$ after seeing the first $t$ observations:
+\[
+\alpha_t(j) = P(o_1, o_2, \dots, o_t, \; q_t = j \mid \lambda)
+\]
+\end{definition}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Forward Algorithm}]
+\begin{enumerate}
+    \item \textbf{Initialisation} ($t = 1$):
+    \[
+    \alpha_1(j) = \pi_j \cdot b_j(o_1), \quad 1 \leq j \leq N
+    \]
+
+    \item \textbf{Recursion} ($t = 2, \dots, T$):
+    \[
+    \alpha_t(j) = \left[ \sum_{i=1}^{N} \alpha_{t-1}(i) \cdot a_{ij} \right] \cdot b_j(o_t), \quad 1 \leq j \leq N
+    \]
+
+    \item \textbf{Termination}:
+    \[
+    P(O \mid \lambda) = \sum_{i=1}^{N} \alpha_T(i) \cdot a_{i,F}
+    \]
+    where $a_{i,F}$ is the transition probability to the final (non-emitting) state. If no final state is used, simply $P(O \mid \lambda) = \sum_{i=1}^{N} \alpha_T(i)$.
+\end{enumerate}
+\end{tcolorbox}
+
+\textbf{How each cell is updated}: $\alpha_t(j)$ combines three quantities:
+\begin{itemize}
+    \item $\alpha_{t-1}(i)$: the previous forward path probability from state $i$.
+    \item $a_{ij}$: the transition probability from state $i$ to state $j$.
+    \item $b_j(o_t)$: the emission probability of observation $o_t$ given state $j$.
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Complexity Reduction}]
+The Forward algorithm reduces the complexity from $O(N^T)$ (na\"ive) to $O(T \cdot N^2)$ by storing and reusing intermediate computations instead of recomputing the same subproblems repeatedly for different state sequences.
+\end{tcolorbox}
+
+%% ====================================================================
+\section{Task 2: Decoding (Viterbi Algorithm)}
+
+\subsection{Problem Statement}
+
+Given an observation sequence $O$ and an HMM $\lambda$, find the \textbf{most likely hidden state sequence} $Q^* = (q_1^*, q_2^*, \dots, q_T^*)$ that generated $O$:
+\[
+Q^* = \arg\max_{Q} P(Q \mid O, \lambda)
+\]
+
+The na\"ive approach (evaluating $P(O \mid Q)$ for every possible $Q$ and picking the maximum) has $O(N^T)$ complexity. The \textbf{Viterbi algorithm} solves this efficiently.
+
+\subsection{The Viterbi Algorithm}
+
+\begin{definition}[Viterbi Variable]
+The Viterbi variable $v_t(j)$ is the probability of the most likely state sequence ending in state $j$ at time $t$:
+\[
+v_t(j) = \max_{q_0, q_1, \dots, q_{t-1}} P(q_0, q_1, \dots, q_{t-1}, o_1, \dots, o_t, \; q_t = j \mid \lambda)
+\]
+\end{definition}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Viterbi Algorithm}]
+\begin{enumerate}
+    \item \textbf{Initialisation} ($t = 1$):
+    \[
+    v_1(j) = \pi_j \cdot b_j(o_1), \quad \text{bt}_1(j) = 0
+    \]
+
+    \item \textbf{Recursion} ($t = 2, \dots, T$):
+    \[
+    v_t(j) = \max_{i=1}^{N} \left[ v_{t-1}(i) \cdot a_{ij} \right] \cdot b_j(o_t)
+    \]
+    \[
+    \text{bt}_t(j) = \arg\max_{i=1}^{N} \left[ v_{t-1}(i) \cdot a_{ij} \right]
+    \]
+    where $\text{bt}_t(j)$ is the \textbf{backpointer} storing which previous state led to the maximum.
+
+    \item \textbf{Termination}:
+    \[
+    P^* = \max_{i=1}^{N} v_T(i), \quad q_T^* = \arg\max_{i=1}^{N} v_T(i)
+    \]
+
+    \item \textbf{Backtrace} ($t = T-1, \dots, 1$):
+    \[
+    q_t^* = \text{bt}_{t+1}(q_{t+1}^*)
+    \]
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{remark}
+The Viterbi algorithm is \textbf{identical to the Forward algorithm} except:
+\begin{itemize}
+    \item It takes the \textbf{max} over previous path probabilities, whereas the Forward algorithm takes the \textbf{sum}.
+    \item It maintains \textbf{backpointers} to reconstruct the best state sequence.
+\end{itemize}
+While $v_T(j)$ gives the maximum probability for ending in state $j$, it alone does not store information about the preceding states. The backtracing process recovers the full optimal path.
+\end{remark}
+
+%% ====================================================================
+\section{Task 3: Training (Baum-Welch Algorithm)}
+
+\subsection{Problem Statement}
+
+Given an observation sequence $O$ and the set of possible hidden states, \textbf{learn} the HMM parameters $\mathbf{A}$ and $\mathbf{B}$.
+
+\begin{itemize}
+    \item \textbf{Input}: an unlabelled observation sequence $O$ and a vocabulary of potential hidden states $\mathcal{Q}$.
+    \item The standard algorithm is the \textbf{Baum-Welch} (forward-backward) algorithm, a special case of the \textbf{EM algorithm}.
+\end{itemize}
+
+\subsection{Fully Visible Case (Baseline)}
+
+If both the hidden states and observations are known, parameters can be estimated directly by \textbf{maximum likelihood}:
+
+\begin{example}
+Given the sequence:
+\begin{center}
+\begin{tabular}{lcccccccc}
+Ice creams: & 3 & 3 & 2 & 1 & 1 & 2 & 1 & 2, 3 \\
+Weather: & Hot & Hot & Cold & Cold & Cold & Cold & Cold & Hot, Hot \\
+\end{tabular}
+\end{center}
+
+\textbf{Transition probabilities} (ignoring final states):
+\begin{itemize}
+    \item $P(\text{Hot}\mid\text{Hot}) = 2/3$, \quad $P(\text{Cold}\mid\text{Hot}) = 1/3$
+    \item $P(\text{Cold}\mid\text{Cold}) = 2/3$, \quad $P(\text{Hot}\mid\text{Cold}) = 1/3$
+\end{itemize}
+
+\textbf{Emission probabilities}:
+\begin{itemize}
+    \item $P(1\mid\text{Hot}) = 0$, \; $P(2\mid\text{Hot}) = 0.25$, \; $P(3\mid\text{Hot}) = 0.75$
+    \item $P(1\mid\text{Cold}) = 0.6$, \; $P(2\mid\text{Cold}) = 0.4$, \; $P(3\mid\text{Cold}) = 0$
+\end{itemize}
+\end{example}
+
+However, in the real HMM setting the hidden states are \textbf{unknown}, so we cannot use simple counting. We need the Baum-Welch algorithm.
+
+\subsection{Backward Probability}
+
+\begin{definition}[Backward Variable]
+The backward variable $\beta_t(i)$ is the probability of observing the \emph{remaining} observations $o_{t+1}, \dots, o_T$ given that we are in state $i$ at time $t$:
+\[
+\beta_t(i) = P(o_{t+1}, o_{t+2}, \dots, o_T \mid q_t = i, \lambda)
+\]
+It is computed analogously to the forward algorithm, but moving \textbf{backwards in time}.
+\end{definition}
+
+The backward variable is computed by summing all successive values $\beta_{t+1}(j)$, weighted by their transition probabilities $a_{ij}$ and observation probabilities $b_j(o_{t+1})$.
+
+\subsection{Key Quantities for Re-Estimation}
+
+\subsubsection{Transition Count: $\xi_t(i,j)$}
+
+\begin{definition}[$\xi_t(i,j)$]
+The probability of being in state $i$ at time $t$ and state $j$ at time $t+1$, given the entire observation sequence:
+\[
+\xi_t(i, j) = P(q_t = i, \; q_{t+1} = j \mid O, \lambda)
+\]
+\end{definition}
+
+To compute $\xi_t(i,j)$, we first compute the joint probability (the ``not-quite-$\xi_t$''):
+\[
+P(q_t = i, \; q_{t+1} = j, \; O \mid \lambda) = \alpha_t(i) \cdot a_{ij} \cdot b_j(o_{t+1}) \cdot \beta_{t+1}(j)
+\]
+
+This combines four quantities:
+\begin{itemize}
+    \item $\alpha_t(i)$: forward probability up to state $i$ at time $t$.
+    \item $a_{ij}$: transition probability from state $i$ to state $j$.
+    \item $b_j(o_{t+1})$: emission probability of the next observation given state $j$.
+    \item $\beta_{t+1}(j)$: backward probability from state $j$ at time $t+1$.
+\end{itemize}
+
+Then normalise:
+\[
+\xi_t(i,j) = \frac{\alpha_t(i) \cdot a_{ij} \cdot b_j(o_{t+1}) \cdot \beta_{t+1}(j)}{P(O \mid \lambda)}
+\]
+
+where $P(O \mid \lambda) = \sum_{j=1}^{N} \alpha_t(j) \cdot \beta_t(j)$.
+
+\subsubsection{State Occupancy: $\gamma_t(j)$}
+
+\begin{definition}[$\gamma_t(j)$]
+The probability of being in state $j$ at time $t$, given the entire observation sequence:
+\[
+\gamma_t(j) = P(q_t = j \mid O, \lambda) = \frac{\alpha_t(j) \cdot \beta_t(j)}{P(O \mid \lambda)}
+\]
+\end{definition}
+
+\begin{remark}
+$\gamma_t(j)$ is a degenerate case of $\xi_t$: $\gamma_t(j) = \sum_{k=1}^{N} \xi_t(j, k)$.
+\end{remark}
+
+\subsection{Parameter Re-Estimation Formulas}
+
+Using $\xi_t$ and $\gamma_t$, the parameters are re-estimated as:
+
+\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!75!black,title=\textbf{Baum-Welch Re-Estimation}]
+\textbf{Transition probabilities}:
+\[
+\hat{a}_{ij} = \frac{\text{expected number of transitions from } i \text{ to } j}{\text{expected number of transitions from } i} = \frac{\displaystyle\sum_{t=1}^{T-1} \xi_t(i,j)}{\displaystyle\sum_{t=1}^{T-1} \gamma_t(i)}
+\]
+
+\textbf{Emission probabilities}:
+\[
+\hat{b}_j(v_k) = \frac{\text{expected number of times in state } j \text{ observing } v_k}{\text{expected number of times in state } j} = \frac{\displaystyle\sum_{\substack{t=1 \\ o_t = v_k}}^{T} \gamma_t(j)}{\displaystyle\sum_{t=1}^{T} \gamma_t(j)}
+\]
+\end{tcolorbox}
+
+\subsection{The Baum-Welch Algorithm (EM for HMMs)}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Baum-Welch Algorithm}]
+\begin{enumerate}
+    \item \textbf{Initialise}: set initial estimates for $\mathbf{A}$, $\mathbf{B}$, and $\boldsymbol{\pi}$.
+    \item \textbf{E-step}: compute the expected state occupancy $\gamma_t(j)$ and the expected state transition count $\xi_t(i,j)$ using the current $\mathbf{A}$ and $\mathbf{B}$ (via forward and backward probabilities).
+    \item \textbf{M-step}: use $\gamma$ and $\xi$ to re-estimate $\hat{\mathbf{A}}$ and $\hat{\mathbf{B}}$.
+    \item \textbf{Repeat} steps 2--3 until convergence.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{remark}
+Although the Baum-Welch algorithm can in principle perform completely unsupervised learning, in practice the \textbf{initial conditions are very important}. For this reason, the algorithm is often given extra information. For example, in speech recognition, the HMM structure is often set by hand, and only the emission ($\mathbf{B}$) and non-zero transition ($\mathbf{A}$) probabilities are trained from data.
+\end{remark}
+
+%% ====================================================================
+\section{HMM Summary}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{HMM Summary}]
+\begin{itemize}
+    \item HMMs relate a sequence of \textbf{observations} to a sequence of \textbf{hidden states} that explain the observations.
+    \item \textbf{Decoding} (finding the hidden state sequence) is solved by the \textbf{Viterbi algorithm}.
+    \item The HMM parameters are $\mathbf{A}$ (transition matrix) and $\mathbf{B}$ (emission matrix).
+    \item Both can be trained with the \textbf{Baum-Welch} (forward-backward) algorithm, which is a special case of EM.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Task} & \textbf{Problem} & \textbf{Algorithm} & \textbf{Complexity} \\
+\hline
+Evaluation & $P(O \mid \lambda)$ & Forward & $O(T \cdot N^2)$ \\
+\hline
+Decoding & Best state sequence $Q^*$ & Viterbi & $O(T \cdot N^2)$ \\
+\hline
+Training & Learn $\mathbf{A}, \mathbf{B}$ & Baum-Welch (EM) & $O(T \cdot N^2)$ per iteration \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Algorithm} & \textbf{Key Operation} & \textbf{Output} \\
+\hline
+Forward & $\sum$ (sum over paths) & Observation likelihood \\
+\hline
+Viterbi & $\max$ (best path) + backpointers & Most likely state sequence \\
+\hline
+Backward & $\sum$ (sum, reverse direction) & Used in Baum-Welch \\
+\hline
+Baum-Welch & E-step ($\gamma, \xi$) + M-step ($\hat{A}, \hat{B}$) & Trained model parameters \\
+\hline
+\end{tabular}
+\end{center}
+
+%% ====================================================================
+%%  PART XI - Machine Learning vs Deep Learning: Recap
+%% ====================================================================
+\newpage
+\part{Machine Learning vs.\ Deep Learning --- Recap}
+
+\section{ML vs DL: Overview}
+
+Machine Learning (ML) and Deep Learning (DL) are related but distinct paradigms. Deep Learning is a \textbf{subset} of Machine Learning that uses multi-layered neural networks to learn hierarchical representations of data.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Aspect} & \textbf{Machine Learning} & \textbf{Deep Learning} \\
+\hline
+Training dataset size & Small (100s--1000s) & Large (10\,000s--millions) \\
+\hline
+Feature engineering & Manual (domain knowledge) & Automatic (learned by network) \\
+\hline
+\# of classifiers available & Many & Few (architecture families) \\
+\hline
+Training time & Short & Long \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{ML vs DL: Detailed Comparison}
+
+\subsection{Data Dependency}
+
+\begin{itemize}
+    \item \textbf{ML}: performs well with \textbf{smaller datasets} (hundreds to thousands of samples).
+    \item \textbf{DL}: requires \textbf{larger datasets} (tens of thousands to millions) due to the high complexity and vast number of parameters.
+\end{itemize}
+
+\subsection{Feature Engineering}
+
+\begin{itemize}
+    \item \textbf{ML}: relies on \textbf{manual feature extraction and selection}. Works best when meaningful features can be crafted using domain knowledge.
+    \item \textbf{DL}: \textbf{automatically} performs feature extraction via hidden layers in neural networks, with no need for manual feature engineering. Better suited for complex data such as images, videos, or audio.
+\end{itemize}
+
+\subsection{Computational Resources}
+
+\begin{itemize}
+    \item \textbf{ML}: less computationally intensive; can run efficiently on \textbf{CPUs}.
+    \item \textbf{DL}: highly resource-intensive; typically requires \textbf{GPUs} (or TPUs) for training.
+\end{itemize}
+
+\subsection{Model Interpretability}
+
+\begin{itemize}
+    \item \textbf{ML}: often \textbf{interpretable} --- e.g., decision trees, linear regression, logistic regression.
+    \item \textbf{DL}: often a \textbf{black box}. Requires additional techniques such as \textbf{LIME} and \textbf{SHAP} to perform interpretability analysis.
+\end{itemize}
+
+\subsection{Training Time}
+
+\begin{itemize}
+    \item \textbf{ML}: generally \textbf{faster} to train.
+    \item \textbf{DL}: generally \textbf{slower} to train, especially with large models and datasets.
+\end{itemize}
+
+\subsection{Problem Complexity}
+
+\begin{itemize}
+    \item \textbf{ML}: best for problems that do \textbf{not require complex representations}.
+    \item \textbf{DL}: excels at complex data structures where \textbf{hierarchical or abstract feature representation} is necessary.
+\end{itemize}
+
+\subsection{Flexibility}
+
+\begin{itemize}
+    \item \textbf{ML}: more flexible across a wider range of tasks. With minor adjustments, the same algorithm can be applied to regression and classification.
+    \item \textbf{DL}: specialised architectures tailored to the task at hand --- e.g., \textbf{CNNs} for image data, \textbf{RNNs} or \textbf{Transformers} for sequential data.
+\end{itemize}
+
+\subsection{Scalability}
+
+\begin{itemize}
+    \item \textbf{ML}: may struggle with scalability; when data size grows significantly, training time can increase disproportionately.
+    \item \textbf{DL}: performance \textbf{improves significantly with more data}; scales better to very large datasets.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{ML vs DL --- Full Comparison}]
+\renewcommand{\arraystretch}{1.4}
+\begin{center}
+\begin{tabular}{|l|p{5.2cm}|p{5.2cm}|}
+\hline
+\textbf{Criterion} & \textbf{Machine Learning} & \textbf{Deep Learning} \\
+\hline
+Data dependency & Small datasets sufficient & Large datasets required \\
+\hline
+Feature engineering & Manual & Automatic \\
+\hline
+Computation & CPU sufficient & GPU/TPU required \\
+\hline
+Interpretability & Often interpretable & Black box (needs LIME/SHAP) \\
+\hline
+Training time & Fast & Slow \\
+\hline
+Problem complexity & Simpler representations & Complex, hierarchical features \\
+\hline
+Flexibility & General-purpose algorithms & Task-specific architectures \\
+\hline
+Scalability & Limited & Scales well with data \\
+\hline
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+%% ====================================================================
+\section{Course Recap}
+
+A structured overview of all topics covered in the course.
+
+\subsection{Foundations}
+
+\begin{itemize}
+    \item Definition of machine learning; types of ML (supervised, unsupervised).
+    \item Applications, error functions, regularisation.
+    \item Overfitting and underfitting.
+\end{itemize}
+
+\subsection{Data Cleaning and Preprocessing}
+
+\begin{itemize}
+    \item Categorical data to numeric data, handling missing values.
+    \item Data cleaning, outlier removal.
+    \item Feature normalisation.
+    \item Dimensionality reduction (e.g., PCA).
+    \item Feature selection (regression-based, forward feature selection).
+\end{itemize}
+
+\subsection{Model Evaluation}
+
+\begin{itemize}
+    \item Train / validation / test split; cross-validation.
+    \item Metrics for regression, classification, and clustering.
+    \item Grid search for parameter selection.
+\end{itemize}
+
+\subsection{Supervised Learning --- Linear Models}
+
+\begin{itemize}
+    \item Linear regression, L1/L2 regularised regression.
+    \item Logistic regression, linear SVM, perceptron.
+\end{itemize}
+
+\subsection{Supervised Learning --- Instance-Based}
+
+\begin{itemize}
+    \item K-Nearest Neighbours (K-NN).
+    \item Distance metrics and their impact on performance.
+\end{itemize}
+
+\subsection{Supervised Learning --- Decision Trees and Ensembles}
+
+\begin{itemize}
+    \item CART algorithm, pruning, entropy, information gain.
+    \item Random Forest, bagging, boosting, AdaBoost.
+\end{itemize}
+
+\subsection{Support Vector Machines}
+
+\begin{itemize}
+    \item Large margin classifiers, SVM for binary classification.
+    \item Kernel trick for non-linear classification.
+    \item Regularisation and the role of the $C$ parameter.
+\end{itemize}
+
+\subsection{Unsupervised Learning --- Clustering}
+
+\begin{itemize}
+    \item K-means, hierarchical clustering, DBSCAN.
+    \item Evaluation metrics: silhouette score, Davies-Bouldin index, etc.
+\end{itemize}
+
+\subsection{Unsupervised Learning --- Dimensionality Reduction}
+
+\begin{itemize}
+    \item PCA, Fisher Discriminant (LDA), t-SNE.
+\end{itemize}
+
+\subsection{Probabilistic Models}
+
+\begin{itemize}
+    \item Na\"ive Bayes.
+    \item Gaussian Mixture Models (GMM) and the EM algorithm.
+    \item Hidden Markov Models (HMM).
+\end{itemize}
+
 \end{document}
