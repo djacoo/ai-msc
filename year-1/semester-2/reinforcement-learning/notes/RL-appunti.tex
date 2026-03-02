@@ -1,0 +1,104 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}  % Better font support for larger sizes
+\usepackage[english]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{PL \& RL}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Planning \& Reinforcement Learning}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\end{document}
