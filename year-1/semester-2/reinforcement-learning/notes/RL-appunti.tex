@@ -102,6 +102,279 @@
 \newpage
 
 
+% ========================================
+\part{Introduction to Reinforcement Learning}
+% ========================================
+
+\section{What is Reinforcement Learning}
+
+\subsection{From Traditional Computer Science to Machine Learning}
+
+In \textbf{traditional computer science}, computers are explicitly programmed for every task they perform — a program is a function mapping inputs to outputs via instructions written by a human.
+
+The \textbf{machine learning paradigm} inverts this: \textbf{examples} are provided to machines, and machines learn models capable of performing tasks based on those examples. Both a hand-written program and a learned model are functions; the fundamental difference lies in how the function is obtained.
+
+\subsection{The Nature of Learning}
+
+A basic observation is that \textbf{we learn by interacting with our environment}. Infants have no explicit teacher but develop knowledge through a direct sensorimotor connection to their surroundings. Exercising this connection produces information about:
+\begin{itemize}
+    \item \textbf{cause-effect relationships} (consequences of actions)
+    \item what to do to achieve \textbf{goals}
+\end{itemize}
+
+\subsection{Learning from Interaction}
+
+We are aware of how our environment responds to what we do, and we seek to influence what happens through our behavior. \textbf{Learning from interaction} is the foundational idea underlying nearly all theories of learning and intelligence.
+
+\subsection{Reinforcement Learning: Definition and Features}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Reinforcement Learning}]
+Reinforcement Learning (RL) is a computational approach to \textbf{learning from interaction}. The agent learns to \textbf{map situations to actions} so as to \textbf{maximize} a numerical \textbf{reward signal}.
+\end{tcolorbox}
+
+Two most important features distinguish RL from other learning paradigms:
+
+\begin{enumerate}
+    \item \textbf{Trial-and-error search}: the learner is \textit{not} told which action to take in each situation (as in supervised learning). It must \textbf{discover} which actions yield the most reward by trying them.
+    \item \textbf{Delayed reward}: actions may affect not only the immediate reward but also the next state and, through that, all \textbf{subsequent rewards}.
+\end{enumerate}
+
+\subsection{RL as Problem, Solution Methods, and Research Field}
+
+RL is simultaneously:
+\begin{itemize}
+    \item a \textbf{problem}
+    \item a \textbf{class of solution methods}
+    \item a \textbf{research field} that studies this problem and its solution methods
+\end{itemize}
+
+It is important to distinguish the three to avoid confusion. The \textbf{problem} of RL draws ideas from dynamical systems theory and optimal control of incompletely-known Markov Decision Processes.
+
+\subsection{Main Ingredients}
+
+The RL problem involves five main elements:
+
+\begin{itemize}
+    \item \textbf{Agent}: the learner and decision maker
+    \item \textbf{Environment}: everything the agent interacts with
+    \item \textbf{State}: a representation of the current situation
+    \item \textbf{Action}: what the agent can do at each step
+    \item \textbf{Reward}: scalar feedback from the environment
+\end{itemize}
+
+The agent selects an action, the environment transitions to a new state and emits a reward; the loop repeats. All these elements are formalized by \textbf{Markov Decision Processes (MDPs)}, introduced in subsequent lectures.
+
+\subsection{RL vs Supervised Learning}
+
+\textbf{Supervised learning} learns from a training set of \textbf{labeled samples} provided by an external supervisor. Each sample encodes a mapping
+\[
+    \text{situation} \;\to\; \text{correct action (label)}
+\]
+The goal is to generalize to situations not seen during training.
+
+Supervised learning is \textbf{not adequate} for learning from interaction because:
+\begin{itemize}
+    \item In interactive problems it is impractical to obtain informative labeled training sets
+    \item The agent must learn from its own experience, not from pre-labeled data
+\end{itemize}
+
+\subsection{RL vs Unsupervised Learning}
+
+\textbf{Unsupervised learning} seeks hidden \textbf{structure} in collections of unlabeled data. Reinforcement learning, instead, tries to \textbf{maximize a reward signal} rather than discover structure.
+
+Discovering structure in an agent's experience may be useful, but it does not in itself address the problem of maximizing reward.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black]
+\centering
+Reinforcement learning is a \textbf{third machine learning paradigm}, alongside supervised and unsupervised learning.
+\end{tcolorbox}
+
+\subsection{The Exploration-Exploitation Trade-off}
+
+A key challenge in RL, absent from other forms of learning, is the optimization of the \textbf{exploration-exploitation trade-off}:
+
+\begin{itemize}
+    \item \textbf{Exploration}: select actions \textit{never tried} in a given situation, to learn what happens.
+    \begin{itemize}
+        \item Risky in terms of immediate reward acquisition
+        \item Informative about environment dynamics
+    \end{itemize}
+    \item \textbf{Exploitation}: select actions \textit{already tried} and found effective in producing reward.
+    \begin{itemize}
+        \item Safe in terms of reward acquisition
+        \item Not informative
+    \end{itemize}
+\end{itemize}
+
+The agent must try a variety of actions and progressively favor those that appear best. On \textbf{stochastic tasks} each action must be tried many times to get a reliable estimate of its expected reward. The exploration-exploitation dilemma is still \textbf{unsolved} in the general case.
+
+\subsection{RL Agents as Components of Larger Systems}
+
+An RL agent can be a \textbf{component of a larger system} (e.g., an agent monitoring the charge level of a robot's battery). In this case the agent's environment is the rest of the system together with the external world.
+
+\subsection{Interaction with Other Disciplines}
+
+RL has substantive interactions with: Artificial Intelligence, Machine Learning, Statistics, Optimization, Operations Research, Control Theory, Psychology, and Neuroscience.
+
+
+\section{Examples and Applications of RL}
+
+RL has been applied successfully across a wide range of domains:
+
+\begin{itemize}
+    \item \textbf{Game playing}: IBM's Deep Blue vs Kasparov in chess (1997); \textbf{AlphaGo} reaching superhuman performance in Go (DeepMind, 2016); Atari, Backgammon, Blackjack, Tic-tac-toe.
+    \item \textbf{Autonomous vehicles}: learning to drive a car, helicopter control (UAV), quadcopter control.
+    \item \textbf{Robot planning and control}: robot navigation and manipulation in industrial environments.
+    \item \textbf{Industrial control}: adaptive controller adjusting parameters of a petroleum refinery's operation in real time (cyber-physical systems).
+    \item \textbf{Mobile robotics}: a robot deciding whether to enter a new room in search of trash or to return to a battery recharging station.
+    \item \textbf{Smart buildings}: autonomous agent controlling air quality and thermal comfort.
+    \item \textbf{Operations research}: pricing, vehicle routing.
+    \item \textbf{Spoken dialog systems}: e.g., chatbots.
+    \item \textbf{Data center energy optimization}.
+    \item \textbf{Self-managing network systems}.
+    \item \textbf{Computational finance}.
+\end{itemize}
+
+\subsection{Common Features Across Examples}
+
+All the above share a set of structural properties:
+\begin{itemize}
+    \item \textbf{Interaction} between agent and environment
+    \item The agent has a \textbf{goal}
+    \item \textbf{Uncertainty} about the environment (effects of actions cannot be fully predicted)
+    \item Actions affect the \textbf{future} state of the environment
+    \item Presence of indirect and \textbf{delayed consequences} of actions
+    \item The agent can use its experience to improve its performance over time $\to$ \textbf{Adaptation}
+\end{itemize}
+
+
+\section{Elements of Reinforcement Learning}
+
+An RL system is characterized by four main elements.
+
+\subsection{Policy}
+
+\begin{definition}[Policy]
+A \textbf{policy} $\pi$ defines the agent's way of behaving at a given time and in a given situation:
+\[
+    \pi: \text{state} \;\to\; \text{action}
+\]
+\end{definition}
+
+A policy may be implemented as a function, a lookup table, or a search process. It may be \textbf{deterministic} or \textbf{stochastic}. Generating the policy is the \textbf{target of reinforcement learning}.
+
+\subsection{Reward Signal}
+
+\begin{definition}[Reward Signal]
+The \textbf{reward signal} defines the goal of the RL problem. At each step, the environment sends the agent a scalar $R_t \in \mathbb{R}$ (immediate pleasure/pain):
+\[
+    r: \text{state},\, \text{action} \;\to\; \text{reward}
+\]
+\end{definition}
+
+The agent's objective is to \textbf{maximize the total reward over long runs}. Reward signals may be deterministic or stochastic functions of state and action.
+
+\subsection{Value Function}
+
+\begin{definition}[Value Function]
+The \textbf{value function} specifies what is good in the \textbf{long run} (while the reward captures what is good \textit{immediately}).
+\begin{itemize}
+    \item \textbf{State value function}: $V(s)$ is the total amount of reward an agent can expect to accumulate over the future, starting from state $s$.
+    \[\text{State Value Function:}\quad s \;\to\; V(s)\]
+    \item \textbf{State-action value function}: $Q(s,a)$ is the total expected reward starting from $s$ and taking action $a$.
+    \[\text{State-Action Value Function:}\quad (s, a) \;\to\; Q(s,a)\]
+\end{itemize}
+\end{definition}
+
+It is much harder to determine values than rewards. Hence, \textbf{methods for efficiently estimating values are key elements of RL algorithms}.
+
+\subsection{Model of the Environment}
+
+\begin{definition}[Environment Model]
+A \textbf{model of the environment} is a mathematical model that mimics the behavior of the environment and allows to infer it:
+\[
+    \text{model}: \text{state},\, \text{action} \;\to\; \text{next state / reward}
+\]
+\end{definition}
+
+Models are used for \textbf{planning}, i.e., choosing immediate actions by considering possible future situations.
+
+\begin{itemize}
+    \item \textbf{Model-based RL}: uses an explicit model of the environment to select actions.
+    \item \textbf{Model-free RL}: does not use the environment model; it is an explicit trial-and-error learner.
+\end{itemize}
+
+
+\section{An Extended Example: Tic-Tac-Toe}
+
+The problem: play Tic-Tac-Toe against an \textbf{imperfect opponent}. We want to construct a player that finds the opponent's weaknesses and learns to \textbf{maximize its probability of winning}.
+
+\subsection{Problems with Classical Techniques}
+
+Classical approaches require a \textbf{complete specification of the opponent}:
+\begin{itemize}
+    \item \textbf{Minimax} (game theory): minimizes worst-case loss.
+    \item \textbf{Dynamic programming}: computes the optimal solution given full model.
+\end{itemize}
+
+Since the opponent is imperfect and unknown, this information must be estimated from experience. One idea: learn the model of the opponent's behavior from many games, then apply dynamic programming — this is not far from what RL does.
+
+\subsection{Evolutionary Methods}
+
+\textbf{Evolutionary methods} search the space of all possible policies:
+\begin{itemize}
+    \item Each policy in the population is evaluated by playing several games; winning probability is estimated.
+    \item Better policies are selected (\textbf{hill-climbing} in policy space).
+\end{itemize}
+
+This method can in principle find the best policy, but it is often \textbf{inefficient}: what happens \textit{during} the games is ignored, discarding valuable online information.
+
+\subsection{Value Function Approach}
+
+A more efficient approach uses a \textbf{value function} learned online:
+
+\begin{enumerate}
+    \item Set up a table $V(s)$ for each game state $s$, initialized as:
+    \begin{itemize}
+        \item $V(s) = 1$ if $s$ is a winning state
+        \item $V(s) = 0$ if $s$ is a losing or drawn state
+        \item $V(s) = 0.5$ otherwise
+    \end{itemize}
+    \item Play many games. Most of the time, select the move leading to the state with the highest value (\textbf{greedy move}). Occasionally take a random \textbf{exploratory move}.
+    \item After each greedy move, \textbf{back up} the value of the previous state using the \textbf{temporal-difference update rule}: let $S_t$ be the state before the greedy move and $S_{t+1}$ the state after; then
+    \[
+        V(S_t) \;\leftarrow\; V(S_t) + \alpha \bigl[V(S_{t+1}) - V(S_t)\bigr]
+    \]
+    where $\alpha > 0$ is a small \textbf{step-size} (learning rate). This moves $V(S_t)$ a fraction $\alpha$ toward $V(S_{t+1})$.
+\end{enumerate}
+
+This is an instance of a \textbf{temporal-difference (TD) learning rule}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Convergence}]
+If $\alpha$ is reduced properly over time, the method converges to the true probabilities of winning from each state under optimal play, yielding an \textbf{optimal policy against the specific opponent}. If $\alpha$ is kept positive, the policy can also adapt to a slowly changing opponent. The Tic-Tac-Toe player is \textbf{model-free}.
+\end{tcolorbox}
+
+\subsection{Evolutionary vs Value Function Methods}
+
+Both methods search the policy space, but they differ in how they use information:
+\begin{itemize}
+    \item \textbf{Evolutionary methods} evaluate a fixed policy over several complete games; information collected \textit{during} games is discarded.
+    \item \textbf{Value function methods} evaluate individual states; they take advantage of information available \textit{during the course of play}.
+\end{itemize}
+
+This makes value function methods \textbf{more efficient} in most cases.
+
+\subsection{General Applicability}
+
+RL methods are not limited to two-player games. They apply to:
+\begin{itemize}
+    \item Problems with \textbf{no external opponent} (game against the environment)
+    \item \textbf{Non-episodic} (continuing) tasks
+    \item \textbf{Continuous-time} problems
+    \item Problems with very \textbf{large or infinite state spaces} (e.g., backgammon with $\approx 10^{20}$ states, using neural network function approximation)
+    \item Problems where the state is \textbf{partially observable}
+    \item Settings where \textbf{prior knowledge} can be incorporated
+\end{itemize}
 
 
 \end{document}
