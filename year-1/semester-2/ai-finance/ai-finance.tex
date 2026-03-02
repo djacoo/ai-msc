@@ -133,12 +133,11 @@ The idea: Given some data from the market
     
 
 \end{itemize}
-This are all important type of data that we can use to calibrate parameters for stochastic models.
+These are all important types of data that we can use to calibrate parameters for stochastic models.
 
 \subsection{Stochastic Models}
-In finance there is a part of description that is deterministic
-, but there is also a part that is stochastic.
-For example we can consider the bernoulli model
+In finance there is a part of the description that is \emph{deterministic}, but there is also a part that is \emph{stochastic}.
+For example, we can consider the \textbf{Bernoulli model}.
 \subsubsection{Bernoulli Model}
 \begin{figure}[h!]
     \centering
@@ -176,46 +175,43 @@ For example we can consider the bernoulli model
 \end{figure}
 
 \subsubsection{Black-Scholes Model}
-The Black-Scholes model is a stochastic model that describes the price of a stock over time.
-It is a continuous time model that is used to price options.
-It is a more complex model than the Bernoulli model, but it is more accurate.
-It is based on the assumption that the price of a stock follows a geometric motion.
-Ignoring the interest rate for the moment:
+The \textbf{Black--Scholes model} is a stochastic model that describes the price of a stock over time.
+It is a continuous-time model used to price options.
+It is more complex than the Bernoulli model, but also more accurate.
+It is based on the assumption that the price of a stock follows a \emph{geometric Brownian motion}.
+Ignoring the interest rate for the moment, we can write:
 
-In differential notation, the Black-Scholes model expresses the evolution of the asset price $S$ as:
+\begin{tcolorbox}[colback=blue!3!white,colframe=blue!60!black,title={\textbf{Black--Scholes dynamics (no drift)}}]
+In differential notation, the Black--Scholes model expresses the evolution of the asset price $S$ as
 \begin{equation}
-    dS_t = S_t \, \sigma_BS \, dW_t
-\end{equation}
-where:
-\begin{itemize}
-    \item $S$ is the asset price,
-    \item $\sigma$ is the volatility coefficient (a measure of how much the price can fluctuate),
-    \item $dW$ is an increment of a Wiener process (standard Brownian motion).
-\end{itemize}
-\begin{equation}
-    S_t+\delta t = S_t + S_t \, \sigma_BS \, (W_{t+\delta t} - W_t)
+    dS_t = S_t \, \sigma_{BS} \, dW_t,
 \end{equation}
 where:
 \begin{itemize}
     \item $S_t$ is the asset price at time $t$,
-    \item $\sigma_BS$ is the volatility coefficient,
-    \item $W_{t+\delta t} - W_t$ is an increment of a Wiener process (standard Brownian motion).
+    \item $\sigma_{BS}$ is the volatility coefficient (a measure of how much the price can fluctuate),
+    \item $dW_t$ is an increment of a Wiener process (standard Brownian motion).
 \end{itemize}
+In a small time step $\delta t$, a discretised version can be written as
+\begin{equation}
+    S_{t+\delta t} = S_t + S_t \, \sigma_{BS} \, (W_{t+\delta t} - W_t),
+\end{equation}
+where $W_{t+\delta t} - W_t$ is again an increment of Brownian motion.
+\end{tcolorbox}
 
-We basically add a variance proportional to the time and the price today.
-$\sigma_BS$ is the volatility coefficient.
-A bigger $\sigma_BS$ means that the price can fluctuate more.
-If $\sigma_BS$ is zero the price is constant.
+We basically add a variance proportional to the time step and to today's price.
+The parameter $\sigma_{BS}$ is the volatility coefficient.
+A bigger $\sigma_{BS}$ means that the price can fluctuate more, while if $\sigma_{BS}=0$ the price is constant.
 
-There are some parameter dependent (i.e $\sigma_BS$) prices of call and
-put options for each K and T.
+There are parameter-dependent (i.e.\ depending on $\sigma_{BS}$) prices of call and
+put options for each strike $K$ and maturity $T$.
 \begin{equation}
     C^K,T (\sigma_BS, S_0) \quad \& \quad P^K,T (\sigma_BS, S_0)
 \end{equation}
 
 \subsubsection{Stochastic Volatility Model}
-We can improve the Black-Scholes model by introducing a stochastic volatility.
-We get a more complex model:
+We can improve the Black--Scholes model by introducing a \emph{stochastic volatility}.
+We obtain a more complex model:
 \begin{align}
     dS_t \hspace{1.5em} &=\ S_t \sqrt{V_t} \, dW_t' \nonumber \\
     dV_t \hspace{1.5em} &=\ \kappa (\theta - V_t) \, dt + \sigma_{SV} \sqrt{V_t} \, dW_t^{(2)} \nonumber \\
@@ -240,7 +236,7 @@ The increments $(W'_{t+\delta t} - W'_t)$ and $(W^2_{t+\delta t} - W^2_t)$ are j
     \end{pmatrix}
 \right).
 \]
-Complicate parameters dependent prices for call and put options.
+This leads to complicated parameter-dependent prices for call and put options.
 The goal is to find the best possible parameters for the model.
 \begin{itemize}
     \item Matching the observations on the market
@@ -248,25 +244,32 @@ The goal is to find the best possible parameters for the model.
 \end{itemize}
 
 How can we do this?
-Tipically with Regressions:
-Classical approach: MLE
-Through: Gaussian Processes
-Through: Neural Networks
+Typically with \textbf{regressions}, for example:
+\begin{itemize}
+    \item classical approach: maximum likelihood estimation (MLE),
+    \item Gaussian processes,
+    \item neural networks.
+\end{itemize}
+
+\subsection{Implied volatility and inverse pricing}
 
 What do we need to learn?
-
-We want to learn the mapping from option prices \& data in general to 
+We want to learn the mapping from option prices and, more generally, market data to 
 the best possible parameters for the model.
-Approximating of key functionals:
-implied volatility: i.e.: 
-With the Black-Scholes model there is a map that takes
+We are especially interested in approximating key functionals such as the \emph{implied volatility}.
+
+\begin{tcolorbox}[colback=green!3!white,colframe=green!50!black,title={\textbf{Pricing and implied-volatility maps}}]
+In the Black--Scholes model there is a pricing map
 \begin{equation}
-    (\sigma_BS, S_0) \mapsto C^K,T (\sigma_BS, S_0)
+    (\sigma_{BS}, S_0) \mapsto C^{K,T}(\sigma_{BS}, S_0),
 \end{equation}
-one can construct a (very complicated) inverse map:
+and one can (in principle) construct a very complicated inverse map
 \begin{equation}
-    C^K,T (\sigma_BS, S_0) \mapsto (\sigma_BS, S_0)
+    C^{K,T}(\sigma_{BS}, S_0) \mapsto (\sigma_{BS}, S_0).
 \end{equation}
+The \emph{implied volatility} is the value of $\sigma_{BS}$ such that the model price $C^{K,T}(\sigma_{BS}, S_0)$
+matches the observed market price of the option.
+\end{tcolorbox}
 
 If we now fix T:
 
@@ -333,17 +336,16 @@ Here we can apply the IV map and get the sigma of the Black-Scholes model.
     \caption{Schematic plot of implied volatility $\sigma_{BS}$ as a function of strike $K$, with $S_0$ placed on the right half of the $x$-axis. The blue curve illustrates the volatility "smile" often observed in implied volatility, while the horizontal green line marks the constant Black--Scholes volatility.}
     \label{fig:iv_smile}
 \end{figure}
-This is usually called the volatility smile.
-Often one prefers to replace prices with the implied volatility.
-volatility rarrow equally scaled and still interpretable. 
-pricing functionals for complicated stochastic models or complicated options.
-parameters rarrow theoretical prices
+This is usually called the \emph{volatility smile}.
+Often one prefers to replace prices with the implied volatility, since volatility is naturally scaled and still interpretable. 
+More generally, we can view option prices as \emph{pricing functionals} for complicated stochastic models or exotic options,
+mapping model parameters to theoretical prices.
 
 Universal approximation theorem(s)
 
-\subsection{Time Series (2nd part of the course)}
+\section{Time Series (second part of the course)}
 
-Given: observations of available quantities over time:
+Given observations of available quantities over time:
 \begin{itemize}
     \item prices of stocks, 
     \item bonds, 
@@ -353,9 +355,9 @@ Given: observations of available quantities over time:
     \item historical values of traded volumes
 \end{itemize}
 
-Goal: forcast the next value of the corresponding quantity the corresponding uncetainty.
+Goal: \textbf{forecast} the next value of the corresponding quantity together with the corresponding \emph{uncertainty}.
 
-How: studyng the time series (frequency, autocorrelation, stationarily, )
+How: studying the time series (frequency, autocorrelation, stationarity, \dots)
 \begin{enumerate}
     \item Apply an econometric model:
     \begin{itemize}
@@ -380,21 +382,18 @@ How: studyng the time series (frequency, autocorrelation, stationarily, )
         \item evaluation of performance (testing)
     \end{itemize}
 \end{enumerate}
-Main applications:
+\subsection{Main applications}
 \begin{itemize}
     \item Risk estimation of given portfolios 
     (how can one measure risk?)
     \begin{itemize}
-        \item variance
-        \item Value at Risk (VaR)
-        i.e. VaR of 99\% = 100 if and only if the prob to have a loss >=100 is simeq 1\%
-        \item Expected Shortfall (ES)
-        i.e. expected loss if Var is exceeded. This is tipically called cVar in engineering.
+        \item variance;
+        \item \textbf{Value at Risk (VaR)}: e.g.\ $\text{VaR}_{99\%} = 100$ if and only if the probability of having a loss $\ge 100$ is approximately $1\%$;
+        \item \textbf{Expected Shortfall (ES)}: expected loss \emph{conditional} on VaR being exceeded. This is typically called \textbf{CVaR} in engineering.
 
     \end{itemize}
 \end{itemize}
-We use them to forecast the distribution i.e. mean and variance... of the value of a portfolio
-and use it to compute the correspondent risk. 
-Backtest the obtained predictions.
-Portfolio optimization. (Markowitz and Reinforcement Learning).
+We use these models to forecast the distribution (mean, variance, \dots) of the value of a portfolio
+and use it to compute the corresponding risk. 
+We then backtest the obtained predictions and perform portfolio optimization (e.g.\ \emph{Markowitz} and \emph{Reinforcement Learning} approaches).
 \end{document}
