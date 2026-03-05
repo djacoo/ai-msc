@@ -1,0 +1,791 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+
+% Code listings
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% Robotics-specific
+\newcommand{\SO}[1]{\mathrm{SO}(#1)} % chktex 36
+\newcommand{\SE}[1]{\mathrm{SE}(#1)} % chktex 36
+\newcommand{\T}[2]{{}^{#1}T_{#2}}          % homogeneous transform: ^A T_B
+\newcommand{\p}[1]{\mathbf{#1}}             % bold vector
+\newcommand{\skewmat}[1]{[#1]_{\times}}     % skew-symmetric matrix
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{AI Robotics}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{AI Robotics}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{II Semester 2025--2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+
+% ========================================
+\part{Mobile Robotics: Introduction}
+% ========================================
+
+\section{Autonomous Mobile Robots}
+
+\subsection{The Three Key Questions}
+
+Mobile robotics revolves around three fundamental questions that any autonomous system must answer:
+
+\begin{enumerate}
+    \item \textbf{Where am I?} $\to$ Perception + Localization + Mapping
+    \item \textbf{Where am I going?} $\to$ Planning + Path Planning
+    \item \textbf{How do I get there?} $\to$ Obstacle Avoidance + Kinematics
+\end{enumerate}
+
+To answer these questions, the robot must:
+\begin{itemize}
+    \item have a \textbf{model} of the environment
+    \item \textbf{perceive} and analyze the environment
+    \item find its \textbf{position/situation} in the environment
+    \item \textbf{plan} and execute the movement
+\end{itemize}
+
+\subsection{General Control Scheme}
+
+The general architecture of an autonomous mobile robot can be decomposed into two main pipelines:
+
+\begin{itemize}
+    \item \textbf{Perception pipeline}: Sensing $\to$ Information Extraction and Interpretation $\to$ Localization and Map Building
+    \item \textbf{Motion control pipeline}: Cognition and Path Planning $\to$ Path Execution $\to$ Acting
+\end{itemize}
+
+The \textit{Localization/Map Building} block feeds a position estimate and a global map to the \textit{Cognition} block, which uses mission commands from the knowledge base to plan a path. The path is then passed to \textit{Path Execution}, which sends actuator commands to the \textit{Acting} block that interacts with the real-world environment. The loop is closed by sensing the resulting state.
+
+\section{Kinematics and Motion Control}
+
+\subsection{Wheel Types and Constraints}
+
+Wheeled mobile robots are subject to two fundamental kinematic constraints:
+
+\begin{itemize}
+    \item \textbf{Rolling constraint}: the wheel rolls without slipping in the rolling direction — velocity component along the wheel plane must be consistent with wheel rotation.
+    \item \textbf{No-sliding constraint}: the wheel does not slip laterally — zero velocity component orthogonal to the wheel plane.
+\end{itemize}
+
+Different wheel types (fixed standard, steerable, castor, Swedish/Mecanum) impose different combinations of these constraints and determine the robot's degrees of freedom and maneuverability.
+
+\subsection{Forward and Inverse Kinematics}
+
+Let $(x, y, \theta)$ be the robot pose in the global frame and $\varphi_1, \ldots, \varphi_n$ the wheel rotation speeds. The \textbf{forward kinematics} (wheels $\to$ body velocity) and \textbf{inverse kinematics} (body velocity $\to$ wheels) are:
+
+\[
+\begin{bmatrix} \dot{x} \\ \dot{y} \\ \dot{\theta} \end{bmatrix}
+= f(\dot{\varphi}_1, \ldots, \dot{\varphi}_n, \theta, \text{geometry})
+\qquad
+\begin{bmatrix} \dot{\varphi}_1 \\ \vdots \\ \dot{\varphi}_n \end{bmatrix}
+= f(\dot{x}, \dot{y}, \dot{\theta})
+\]
+
+The geometry of the robot (wheel placement, radius, orientation) determines the specific form of $f$.
+
+\section{Perception}
+
+\subsection{Sensing Modalities}
+
+Perception is the process of extracting meaningful information from raw sensor data. Common sensors on mobile robots include:
+
+\begin{itemize}
+    \item \textbf{Lidar} (2D or 3D): provides range measurements by emitting laser pulses and measuring time-of-flight. Produces dense point clouds or scan profiles used for obstacle detection, mapping, and localization.
+    \item \textbf{Cameras}:
+    \begin{itemize}
+        \item \textit{Stereo}: two horizontally offset cameras enabling triangulation-based depth estimation.
+        \item \textit{Omnidirectional}: wide field-of-view imaging via catadioptric optics.
+        \item \textit{RGB-D}: combines color image with per-pixel depth (structured light or ToF).
+    \end{itemize}
+\end{itemize}
+
+Laser scans are frequently overlaid on occupancy grid maps for real-time spatial reasoning.
+
+\section{Localization and Mapping}
+
+\subsection{Localization: The Core Problem}
+
+Localization is the task of estimating the robot's pose $(x, y, \theta)$ relative to a known or partially known map. It is inherently probabilistic: sensors are noisy, and motion estimation via encoders accumulates error over time.
+
+\subsection{Markov Localization}
+
+A classical probabilistic approach to localization proceeds through a \textbf{sense–act–sense} cycle:
+
+\begin{enumerate}
+    \item \textbf{SEE}: robot queries its sensors $\to$ observes a landmark (e.g.\ a door). The belief distribution is updated (sharpened at consistent hypotheses).
+    \item \textbf{ACT}: robot moves forward. Motion is estimated via encoders; uncertainty grows (belief spreads).
+    \item \textbf{SEE}: robot observes again. The new observation is fused with the propagated belief via Bayes' rule.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Belief Update}]
+At each step, the robot maintains a probability distribution over poses — the \textbf{belief} $\text{bel}(x_t)$. It is updated by:
+\[
+\text{bel}(x_t) = \eta \, p(z_t \mid x_t) \int p(x_t \mid u_t, x_{t-1})\, \text{bel}(x_{t-1})\, dx_{t-1}
+\]
+where $z_t$ is the sensor observation, $u_t$ is the control input, and $\eta$ is a normalizing constant.
+\end{tcolorbox}
+
+\subsection{Visual Odometry}
+
+An alternative to encoder-based motion estimation is \textbf{visual odometry}: estimating ego-motion from consecutive camera frames. Modern methods such as \textit{Direct Sparse Odometry} (DSO) operate directly on pixel intensities without requiring explicit feature matching, achieving robust and accurate trajectory estimation.
+
+\section{Cognition}
+
+\subsection{Obstacle Avoidance}
+
+Obstacle avoidance employs \textbf{local or reactive methods} to steer the robot toward its goal while avoiding collisions in real time. Two representative approaches:
+
+\begin{itemize}
+    \item \textbf{Bug algorithms} (e.g.\ Bug2): the robot moves in a straight line toward the goal and follows obstacle boundaries when a collision is imminent. Simple and provably complete for certain environments.
+    \item \textbf{Vector Field Histogram (VFH)}: builds a polar histogram of obstacle density around the robot; selects a steering direction in a sector with low obstacle density aligned with the goal direction.
+\end{itemize}
+
+\subsection{Global Path Planning}
+
+Global path planning computes a \textbf{collision-free path} from the robot's current position to the goal using a prior map. Representative methods:
+
+\begin{itemize}
+    \item \textbf{Voronoi diagram}: paths are planned along the medial axis of the free space, maximizing clearance from obstacles.
+    \item \textbf{Cell decomposition}: the free space is partitioned into cells; a graph is built over adjacent free cells and a graph-search algorithm (e.g.\ A$^*$) finds the optimal path.
+\end{itemize}
+
+\subsection{Decision Making}
+
+Beyond reactive and planned navigation, a robot may need to \textbf{regulate its behavior online} — e.g.\ adjust velocity to complete a path as fast as possible while avoiding accidents under uncertainty.
+
+\textbf{Online Monte Carlo Planning} (in particular POMCP — Partially Observable Monte Carlo Planning) addresses this by:
+\begin{itemize}
+    \item modeling the task as a POMDP (Partially Observable Markov Decision Process)
+    \item using Monte Carlo Tree Search to plan online without a full model of the environment
+    \item incorporating \textbf{prior knowledge} and handling \textbf{state uncertainty} explicitly through belief states
+\end{itemize}
+
+\section{Learning}
+
+\subsection{Deep Reinforcement Learning for Robotic Navigation}
+
+When explicit maps are unavailable or the environment is non-stationary, \textbf{Deep Reinforcement Learning (DRL)} provides a powerful paradigm for learning navigation policies directly from experience.
+
+\textbf{Mapless navigation for wheeled robots}: a DRL agent (e.g.\ DDQN with discrete action space) is trained in simulation (Unity) and transferred to a real wheeled platform. Simulation significantly reduces training time while preserving real-world success rate.
+
+\textbf{Mapless navigation for ASVs (Autonomous Surface Vehicles)}: DRL is applied to navigation in challenging non-stationary scenarios where real-world experiments are difficult. \textbf{Formal verification} methods are additionally used to identify critical configurations and guarantee safety properties of the learned policy.
+
+
+
+
+% ========================================
+\part{Wheeled Locomotion: Kinematics}
+% ========================================
+
+\section{Introduction to Kinematics for Mobile Robots}
+
+\subsection{Wheeled Locomotion: Motivation}
+
+Wheeled locomotion is:
+\begin{itemize}
+    \item very efficient on flat/hard surfaces
+    \item restricted to man-made infrastructures
+    \item the de-facto standard for mobile robots
+\end{itemize}
+
+\subsection{Mobile Robots vs.\ Manipulator Arms}
+
+\begin{itemize}
+    \item \textbf{Robotic arms}: fixed to the ground; single chain of actuated links (usually).
+    \item \textbf{Mobile robots}: position is unbounded; subject to rolling and sliding constraints at the wheel-ground contact point.
+\end{itemize}
+
+Key consequences for mobile robot kinematics:
+\begin{itemize}
+    \item encoder values do not map to unique poses — the workspace is unbounded
+    \item no direct way to measure pose: positions must be integrated over time (path-dependent)
+    \item integration accumulates errors in position/motion estimates
+    \item the constraints imposed by wheels on mobility must be understood
+\end{itemize}
+
+\subsection{Non-Holonomic Systems}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Non-Holonomic System}]
+A system is \textbf{non-holonomic} if the kinematic constraints cannot be integrated to a finite position constraint. Knowing the travel distance of each wheel is insufficient to determine the final pose — one must know the full trajectory as a function of time.
+\end{tcolorbox}
+
+This is in sharp contrast with robotic arms, where encoder positions map directly to the end-effector pose.
+
+\subsection{Forward and Differential Kinematics}
+
+For mobile robots, the relevant kinematic problems are:
+
+\begin{itemize}
+    \item \textbf{Forward kinematics}: given actuator positions (or speeds), determine the corresponding pose (or body velocity).
+    \item \textbf{Inverse kinematics}: given a desired pose, determine the corresponding actuator positions — required for motion control.
+    \item \textbf{Differential forward kinematics}: given actuator speeds $\dot{\varphi}_i$, determine body velocity $\dot{\xi}$.
+    \item \textbf{Differential inverse kinematics}: given a desired body velocity, determine the required actuator speeds.
+\end{itemize}
+
+Because non-holonomic constraints prevent direct integration, wheels provide only \textit{differential} inverse kinematics:
+\[
+\begin{bmatrix} \dot{x} \\ \dot{y} \end{bmatrix} = \begin{bmatrix} \dot{\varphi} r \\ 0 \end{bmatrix}
+\]
+
+\section{Wheel Arrangement}
+
+\subsection{Three Design Concepts}
+
+The choice of wheel configuration involves three competing properties:
+\begin{itemize}
+    \item \textbf{Stability} (static configuration): three wheels are sufficient to guarantee stability, as the center of gravity lies within their support triangle. More than three wheels require a flexible suspension system (hyperstatic configuration).
+    \item \textbf{Maneuverability}: how the robot can move in the environment.
+    \item \textbf{Controllability}: how actuators must be commanded to achieve motion.
+\end{itemize}
+
+No single configuration maximizes all three — the selection depends on the application.
+
+\subsection{Basic Wheel Types}
+
+\begin{itemize}
+    \item \textbf{Standard (fixed) wheel} — 2 DOF: rotation around the (motorized) wheel axle and the contact point.
+    \item \textbf{Castor wheel} — 3 DOF: rotation around the wheel axle, the contact point, and the castor axle (offset pivot).
+    \item \textbf{Swedish (Mecanum) wheel} — 3 DOF: rotation around the wheel axle, the contact point, and around the passive rollers mounted on the rim. Allows motion in any direction.
+    \item \textbf{Spherical wheel} — 3 DOF: rotation around the three orthogonal axes.
+\end{itemize}
+
+\subsection{Wheel Configurations and Stability}
+
+\begin{itemize}
+    \item Stability guaranteed with three wheels: center of gravity (CoG) must lie within the triangle formed by the ground contact points.
+    \item Four or more wheels improve stability but create a hyperstatic arrangement requiring flexible suspension.
+    \item Bigger wheels overcome higher obstacles, at the cost of higher torque or gear reduction (increased complexity).
+    \item Most arrangements are non-holonomic $\Rightarrow$ higher control effort.
+    \item Actuation and steering on the same wheel leads to complex design and additional odometry errors.
+\end{itemize}
+
+Common layouts include 2-, 3-, 4-, and 6-wheel configurations. A notable example is the \textbf{CMU Uranus}: four independent Swedish wheels at 45°, enabling motion along any trajectory on the plane and simultaneous spinning about the vertical axis.
+
+\section{Mobile Robot Kinematics}
+
+\subsection{Representing Robot Position}
+
+The robot chassis is modeled as a rigid body on a planar environment. Two reference frames are used:
+\begin{itemize}
+    \item \textbf{Global frame} $\{x_I, y_I\}$: inertial (world) frame.
+    \item \textbf{Local frame} $\{x_R, y_R\}$: robot-fixed frame.
+\end{itemize}
+
+The robot pose is described by a reference point $P$ with 3 DOF:
+\[
+\xi_I = \begin{bmatrix} x \\ y \\ \theta \end{bmatrix}
+\]
+where $(x, y)$ is the position of $P$ in the global frame and $\theta$ is the heading angle.
+
+\subsection{Frame Mapping: Rotation Matrix}
+
+Orthogonal rotation matrices map between local and global frames:
+\[
+R(\theta) = \begin{bmatrix} \cos\theta & \sin\theta & 0 \\ -\sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix}
+\]
+
+The velocity in the robot frame relates to the global velocity by:
+\[
+\dot{\xi}_R = R(\theta)\,\dot{\xi}_I
+\]
+
+\subsection{Forward Kinematic Model (Differential Drive)}
+
+For a differential drive robot with wheel radius $r$, axle half-length $l$, wheel spinning speeds $\dot{\varphi}_1$ (right) and $\dot{\varphi}_2$ (left):
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Forward Kinematics: Differential Drive}]
+\textbf{Local frame velocity}:
+\[
+\begin{bmatrix} \dot{x}_R \\ \dot{y}_R \\ \dot{\theta}_R \end{bmatrix}
+= \begin{bmatrix} \dfrac{r\dot{\varphi}_1}{2} + \dfrac{r\dot{\varphi}_2}{2} \\[6pt] 0 \\[6pt] \dfrac{r\dot{\varphi}_1}{2l} - \dfrac{r\dot{\varphi}_2}{2l} \end{bmatrix}
+\]
+
+\textbf{Global frame velocity} (via $\dot{\xi}_I = R(\theta)^{-1}\dot{\xi}_R$):
+\[
+\begin{bmatrix} \dot{x}_I \\ \dot{y}_I \\ \dot{\theta}_I \end{bmatrix}
+= \begin{bmatrix} \cos\theta & -\sin\theta & 0 \\ \sin\theta & \cos\theta & 0 \\ 0 & 0 & 1 \end{bmatrix}
+\begin{bmatrix} \dfrac{r\dot{\varphi}_1}{2} + \dfrac{r\dot{\varphi}_2}{2} \\[6pt] 0 \\[6pt] \dfrac{r\dot{\varphi}_1}{2l} - \dfrac{r\dot{\varphi}_2}{2l} \end{bmatrix}
+\]
+\end{tcolorbox}
+
+\subsection{Wheel Kinematic Constraints}
+
+Individual wheel constraints are derived under assumptions: wheel in vertical plane, single contact point, no sliding. Two constraint types are imposed for each wheel:
+
+\subsubsection*{Fixed Standard Wheel}
+
+Parameters: $\alpha$ (wheel orientation w.r.t.\ robot frame), $\beta$ (steering angle, fixed here), $l$ (distance from $P$), $r$ (radius).
+
+\begin{itemize}
+    \item \textbf{Rolling constraint}: all motion in the wheel plane must be due to rotation,
+    \[
+    [\sin(\alpha+\beta) \; {-\cos(\alpha+\beta)} \; {(-l)\cos\beta}]\,R(\theta)\dot{\xi}_I - r\dot{\varphi} = 0
+    \]
+    \item \textbf{Sliding (no-slip) constraint}: no motion perpendicular to wheel plane,
+    \[
+    [\cos(\alpha+\beta) \; \sin(\alpha+\beta) \; l\sin\beta]\,R(\theta)\dot{\xi}_I = 0
+    \]
+\end{itemize}
+
+\subsubsection*{Swedish Wheel}
+
+Rolling constraint is modified by the roller angle $\gamma$; there is no constraint on the orthogonal direction (passive rollers absorb lateral motion):
+\[
+[\sin(\alpha+\beta+\gamma) \; {-\cos(\alpha+\beta+\gamma)} \; {(-l)\cos(\beta+\gamma)}]\,R(\theta)\dot{\xi}_I - r\dot{\varphi}\cos\gamma = 0
+\]
+
+\subsubsection*{Complete Robot Model}
+
+For a robot with $M = N_f + N_s$ wheels ($N_f$ fixed, $N_s$ steerable), only fixed and steerable standard wheels impose constraints. Stacking all constraints:
+
+\[
+J_1(\beta_s)\,R(\theta)\,\dot{\xi}_I - J_2\,\dot{\varphi} = 0 \qquad \text{(rolling)}
+\]
+\[
+C_1(\beta_s)\,R(\theta)\,\dot{\xi}_I = 0 \qquad \text{(no lateral slip)}
+\]
+
+where $J_2 = \mathrm{diag}(r_1, \ldots, r_M)$ and $J_1$, $C_1$ encode the geometric parameters of each wheel.
+
+\section{Mobile Robot Maneuverability}
+
+\subsection{Degrees of Mobility and Steerability}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Maneuverability}]
+Robot maneuverability $\delta_M = \delta_m + \delta_s$ where:
+\begin{itemize}
+    \item $\delta_m$: \textbf{degree of mobility} — DoF that can be directly manipulated through changes in wheel velocity (from the sliding constraint null space).
+    \item $\delta_s$: \textbf{degree of steerability} — number of independently controllable steering parameters.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Five Basic Three-Wheel Configurations}
+
+\begin{center}
+\begin{tabular}{lccc}
+\hline
+Configuration & $\delta_M$ & $\delta_m$ & $\delta_s$ \\
+\hline
+Omnidirectional & 3 & 3 & 0 \\
+Differential drive & 2 & 2 & 0 \\
+Omni-steer & 3 & 2 & 1 \\
+Tricycle & 2 & 1 & 1 \\
+Two-steer & 3 & 1 & 2 \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Motion Control}
+
+\subsection{Overview}
+
+The objective of a kinematic controller is to follow a trajectory described by position and/or velocity profiles as a function of time. Motion control is challenging because:
+\begin{itemize}
+    \item mobile robots are typically non-holonomic
+    \item they are Multi-Input Multi-Output (MIMO) systems
+\end{itemize}
+Most controllers (including those covered here) operate at the kinematic level and do not account for system dynamics.
+
+\subsection{Open Loop Control}
+
+Given a trajectory, decompose it into \textbf{motion segments} of clearly defined shape (straight lines or circular arcs). Pre-compute a smooth trajectory for each segment.
+
+Drawbacks:
+\begin{itemize}
+    \item pre-computing trajectories that incorporate robot constraints is non-trivial
+    \item dynamic changes in the environment cannot be handled
+    \item resulting overall trajectory may not be smooth at segment transitions
+\end{itemize}
+
+\subsection{Feedback Control}
+
+Find a control matrix $K$ (with $k_{ij} = k(t, e)$) such that:
+\[
+\begin{bmatrix} v(t) \\ \omega(t) \end{bmatrix} = K \cdot e = K \cdot \begin{bmatrix} x \\ y \\ \theta \end{bmatrix}
+\]
+drives the error to zero: $\lim_{t \to \infty} e(t) = 0$.
+
+\subsubsection*{Kinematic Position Control for Differential Drive}
+
+The kinematics of a differential drive in the inertial frame are:
+\[
+\begin{bmatrix} \dot{x} \\ \dot{y} \\ \dot{\theta} \end{bmatrix}
+= \begin{bmatrix} \cos\theta & 0 \\ \sin\theta & 0 \\ 0 & 1 \end{bmatrix}
+\begin{bmatrix} v \\ \omega \end{bmatrix}
+\]
+
+Assume w.l.o.g.\ the goal is at the origin of the inertial frame. Let $\alpha$ denote the angle between the robot's $x_R$ axis and the vector from the wheel axle center to the goal.
+
+\subsubsection*{Polar Coordinate Transformation}
+
+Transform to polar coordinates centered at the goal:
+\[
+\rho = \sqrt{\Delta x^2 + \Delta y^2}, \qquad \alpha = -\theta + \mathrm{atan2}(\Delta y, \Delta x), \qquad \beta = -\theta - \alpha
+\]
+
+The system dynamics in polar coordinates (for $\alpha \in I_1 = (-\frac{\pi}{2}, \frac{\pi}{2})$):
+\[
+\begin{bmatrix} \dot{\rho} \\ \dot{\alpha} \\ \dot{\beta} \end{bmatrix}
+= \begin{bmatrix} -\cos\alpha & 0 \\ \frac{\sin\alpha}{\rho} & -1 \\ -\frac{\sin\alpha}{\rho} & 0 \end{bmatrix}
+\begin{bmatrix} v \\ \omega \end{bmatrix}
+\]
+For $\alpha \in I_2 = (-\pi, -\frac{\pi}{2}] \cup [\frac{\pi}{2}, \pi]$, use $v = -v$ (backward motion).
+
+\begin{remark}
+The transformation is undefined at $x = y = 0$ (the goal itself). For $\alpha \in I_1$ the forward direction points toward the goal; for $\alpha \in I_2$ the backward direction does. One can always initialize so that $\alpha \in I_1$, but the control law must ensure it stays there.
+\end{remark}
+
+\subsubsection*{Control Law}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Kinematic Feedback Control Law}]
+\[
+v = k_\rho \rho, \qquad \omega = k_\alpha \alpha + k_\beta \beta
+\]
+This drives the robot to the equilibrium $(\rho, \alpha, \beta) = (0, 0, 0)$. Stability conditions for $\alpha \in I_1$:
+\begin{itemize}
+    \item \textit{Local exponential stability}: $k_\rho > 0$,\ $k_\beta < 0$,\ $k_\alpha - k_\rho > 0$
+    \item \textit{Strong stability} (no direction reversal): additionally $k_\alpha + \tfrac{5}{3}k_\beta - \tfrac{2}{\pi}k_\rho > 0$
+\end{itemize}
+\end{tcolorbox}
+
+This drives the robot to $(\rho, \alpha, \beta) = (0, 0, 0)$. The closed-loop dynamics for $\alpha \in I_1$:
+\[
+\begin{bmatrix} \dot{\rho} \\ \dot{\alpha} \\ \dot{\beta} \end{bmatrix}
+= \begin{bmatrix} -k_\rho \rho \cos\alpha \\ k_\rho \sin\alpha - k_\alpha\alpha - k_\beta\beta \\ -k_\rho \sin\alpha \end{bmatrix}
+\]
+
+\textbf{Stability conditions}:
+\begin{itemize}
+    \item \textit{Local exponential stability}: $k_\rho > 0$, $k_\beta < 0$, $k_\alpha - k_\rho > 0$
+    \item \textit{Strong stability} (no direction reversal during approach): additionally $k_\alpha + \tfrac{5}{3}k_\beta - \tfrac{2}{\pi}k_\rho > 0$, which guarantees $\alpha \in I_1$ for all $t$ if $\alpha(0) \in I_1$.
+\end{itemize}
+
+The control signal $v$ always has constant sign — the robot either drives forward or backward without ever inverting direction (``parking without reversing'').
+
+
+
+% ========================================
+\part{Perception: Introduction and Sensors}
+% ========================================
+
+\section{Introduction to Perception}
+
+\subsection{Perception in the Control Loop}
+
+Perception is the subsystem responsible for extracting meaningful information from raw sensor data and feeding it to higher-level reasoning. In the general control scheme, the \textbf{perception pipeline} comprises three stages:
+
+\begin{enumerate}
+    \item \textbf{Sensing}: raw data acquisition from the physical environment.
+    \item \textbf{Information extraction and interpretation}: feature detection, object recognition, scene understanding.
+    \item \textbf{Localization and map building}: estimating robot pose and constructing an environment model.
+\end{enumerate}
+
+The output of this pipeline (position estimate + local map) feeds the cognition block, closing the sense--act loop.
+
+\subsection{Perception as Information Compression}
+
+Perception can be viewed as a hierarchy of increasing abstraction, each level compressing information relative to the one below:
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+\textbf{Level} & \textbf{Examples} \\
+\hline
+Raw data & Vision, laser, sound \\
+Features & Corners, lines, colors \\
+Objects & Doors, pedestrians, bicycles \\
+Places/Situations & Kitchen, car overtaking \\
+\hline
+\end{tabular}
+\end{center}
+
+Moving up the hierarchy requires increasingly powerful models and semantic reasoning: from geometric \textit{models} for features, to \textit{models/semantics} for objects, to \textit{reasoning about relationships} for situations.
+
+\subsection{Challenges}
+
+Perception is extremely challenging in practice due to:
+\begin{itemize}
+    \item \textbf{Noise}: all sensors are subject to measurement noise and quantization error.
+    \item \textbf{Partial observation}: sensors have limited field of view, range, and resolution.
+    \item \textbf{Context dependency}: interpreting raw data often requires situational context that is difficult to encode algorithmically.
+\end{itemize}
+
+Humans excel at perception precisely because of common-sense knowledge, something that remains difficult to replicate in artificial systems.
+
+\section{Sensor Classification}
+
+\subsection{What They Measure}
+
+\begin{itemize}
+    \item \textbf{Proprioceptive sensors}: measure quantities \textit{internal} to the robot — e.g., motor speed, battery status, joint angles, wheel odometry.
+    \item \textbf{Exteroceptive sensors}: measure quantities from the \textit{environment} — e.g., distance to obstacles, light intensity, object positions.
+\end{itemize}
+
+\subsection{How They Measure}
+
+\begin{itemize}
+    \item \textbf{Passive sensors}: measure energy naturally present in the environment (e.g., cameras detecting ambient light). Their output is highly dependent on environmental conditions.
+    \item \textbf{Active sensors}: emit energy and measure the reaction from the environment (e.g., lidar emitting laser pulses, ultrasonic sensors emitting sound). Generally higher performance, but may interfere with each other or the environment.
+\end{itemize}
+
+\subsection{Sensor Classification Tables}
+
+The following tables categorize common sensors by function, whether they are proprioceptive (PC) or exteroceptive (EC), and whether they are active (A) or passive (P).
+
+\begin{center}
+\begin{tabular}{llcc}
+\hline
+\textbf{Category} & \textbf{Sensor} & \textbf{PC/EC} & \textbf{A/P} \\
+\hline
+\multirow{3}{*}{\parbox{3cm}{Tactile sensors\\(contact, proximity)}} & Contact switches, bumpers & EC & P \\
+ & Optical barriers & EC & A \\
+ & Noncontact proximity sensors & EC & A \\
+\hline
+\multirow{7}{*}{\parbox{3cm}{\raggedright Wheel/motor sensors\\(speed, position)}} & Brush encoders & PC & P \\
+ & Potentiometers & PC & P \\
+ & Synchros, resolvers & PC & A \\
+ & Optical encoders & PC & A \\
+ & Magnetic encoders & PC & A \\
+ & Inductive encoders & PC & A \\
+ & Capacitive encoders & PC & A \\
+\hline
+\multirow{3}{*}{\parbox{3cm}{Heading sensors\\(orientation)}} & Compass & EC & P \\
+ & Gyroscopes & PC & P \\
+ & Inclinometers & EC & A/P \\
+\hline
+\multirow{4}{*}{\parbox{3cm}{\raggedright Ground-based beacons\\(localization)}} & GPS & EC & A \\
+ & Active optical or RF beacons & EC & A \\
+ & Active ultrasonic beacons & EC & A \\
+ & Reflective beacons & EC & A \\
+\hline
+\multirow{5}{*}{\parbox{3cm}{Active ranging\\(range, geometry)}} & Reflectivity sensors & EC & A \\
+ & Ultrasonic sensor & EC & A \\
+ & Laser rangefinder & EC & A \\
+ & Optical triangulation (1D) & EC & A \\
+ & Structured light (2D) & EC & A \\
+\hline
+\multirow{2}{*}{\parbox{3cm}{\raggedright Motion/speed sensors}} & Doppler radar & EC & A \\
+ & Doppler sound & EC & A \\
+\hline
+\multirow{3}{*}{\parbox{3cm}{Vision-based sensors}} & CCD/CMOS camera(s) & EC & P \\
+ & Visual ranging packages & EC & P \\
+ & Object tracking packages & EC & P \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Individual Sensor Types}
+
+\subsection{Encoders}
+
+An encoder is an electro-mechanical device that converts position (linear or angular) to an analogue or digital signal. In robotics, \textbf{optical incremental encoders} are the standard:
+
+\begin{itemize}
+    \item A disk with alternating opaque and transparent segments is attached to the motor shaft.
+    \item Two photo-detectors (channels A and B) are offset by a quarter period (\textbf{quadrature encoding}).
+    \item The four-state sequence of (A, B) $\in \{(\text{high},\text{low}),\, (\text{high},\text{high}),\, (\text{low},\text{high}),\, (\text{low},\text{low})\}$ encodes both displacement and direction.
+    \item Resolution is typically specified in pulses per revolution (PPR); quadrature decoding multiplies effective resolution by 4.
+\end{itemize}
+
+Encoders are proprioceptive and passive — they impose no load on the environment and require no emitted energy.
+
+\subsection{Heading Sensors}
+
+Heading sensors determine the robot's \textbf{orientation} (yaw) and inclination (roll, pitch) with respect to a reference frame.
+
+\begin{itemize}
+    \item \textbf{Compass} (exteroceptive, passive): senses the absolute direction of Earth's magnetic field. Gives yaw directly but is susceptible to ferromagnetic interference.
+    \item \textbf{Gyroscope} (proprioceptive, passive): senses \textit{relative} orientation change. When fused with velocity information, enables \textbf{dead reckoning} (deduced reckoning) — integrating angular rate over time to estimate heading.
+    \item \textbf{Inclinometer}: measures static tilt relative to gravity via a damped pendulum or fluid.
+\end{itemize}
+
+\subsubsection*{Gyroscopes}
+
+Two main technologies:
+
+\begin{itemize}
+    \item \textbf{Mechanical}: exploits the angular momentum of a rapidly spinning wheel. Force applied on one axis generates a reaction (precession) on the orthogonal axis. High accuracy but high cost and significant drift over time.
+    \item \textbf{Optical (fiber-optic / ring laser)}: two laser beams travel in opposite directions around a closed optical path. The beam counter-propagating to the rotation direction travels a slightly shorter path (Sagnac effect), producing a measurable phase shift proportional to angular velocity. Lower drift than mechanical; no moving parts.
+\end{itemize}
+
+\subsection{Accelerometers}
+
+An accelerometer measures all external forces acting on the robot, including gravity. The working principle is a \textbf{spring-mass-damper} system: a proof mass $m$ attached to a spring $k$ and damper $c$ deflects under acceleration; the deflection is measured capacitively or piezoelectrically.
+
+Modern accelerometers are fabricated as \textbf{MEMS} (Micro Electro-Mechanical Systems), enabling miniaturization and mass production (applications: airbags, game controllers, smartphones).
+
+\begin{remark}
+Gravity must be subtracted before integrating accelerometer data to obtain velocity and position. Without careful calibration, double integration accumulates large errors.
+\end{remark}
+
+\subsection{Inertial Measurement Units (IMU)}
+
+An IMU integrates gyroscopes and accelerometers (and optionally magnetometers) to jointly estimate:
+\begin{itemize}
+    \item relative position $(x, y, z)$
+    \item orientation: roll, pitch, yaw
+    \item velocity and acceleration
+\end{itemize}
+all with respect to an inertial reference frame. The processing pipeline is:
+
+\[
+\underbrace{\text{Rate gyroscope}}_{\dot{\theta}} \xrightarrow{\int} \text{Orientation}
+\qquad
+\underbrace{\text{Accelerometer}}_{\mathbf{a}_\text{body}} \xrightarrow{R^{-1}} \mathbf{a}_\text{nav} \xrightarrow{-g} \mathbf{a}_\text{linear} \xrightarrow{\int} \mathbf{v} \xrightarrow{\int} \mathbf{p}
+\]
+
+Key issues:
+\begin{itemize}
+    \item Gravity must be compensated in the navigation frame.
+    \item Initial velocity must be known.
+    \item \textbf{Drift} is the dominant source of error: integrating small biases accumulates unbounded error over time. IMUs must be periodically re-calibrated or fused with absolute sensors (GPS, cameras).
+\end{itemize}
+
+\subsection{Beacons and GPS}
+
+Beacons are artificial landmarks that provide point references to compute the position of a mobile platform.
+
+\subsubsection*{Outdoor: GPS}
+
+The Global Positioning System (GPS) consists of a constellation of satellites broadcasting timing signals. A receiver triangulates its position using signals from at least 4 satellites (the fourth satellite is needed to solve for the unknown receiver clock offset).
+
+\begin{itemize}
+    \item Standard civilian GPS accuracy: 5--20 meters.
+    \item Differential GPS (DGPS): a fixed reference station with known position broadcasts correction signals $\to$ centimeter-level accuracy achievable.
+    \item Critical limitation: \textbf{occlusions} (indoors, urban canyons, tunnels) break satellite visibility.
+\end{itemize}
+
+\subsubsection*{Indoor: RFID, WiFi, Bluetooth, UWB}
+
+Indoor localization systems are based on the same triangulation/trilateration principles as GPS but use different signal technologies:
+\begin{itemize}
+    \item Most technologies are sensitive to multipath propagation and interference.
+    \item \textbf{UWB} (Ultra-Wideband): short-pulse ToF ranging with centimeter-level precision; more robust to multipath than narrowband systems.
+\end{itemize}
+
+\subsection{Range Sensors}
+
+Range sensors are key sensors for localization, mapping, and obstacle detection. They are popular in robotics due to their low cost and ease of interpretation. Two families:
+
+\subsubsection*{Time-of-Flight (ToF)}
+
+Principle: emit a signal, measure the round-trip travel time $t$, compute distance as $d = c \cdot t$.
+
+\begin{itemize}
+    \item \textbf{Sonars}: use sound ($c \approx 0.3\,\text{m/ms}$). At 3 m, the echo returns in $\approx 10\,\text{ms}$ — easy to measure. Wide beam opening angle is a limitation (poor angular resolution).
+    \item \textbf{Lidars}: use light ($c \approx 0.3\,\text{m/ns}$). At 3 m, the round-trip takes $\approx 10\,\text{ns}$ — measuring nanosecond intervals requires dedicated electronics. High angular resolution and range accuracy. Used for 2D scan profiles or 3D point clouds.
+    \item \textbf{Time-of-Flight cameras}: per-pixel ToF measurement using modulated infrared illumination, producing dense depth images.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{ToF Accuracy Factors}]
+Quality of ToF sensors depends on:
+\begin{itemize}
+    \item \textbf{Inaccuracies in time measurement} (dominant for lidars)
+    \item \textbf{Opening angle of the beam} (dominant for sonars — poor spatial resolution)
+    \item \textbf{Target interactions}: reflectivity, opacity, surface angle (specular vs.\ diffuse reflection)
+\end{itemize}
+Speed of sound $\approx 0.3\,\text{m/ms}$; speed of light $\approx 0.3\,\text{m/ns}$. EM signals travel $10^6\times$ faster than sound.
+\end{tcolorbox}
+
+\subsubsection*{Geometric Active Ranging: Structured Light}
+
+Structured light sensors project a known light pattern (e.g., a line, grid, or coded texture using a laser or projector with a prism) onto the scene. A camera displaced from the emitter observes the projected pattern and detects deformations caused by scene geometry.
+
+\begin{itemize}
+    \item The \textbf{correspondence problem} is simplified because the projected pattern is known a priori.
+    \item Depth is recovered via \textbf{triangulation}: the displacement of observed pattern features relative to their expected positions encodes range.
+    \item Common patterns: single stripe (1D), multiple stripes, coded patterns (binary or phase-shifted).
+    \item Modern RGB-D cameras (e.g., Intel RealSense, original Microsoft Kinect) use structured infrared light.
+\end{itemize}
+
+\end{document}

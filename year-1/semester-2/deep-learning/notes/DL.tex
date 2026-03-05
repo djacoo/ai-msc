@@ -1,0 +1,511 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}  % Better font support for larger sizes
+\usepackage[english]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{DL}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Deep Learning}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{II Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+
+% ========================================
+\part{Introduction to Deep Learning}
+% ========================================
+
+\section{What is Deep Learning?}
+
+\subsection{Positioning within AI}
+
+\textbf{Deep Learning} is a subset of machine learning and, more specifically, of \textbf{representation learning} (also called \textit{feature learning}). The fundamental goal is to \emph{learn underlying features directly from data}, eliminating the need for hand-engineered feature extractors.
+
+The standard machine learning pipeline separates two concerns: \textbf{feature extraction}, designed by a domain expert, and \textbf{classification}, learned from labeled examples. Deep learning collapses this pipeline --- the network performs both steps jointly, learning task-relevant representations end-to-end from raw input.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+        \foreach \r/\col in {3.2/teal!25, 2.5/blue!20, 1.7/blue!38, 0.85/blue!65} {
+            \fill[\col] (0,0) circle (\r);
+        }
+        \node[white, font=\bfseries\small] at (0, 0.1)   {Deep};
+        \node[white, font=\bfseries\small] at (0, -0.22) {Learning};
+        \node[blue!15!black, font=\small]  at (0, 1.25)  {Neural Networks};
+        \node[blue!10!black, font=\small]  at (0, 2.05)  {Machine Learning};
+        \node[teal!60!black, font=\small]  at (0, 2.85)  {Artificial Intelligence};
+    \end{tikzpicture}
+    \caption{Deep Learning as a nested subset of AI.}\label{fig:dl-subset}
+\end{figure}
+
+\subsection{Why Deep Learning?}
+
+A critical empirical observation motivates deep learning: as the volume of available data grows, most classical learning algorithms \textbf{plateau} in performance, while deep neural networks \textbf{continue to improve}. This favorable scaling behavior, combined with large-scale datasets and modern hardware accelerators, explains the field's current dominance.
+
+\subsection{Deep Learning as Representation Learning}
+
+Deep learning is explicitly a form of \textbf{representation learning}: the network learns a hierarchy of representations, layer by layer, from raw input to task-relevant abstractions. In visual recognition, the hierarchy proceeds roughly as:
+
+\begin{itemize}
+    \item \textbf{Visible layer}: raw pixel values
+    \item \textbf{1st hidden layer}: low-level features (edges, color blobs)
+    \item \textbf{2nd hidden layer}: mid-level features (corners, contours)
+    \item \textbf{3rd hidden layer}: high-level features (object parts)
+    \item \textbf{Output layer}: class identity (car, person, animal, \ldots)
+\end{itemize}
+
+The deeper the network, the more abstract and task-specific the learned representations.
+
+\subsection{Why Representation Matters}
+
+The choice of representation fundamentally affects the difficulty of learning. A canonical example: two point clouds that cannot be separated by a linear boundary in Cartesian coordinates $(x, y)$ become trivially linearly separable after converting to polar coordinates $(r, \theta)$. Deep networks learn such transformations automatically, avoiding the need for manual feature engineering.
+
+
+\section{A Brief History of Neural Networks}
+
+The current success of deep learning is recent, but its intellectual roots extend to the 1940s. Three factors explain the modern renaissance:
+
+\begin{enumerate}
+    \item \textbf{Big data}: availability of massive labeled datasets (e.g., ImageNet, web-scale corpora).
+    \item \textbf{Improved software}: modern frameworks (PyTorch, TensorFlow) with automatic differentiation and GPU support.
+    \item \textbf{Hardware}: GPUs and TPUs provide the parallelism required to train large models in tractable time.
+\end{enumerate}
+
+Key milestones (1943--present):
+
+\begin{itemize}
+    \item \textbf{1943}: McCulloch \& Pitts model a neuron with electrical circuits.
+    \item \textbf{1949}: Hebb formalizes synaptic plasticity in \textit{The Organization of Behavior}.
+    \item \textbf{1956}: The Dartmouth Summer Research Project launches AI as a field.
+    \item \textbf{1957--58}: Rosenblatt develops the \textbf{Perceptron} --- the oldest neural network still in common use today.
+    \item \textbf{1959}: Widrow \& Hoff develop ADALINE and MADALINE --- the first neural network applied to a real-world problem.
+    \item \textbf{1969}: Minsky \& Papert prove the Perceptron's fundamental limitations (\textit{Perceptrons}); neural network research stalls.
+    \item \textbf{1981--82}: Hopfield presents energy-based associative memory; interest revives.
+    \item \textbf{1985}: Backpropagation popularized (Rumelhart, Hinton, Williams).
+    \item \textbf{1997}: LSTM proposed by Schmidhuber \& Hochreiter.
+    \item \textbf{1998}: LeCun publishes \textit{Gradient-Based Learning Applied to Document Recognition}.
+    \item \textbf{Now}: neural networks are ubiquitous; discussions about their future are prevalent.
+\end{itemize}
+
+
+\section{The Perceptron}
+
+The \textbf{perceptron} is the basic building block of neural networks, introduced by Frank Rosenblatt in 1958. It is a computational abstraction of a biological neuron.
+
+\begin{definition}[Perceptron]
+A perceptron takes $m$ real-valued inputs $x_1, \ldots, x_m$ together with a constant bias $w_0$, computes their weighted sum, and passes the result through an activation function $g$:
+\[
+    \hat{y} = g\!\left(w_0 + \sum_{i=1}^{m} x_i\, w_i\right)
+\]
+In the original formulation, $g$ is the Heaviside step function. Information flows strictly \textbf{forward}: from inputs to output, with no feedback connections.
+\end{definition}
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        >=Stealth,
+        neuron/.style={circle, draw, minimum size=0.9cm, fill=blue!15},
+        weight/.style={rectangle, draw, minimum size=0.8cm, fill=green!20},
+        op/.style={circle, draw, minimum size=0.9cm, fill=red!20}
+    ]
+        \node[neuron] (bias) at (0, 2.6)  {$1$};
+        \node[neuron] (x1)   at (0, 1.3)  {$x_1$};
+        \node          (dots) at (0, 0)    {$\vdots$};
+        \node[neuron] (xn)   at (0, -1.3) {$x_n$};
+
+        \node[weight] (w0) at (3.0, 2.6)  {$w_0$};
+        \node[weight] (w1) at (3.0, 1.3)  {$w_1$};
+        \node[weight] (wn) at (3.0, -1.3) {$w_n$};
+
+        \node[op] (sum) at (5.5, 0.65) {$\Sigma$};
+        \node[op] (act) at (7.5, 0.65) {$g$};
+        \node     (out) at (9.3, 0.65) {$\hat{y}$};
+
+        \draw[->] (bias) -- (w0);
+        \draw[->] (x1)   -- (w1);
+        \draw[->] (xn)   -- (wn);
+        \draw[->] (w0)   -- (sum);
+        \draw[->] (w1)   -- (sum);
+        \draw[->] (wn)   -- (sum);
+        \draw[->] (sum)  -- node[above, font=\scriptsize]{weighted sum} (act);
+        \draw[->] (act)  -- (out);
+
+        \node[above=0.05cm of bias, font=\scriptsize]{Constant};
+        \node[left=0.1cm  of x1,   font=\scriptsize]{inputs};
+        \node[above=0.1cm of w0,   font=\scriptsize]{Weights};
+        \node[above=0.05cm of act, font=\scriptsize]{Step fn.};
+    \end{tikzpicture}
+    \caption{Perceptron: inputs are multiplied by learned weights, summed, and passed through an activation function.}\label{fig:perceptron}
+\end{figure}
+
+
+\section{Activation Functions}
+
+Activation functions introduce \textbf{non-linearity} into the network. Without them, stacking linear layers collapses to a single linear transformation, making the model incapable of representing non-linear decision boundaries. They are a crucial element of every architecture.
+
+\begin{itemize}
+    \item \textbf{Sigmoid}: $\sigma(x) = \dfrac{1}{1+e^{-x}}$\\
+        Output in $(0,1)$; historically widespread but suffers from vanishing gradients at saturation.
+
+    \item \textbf{Tanh}: $\tanh(x)$\\
+        Zero-centered; output in $(-1,1)$; generally preferred over sigmoid in hidden layers.
+
+    \item \textbf{ReLU} (Rectified Linear Unit): $\max(0, x)$\\
+        Sparse activations, computationally cheap; the default choice in modern architectures.
+
+    \item \textbf{Leaky ReLU}: $\max(0.1x,\, x)$\\
+        Mitigates the dying ReLU problem by allowing a small gradient for negative inputs.
+
+    \item \textbf{ELU} (Exponential Linear Unit):
+    \[
+        \mathrm{ELU}(x) = \begin{cases} x & x \geq 0 \\ \alpha(e^x - 1) & x < 0 \end{cases}
+    \]
+    Smooth for negative inputs; can push mean activations toward zero.
+
+    \item \textbf{Maxout}: $\max(w_1^T x + b_1,\; w_2^T x + b_2)$\\
+        Generalizes ReLU and Leaky ReLU; learns the activation shape at the cost of doubling the parameter count.
+\end{itemize}
+
+
+\section{From Perceptron to Neural Networks}
+
+\subsection{The Multi-Layer Idea}
+
+The goal is to build a \textbf{larger, non-linear model}. The key idea: concatenate many perceptron systems and insert a \textbf{non-linear activation function} between computation layers. A two-layer network (one hidden layer) computes:
+\[
+    \mathbf{y}_1 = \mathbf{x} W_1 + \mathbf{b}_1, \qquad
+    \mathbf{y}_2 = \phi(\mathbf{y}_1)\, W_2 + \mathbf{b}_2, \qquad
+    \hat{\mathbf{y}} = s(\mathbf{y}_2)
+\]
+where $\phi$ is a non-linear activation (e.g., ReLU) and $s$ is the output activation (e.g., softmax for classification).
+
+\subsection{Dimensions}
+
+For a problem with $F$ input features, $H$ hidden neurons, and $C$ output classes:
+\begin{itemize}
+    \item $\mathbf{x} \in \R^{1 \times F}$, $W_1 \in \R^{F \times H}$, $\mathbf{b}_1 \in \R^{1 \times H}$, $\mathbf{y}_1 \in \R^{1 \times H}$
+    \item $W_2 \in \R^{H \times C}$, $\mathbf{b}_2 \in \R^{1 \times C}$, $\mathbf{y}_2 \in \R^{1 \times C}$
+\end{itemize}
+
+\textit{Example}: a $28{\times}28$ grayscale image ($F=784$), $H=1024$ hidden neurons, $C=3$ classes:
+\[
+    \underbrace{\mathbf{x}}_{1 \times 784}
+    \cdot\underbrace{W_1}_{784 \times 1024}
+    + \underbrace{\mathbf{b}_1}_{1 \times 1024}
+    = \underbrace{\mathbf{y}_1}_{1 \times 1024}
+    \;\xrightarrow{\;\mathrm{ReLU}\;}\;
+    \underbrace{W_2}_{1024 \times 3}
+    + \underbrace{\mathbf{b}_2}_{1 \times 3}
+    = \underbrace{\mathbf{y}_2}_{1 \times 3}
+    \;\to\; s(\mathbf{y}_2)
+\]
+
+\subsection{Multilayer Perceptron (MLP)}
+
+The \textbf{Multilayer Perceptron} (MLP) extends this to an arbitrary number of stacked hidden layers. For input $x = (\chi_1, \ldots, \chi_p)^T$:
+\begin{enumerate}
+    \item \textbf{Hidden layer} with weight matrix $W^h$ and activation $\sigma$:
+    \[
+        u_j = \sum_i W^h_{ji}\,\chi_i, \qquad h_j = \sigma(u_j)
+    \]
+    \item \textbf{Output layer} with weight matrix $W^y$:
+    \[
+        v_k = \sum_j W^y_{kj}\,h_j, \qquad y_k = \sigma(v_k)
+    \]
+\end{enumerate}
+
+The network is \textbf{fully connected}: every neuron in layer $\ell$ connects to every neuron in layer $\ell+1$.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        >=Stealth,
+        neuron/.style={circle, draw, minimum size=0.55cm, fill=blue!15}
+    ]
+        \def\layersep{3.0cm}
+        \def\nodesep{0.82cm}
+
+        \foreach \i in {1,...,4}
+            \node[neuron] (I\i) at (0, {(-\i+2.5)*\nodesep}) {};
+        \foreach \i in {1,...,5}
+            \node[neuron] (H\i) at (\layersep, {(-\i+3)*\nodesep}) {};
+        \foreach \i in {1,...,3}
+            \node[neuron] (O\i) at (2*\layersep, {(-\i+2)*\nodesep}) {};
+
+        \foreach \i in {1,...,4}
+            \foreach \j in {1,...,5}
+                \draw[gray!40] (I\i) -- (H\j);
+        \foreach \i in {1,...,5}
+            \foreach \j in {1,...,3}
+                \draw[gray!40] (H\i) -- (O\j);
+
+        \node[above=0.3cm] at (0,           {1.5*\nodesep}) {\small Input Layer};
+        \node[above=0.3cm] at (\layersep,   {2.0*\nodesep}) {\small Hidden Layer};
+        \node[above=0.3cm] at (2*\layersep, {1.0*\nodesep}) {\small Output Layer};
+        \node at (0.5*\layersep, {2.5*\nodesep}) {$W^h$};
+        \node at (1.5*\layersep, {2.5*\nodesep}) {$W^y$};
+    \end{tikzpicture}
+    \caption{Multilayer Perceptron with one hidden layer.}\label{fig:mlp}
+\end{figure}
+
+
+\section{Training Neural Networks}
+
+\subsection{Training and Testing Stages}
+
+Neural network training proceeds in two distinct phases:
+\begin{itemize}
+    \item \textbf{Training stage}: input data is passed through the network and compared to the ground truth. The network parameters are adjusted to minimize the discrepancy.
+    \item \textbf{Testing stage}: new, unseen input is passed through the \textit{trained} (frozen) network to produce a prediction (best guess).
+\end{itemize}
+
+\subsection{Forward and Backward Pass}
+
+Each training step consists of two passes:
+\begin{enumerate}
+    \item \textbf{Forward pass}: propagate the input through the network to compute a prediction.
+    \item \textbf{Backward pass (backpropagation)}: compute the loss between prediction and ground truth; propagate the error signal backward through the network via the chain rule; update weights to reduce the error.
+\end{enumerate}
+
+
+\section{Loss Functions}
+
+A loss function quantifies the discrepancy between the network's prediction $p$ and the ground truth $t$. The choice is \textbf{task-dependent}.
+
+\subsection{Standard Loss Functions}
+
+\begin{enumerate}
+    \item \textbf{Regression} --- Mean Squared Error (MSE):
+    \[
+        \mathrm{MSE} = \frac{1}{n}\sum \bigl(y - \hat{y}\bigr)^2
+    \]
+
+    \item \textbf{Binary classification} --- Binary Cross-Entropy (BCE):
+    \[
+        \mathrm{BCE}(t, p) = -\bigl(t \cdot \log(p) + (1-t) \cdot \log(1-p)\bigr)
+    \]
+
+    \item \textbf{Multiclass classification} --- Categorical Cross-Entropy (CCE):
+    \[
+        \mathrm{CCE}(p, t) = -\sum_{c=1}^{C} t_{o,c}\,\log(p_{o,c})
+    \]
+\end{enumerate}
+
+\subsection{Cross-Entropy and Information Theory}
+
+Cross-entropy loss derives from the notion of \textbf{entropy} $H(X)$, which measures the uncertainty of a probability distribution:
+\[
+    H(X) = \begin{cases}
+        -\displaystyle\int_x p(x)\log p(x)\,dx & \text{if } X \text{ is continuous} \\[8pt]
+        -\displaystyle\sum_x p(x)\log p(x)     & \text{if } X \text{ is discrete}
+    \end{cases}
+\]
+(Logarithm in base 2.)
+
+\begin{itemize}
+    \item Higher $H(X)$ $\Rightarrow$ greater uncertainty in the distribution.
+    \item A \textbf{uniform} $p(x)$ $\Rightarrow$ maximum entropy (maximum uncertainty).
+    \item A \textbf{Dirac delta} $p(x)$ $\Rightarrow$ minimum entropy (zero uncertainty).
+\end{itemize}
+
+Minimizing cross-entropy is equivalent to concentrating the predicted distribution on the correct class. Hence: \textbf{the lower the loss, the better the model}.
+
+\subsection{Loss as an Optimization Objective}
+
+Because loss functions are \textbf{differentiable}, the learning problem can be cast as an \textbf{optimization problem}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Key Insight}]
+By training the network, we want to find the weights that achieve \textbf{minimal loss}. The weight update algorithm is called \textbf{Gradient Descent}, implemented in practice via the \textbf{backpropagation procedure}.
+\end{tcolorbox}
+
+
+\section{Backpropagation and Gradient Descent}
+
+\subsection{General Idea}
+
+Backpropagation iteratively updates \textbf{weights} $w$ and \textbf{biases} $b$ to decrease the loss $J(w)$. The procedure decomposes into three sub-tasks:
+\begin{enumerate}
+    \item \textbf{Forward pass}: compute the network output and evaluate the loss.
+    \item \textbf{Backward pass}: compute gradients $\partial J/\partial w$ by applying the chain rule layer by layer (from output to input).
+    \item \textbf{Weight update}: subtract a fraction of the gradient from each weight. The fraction is controlled by the \textbf{learning rate} $\eta$ --- a critical hyperparameter.
+\end{enumerate}
+
+The update corresponds geometrically to moving in the direction of \textbf{steepest descent} on the loss surface.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=7cm, height=5cm,
+            xlabel={$w$}, ylabel={$J(w)$},
+            axis lines=left,
+            xmin=-0.5, xmax=4.5,
+            ymin=-0.2, ymax=5.5,
+            xtick=\empty, ytick=\empty,
+            clip=false
+        ]
+            \addplot[blue!60!black, thick, domain=0:4.2, samples=100] {(x-1)^2 + 0.2};
+            \addplot[mark=*, mark size=3pt, black] coordinates {(3.6, 6.76)};
+            \node[right, font=\small] at (axis cs:3.6, 5.2) {Initial weight};
+            \node[below, font=\small] at (axis cs:1.0, 0.2) {$J_{\min}(w)$};
+            \draw[->, thick, dashed, black!70] (axis cs:3.5, 5.05) -- (axis cs:2.7, 2.89);
+            \draw[->, thick, dashed, black!70] (axis cs:2.7, 2.89) -- (axis cs:1.9, 0.92);
+            \draw[->, thick, dashed, black!70] (axis cs:1.9, 0.92) -- (axis cs:1.2, 0.24);
+            \node[right, font=\scriptsize, black!60] at (axis cs:3.2, 4.0) {Gradient};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Gradient descent on a 1D loss surface. Each step moves in the direction of the negative gradient toward the global minimum.}\label{fig:gd}
+\end{figure}
+
+\subsection{Batch Gradient Descent}
+
+\begin{enumerate}
+    \item Initialize weights randomly: $w \sim \mathcal{N}(0, \sigma^2)$.
+    \item Repeat until convergence:
+    \begin{enumerate}
+        \item Compute the gradient $\dfrac{\partial J(w)}{\partial w}$ over the \emph{entire} training set.
+        \item Update: $w \leftarrow w - \eta\,\dfrac{\partial J(w)}{\partial w}$.
+    \end{enumerate}
+    \item Return $w$.
+\end{enumerate}
+
+\textbf{Drawback}: computing the gradient over all training samples is very expensive when the dataset contains millions of examples.
+
+\subsection{Stochastic Gradient Descent (SGD)}
+
+SGD reduces the cost by estimating the gradient from a \textit{single} training sample $i$ at each step:
+\begin{enumerate}
+    \item Initialize weights randomly: $w \sim \mathcal{N}(0, \sigma^2)$.
+    \item Repeat until convergence:
+    \begin{enumerate}
+        \item Pick a single data point $i$.
+        \item Compute the gradient $\dfrac{\partial J_i(w)}{\partial w}$.
+        \item Update: $w \leftarrow w - \eta\,\dfrac{\partial J(w)}{\partial w}$.
+    \end{enumerate}
+    \item Return $w$.
+\end{enumerate}
+
+\textbf{Drawback}: the gradient estimate is very noisy since it relies on a single instance.
+
+\subsection{Mini-Batch Gradient Descent}
+
+Mini-batch gradient descent is the standard approach in practice --- the middle ground between batch GD and SGD:
+\begin{enumerate}
+    \item Initialize weights randomly: $w \sim \mathcal{N}(0, \sigma^2)$.
+    \item Repeat until convergence:
+    \begin{enumerate}
+        \item Pick a batch $B$ of data points.
+        \item Compute the averaged gradient:
+        \[
+            \frac{\partial J_B(w)}{\partial w} = \frac{1}{B}\sum_{k=1}^{B} \frac{\partial J_k(w)}{\partial w}
+        \]
+        \item Update: $w \leftarrow w - \eta\,\dfrac{\partial J(w)}{\partial w}$.
+    \end{enumerate}
+    \item Return $w$.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black]
+    Mini-batch gradient descent yields \textbf{smoother convergence}, \textbf{more stable gradients}, and allows for \textbf{larger learning rates} compared to pure SGD --- making it the default optimization strategy in deep learning.
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+\end{document}
+
