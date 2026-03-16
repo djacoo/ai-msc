@@ -1,0 +1,198 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+
+% Code listings
+\usepackage{listings}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{CC}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Cybercrime}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{II Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+
+% ========================================
+\part{Crime in the Digital Society}
+% ========================================
+
+\section{Digitalisation: Definition and Short History}
+
+\subsection{Digital Data}
+
+\begin{definition}[Digital data]
+Electronic representation of information in a format or language that computers can read and understand. In more technical terms: information in binary format (0--1) that is converted into a digital format readable by a computer.
+\end{definition}
+
+\subsection{A Brief History of Digitalisation}
+
+\begin{itemize}
+    \item \textbf{1663}: John Graunt applies statistical analysis to mortality data from the bubonic plague --- an early precursor to data-driven reasoning.
+    \item \textbf{1865}: R. Millar Devens coins the concept of business intelligence.
+    \item \textbf{1884}: Herman Hollerith builds the tabulating machine for the US Census; later founds what becomes IBM.
+    \item \textbf{1943}: Colossus, the first programmable electronic computer, is used to decipher Nazi communications at Bletchley Park.
+    \item \textbf{1989}: Tim Berners-Lee creates the World Wide Web.
+    \item \textbf{1995}: First supercomputer.
+\end{itemize}
+
+\subsection{From Digital Data to Big Data}
+
+\begin{itemize}
+    \item \textbf{Since 1997}: Emergence of social networks.
+    \item \textbf{1999}: The term \textbf{Internet of Things (IoT)} enters use --- the extension of the Internet to the world of physical objects.
+    \item \textbf{2005}: Roger Mougalas coins the term \textbf{Big Data}: a set of digital data so large that it cannot be analysed and stored using traditional tools; specific technologies and analytical methods are needed to extract value from it.
+\end{itemize}
+
+
+\section{Case Study: Smart Toys and Criminal Risks}
+
+This case study illustrates how IoT consumer devices --- specifically smart toys --- introduce concrete criminal risks by collecting and transmitting sensitive data about children.
+
+\subsection{The Cayla Doll}
+
+The Cayla doll was an internet-connected toy capable of recording and transmitting children's voice data. In 2017, Germany banned the device over fears that hackers could exploit it to target children. The case raises a fundamental question that recurs throughout the course: \textit{unfounded fears or documented reality?}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+Justin Huggler, ``Germany bans internet-connected dolls over fears hackers could target children'', \textit{The Telegraph}, 17 February 2017.
+\end{tcolorbox}
+
+\subsection{CloudPets}
+
+CloudPets were internet-connected stuffed animals that allowed children and parents to exchange voice messages via a companion app. A security analysis by Troy Hunt revealed that the backend database --- containing millions of voice recordings and user credentials --- was left exposed on the internet without authentication, was subsequently accessed by unauthorised parties, and the data was held for ransom. This is a documented case of a data breach compounded by ransom, affecting a particularly vulnerable population.
+
+\subsection{Wiggy}
+
+Wiggy was a crowdfunded ``smart piggy bank'' that linked to a child's savings account via a mobile app, allowing parents and relatives to deposit money remotely. The device combined financial account access with an IoT object marketed at children, creating a direct bridge between physical play and banking infrastructure --- a surface area for financial fraud and account compromise.
+
+
+\section{Crime in the Digital Society}
+
+The digital environment does not create crime \textit{ex novo}, but it transforms its scale, speed, authorship, and victim profile. The following dimensions illustrate this transformation through concrete examples.
+
+\subsection{Crime Types}
+
+Digital infrastructure enables new crime typologies or drastically scales existing ones:
+
+\begin{itemize}
+    \item \textbf{Cyberattacks on critical infrastructure}: In February 2023, a pro-Russian hacker group targeted Italian government websites and corporate portals (Carabinieri, Bper bank, A2A, TIM) coinciding with Prime Minister Meloni's visit to Kyiv. The Italian National Cybersecurity Agency (ACN) managed to mitigate the effects.
+    \item \textbf{Election manipulation}: Investigative reporting identified a network led by ``Tal Hanan'' (former Israeli special forces operative) that allegedly manipulated 30 elections worldwide by deploying hacking, disinformation, and social engineering campaigns on behalf of paying clients.
+    \item \textbf{Online fraud and sextortion}: Italian police data and news reports document a continuous rise in online fraud, with sextortion and fake social profiles representing a significant and growing share.
+    \item \textbf{AI-assisted fraud}: In February 2025, a fraud scheme used AI-generated voice cloning to impersonate Italian Defence Minister Crosetto and a cloned ministerial phone number to solicit money from major Italian entrepreneurs (Armani, Moratti, Tronchetti Provera, Della Valle) under the pretext of ``freeing hostages''. At least one victim paid.
+\end{itemize}
+
+\subsection{Crime Authors}
+
+The digital environment radically diversifies who can commit crime and at what scale:
+
+\begin{itemize}
+    \item \textbf{Individual actors}: Cody Wilson (b.\@ 1988), founder of Defense Distributed, published open-source gun designs (``wiki weapons'') for 3D printing online, gaining international notoriety in 2013 with the Liberator --- the first widely available 3D-printed pistol.
+    \item \textbf{Teenage actors}: Graham Ivan Clark, at age 17, hacked Twitter's internal admin tool in 2020 and took control of high-profile accounts (Obama, Gates, Musk, West) to run a Bitcoin scam that defrauded victims of over \$100,000. He pleaded guilty to a three-year sentence.
+    \item \textbf{Nation-state actors}: Bureau 121, North Korea's internal hacking unit, has been linked to several major malware events, most notably the \textbf{WannaCry ransomware attack} (2017), which infected around 300,000 devices across 150 countries and caused an estimated \$4 billion in damages. The US sanctioned North Korea over WannaCry in 2019.
+    \item \textbf{AI systems as unintended actors}: Microsoft's Tay chatbot (2016) was corrupted by coordinated users within 24 hours of launch and began producing racist and misanthropic content at scale --- a case where the crime author is ambiguous and the platform's own technology becomes the vector.
+\end{itemize}
+
+\subsection{Crime Victims}
+
+Victimisation in the digital society is broader, faster, and less visible than in traditional crime:
+
+\begin{itemize}
+    \item \textbf{Sextortion}: FBI data documents a troubling increase in sextortion cases targeting minors. In one case (May 2022), a 17-year-old died by suicide hours after being scammed.
+    \item \textbf{Mass data breach}: The Ashley Madison hack exposed the personal data of 32 million users of an extramarital affairs platform, with ongoing blackmail and reputational damage for victims years after the breach.
+    \item \textbf{Cyber kidnapping}: A new criminal trend targeting foreign exchange students and their families. Police found a Chinese exchange student isolated and frightened in a tent in the Utah mountains; the perpetrators had convinced the victim to stage a kidnapping while extorting the family remotely.
+    \item \textbf{Digital-enabled physical crime}: Thieves monitored Facebook posts to identify when homes were empty before burglarising them. In the Kim Kardashian Paris hotel robbery (2016), the perpetrators reportedly used her social media to track her location and movements.
+    \item \textbf{Digital humiliation}: In Milan (2023), a perpetrator filmed and shared on social media footage of a physical assault she committed, leading victims' counsel to demand a public apology on TikTok as part of the settlement.
+\end{itemize}
+
+\subsection{Social Control and Policing}
+
+Digital technologies also reshape the instruments of social control:
+
+\begin{itemize}
+    \item \textbf{Facial recognition}: In 2020, the European Commission considered a five-year ban on facial recognition in public spaces, highlighting the tension between law enforcement utility and civil liberties.
+    \item \textbf{Algorithmic risk assessment}: Police forces increasingly use algorithmic tools to assess threat levels and predict criminal behaviour. A 2016 ProPublica investigation (``Machine Bias'') documented that the COMPAS recidivism prediction software used across US courts exhibited systematic racial bias, falsely flagging Black defendants as future criminals at nearly twice the rate of white defendants.
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black]
+A recurring tension throughout the course: the same digital tools that enable crime also constitute the primary instruments of crime detection and social control. This duality --- and its legal, ethical, and criminological implications --- is the central analytical lens of the course.
+\end{tcolorbox}
+
+
+\end{document}
