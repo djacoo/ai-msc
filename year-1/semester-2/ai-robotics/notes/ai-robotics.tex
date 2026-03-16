@@ -788,4 +788,3623 @@ Structured light sensors project a known light pattern (e.g., a line, grid, or c
     \item Modern RGB-D cameras (e.g., Intel RealSense, original Microsoft Kinect) use structured infrared light.
 \end{itemize}
 
+
+
+% ========================================
+\part{Perception: Vision Basics}
+% ========================================
+
+\section{Introduction to Vision}
+
+\subsection{Human Vision}
+
+Vision is the most powerful sense for perceiving the three-dimensional world. The human retina occupies only $\approx 1000\,\text{mm}^2$ yet is extraordinarily dense:
+
+\begin{itemize}
+    \item $\approx 120$ million \textbf{rods} (brightness, peripheral, low-light vision)
+    \item $\approx 7$ million \textbf{cones} (color, high-acuity central vision)
+\end{itemize}
+
+In terms of spatial resolution, the human eye is equivalent to a digital camera with around \textbf{500 Megapixels}. The resulting data rate reaching the visual cortex is approximately \textbf{3 GB/s}. A large fraction of the human brain is devoted to processing this stream — an evolutionary investment that makes biological vision essentially effortless and extraordinarily robust.
+
+For robots, this must be replicated algorithmically. \textbf{Computer vision} is the field concerned with extracting meaningful information from images and videos.
+
+\subsection{Challenges}
+
+Matching the robustness of biological vision is an open research problem. Three fundamental sources of variability make it hard:
+
+\begin{itemize}
+    \item \textbf{Viewpoint changes}: the same 3D scene produces radically different images when viewed from different angles.
+    \item \textbf{Illumination changes}: color and appearance of objects change dramatically under different lighting conditions.
+    \item \textbf{Intra-class variations}: objects of the same semantic class (e.g., chairs) can look very different from one another.
+\end{itemize}
+
+These challenges motivate the use of learned representations (deep networks) rather than hand-crafted descriptors for high-level vision tasks.
+
+\section{Camera and Image Formation}
+
+\subsection{Digital Cameras: CCD and CMOS}
+
+All digital cameras capture images using an array of \textbf{light-sensitive picture elements (pixels)}.
+
+\begin{itemize}
+    \item \textbf{CCD (Charge Coupled Device)}: each pixel is a discharging capacitor that accumulates charge proportional to the number of photons striking it during the exposure time. Charge is then read out sequentially. CCDs offer high image quality but are relatively expensive and power-hungry.
+    \item \textbf{CMOS (Complementary Metal Oxide Semiconductor)}: each pixel has a dedicated transistor circuit that measures and amplifies the signal in parallel. CMOS chips are simpler, cheaper, and consume less power than CCDs, at some cost in image quality. They are now the dominant technology in consumer devices and robotics.
+\end{itemize}
+
+Both sensors return a scalar per pixel (light intensity) — they do not directly capture color.
+
+\subsection{Color Cameras}
+
+To acquire color images, filters are used to separate wavelengths:
+
+\begin{itemize}
+    \item \textbf{Single-chip Bayer filter}: a color filter array (typically 2$\times$2 blocks of R, G, G, B) is placed over the pixel array. Each pixel measures only one color channel; the missing channels are interpolated (\textit{demosaicing}). This is cheap but reduces effective spatial resolution.
+    \item \textbf{Three-chip cameras}: a beam splitter directs each primary color to a dedicated sensor chip. All three channels are sampled at full resolution; the outputs are combined electronically. Higher quality and resolution than single-chip, but significantly more expensive.
+\end{itemize}
+
+\subsection{Pinhole Camera Model}
+
+Placing a film directly in front of an object without any optics produces a hopelessly blurred image: each film point receives rays from the entire scene simultaneously. To form a useful image, the number of rays reaching each film point must be reduced.
+
+The \textbf{pinhole camera model} is the simplest way to achieve this:
+
+\begin{itemize}
+    \item All rays passing through a single point — the \textbf{center of projection} (or \textit{optical center}) $C$ — are captured.
+    \item An \textbf{image plane} is placed at distance $f$ (the \textit{focal length}) from $C$; the scene projects onto it, inverted.
+\end{itemize}
+
+This model is the foundation for almost all geometric reasoning in computer vision. It is simple, analytically tractable, and a good approximation for most cameras.
+
+\subsection{Why Lenses? The Thin Lens Equation}
+
+A perfect pinhole admits only one ray per image point, producing a perfectly sharp but very \textbf{dim} image (and diffraction effects become non-negligible). Increasing the aperture lets in more light but blurs the image.
+
+A \textbf{lens} solves this: it focuses all rays from a scene point onto a single image point, allowing a large aperture without blurring. Key geometric properties of a thin lens:
+
+\begin{itemize}
+    \item Rays passing through the \textbf{optical center} are not deviated.
+    \item Rays parallel to the \textbf{optical axis} converge to the \textbf{focal point} at distance $f$ behind the lens.
+\end{itemize}
+
+These two properties, combined with similar triangles, yield the \textbf{thin lens equation}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Thin Lens Equation}]
+\[
+\frac{1}{f} = \frac{1}{z} + \frac{1}{e}
+\]
+where $z$ is the distance of the object from the lens, $e$ is the distance behind the lens at which a focused image is formed, and $f$ is the focal length.
+\end{tcolorbox}
+
+\subsection{Pinhole Approximation}
+
+In practice, the object distance $z \gg f$, so from the thin lens equation:
+\[
+\frac{1}{e} = \frac{1}{f} - \frac{1}{z} \approx \frac{1}{f} \quad \Longrightarrow \quad e \approx f.
+\]
+
+The image plane is placed at distance $f$ from the lens (focused at infinity). Under this approximation, the lens behaves like a pinhole at distance $f$ from the focal plane. The \textbf{pinhole approximation} then gives the relationship between real-world height $h$ and its projection $h'$:
+
+\[
+\frac{h'}{h} = \frac{f}{z} \quad \Longrightarrow \quad h' = \frac{f}{z}\,h.
+\]
+
+This is the basic scaling law of perspective imaging: objects appear smaller by a factor proportional to their distance.
+
+\section{Perspective Projection}
+
+\subsection{From Scene Points to Image Plane}
+
+Assume the camera reference frame coincides with the world reference frame. A scene point is $P = (x_c, y_c, z_c)^\top$; its projection onto the image plane is $p = (x, y)$.
+
+By similar triangles (the pinhole model with focal length $f$):
+\[
+\frac{x}{x_c} = \frac{y}{y_c} = \frac{f}{z_c}
+\quad \Longrightarrow \quad
+x = f\,\frac{x_c}{z_c}, \qquad y = f\,\frac{y_c}{z_c}.
+\]
+
+This is a \textbf{perspective projection}: depth $z_c$ divides the world coordinates, introducing the depth-dependent scaling that makes distant objects appear smaller. Crucially, cameras measure \textbf{angles}, not distances.
+
+\begin{remark}
+The image plane is conventionally represented in front of the optical center $C$ (rather than behind it) to avoid the inversion. This produces an image with the same orientation as the scene.
+\end{remark}
+
+\subsection{From Image Coordinates to Pixel Coordinates}
+
+The image plane coordinates $(x, y)$ are in metric units. To obtain \textbf{pixel coordinates} $(u, v)$ we need:
+
+\begin{itemize}
+    \item An \textbf{origin offset}: the optical center $C$ projects to the pixel $(u_0, v_0)$ (the \textit{principal point}).
+    \item A \textbf{scale factor} $k$ (pixels per meter) accounting for pixel size.
+\end{itemize}
+
+\[
+u = u_0 + kx = u_0 + k\,\frac{f\,x_c}{z_c}, \qquad v = v_0 + ky = v_0 + k\,\frac{f\,y_c}{z_c}.
+\]
+
+\subsection{The Intrinsic Camera Matrix}
+
+The mapping from 3D camera-frame coordinates to pixel coordinates is linear in \textbf{homogeneous coordinates}. Define $\alpha = kf$ (focal length in pixels). Then:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Perspective Projection in Homogeneous Coordinates}]
+\[
+\lambda \begin{bmatrix} u \\ v \\ 1 \end{bmatrix}
+= \underbrace{\begin{bmatrix} \alpha & 0 & u_0 \\ 0 & \alpha & v_0 \\ 0 & 0 & 1 \end{bmatrix}}_{K}
+\begin{bmatrix} x_c \\ y_c \\ z_c \end{bmatrix}
+\]
+where $\lambda = z_c$ is a scale factor and $K$ is the \textbf{intrinsic camera matrix} (or \textit{calibration matrix}).
+\end{tcolorbox}
+
+The matrix $K$ encodes all internal geometric properties of the camera: focal length $\alpha$ and principal point $(u_0, v_0)$. It does not depend on scene geometry.
+
+\subsection{General Case: Extrinsic Parameters}
+
+In general, the world and camera frames do not coincide. A scene point $P_w = (x_w, y_w, z_w)^\top$ in the world frame must first be mapped to the camera frame via a rigid-body transform:
+
+\[
+\begin{bmatrix} x_c \\ y_c \\ z_c \end{bmatrix} = R\begin{bmatrix} x_w \\ y_w \\ z_w \end{bmatrix} + \p{t}
+\]
+
+where $R \in \SO{3}$ is the camera rotation and $\p{t} \in \R^3$ is the camera translation relative to the world. The full projection is then:
+
+\[
+\lambda \begin{bmatrix} u \\ v \\ 1 \end{bmatrix}
+= K\,[R \mid \p{t}]\,\begin{bmatrix} x_w \\ y_w \\ z_w \\ 1 \end{bmatrix}
+= M\,\tilde{P}_w
+\]
+
+where $M = K[R \mid \p{t}]$ is the $3 \times 4$ \textbf{camera projection matrix}. The parameters $(R, \p{t})$ are called \textbf{extrinsic parameters} — they describe the camera pose in the world.
+
+\begin{itemize}
+    \item \textbf{Intrinsic parameters}: $K$ — internal geometry of the camera ($\alpha$, $u_0$, $v_0$).
+    \item \textbf{Extrinsic parameters}: $(R, \p{t})$ — position and orientation of the camera in the world.
+\end{itemize}
+
+\section{Radial Distortion}
+
+Real lenses deviate from the ideal thin lens model, introducing geometric \textbf{distortions}. The most common is \textbf{radial distortion}:
+
+\begin{itemize}
+    \item \textbf{Barrel distortion}: image magnification decreases with distance from the optical center — the image appears to bulge outward. Common in wide-angle lenses.
+    \item \textbf{Pincushion distortion}: magnification increases with distance — the image appears to be pinched inward. Common in telephoto lenses.
+\end{itemize}
+
+The distortion maps ideal (undistorted) pixel coordinates $(u, v)$ to observable (distorted) coordinates $(u_d, v_d)$ as a nonlinear function of the radial distance from the optical center. For most lenses a \textbf{quadratic model} is sufficient:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Radial Distortion Model}]
+\[
+\begin{bmatrix} u_d \\ v_d \end{bmatrix}
+= (1 + k_1 r^2)\begin{bmatrix} u - u_0 \\ v - v_0 \end{bmatrix} + \begin{bmatrix} u_0 \\ v_0 \end{bmatrix}
+\]
+where the radial distance from the optical center is:
+\[
+r^2 = (u - u_0)^2 + (v - v_0)^2
+\]
+and $k_1$ is the \textbf{radial distortion coefficient} (negative for barrel, positive for pincushion distortion).
+\end{tcolorbox}
+
+Higher-order terms ($k_2 r^4, \ldots$) can be added when stronger distortion correction is needed (e.g., fisheye lenses). Distortion correction must be applied \textit{before} using the pinhole projection model.
+
+\section{Camera Calibration}
+
+\subsection{Goal}
+
+\textbf{Camera calibration} is the process of accurately estimating the intrinsic parameters $K$ (and the distortion coefficient $k_1$) and optionally the extrinsic parameters $(R, \p{t})$ for a given camera. Without calibration, metric measurements and 3D reconstruction from images are not possible.
+
+The approach: collect a set of $n$ known \textbf{correspondences} $\{(P_i, p_i)\}$ — 3D world points with known coordinates and their observed pixel locations — then solve for the parameters by inverting the projection model.
+
+\subsection{Direct Linear Transform (DLT)}
+
+The projection model $\lambda\, p_i = M\, \tilde{P}_i$ involves the $3 \times 4$ matrix $M$. Since scale is irrelevant, $M$ has 11 degrees of freedom (we can set $m_{34} = 1$). Each point correspondence gives two equations:
+\[
+u_i = \frac{m_{11}x_w + m_{12}y_w + m_{13}z_w + m_{14}}{m_{31}x_w + m_{32}y_w + m_{33}z_w + m_{34}}, \qquad
+v_i = \frac{m_{21}x_w + m_{22}y_w + m_{23}z_w + m_{24}}{m_{31}x_w + m_{32}y_w + m_{33}z_w + m_{34}}.
+\]
+
+With $\geq 6$ point correspondences these equations become a linear system in the $m_{ij}$, solvable via \textbf{linear least squares} (e.g., SVD). This is the \textbf{Direct Linear Transform (DLT)}.
+
+Once $M$ is estimated, the intrinsic and extrinsic parameters are recovered by decomposing $M = K[R \mid \p{t}]$:
+
+\begin{itemize}
+    \item The $3 \times 3$ submatrix $M_{1:3,1:3} = KR$ is decomposed via \textbf{QR factorization} into an upper triangular matrix $K$ and an orthogonal matrix $R$.
+    \item The translation is then $\p{t} = K^{-1}[m_{14}, m_{24}, m_{34}]^\top$.
+\end{itemize}
+
+\subsection{Zhang's Planar Grid Method}
+
+The DLT requires a 3D calibration object with known geometry, which is inconvenient in practice. Zhang (1998) proposed a far more practical approach using a \textbf{planar checkerboard pattern}:
+
+\begin{itemize}
+    \item The world coordinate system is placed on the calibration plane, so $z_w = 0$ for all points. The projection simplifies to:
+    \[
+    \lambda \begin{bmatrix} u_d \\ v_d \\ 1 \end{bmatrix} = K\,[r_1 \;\; r_2 \;\; \p{t}]\,\begin{bmatrix} x_w \\ y_w \\ 1 \end{bmatrix}
+    \]
+    where $r_1, r_2$ are the first two columns of $R$.
+    \item The user takes \textbf{several images} of the checkerboard at different positions and orientations. Checkerboard corners are easy to detect sub-pixel accurately.
+    \item For each image a different homography between the pattern plane and the image plane is estimated. Stacking homographies from multiple views provides enough constraints to solve for $K$ and the per-image extrinsics.
+    \item Radial distortion coefficients are estimated jointly in a nonlinear refinement step.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Zhang's Method in Practice}]
+\begin{itemize}
+    \item \textbf{Input}: several images of a planar checkerboard pattern at distinct poses; detected corner pixel coordinates.
+    \item \textbf{Output}: $K$, $k_1$ (distortion), and $(R_i, \p{t}_i)$ for each image.
+    \item \textbf{Minimum}: at least 3 images of the pattern; in practice 10--20 give more robust results.
+    \item \textbf{Implementations}: MATLAB Camera Calibration Toolbox, OpenCV \texttt{calibrateCamera}.
+\end{itemize}
+\end{tcolorbox}
+
+Zhang's method is by far the most widely used calibration technique in practice due to its simplicity — the calibration target is a printout — and its flexibility: no special 3D rig is needed.
+
+
+
+% ========================================
+\part{Perception: Stereo Vision}
+% ========================================
+
+\section{Structure from Stereo: Motivation}
+
+A single camera image cannot provide depth information. The projection from 3D to 2D is a many-to-one mapping — any point along the ray from the optical center to an image pixel is consistent with that pixel. Recovering depth requires additional constraints.
+
+Two broad strategies exist:
+\begin{itemize}
+    \item \textbf{Depth from camera geometry}: e.g., depth from focus — the amount of defocus of a point encodes its distance.
+    \item \textbf{Depth from multiple viewpoints}: use two or more images taken from different positions to triangulate 3D structure.
+        \begin{itemize}
+            \item \textbf{Structure from stereo}: two cameras at known relative positions observe the scene simultaneously.
+            \item \textbf{Structure from motion}: a single moving camera observes the scene at different times; the relative pose is unknown and must be estimated jointly with the structure.
+        \end{itemize}
+\end{itemize}
+
+Depth (range) information is indispensable for mobile robots: it drives mapping, localization, and obstacle avoidance.
+
+\subsection{Stereo Vision vs.\ Structure from Motion}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+ & \textbf{Stereo Vision} & \textbf{Structure from Motion} \\
+\hline
+Images captured & simultaneously & at different times \\
+Relative camera pose & known (from calibration) & unknown — must be estimated \\
+What is estimated & 3D structure & structure + motion (pose) \\
+\hline
+\end{tabular}
+\end{center}
+
+Both techniques recover 3D scene geometry from image correspondences; they differ in what is assumed known.
+
+\section{Stereo Vision: Working Principle}
+
+\subsection{Triangulation}
+
+The core idea of stereo vision is to observe the same 3D point $P$ from two cameras at known relative positions, then recover $P$ as the \textbf{intersection of the two back-projected rays}. Each camera provides a ray from its optical center through the image point; their intersection in 3D is the scene point.
+
+\textbf{Triangulation} is the problem of determining the 3D position of a point given:
+\begin{itemize}
+    \item its image coordinates in two (or more) views,
+    \item the intrinsic parameters and relative pose of the cameras.
+\end{itemize}
+
+Setting up the projection equations for left and right cameras:
+\[
+\lambda_l \begin{bmatrix} u_l \\ v_l \\ 1 \end{bmatrix} = K_l \begin{bmatrix} I & \mathbf{0} \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix}, \qquad
+\lambda_r \begin{bmatrix} u_r \\ v_r \\ 1 \end{bmatrix} = K_r \begin{bmatrix} R & \p{t} \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix}
+\]
+
+where $K_l, K_r$ are the intrinsic matrices, $(R, \p{t})$ is the relative pose of the right camera with respect to the left (known from calibration), and $\lambda_l, \lambda_r$ are the unknown depth scales. Solving this system yields $P_w = (X_w, Y_w, Z_w)^\top$.
+
+\subsection{Simplified Case: Aligned Cameras}
+
+To build intuition, consider the idealized setup: two identical cameras with focal length $f$, optical axes parallel, image planes coplanar, separated by a horizontal \textbf{baseline} $b$. Let $P = (X, Y, Z)$ be a scene point. By similar triangles applied to each camera:
+
+\[
+u_l = f\,\frac{X}{Z}, \qquad u_r = f\,\frac{X - b}{Z}.
+\]
+
+Subtracting gives the \textbf{disparity}:
+\[
+d \coloneqq u_l - u_r = f\,\frac{X}{Z} - f\,\frac{X-b}{Z} = \frac{f\,b}{Z}.
+\]
+
+Solving for depth:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Depth from Disparity}]
+\[
+Z = \frac{f \cdot b}{d}, \qquad d = u_l - u_r
+\]
+where $f$ is the focal length (in pixels), $b$ is the baseline (distance between the two optical centers), and $d$ is the disparity (difference in horizontal image coordinates of the corresponding projections).
+\end{tcolorbox}
+
+Two key observations:
+\begin{itemize}
+    \item \textbf{Depth is inversely proportional to disparity}: closer objects produce larger disparity; distant objects produce small disparity, making them harder to distinguish.
+    \item \textbf{Depth resolution scales with baseline}: a longer $b$ amplifies disparity differences, improving depth resolution — but makes the correspondence problem harder (larger apparent shifts between views).
+\end{itemize}
+
+\subsection{General Case}
+
+In practice the idealized aligned setup is unachievable:
+\begin{itemize}
+    \item No two manufactured cameras are truly identical.
+    \item Aligning both optical axes precisely on a common horizontal axis is mechanically very difficult.
+\end{itemize}
+
+The general case requires knowing the \textbf{relative pose} $(R, \p{t})$, the \textbf{intrinsic parameters} $(K_l, K_r)$, and the \textbf{distortion coefficients} of each camera — all obtained via \textbf{stereo calibration} (an extension of Zhang's method applied jointly to a synchronized stereo pair). Once calibrated, the general triangulation equations can be solved directly.
+
+\section{Correspondence Search}
+
+Given two calibrated cameras, the practical challenge is: \textit{which pixel in the right image corresponds to a given pixel in the left image?} This is the \textbf{correspondence problem}, and it must be solved before triangulation can proceed.
+
+\subsection{Area-Based Methods}
+
+For each pixel in the left image, define a small \textbf{patch} (window) centered on it and search for the most similar patch in the right image. Common similarity measures:
+
+\begin{itemize}
+    \item \textbf{Normalized Cross-Correlation (NCC)}: measures linear correlation between two patches, normalized by their individual energies. Robust to affine illumination changes.
+    \item \textbf{Sum of Squared Differences (SSD)}: $\sum_{(i,j)\in W}(I_l(i,j) - I_r(i+\Delta u,\, j+\Delta v))^2$. Simple and fast, but sensitive to illumination changes.
+    \item \textbf{Sum of Absolute Differences (SAD)}: $\sum_{(i,j)\in W}|I_l(i,j) - I_r(i+\Delta u,\, j+\Delta v)|$. Similar to SSD but more robust to outlier pixels.
+\end{itemize}
+
+Limitation: exhaustive search over all candidate displacements is computationally expensive.
+
+\subsection{Feature-Based Methods}
+
+Rather than matching every pixel, extract \textbf{distinctive keypoints} in both images and match only those. Features should be repeatable (detectable under different viewpoints) and invariant to illumination, scale, and orientation changes. Common examples:
+
+\begin{itemize}
+    \item \textbf{Geometric}: edges, corners, line segments.
+    \item \textbf{Descriptor-based}: SIFT (Scale-Invariant Feature Transform), SURF (Speeded-Up Robust Features), MSER (Maximally Stable Extremal Regions).
+\end{itemize}
+
+\textbf{Advantages} over area-based methods: faster, more robust.
+\textbf{Drawback}: depth is recovered only at keypoints; a \textbf{dense depth map} requires interpolation between matches.
+
+\subsection{Epipolar Constraint}
+
+Exhaustive 2D search is unnecessary. The \textbf{epipolar constraint} reduces correspondence search from 2D to 1D.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Epipolar Geometry}]
+Given a point $p_l$ in the left image, the set of all 3D points consistent with $p_l$ (varying depth) projects onto a \textbf{line} in the right image — the \textbf{epipolar line} of $p_l$. The correct correspondence $p_r$ must lie on this line.
+
+The plane containing both optical centers $C_l$, $C_r$ and the 3D point $P$ is the \textbf{epipolar plane}. Its intersections with the two image planes are the epipolar lines.
+\end{tcolorbox}
+
+The \textbf{epipoles} $e_l$ and $e_r$ are the projections of each camera's optical center onto the other camera's image plane. All epipolar lines pass through their respective epipole.
+
+By restricting search to epipolar lines, the problem reduces from a 2D search to a \textbf{1D search}, dramatically cutting computational cost and false match rate.
+
+\section{Epipolar Rectification}
+
+In the general (uncalibrated or non-aligned) setup, epipolar lines are oblique and differ per pixel. \textbf{Epipolar rectification} is a homographic re-sampling of both images such that:
+\begin{itemize}
+    \item all epipolar lines become \textbf{horizontal} (parallel to the $u$-axis),
+    \item corresponding epipolar lines share the \textbf{same row index} $v$ in both images.
+\end{itemize}
+
+After rectification, correspondence search reduces to a \textbf{horizontal 1D scan} per row — highly efficient and amenable to hardware implementation.
+
+\subsection{Rectification Pipeline}
+
+\begin{enumerate}
+    \item \textbf{Remove radial distortion}: apply the inverse distortion model to both images using the calibrated coefficients, yielding undistorted images.
+
+    \item \textbf{Compensate for rotation and translation}: apply a homographic warp to each undistorted image, derived from the known $(R, \p{t})$, so that the virtual image planes become coplanar and parallel to the baseline vector.
+\end{enumerate}
+
+After step 2, any point in the left image and its correspondent in the right image have the same $v$-coordinate: $v_l = v_r$. Disparity $d = u_l - u_r$ is purely horizontal.
+
+\begin{remark}
+Rectification needs to be computed only once per stereo rig for a fixed calibration. At runtime, each stereo frame is warped using precomputed lookup tables (one per camera), making the per-frame cost negligible.
+\end{remark}
+
+\section{Disparity Maps}
+
+After rectification, correspondence search along rows produces a \textbf{disparity map}: an image in which each pixel $(u, v)$ stores the disparity $d(u,v) = u_l - u_r$ of the corresponding scene point.
+
+\begin{itemize}
+    \item \textbf{Brighter pixels} (large $d$) correspond to \textbf{closer} objects — large disparity means the projections are far apart horizontally, which by $Z = fb/d$ implies small depth.
+    \item \textbf{Darker pixels} (small $d$) correspond to \textbf{farther} objects.
+    \item \textbf{Invalid pixels}: regions visible in only one camera (occlusions) or textureless regions (where NCC/SSD/SAD are unreliable) are assigned an invalid depth label.
+\end{itemize}
+
+Every valid disparity pixel can be back-projected to a 3D point via $Z = fb/d$, $X = Zu_l/f$, $Y = Zv/f$, yielding a dense \textbf{point cloud} of the visible scene.
+
+\section{Structure from Motion}
+
+Structure from motion (SfM) generalizes stereo to the case where the relative camera pose is \textbf{unknown}. Given image correspondences across multiple views, SfM simultaneously estimates:
+
+\begin{itemize}
+    \item \textbf{Structure}: the 3D positions $\{P_i\}$ of scene points.
+    \item \textbf{Motion}: the camera poses $\{(R_j, \p{t}_j)\}$ for each view.
+\end{itemize}
+
+The standard formulation minimizes the \textbf{reprojection error} — the sum of squared distances between observed image points and the re-projected 3D points:
+
+\[
+\min_{\{P_i\},\,\{R_j,\,\p{t}_j\}} \sum_{i,j} \norm{\pi(K_j,\, R_j,\, \p{t}_j,\, P_i) - p_{ij}}^2
+\]
+
+where $\pi(\cdot)$ is the perspective projection and $p_{ij}$ is the observed image coordinate of point $i$ in view $j$. This is a non-linear least-squares problem solved via \textbf{bundle adjustment} (typically Levenberg--Marquardt).
+
+SfM is the backbone of large-scale 3D reconstruction pipelines (e.g., COLMAP) and is closely related to \textbf{visual odometry} and \textbf{visual SLAM}, where camera trajectory estimation must happen in real time.
+
+
+
+% ========================================
+\part{Perception: Line Extraction from Range Data}
+% ========================================
+
+\section{Introduction}
+
+Range sensors (lidars, sonars) produce sparse or dense \textbf{point clouds} representing the geometry of the surrounding environment. Raw point clouds are not directly useful for higher-level tasks such as localization or map matching; they must first be processed to extract compact \textbf{geometric features}.
+
+The most fundamental and widely used feature from 2D range data is the \textbf{line segment}: walls, corridors, and table edges all appear as lines in a planar laser scan. Line features are used for:
+\begin{itemize}
+    \item laser scan matching for localization,
+    \item map building (line-based maps),
+    \item detecting and navigating along structured environments.
+\end{itemize}
+
+\textbf{Feature fitting} is in general an over-determined problem: the number of data points exceeds the number of model parameters, and measurements are noisy. The standard approach is to cast it as a \textbf{least-squares optimization}: find the model parameters that minimize the sum of squared discrepancies between the data and the model.
+
+Before considering specific algorithms, three sub-problems must be addressed:
+\begin{enumerate}
+    \item \textbf{How many lines} are present in the data?
+    \item \textbf{Which points} belong to which line (data association)?
+    \item \textbf{How to estimate} the line parameters robustly?
+\end{enumerate}
+
+\section{Probabilistic Line Fitting}
+
+\subsection{Line Representation in Polar Coordinates}
+
+A natural parameterization for lines in the context of range data uses \textbf{polar (normal) form}: a line is described by $(r, \alpha)$, where $r$ is the perpendicular distance from the origin to the line, and $\alpha$ is the angle of the normal to the line. This avoids the singularities of slope-intercept form for vertical lines.
+
+Given $n$ range measurements in polar coordinates $(\rho_i, \theta_i)$ (from the laser), the \textbf{signed distance} from point $i$ to the line $(r, \alpha)$ is:
+\[
+d_i = \rho_i \cos(\theta_i - \alpha) - r.
+\]
+
+The line converts to Cartesian via $x\cos\alpha + y\sin\alpha = r$.
+
+\subsection{Least-Squares Estimation}
+
+The optimal line parameters $(r^*, \alpha^*)$ minimize the \textbf{sum of squared distances}:
+\[
+S(r, \alpha) = \sum_{i=1}^{n} \left(\rho_i \cos(\theta_i - \alpha) - r\right)^2.
+\]
+
+Setting the partial derivatives to zero yields a closed-form solution. From $\partial S/\partial r = 0$:
+\[
+r = \frac{1}{n}\sum_{i=1}^{n} \rho_i \cos(\theta_i - \alpha).
+\]
+
+Substituting into $\partial S / \partial \alpha = 0$ and applying trigonometric identities gives:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Closed-Form Line Fit (Polar Coordinates)}]
+\[
+\alpha^* = \frac{1}{2}\arctan\!\left(\frac{-\sum_i \rho_i^2 \sin 2\theta_i + \dfrac{2}{n}\sum_i \rho_i\cos\theta_i \cdot \sum_i \rho_i\sin\theta_i}{\sum_i \rho_i^2 \cos 2\theta_i - \dfrac{1}{n}\!\left[\left(\sum_i \rho_i\cos\theta_i\right)^2 - \left(\sum_i \rho_i\sin\theta_i\right)^2\right]}\right)
+\]
+\[
+r^* = \frac{1}{n}\sum_{i=1}^{n} \rho_i \cos(\theta_i - \alpha^*)
+\]
+\end{tcolorbox}
+
+This gives the \textbf{maximum-likelihood line estimate} under the assumption that measurement errors are i.i.d.\ Gaussian. It is the statistical foundation used by all line-fitting algorithms below.
+
+\section{Line Extraction Algorithms}
+
+\subsection{Split and Merge}
+
+The \textbf{split and merge} algorithm recursively subdivides a set of points until every subset is well fit by a single line, then merges collinear adjacent segments.
+
+\begin{algorithm}
+\caption{Split and Merge}
+\begin{algorithmic}
+\STATE \textbf{Input:} Set of points $S$, distance threshold $t_h$
+\STATE \textbf{Output:} Set of line segments
+\STATE Push $S$ onto list $L$
+\WHILE{$L$ is not empty}
+    \STATE $S_i \leftarrow \mathrm{pop}(L)$
+    \STATE $\ell \leftarrow \mathrm{fitLine}(S_i)$
+    \STATE $d_{\max} \leftarrow \max_{p \in S_i} \mathrm{dist}(p, \ell)$
+    \IF{$d_{\max} > t_h$}
+        \STATE Split $S_i$ at the farthest point into $S_{i1}$, $S_{i2}$
+        \STATE Push $S_{i1}$ and $S_{i2}$ onto $L$
+    \ENDIF
+\ENDWHILE
+\STATE Merge collinear adjacent segments
+\end{algorithmic}
+\end{algorithm}
+
+The key design choice is the threshold $t_h$: too small and noise causes unnecessary splits; too large and distinct lines get merged. The final merge step combines segments whose fitted lines are nearly collinear (small angle and distance between endpoints).
+
+\textbf{Complexity}: $O(N \log N)$ on average (balanced splits). In practice it is very fast — around 1500 Hz on typical laser scan sizes.
+
+\subsection{Line Regression}
+
+\textbf{Line regression} is a sliding-window approach: a window of $N_f$ consecutive points is moved across the ordered point set, fitting a line to each window. Adjacent fitted lines are then merged if collinear.
+
+\begin{algorithm}
+\caption{Line Regression}
+\begin{algorithmic}
+\STATE \textbf{Input:} Ordered set of points $S$, window size $N_f$
+\STATE \textbf{Output:} Set of line segments
+\STATE Initialize sliding window of $N_f$ points
+\FORALL{windows $W$ of $N_f$ consecutive points}
+    \STATE Fit a line to points in $W$ (least squares)
+\ENDFOR
+\STATE Merge collinear adjacent segments
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity}: $O(N \cdot N_f)$. Slower than split and merge ($\sim 400\,\text{Hz}$) due to redundant overlapping fits, but straightforward to implement.
+
+\subsection{RANSAC}
+
+\textbf{RANSAC} (RANdom SAmple Consensus) is a general-purpose robust fitting algorithm designed to work well in the presence of \textbf{outliers} — data points that do not belong to any line. It is iterative and non-deterministic: with more iterations, the probability of finding a good solution increases.
+
+\begin{algorithm}
+\caption{RANSAC for Line Extraction}
+\begin{algorithmic}
+\STATE \textbf{Input:} Set of points $S$, number of iterations $k$, threshold $t_h$
+\STATE \textbf{Output:} Best line and its inlier set
+\FOR{$i = 1$ to $k$}
+    \STATE Randomly sample 2 points $(p_1, p_2)$ from $S$
+    \STATE Fit line $\ell$ through $(p_1, p_2)$
+    \STATE $\mathrm{InlierSet}_i \leftarrow \{p \in S : \mathrm{dist}(p, \ell) < t_h\}$
+\ENDFOR
+\RETURN line with largest $|\mathrm{InlierSet}|$, refit to all inliers
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection*{Choosing the Number of Iterations $k$}
+
+The number of iterations needed depends on the fraction of inliers in the data. Let $w$ be the (estimated) fraction of inliers. Under the assumption that the two sampled points are drawn independently:
+\[
+P(\text{both sampled points are inliers}) = w^2, \qquad P(\text{at least one outlier}) = 1 - w^2.
+\]
+
+The probability that \textit{all} $k$ iterations sample at least one outlier (i.e., RANSAC never finds a clean pair) is $(1-w^2)^k$. Setting this equal to $1 - p$, where $p$ is the desired probability of finding at least one outlier-free sample:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{RANSAC: Required Number of Iterations}]
+\[
+k = \frac{\log(1 - p)}{\log(1 - w^2)}
+\]
+where $p$ is the desired success probability and $w$ is the estimated fraction of inliers.
+\end{tcolorbox}
+
+\begin{example}
+With $p = 0.99$ (99\% success) and $w = 0.5$ (50\% inliers): $k = \log(0.01)/\log(0.75) \approx 16$ iterations suffice.
+\end{example}
+
+To extract \textbf{multiple lines}, RANSAC is re-run iteratively: after each run, the inliers of the found line are removed from $S$ and the algorithm repeats on the remaining points.
+
+\textbf{Drawbacks}: no optimality guarantee on the number of inliers or on the fit quality within the inlier set. Results differ between runs (non-deterministic). \textbf{Complexity}: $O(S \cdot N \cdot k)$ where $S$ is the number of lines — significantly slower ($\sim 30\,\text{Hz}$) than split and merge or regression.
+
+\subsection{Hough Transform}
+
+The \textbf{Hough transform} takes a fundamentally different approach: it maps the problem from \textit{data space} (where we seek a line through points) to a \textit{parameter space} (where points vote for line parameters), and finds the line as the most-voted parameter cell.
+
+\subsubsection*{Duality between Points and Lines}
+
+In the slope-intercept parameterization $y = mx + b$:
+\begin{itemize}
+    \item A \textbf{line} $y = m_0 x + b_0$ in data space $\leftrightarrow$ a \textbf{point} $(m_0, b_0)$ in parameter space.
+    \item A \textbf{point} $(x_0, y_0)$ in data space $\leftrightarrow$ a \textbf{line} $b = -x_0 m + y_0$ in parameter space.
+    \item Two collinear points in data space $\leftrightarrow$ two lines in parameter space that \textbf{intersect} at the parameters $(m^*, b^*)$ of the line through them.
+\end{itemize}
+
+In general, $n$ collinear points produce $n$ lines in parameter space all passing through the same point $(m^*, b^*)$ — this intersection is detected by voting.
+
+\subsubsection*{Polar Parameterization}
+
+The slope-intercept form has two problems: $m$ is unbounded (vertical lines have $m \to \infty$), and $b$ is also unbounded. The standard fix is the \textbf{polar (Hesse normal) form}:
+\[
+x\cos\theta + y\sin\theta = \rho, \qquad 0 \le \theta < \pi,\; \rho \in \mathbb{R}.
+\]
+
+Under this parameterization, a point $(x, y)$ in data space maps to a \textbf{sinusoid} $\rho = x\cos\theta + y\sin\theta$ in the $(\theta, \rho)$ parameter space (bounded since $\rho \leq \sqrt{x^2+y^2}$ for fixed $(x,y)$).
+
+\begin{algorithm}
+\caption{Hough Transform}
+\begin{algorithmic}
+\STATE \textbf{Input:} Points $S$, accumulator dimensions $N_r \times N_c$, threshold $t_h$
+\STATE \textbf{Output:} Detected line(s)
+\STATE Initialize accumulator $H[N_r][N_c] \leftarrow 0$
+\FORALL{points $p = (x, y) \in S$}
+    \FORALL{discrete values $\theta$}
+        \STATE $\rho \leftarrow x\cos\theta + y\sin\theta$
+        \STATE $H(\theta, \rho) \leftarrow H(\theta, \rho) + 1$
+    \ENDFOR
+\ENDFOR
+\STATE $(\theta^*, \rho^*) \leftarrow \arg\max_{\theta, \rho} H(\theta, \rho)$
+\IF{$H(\theta^*, \rho^*) > t_h$}
+    \STATE Inliers $\leftarrow$ all points that voted for $(\theta^*, \rho^*)$
+    \STATE Refit line to inliers; \textbf{return} line
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity}: $O(S \cdot N \cdot N_c + N_r \cdot N_c)$, where $N_c$ is the number of $\theta$-bins. In practice the Hough transform is the slowest of the algorithms considered ($\sim 10\,\text{Hz}$) due to the inner loop over all $\theta$ values per point.
+
+\section{Algorithm Comparison}
+
+The following table summarizes the empirical performance of the four algorithms on typical laser scan data ($N = 722$ points, $S = 7$ extracted segments on average), from Nguyen et al.\ (IROS 2005):
+
+\begin{center}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Algorithm} & \textbf{Complexity} & \textbf{Speed (Hz)} & \textbf{False Positives} & \textbf{Precision} \\
+\hline
+Split and Merge    & $O(N \log N)$                     & $\sim 1500$ & 10\%  & +++ \\
+Line Regression    & $O(N \cdot N_f)$                  & $\sim 400$  & 10\%  & +++ \\
+RANSAC             & $O(S \cdot N \cdot k)$             & $\sim 30$   & 30\%  & ++++ \\
+Hough Transform    & $O(S \cdot N \cdot N_c + N_r N_c)$& $\sim 10$   & 30\%  & ++++ \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Split and Merge} and \textbf{Line Regression} are fast and have low false positive rates, but are sensitive to the ordering of points and to outliers in the data.
+    \item \textbf{RANSAC} and \textbf{Hough Transform} are inherently robust to outliers (they find the \textit{best-supported} model regardless of noise), achieving higher precision at the cost of speed. RANSAC is more widely used in practice due to its simplicity and easy extension to other geometric primitives (planes, circles, etc.).
+\end{itemize}
+
+
+
+% ========================================
+\part{Localization: Recursive State Estimation}
+% ========================================
+
+\section{Introduction to Localization}
+
+\subsection{The Localization Problem}
+
+\textbf{Localization} is the task of estimating the robot's pose (position and orientation) in the environment based on sensor observations and a prior map. It sits at the core of the perception pipeline: without a reliable pose estimate, planning and map-based reasoning are impossible.
+
+Two related problems are distinguished:
+\begin{itemize}
+    \item \textbf{Localization}: the map is given; only the pose must be estimated.
+    \item \textbf{Simultaneous Localization and Mapping (SLAM)}: the map and the pose are both unknown and must be estimated jointly.
+\end{itemize}
+
+\subsection{Why Probabilistic?}
+
+Two fundamental sources of uncertainty prevent a deterministic solution:
+\begin{itemize}
+    \item \textbf{Noisy sensors}: both proprioceptive measurements (wheel odometry, IMU) and exteroceptive measurements (lidar, camera) are corrupted by noise. A single range reading does not give a precise distance — it gives a \textit{distribution} over distances.
+    \item \textbf{Imperfect maps}: the stored environment model differs from the real world (dynamic objects, construction, measurement errors at build time).
+\end{itemize}
+
+A deterministic approach would produce a single point estimate $x = 0.5\,\text{m}$ that ignores all uncertainty. A \textbf{probabilistic approach} instead maintains a full probability distribution over poses — e.g., $X \sim \mathcal{N}(0.5, 1)$ — capturing both the best estimate and the confidence in it. This distinction is critical: a robot that knows it is uncertain can act cautiously or seek additional observations.
+
+\section{Probability Background}
+
+\subsection{Discrete and Continuous Random Variables}
+
+Let $X$ be a random variable and $x$ a realization.
+
+\begin{itemize}
+    \item \textbf{Discrete}: $x \in \{x_1, \ldots, x_n\}$. The probability mass function gives $P(X = x_i) \geq 0$ with $\sum_i P(X = x_i) = 1$.
+    \item \textbf{Continuous}: $X$ takes values on $\mathbb{R}$ (or a subset). The probability density function $p(x) \geq 0$ satisfies $\int p(x)\,dx = 1$, and $P(X \in [a,b]) = \int_a^b p(x)\,dx$.
+\end{itemize}
+
+\subsection{Joint, Conditional, and Marginal Probability}
+
+For two random variables $X$ and $Y$:
+\begin{itemize}
+    \item \textbf{Joint}: $P(x, y) = P(X=x \text{ and } Y=y)$.
+    \item \textbf{Conditional}: $P(x \mid y) = P(x,y)/P(y)$, equivalently $P(x,y) = P(x \mid y)P(y)$.
+    \item \textbf{Independence}: $P(x,y) = P(x)P(y)$, equivalently $P(x \mid y) = P(x)$.
+    \item \textbf{Marginal}: $p(x) = \int P(x,y)\,dy$ (continuous), or $P(x) = \sum_y P(x,y)$ (discrete).
+    \item \textbf{Total probability}: $p(x) = \int P(x \mid y)P(y)\,dy$.
+\end{itemize}
+
+\subsection{Bayes' Rule}
+
+From the product rule $P(x,y) = P(x \mid y)P(y) = P(y \mid x)P(x)$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bayes' Rule}]
+\[
+P(x \mid y) = \frac{P(y \mid x)\,P(x)}{P(y)} = \eta\, P(y \mid x)\,P(x)
+\]
+where the normalizing constant $\eta = 1/P(y) = 1/\sum_x P(y \mid x)P(x)$ ensures the result is a valid distribution.
+\end{tcolorbox}
+
+The terms have a natural interpretation: $P(x)$ is the \textbf{prior} (belief before observing $y$), $P(y \mid x)$ is the \textbf{likelihood} (probability of the observation given the state), and $P(x \mid y)$ is the \textbf{posterior} (updated belief after observing $y$).
+
+\textbf{Incorporating previous knowledge}: when a third variable $z$ is already known,
+\[
+P(x \mid y, z) = \eta\, P(y \mid x, z)\, P(x \mid z).
+\]
+
+\subsection{Conditional Independence}
+
+$X$ is conditionally independent of $Y$ given $Z$ if:
+\[
+P(x, y \mid z) = P(x \mid z)\,P(y \mid z) \quad \Longleftrightarrow \quad P(x \mid z, y) = P(x \mid z).
+\]
+
+Knowing $z$ renders knowledge of $y$ irrelevant for inferring $x$. This property is central to the Markov assumption used in the Bayes filter.
+
+\section{The Bayes Filter}
+
+\subsection{Setup and Belief}
+
+The robot interacts with the world through a sequence of \textbf{controls} $u_1, u_2, \ldots$ and \textbf{observations} $z_1, z_2, \ldots$. At time $t$, the history is $h_t = u_1, z_1, \ldots, u_t, z_t$.
+
+The \textbf{belief} $\mathrm{Bel}(x_t)$ is the posterior distribution over the robot's state $x_t$ (here: pose) given all past controls and observations:
+\[
+\mathrm{Bel}(x_t) = P(x_t \mid u_{1:t},\, z_{1:t}).
+\]
+
+Three models are required:
+\begin{itemize}
+    \item \textbf{Sensor model} $P(z_t \mid x_t)$: probability of receiving observation $z_t$ when in state $x_t$.
+    \item \textbf{Motion model} $P(x_t \mid u_t, x_{t-1})$: probability of transitioning to state $x_t$ from $x_{t-1}$ under control $u_t$.
+    \item \textbf{Prior} $P(x_0)$: initial belief over the state.
+\end{itemize}
+
+\subsection{The Markov Assumption}
+
+Computing $\mathrm{Bel}(x_t)$ directly from the full history is intractable. The \textbf{Markov assumption} makes it manageable by asserting that the current state $x_t$ contains all relevant information about the past:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Markov Assumption}]
+\begin{align*}
+P(z_t \mid x_t,\, z_{t-1},\, u_{1:t}) &= P(z_t \mid x_t) \\
+P(x_t \mid x_{t-1},\, z_{t-1},\, u_{1:t}) &= P(x_t \mid x_{t-1},\, u_t)
+\end{align*}
+The current observation depends only on the current state (not on history). The current state depends only on the previous state and the current control.
+\end{tcolorbox}
+
+This defines a \textbf{Dynamic Bayesian Network} (DBN): states $x_0 \to x_1 \to x_2 \to \cdots$ form a Markov chain driven by controls $u_t$, with observations $z_t$ depending only on $x_t$.
+
+\subsection{Derivation of the Recursive Update}
+
+Starting from the definition and applying Bayes' rule, total probability, and the Markov assumption:
+
+\begin{align*}
+\mathrm{Bel}(x_t)
+&= P(x_t \mid u_{1:t},\, z_{1:t}) \\
+&= \eta\, P(z_t \mid x_t,\, u_{1:t},\, z_{t-1})\, P(x_t \mid u_{1:t},\, z_{t-1}) && \text{[Bayes]}\\
+&= \eta\, P(z_t \mid x_t)\, P(x_t \mid u_{1:t},\, z_{t-1}) && \text{[Markov (1)]}\\
+&= \eta\, P(z_t \mid x_t)\! \int P(x_t \mid u_{1:t},\, z_{t-1},\, x_{t-1})\, P(x_{t-1} \mid u_{1:t},\, z_{t-1})\,dx_{t-1} && \text{[Total prob.]}\\
+&= \eta\, P(z_t \mid x_t)\! \int P(x_t \mid u_t,\, x_{t-1})\, P(x_{t-1} \mid u_{1:t-1},\, z_{t-1})\,dx_{t-1} && \text{[Markov (2)]}\\
+&= \eta\, P(z_t \mid x_t)\! \int P(x_t \mid u_t,\, x_{t-1})\, \mathrm{Bel}(x_{t-1})\,dx_{t-1}
+\end{align*}
+
+The last step recognizes $P(x_{t-1} \mid u_{1:t-1}, z_{t-1}) = \mathrm{Bel}(x_{t-1})$, making the update \textbf{recursive}: the new belief depends only on the previous belief, the new control, and the new observation — not on the full history.
+
+\subsection{Prediction and Correction}
+
+The full update is split into two steps that have clear physical interpretations:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bayes Filter: Predict-Correct}]
+\textbf{Prediction step} (propagate belief through the motion model):
+\[
+\overline{\mathrm{Bel}}(x_t) = \int P(x_t \mid u_t,\, x_{t-1})\,\mathrm{Bel}(x_{t-1})\,dx_{t-1}
+\]
+
+\textbf{Correction step} (incorporate the new observation):
+\[
+\mathrm{Bel}(x_t) = \eta\, P(z_t \mid x_t)\,\overline{\mathrm{Bel}}(x_t)
+\]
+\end{tcolorbox}
+
+\begin{itemize}
+    \item \textbf{Prediction}: applying a control $u_t$ moves the robot and increases uncertainty. The predicted belief $\overline{\mathrm{Bel}}(x_t)$ is a convolution of the previous belief with the motion model — it spreads out.
+    \item \textbf{Correction}: observing $z_t$ sharpens the belief by multiplying pointwise by the sensor likelihood $P(z_t \mid x_t)$ and renormalizing.
+\end{itemize}
+
+\subsection{Worked Example: Door State Estimation}
+
+A robot faces a door. State: \textit{open} or \textit{closed}.
+
+\textbf{Models:}
+\begin{align*}
+P(\text{light=high} \mid \text{open}) &= 0.6,  & P(\text{light=high} \mid \text{closed}) &= 0.3 \\
+P(\text{range=near} \mid \text{open}) &= 0.5,  & P(\text{range=near} \mid \text{closed}) &= 0.6
+\end{align*}
+\textbf{Prior:} $P(\text{open}) = P(\text{closed}) = 0.5$.
+
+\textbf{After first observation} (light = high):
+\[
+P(\text{open} \mid \text{light=high}) = \eta \cdot 0.6 \cdot 0.5 = \eta \cdot 0.30
+\]
+\[
+P(\text{closed} \mid \text{light=high}) = \eta \cdot 0.3 \cdot 0.5 = \eta \cdot 0.15
+\]
+Normalizing: $\eta = 1/(0.30+0.15) = 1/0.45$, so $P(\text{open} \mid \text{light=high}) \approx 0.67$.
+
+\textbf{After second observation} (range = near), using the posterior from step 1 as the new prior:
+\[
+P(\text{open}) \leftarrow 0.67,\quad P(\text{closed}) \leftarrow 0.33
+\]
+\[
+P(\text{open} \mid \text{light=high, range=near}) = \eta \cdot 0.5 \cdot 0.67 \approx 0.50
+\]
+\[
+P(\text{closed} \mid \text{light=high, range=near}) = \eta \cdot 0.6 \cdot 0.33 \approx 0.50
+\]
+The second observation provides conflicting evidence (a range reading of \textit{near} is more consistent with \textit{closed}), pulling the posterior back toward 50/50.
+
+\textbf{Incorporating an action} (robot closes the door):
+
+Transition model: $P(\text{open} \mid \text{close}, \text{open}) = 0.1$, $P(\text{closed} \mid \text{close}, \text{open}) = 0.9$, $P(\text{open} \mid \text{close}, \text{closed}) = 0$, $P(\text{closed} \mid \text{close}, \text{closed}) = 1$.
+
+With prior $P(\text{open}) = 5/8$, $P(\text{closed}) = 3/8$:
+\begin{align*}
+P(\text{closed after close}) &= P(\text{closed} \mid \text{close}, \text{open}) \cdot \tfrac{5}{8} + P(\text{closed} \mid \text{close}, \text{closed}) \cdot \tfrac{3}{8} \\
+&= 0.9 \cdot \tfrac{5}{8} + 1.0 \cdot \tfrac{3}{8} = \tfrac{4.5 + 3}{8} = \tfrac{7.5}{8} = 0.9375.
+\end{align*}
+
+The action greatly increases the probability that the door is closed, as expected.
+
+\section{Realizations of the Bayes Filter}
+
+The Bayes filter is a \textbf{general framework}. Practical implementations differ in how they represent and update the belief distribution:
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Filter} & \textbf{Belief Representation} & \textbf{Model Assumptions} \\
+\hline
+Kalman Filter (KF) & Gaussian (mean + covariance) & Linear motion and sensor models \\
+Extended KF (EKF) & Gaussian & Linearized nonlinear models \\
+Unscented KF (UKF) & Gaussian & Nonlinear models (sigma points) \\
+Particle Filter (PF) & Weighted sample set & Arbitrary nonlinear/non-Gaussian \\
+Histogram Filter & Discrete grid & Arbitrary (discretized state space) \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Kalman-family filters}: represent the belief as a Gaussian $\mathcal{N}(\mu_t, \Sigma_t)$. The prediction and correction steps have closed-form solutions under linear (or linearized) models. Very efficient but limited to unimodal distributions — they cannot represent global uncertainty or multiple hypotheses simultaneously.
+    \item \textbf{Particle filters}: represent the belief as a set of $N$ weighted samples (particles) $\{x_t^{[i]}, w_t^{[i]}\}$. They make no parametric assumption and can approximate arbitrary distributions, including multi-modal ones. The correction step reweights samples by the sensor likelihood; a \textbf{resampling} step then draws new particles proportional to the weights, concentrating them in high-probability regions. Particle filters are the basis of \textbf{Monte Carlo Localization (MCL)}, which demonstrated real-time localization in large environments (e.g., the Smithsonian Museum) without requiring linearization.
+\end{itemize}
+
+
+
+% ========================================
+\part{Localization: Kalman Filter}
+% ========================================
+
+\section{The Kalman Filter}
+
+\subsection{Overview}
+
+The \textbf{Kalman filter} (KF) is a concrete realization of the Bayes filter for the case where:
+\begin{itemize}
+    \item the belief is represented as a \textbf{Gaussian distribution},
+    \item motion and observation models are \textbf{linear} with \textbf{Gaussian noise}.
+\end{itemize}
+
+Under these assumptions the KF is the \textbf{optimal} estimator — it minimizes the mean squared error and the belief remains exactly Gaussian at every step. The key insight is that Gaussians are closed under linear transformations, products, and marginalization, so every operation in the predict--correct cycle produces another Gaussian.
+
+\subsection{The Gaussian Belief}
+
+The state belief is a multivariate Gaussian:
+\[
+\mathrm{Bel}(x_t) = \mathcal{N}(x_t;\, \mu_t, \Sigma_t) = \det(2\pi\Sigma_t)^{-1/2} \exp\!\left(-\tfrac{1}{2}(x_t - \mu_t)^\top \Sigma_t^{-1}(x_t - \mu_t)\right)
+\]
+
+where $\mu_t \in \mathbb{R}^n$ is the \textbf{mean} (best state estimate) and $\Sigma_t \in \mathbb{R}^{n \times n}$ is the \textbf{covariance matrix} (encoding uncertainty). Representing and updating the belief reduces to tracking $(\mu_t, \Sigma_t)$.
+
+\subsection{Linear Motion and Observation Models}
+
+The Kalman filter assumes the following parametric structure:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{KF System Models}]
+\textbf{Motion model:}
+\[
+x_t = A_t x_{t-1} + B_t u_t + \epsilon_t, \qquad \epsilon_t \sim \mathcal{N}(0, R_t)
+\]
+\textbf{Observation model:}
+\[
+z_t = C_t x_t + \delta_t, \qquad \delta_t \sim \mathcal{N}(0, Q_t)
+\]
+\end{tcolorbox}
+
+The matrices have the following roles:
+\begin{itemize}
+    \item $A_t$ ($n \times n$): state transition matrix — describes how the state evolves from $x_{t-1}$ to $x_t$ in the absence of controls.
+    \item $B_t$ ($n \times l$): control-input matrix — maps the control $u_t \in \mathbb{R}^l$ to a state increment.
+    \item $C_t$ ($k \times n$): observation matrix — maps the state to the expected observation $z_t \in \mathbb{R}^k$.
+    \item $R_t$ ($n \times n$): process noise covariance — uncertainty injected by the motion.
+    \item $Q_t$ ($k \times k$): measurement noise covariance — uncertainty in the sensor.
+\end{itemize}
+
+Under these definitions the models become Gaussians:
+\[
+P(x_t \mid u_t, x_{t-1}) = \mathcal{N}(x_t;\, A_t x_{t-1} + B_t u_t,\, R_t)
+\]
+\[
+P(z_t \mid x_t) = \mathcal{N}(z_t;\, C_t x_t,\, Q_t)
+\]
+
+\subsection{Closure under Gaussian Belief}
+
+Because the product of two Gaussians is Gaussian, and because a linear transformation of a Gaussian is Gaussian, it follows by induction that:
+\begin{itemize}
+    \item if $\mathrm{Bel}(x_{t-1}) = \mathcal{N}(\mu_{t-1}, \Sigma_{t-1})$, then after the prediction step $\overline{\mathrm{Bel}}(x_t)$ is Gaussian,
+    \item after the correction step $\mathrm{Bel}(x_t)$ is Gaussian (product of two Gaussians, renormalized).
+\end{itemize}
+
+The belief stays Gaussian for all $t$ if initialized as Gaussian.
+
+\subsection{The Kalman Filter Algorithm}
+
+The predict--correct cycle computes the new Gaussian parameters $(\mu_t, \Sigma_t)$ in closed form:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Kalman Filter Algorithm}]
+\textbf{Input:} $\mu_{t-1}$, $\Sigma_{t-1}$, $u_t$, $z_t$
+
+\textbf{Prediction:}
+\begin{align*}
+\bar{\mu}_t &= A_t \mu_{t-1} + B_t u_t \\
+\bar{\Sigma}_t &= A_t \Sigma_{t-1} A_t^\top + R_t
+\end{align*}
+
+\textbf{Kalman gain:}
+\[
+K_t = \bar{\Sigma}_t C_t^\top \left(C_t \bar{\Sigma}_t C_t^\top + Q_t\right)^{-1}
+\]
+
+\textbf{Correction:}
+\begin{align*}
+\mu_t &= \bar{\mu}_t + K_t(z_t - C_t \bar{\mu}_t) \\
+\Sigma_t &= (I - K_t C_t)\bar{\Sigma}_t
+\end{align*}
+
+\textbf{Output:} $\mu_t$, $\Sigma_t$
+\end{tcolorbox}
+
+\subsection{Interpreting Each Step}
+
+\begin{enumerate}
+    \item \textbf{Predict mean} $\bar{\mu}_t = A_t \mu_{t-1} + B_t u_t$: propagate the previous estimate through the linear motion model.
+    \item \textbf{Predict covariance} $\bar{\Sigma}_t = A_t \Sigma_{t-1} A_t^\top + R_t$: transform the previous uncertainty through the dynamics and add process noise. Uncertainty \textit{grows} in the prediction step.
+    \item \textbf{Kalman gain} $K_t$: trades off between the predicted uncertainty $\bar{\Sigma}_t$ and the measurement noise $Q_t$. If measurements are very accurate ($Q_t \approx 0$) then $K_t \to C_t^{-1}$ and the state is set to the measurement. If motion is very accurate ($R_t \approx 0$, $\bar{\Sigma}_t \approx 0$) then $K_t \to 0$ and the measurement is ignored.
+    \item \textbf{Correct mean}: $z_t - C_t \bar{\mu}_t$ is the \textbf{innovation} — the discrepancy between the actual observation and the predicted observation. The correction moves the mean toward the measurement by an amount proportional to $K_t$.
+    \item \textbf{Correct covariance}: $(I - K_t C_t)\bar{\Sigma}_t$ reduces uncertainty. Uncertainty \textit{shrinks} in the correction step.
+\end{enumerate}
+
+\section{Mobile Robot Localization with the KF}
+
+\subsection{Markov Localization}
+
+\textbf{Markov Localization} is the application of the Bayes filter to robot pose estimation given a map $m$. The map enters the observation model: the sensor likelihood becomes $P(z_t \mid x_t, m)$, giving the probability of receiving observation $z_t$ from state $x_t$ given the known map.
+
+The algorithm is the standard Bayes filter predict--correct cycle:
+\begin{enumerate}
+    \item $\overline{\mathrm{bel}}(x_t) = \int P(x_t \mid u_t, x_{t-1})\,\mathrm{bel}(x_{t-1})\,dx_{t-1}$ \quad (prediction)
+    \item $\mathrm{bel}(x_t) = \eta\, P(z_t \mid x_t, m)\,\overline{\mathrm{bel}}(x_t)$ \quad (correction)
+\end{enumerate}
+
+Markov Localization is a \textit{framework} — the choice of belief representation and models gives different concrete algorithms.
+
+\subsection{KF Localization for Feature-Based Maps}
+
+When the map consists of identifiable \textbf{landmarks} (features with known positions), the KF provides an efficient and principled solution. The state is the robot pose $x_t = (x, y, \theta)^\top$. Observations are range and bearing measurements to nearby landmarks: $z_t^i = (r^i, \phi^i)^\top$.
+
+\textbf{Key requirement}: landmarks must be \textbf{uniquely identifiable} — the data association problem (which observation corresponds to which landmark) must be solved. Under known correspondences, each landmark observation independently constrains the pose through the correction step.
+
+The belief is a Gaussian $\mathrm{Bel}(x_t) = \mathcal{N}(\mu_t, \Sigma_t)$ representing the estimated pose and its uncertainty. The covariance ellipse $\Sigma_t$ shrinks with each observation and grows with each motion.
+
+\subsection{Localization Taxonomy}
+
+Localization problems differ along several axes:
+\begin{itemize}
+    \item \textbf{Local vs.\ global}: local localization (position tracking) assumes a good initial estimate; global localization starts with a uniform prior over all poses. The ``kidnapped robot'' problem (robot is moved without warning) is the hardest global case.
+    \item \textbf{Static vs.\ dynamic environments}: dynamic elements (people, moving objects) violate the static map assumption and require special handling.
+    \item \textbf{Passive vs.\ active}: a passive robot localizes from observations collected incidentally; an active robot plans actions to reduce its uncertainty (information-theoretic planning).
+    \item \textbf{Single vs.\ multi-robot}: multiple robots can cooperate by sharing observations or using each other as landmarks.
+\end{itemize}
+
+\section{Extended Kalman Filter}
+
+\subsection{Motivation}
+
+The standard KF requires linear models. In practice, robot kinematics and sensor geometry are nonlinear. For a differential-drive robot, the motion model involves $\cos\theta$ and $\sin\theta$; range-bearing observations involve $\arctan$ and square roots. The \textbf{Extended Kalman Filter} (EKF) extends the KF to nonlinear models via \textbf{local linearization}.
+
+\subsection{Nonlinear Models}
+
+The general case replaces the linear matrices with arbitrary differentiable functions:
+\begin{align*}
+x_t &= g(u_t, x_{t-1}) + \epsilon_t, \qquad \epsilon_t \sim \mathcal{N}(0, R_t) \\
+z_t &= h(x_t) + \delta_t, \qquad \delta_t \sim \mathcal{N}(0, Q_t)
+\end{align*}
+
+where $g: \mathbb{R}^l \times \mathbb{R}^n \to \mathbb{R}^n$ is the (nonlinear) motion function and $h: \mathbb{R}^n \to \mathbb{R}^k$ is the (nonlinear) observation function.
+
+\subsection{First-Order Taylor Linearization}
+
+The EKF approximates $g$ and $h$ by their first-order Taylor expansions around the current mean estimate:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{EKF Linearization}]
+\textbf{Motion linearization} around $\mu_{t-1}$:
+\[
+g(u_t, x_{t-1}) \approx g(u_t, \mu_{t-1}) + G_t(x_{t-1} - \mu_{t-1}), \qquad G_t = \frac{\partial g(u_t, \mu_{t-1})}{\partial x_{t-1}}
+\]
+\textbf{Observation linearization} around $\bar{\mu}_t$:
+\[
+h(x_t) \approx h(\bar{\mu}_t) + H_t(x_t - \bar{\mu}_t), \qquad H_t = \frac{\partial h(\bar{\mu}_t)}{\partial x_t}
+\]
+\end{tcolorbox}
+
+$G_t$ and $H_t$ are \textbf{Jacobian matrices} evaluated at the current mean. The Jacobian of a vector-valued function $f: \mathbb{R}^n \to \mathbb{R}^m$ is the $m \times n$ matrix of partial derivatives:
+\[
+F_x = \begin{pmatrix}
+\partial f_1/\partial x_1 & \cdots & \partial f_1/\partial x_n \\
+\vdots & \ddots & \vdots \\
+\partial f_m/\partial x_1 & \cdots & \partial f_m/\partial x_n
+\end{pmatrix}
+\]
+
+\subsection{EKF Algorithm}
+
+The EKF algorithm is structurally identical to the KF, with the linear matrices replaced by the nonlinear functions and their Jacobians:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Extended Kalman Filter Algorithm}]
+\textbf{Input:} $\mu_{t-1}$, $\Sigma_{t-1}$, $u_t$, $z_t$
+
+\textbf{Prediction:}
+\begin{align*}
+\bar{\mu}_t &= g(u_t, \mu_{t-1}) \\
+\bar{\Sigma}_t &= G_t \Sigma_{t-1} G_t^\top + R_t
+\end{align*}
+
+\textbf{Kalman gain:}
+\[
+K_t = \bar{\Sigma}_t H_t^\top \left(H_t \bar{\Sigma}_t H_t^\top + Q_t\right)^{-1}
+\]
+
+\textbf{Correction:}
+\begin{align*}
+\mu_t &= \bar{\mu}_t + K_t(z_t - h(\bar{\mu}_t)) \\
+\Sigma_t &= (I - K_t H_t)\bar{\Sigma}_t
+\end{align*}
+
+\textbf{Output:} $\mu_t$, $\Sigma_t$
+\end{tcolorbox}
+
+The key differences from the KF:
+\begin{itemize}
+    \item Predict mean: use $g(u_t, \mu_{t-1})$ instead of $A_t\mu_{t-1} + B_t u_t$.
+    \item Predict covariance: use $G_t$ (Jacobian) instead of $A_t$.
+    \item Correct mean: use $h(\bar{\mu}_t)$ instead of $C_t\bar{\mu}_t$ in the innovation.
+    \item Correct covariance: use $H_t$ (Jacobian) instead of $C_t$.
+\end{itemize}
+
+\subsection{When Does EKF Work?}
+
+The EKF approximation is valid when:
+\begin{itemize}
+    \item The functions $g$ and $h$ are \textbf{locally linear} around the mean — i.e., the true function is well approximated by its tangent at the current estimate.
+    \item The \textbf{uncertainty is small} — a wide distribution magnifies linearization errors because the tails of the Gaussian explore regions where the linear approximation fails.
+\end{itemize}
+
+When these conditions are violated (high uncertainty, highly nonlinear functions), the EKF can diverge. Alternative approaches include the \textbf{Unscented Kalman Filter} (UKF), which propagates a set of carefully chosen \textit{sigma points} through the nonlinear function without requiring an explicit Jacobian, and \textbf{particle filters}, which make no linearity or Gaussianity assumptions at all.
+
+\subsection{Extensions}
+
+\begin{itemize}
+    \item \textbf{Unknown correspondences}: when landmark identity is ambiguous, the \textbf{maximum-likelihood} correspondence estimate is used: each observation is assigned to the landmark that maximizes $P(z_t \mid x_t, m)$.
+    \item \textbf{Multiple Hypothesis Tracking (MHT)}: maintain a mixture of Gaussians, one per data-association hypothesis, to handle ambiguous correspondences without committing to a single assignment.
+    \item \textbf{Information filter}: an algebraically equivalent reformulation of the KF using the \textit{information matrix} $\Omega_t = \Sigma_t^{-1}$ and \textit{information vector} $\xi_t = \Sigma_t^{-1}\mu_t$. Some operations (e.g., incorporating independent observations, sparsity exploitation) are more efficient in this parameterization.
+\end{itemize}
+
+
+
+% ========================================
+\part{Localization: Particle Filters and Monte Carlo Localization}
+% ========================================
+
+\section{Non-Parametric Belief Representation}
+
+\subsection{Motivation}
+
+The Kalman filter family requires the belief to be Gaussian — a unimodal, symmetric distribution fully described by a mean and covariance. This is inadequate for:
+\begin{itemize}
+    \item \textbf{Global localization}: initially the robot has no idea where it is; the belief is uniform or multi-modal (many plausible poses).
+    \item \textbf{Highly nonlinear models}: linearization errors can cause the Gaussian to drift away from the true posterior.
+    \item \textbf{Non-Gaussian sensor noise}: real sensors (e.g., sonars with specular reflections, lidars with mixed pixels) produce non-Gaussian likelihoods.
+\end{itemize}
+
+\textbf{Particle filters} address all of these by representing the belief as a set of weighted samples — a non-parametric, fully general approximation that can represent \textit{any} distribution.
+
+\subsection{Sample-Based Distribution Representation}
+
+A probability distribution $p(x)$ is approximated by a \textbf{particle set}:
+\[
+\mathcal{X} = \left\{\left(x^{[j]},\, \omega^{[j]}\right)\right\}_{j=1}^{M} % chktex 3
+\]
+where $x^{[j]}$ is the $j$-th \textbf{particle} (a concrete state hypothesis) and $\omega^{[j]} \geq 0$ is its \textbf{importance weight}, normalized so that $\sum_j \omega^{[j]} = 1$. The discrete approximation is:
+\[
+p(x) \approx \sum_{j=1}^{M} \omega^{[j]}\,\delta_{x^{[j]}}(x)
+\]
+
+where $\delta_{x^{[j]}}$ is a Dirac delta centered at $x^{[j]}$. As $M \to \infty$, the approximation converges to the true distribution under mild regularity conditions. The quality of the approximation is controlled by the number of particles $M$: more particles give a finer representation but increase computational cost.
+
+\section{Importance Sampling}
+
+\subsection{The Core Idea}
+
+To update the belief recursively we need to draw samples from the new posterior, which in general we cannot sample from directly. \textbf{Importance sampling} solves this: we draw samples from a tractable \textbf{proposal distribution} $g(x)$ and correct for the difference using weights.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Importance Sampling}]
+To approximate samples from a target distribution $f(x)$:
+\begin{enumerate}
+    \item Draw $x^{[j]} \sim g(x)$ from the proposal.
+    \item Assign importance weight $\omega^{[j]} = f(x^{[j]})/g(x^{[j]})$.
+\end{enumerate}
+\textbf{Precondition}: $f(x) > 0 \Rightarrow g(x) > 0$ — the proposal must cover the support of the target.
+\end{tcolorbox}
+
+The weighted samples $\{(x^{[j]}, \omega^{[j]})\}$ then represent $f$ despite having been drawn from $g$. The choice of proposal affects efficiency: $g$ close to $f$ yields lower variance weights and a better approximation with fewer samples.
+
+\section{The Particle Filter Algorithm}
+
+\subsection{Predict, Weight, Resample}
+
+The particle filter implements recursive Bayesian estimation in three stages per timestep:
+
+\begin{enumerate}
+    \item \textbf{Prediction (sampling)}: propagate each particle through the motion model to obtain a new hypothesis.
+    \item \textbf{Correction (weighting)}: weight each new particle by how well it explains the current observation.
+    \item \textbf{Resampling}: draw a new particle set from the weighted set, concentrating particles in high-probability regions.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Particle Filter Algorithm}]
+\textbf{Input:} $\mathcal{X}_{t-1}$, $u_t$, $z_t$ \quad (previous particles, control, observation)
+
+\textbf{Phase 1 — sample and weight:}
+\begin{algorithmic}
+\STATE $\bar{\mathcal{X}}_t = \emptyset$
+\FOR{$m = 1$ to $M$}
+    \STATE sample $x_t^{[m]} \sim P(x_t \mid u_t, x_{t-1}^{[m]})$
+    \STATE $\omega_t^{[m]} = P(z_t \mid x_t^{[m]})$
+    \STATE add $(x_t^{[m]}, \omega_t^{[m]})$ to $\bar{\mathcal{X}}_t$
+\ENDFOR
+\end{algorithmic}
+
+\textbf{Phase 2 — resample:}
+\begin{algorithmic}
+\STATE $\mathcal{X}_t = \emptyset$
+\FOR{$m = 1$ to $M$}
+    \STATE draw index $j$ with probability $\propto \omega_t^{[j]}$
+    \STATE add $x_t^{[j]}$ to $\mathcal{X}_t$
+\ENDFOR
+\STATE \textbf{return} $\mathcal{X}_t$
+\end{algorithmic}
+\end{tcolorbox}
+
+The proposal is the \textbf{motion model} $P(x_t \mid u_t, x_{t-1}^{[m]})$ — easy to sample from. The importance weight is the \textbf{observation likelihood} $P(z_t \mid x_t^{[m]})$ — it measures how consistent the sampled state is with the observation.
+
+\subsection{Why This Works}
+
+The ratio of target to proposal is:
+\[
+\omega^{[m]} = \frac{\mathrm{Bel}(x_t^{[m]})}{P(x_t^{[m]} \mid u_t, x_{t-1}^{[m]})} \propto P(z_t \mid x_t^{[m]})
+\]
+
+because $\mathrm{Bel}(x_t) \propto P(z_t \mid x_t)\,\overline{\mathrm{Bel}}(x_t)$ and $\overline{\mathrm{Bel}}(x_t)$ is exactly the distribution we sampled from. The observation likelihood therefore serves directly as the importance weight.
+
+\section{Resampling}
+
+\subsection{Purpose}
+
+After weighting, many particles have very small weights and contribute negligibly to the belief. Resampling eliminates them and duplicates high-weight particles, keeping the effective sample count high. Without resampling, the particle set degenerates over time: a few particles accumulate all the weight while the rest are wasted.
+
+\subsection{Roulette Wheel Sampling}
+
+The naive approach — a roulette wheel where each slot has area proportional to $\omega^{[j]}$ — selects particles independently via binary search. This is easy to implement but:
+\begin{itemize}
+    \item \textbf{Complexity}: $O(M \log M)$ (binary search per sample).
+    \item \textbf{High variance}: if all weights are equal the roulette wheel may nonetheless select some particles many times and miss others entirely, introducing unnecessary noise.
+\end{itemize}
+
+\subsection{Low-Variance (Systematic) Resampling}
+
+The preferred method. Instead of $M$ independent random draws, a single random offset $r \sim \mathcal{U}(0, M^{-1})$ is drawn and the $M$ selection points are placed at:
+\[
+r,\quad r + M^{-1},\quad r + 2M^{-1},\quad \ldots,\quad r + (M-1)M^{-1}.
+\]
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Low-Variance Resampling Algorithm}]
+\begin{algorithmic}
+\STATE $r \leftarrow \mathcal{U}(0,\, M^{-1})$
+\STATE $c \leftarrow \omega_1^{[1]}$;\quad $j \leftarrow 1$
+\FOR{$m = 1$ to $M$}
+    \STATE $u \leftarrow r + (m-1) \cdot M^{-1}$
+    \WHILE{$u > c$}
+        \STATE $j \leftarrow j + 1$;\quad $c \leftarrow c + \omega_t^{[j]}$
+    \ENDWHILE
+    \STATE add $x_t^{[j]}$ to $\mathcal{X}_t$
+\ENDFOR
+\STATE \textbf{return} $\mathcal{X}_t$
+\end{algorithmic}
+\end{tcolorbox}
+
+\textbf{Properties}:
+\begin{itemize}
+    \item \textbf{Complexity}: $O(M)$ — the $M$ selection points are processed in a single left-to-right pass over the cumulative weight array.
+    \item \textbf{Low variance}: the evenly spaced selection points guarantee that if all weights are equal, every particle is selected exactly once — no spurious variance is introduced.
+    \item \textbf{Recommendation}: always use low-variance resampling over roulette-wheel sampling.
+\end{itemize}
+
+\section{Monte Carlo Localization}
+
+\subsection{Algorithm}
+
+\textbf{Monte Carlo Localization} (MCL) is the particle filter applied to mobile robot pose estimation. Each particle $x_t^{[m]} = (x, y, \theta)^\top$ is a pose hypothesis. The posterior belief over poses is:
+\[
+\mathrm{bel}(x_t) \approx \sum_{m=1}^{M} \omega_t^{[m]}\,\delta_{x_t^{[m]}}(x_t).
+\]
+
+The three models required are:
+\begin{itemize}
+    \item \textbf{Motion model} $P(x_t \mid u_t, x_{t-1})$: samples a new pose given the previous pose and the executed control (e.g., odometry-based sampling).
+    \item \textbf{Observation model} $P(z_t \mid x_t, m)$: scores a pose hypothesis by how well the sensor reading $z_t$ matches what would be expected from that pose given map $m$.
+    \item \textbf{Prior} $P(x_0)$: for global localization, initialized as uniform over the map; for tracking, initialized as a tight Gaussian around the known starting pose.
+\end{itemize}
+
+MCL is a direct specialization of the generic particle filter; the map $m$ enters only in the observation model.
+
+\subsection{The MCL Cycle}
+
+One timestep of MCL proceeds as follows:
+
+\begin{enumerate}
+    \item \textbf{Motion update}: for each particle $x_{t-1}^{[m]}$, sample a new pose $x_t^{[m]} \sim P(x_t \mid u_t, x_{t-1}^{[m]})$ from the motion model. This \textit{spreads} the particle cloud in accordance with motion uncertainty.
+    \item \textbf{Observation update}: weight each particle by $\omega_t^{[m]} = P(z_t \mid x_t^{[m]}, m)$. Particles at poses consistent with the observation receive high weights; inconsistent ones receive low weights.
+    \item \textbf{Resampling}: draw $M$ particles from the weighted set (using low-variance resampling). Particles with high weights survive and are duplicated; low-weight particles are discarded.
+\end{enumerate}
+
+Over successive iterations the particle cloud \textit{converges}: it collapses from a diffuse cloud covering the whole map to a tight cluster around the true pose as observations accumulate.
+
+\subsection{Global Localization}
+
+MCL handles the global localization problem naturally by initializing particles uniformly across all free space in the map. After a few observations and motion steps, the cloud rapidly concentrates around the consistent pose hypotheses. This is impossible for the KF/EKF, which require a unimodal Gaussian prior.
+
+\begin{remark}
+The kidnapped robot problem — where the robot is physically moved to an unknown location mid-mission — can be addressed by injecting a fraction of random particles at each step, ensuring the filter never fully commits to a single hypothesis.
+\end{remark}
+
+\section{Practical Considerations}
+
+\subsection{Pros and Cons of Particle Filters}
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+\textbf{Advantages} & \textbf{Disadvantages} \\
+\hline
+Handle non-Gaussian distributions directly & Problematic in high-dimensional state spaces \\
+Handle data-association ambiguity naturally & Particle depletion under high uncertainty \\
+Support multiple sensing modalities easily & Computationally expensive for large $M$ \\
+Easy to implement & Approximation quality depends on $M$ \\
+Robust to model mismatch & \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Particle Depletion}
+
+When the observation likelihood is very peaked (informative sensor), nearly all particles receive near-zero weight after the correction step. The resampling step then draws only from the few surviving high-weight particles, catastrophically reducing diversity. Mitigation strategies include:
+\begin{itemize}
+    \item using a large $M$,
+    \item adaptive particle counts (more particles when uncertainty is high),
+    \item injecting random particles to maintain diversity.
+\end{itemize}
+
+\subsection{Variants}
+
+\begin{itemize}
+    \item \textbf{Rao-Blackwellized Particle Filters}: analytically marginalize out part of the state (e.g., the map in SLAM) and maintain only a particle filter over the remaining lower-dimensional state (e.g., the trajectory). This reduces the effective dimensionality and makes the filter tractable for SLAM.
+    \item \textbf{Real-time particle filters}: handle sensor streams arriving at different frame rates by decoupling the prediction and correction steps.
+    \item \textbf{Delayed-state particle filters}: handle delays in sensor data by conditioning on the delayed observation at the time it arrives.
+\end{itemize}
+
+MCL is the \textbf{gold standard} for indoor mobile robot localization. It was used to localize the Minerva robot autonomously in the Smithsonian Museum and has been deployed in numerous real-world systems since.
+
+% ========================================
+\part{Simultaneous Localization and Mapping}
+% ========================================
+
+\section{The SLAM Problem}
+
+\subsection{Motivation}
+
+Localization (Parts VII to IX) assumes a known map. Mapping assumes a known trajectory. In practice, neither is available: a robot deployed in an unknown environment must build its map \emph{and} localize within it simultaneously. This is the \textbf{Simultaneous Localization and Mapping (SLAM)} problem.
+
+SLAM is harder than either task in isolation because the two sub-problems are coupled: the map depends on the estimated trajectory, and the trajectory estimate depends on the map. Errors in one propagate to the other.
+
+\subsection{Problem Formulations}
+
+Let $x_{0:T} = \{x_0, x_1, \ldots, x_T\}$ be the robot trajectory, $m$ the map, $z_{1:T}$ the sequence of observations, and $u_{1:T}$ the control inputs.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Full SLAM}]
+Estimate the \emph{entire} trajectory and the map jointly:
+\[
+    P(x_{0:T},\, m \mid z_{1:T},\, u_{1:T}).
+\]
+This is a high-dimensional distribution over all past poses. It is usually solved offline (batch).
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Online SLAM}]
+Marginalize out past poses and track only the current pose and map:
+\[
+    P(x_t,\, m \mid z_{1:t},\, u_{1:t}).
+\]
+This is the incremental formulation suited to real-time systems.
+\end{tcolorbox}
+
+\subsection{Key Challenges}
+
+\begin{itemize}
+    \item \textbf{Correlation}: the robot's poses and landmark positions are correlated. Ignoring correlations (e.g., treating each observation independently) leads to overconfident, inconsistent estimates.
+    \item \textbf{Data association}: deciding which measurement corresponds to which landmark is ambiguous, especially in repetitive environments. Wrong associations degrade the map catastrophically.
+    \item \textbf{Scalability}: the state grows with the number of landmarks and poses; naive approaches are $O(n^2)$ in landmark count.
+    \item \textbf{Loop closure}: when the robot revisits a location after a long traverse, accumulated drift must be corrected globally, not just locally.
+\end{itemize}
+
+\begin{remark}
+SLAM was once considered one of the fundamental open problems in robotics. The key theoretical insight --- that the joint distribution over all poses and landmarks can be maintained consistently --- came from the late 1980s and 1990s (Smith, Self, Cheeseman; Dissanayake et al.). Scalable solutions emerged in the 2000s.
+\end{remark}
+
+% ========================================
+\section{Grid-Based SLAM with Rao-Blackwellized Particle Filters}
+% ========================================
+
+\subsection{Factoring the Joint Distribution}
+
+An occupancy-grid map $m$ is high-dimensional but, given a \emph{known} trajectory $x_{0:t}$, each cell is conditionally independent of all others given the observations. This permits an exact factorization:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Rao-Blackwellization for SLAM}]
+\[
+    p(x_{0:t}, m \mid z_{1:t}, u_{1:t})
+    = \underbrace{p(x_{0:t} \mid z_{1:t}, u_{1:t})}_{\text{particle filter over trajectory}}
+      \cdot
+      \underbrace{p(m \mid x_{0:t}, z_{1:t})}_{\text{exact grid map per particle}}.
+\]
+\end{tcolorbox}
+
+Each particle carries a complete hypothesis of the trajectory \emph{and} its own individual map. The map for particle $i$ is updated with standard occupancy-grid techniques conditioned on the particle's pose sequence.
+
+\subsection{Particle Filter over Trajectories}
+
+The trajectory distribution $p(x_{0:t} \mid z_{1:t}, u_{1:t})$ is maintained by a particle filter:
+
+\begin{algorithm}
+\caption{Rao-Blackwellized SLAM Particle Filter (one step)}
+\begin{algorithmic}
+\STATE \textbf{Input}: particle set $\mathcal{X}_{t-1} = \{(x_{0:t-1}^{[i]}, m_{t-1}^{[i]}, \omega^{[i]})\}_{i=1}^{N}$, control $u_t$, observation $z_t$ % chktex 3
+\FOR{$i = 1$ \TO $N$}
+    \STATE Sample $x_t^{[i]} \sim p(x_t \mid x_{t-1}^{[i]}, u_t)$ \hfill (motion model proposal)
+    \STATE Update map: $m_t^{[i]} = \text{GridUpdate}(m_{t-1}^{[i]}, x_t^{[i]}, z_t)$
+    \STATE Compute weight: $\omega_t^{[i]} = p(z_t \mid x_t^{[i]}, m_t^{[i]})$
+\ENDFOR
+\STATE Normalize weights: $\omega^{[i]} \leftarrow \omega^{[i]} / \sum_j \omega^{[j]}$
+\STATE Resample $N$ particles with replacement according to $\{\omega^{[i]}\}$
+\STATE \textbf{Return}: $\mathcal{X}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Improved Proposal via Scan Matching}
+
+The plain motion-model proposal is inefficient when the sensor is highly informative (narrow likelihood) relative to the motion noise (wide prior). Incorporating the most recent observation into the proposal dramatically reduces the number of particles needed.
+
+\textbf{Scan matching} (e.g., ICP or correlation-based scan matching) is used to compute a refined pose estimate $\hat{x}_t^{[i]}$ by aligning the incoming laser scan against particle $i$'s map. The proposal is then a Gaussian centered on $\hat{x}_t^{[i]}$:
+\[
+    q(x_t \mid x_{0:t-1}^{[i]}, z_t, u_t) = \mathcal{N}(\hat{x}_t^{[i]},\, \hat{\Sigma}_t^{[i]}).
+\]
+Weights are adjusted accordingly to account for the change of proposal:
+\[
+    \omega_t^{[i]} \propto \frac{p(z_t \mid x_t^{[i]}, m_{t-1}^{[i]})\, p(x_t^{[i]} \mid x_{t-1}^{[i]}, u_t)}{q(x_t^{[i]} \mid \cdots)}.
+\]
+
+The GMapping algorithm (Grisetti et al., 2007) implements this approach and remains a widely used open-source SLAM system.
+
+% ========================================
+\section{Graph-Based SLAM}
+% ========================================
+
+\subsection{Pose Graph Representation}
+
+Graph-based SLAM separates the problem into two phases:
+
+\begin{enumerate}
+    \item \textbf{Front-end}: process raw sensor data to extract relative pose constraints between robot poses.
+    \item \textbf{Back-end}: optimize a graph of poses to find the globally consistent trajectory.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Pose Graph}]
+\begin{itemize}
+    \item \textbf{Nodes}: robot poses $x_i \in SE(2)$ (or $SE(3)$).
+    \item \textbf{Edges}: a constraint between nodes $i$ and $j$ is a measured relative transformation $Z_{ij}$ with information matrix $\Omega_{ij} \succ 0$. Sequential odometry edges encode motion; loop-closure edges encode sensor-derived matches between non-consecutive poses.
+\end{itemize}
+\end{tcolorbox}
+
+The key insight is that once the graph is built, the map can be recovered from the optimized trajectory without being part of the optimization itself (for feature-based maps, landmarks become nodes; for grid maps, the grid is reconstructed after optimization).
+
+\subsection{Front-End: ICP Scan Matching}
+
+The Iterative Closest Point (ICP) algorithm computes the rigid transformation $T$ that best aligns two point clouds $\mathcal{A}$ and $\mathcal{B}$:
+
+\begin{algorithm}
+\caption{ICP}
+\begin{algorithmic}
+\STATE Initialize $T \leftarrow T_0$ (e.g., from odometry)
+\REPEAT
+    \FOR{each point $a \in \mathcal{A}$}
+        \STATE $b^* \leftarrow \arg\min_{b \in \mathcal{B}} \|T\,a - b\|^2$ \hfill (nearest-neighbor matching)
+    \ENDFOR
+    \STATE $T \leftarrow \arg\min_T \sum_k \|T\,a_k - b_k^*\|^2$ \hfill (closed-form SVD solution)
+\UNTIL{convergence}
+\STATE \textbf{Return}: $T$, residual error
+\end{algorithmic}
+\end{algorithm}
+
+ICP converges to a local minimum, so a good initialization (from odometry or scan matching on a local map) is critical. The output relative pose and its uncertainty form an edge in the pose graph.
+
+\subsection{Back-End: Gauss-Newton Optimization}
+
+\subsubsection{Error Function}
+
+For an edge $(i,j)$, the error measures the discrepancy between the observed relative transformation $Z_{ij}$ and the one implied by the current pose estimates $x_i, x_j$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Edge Error}]
+\[
+    e_{ij}(x_i, x_j) = \mathrm{t2v}\!\left(Z_{ij}^{-1}\,(X_i^{-1}\,X_j)\right),
+\]
+where $X_i \in SE(2)$ is the matrix form of pose $x_i$, and $\mathrm{t2v}(\cdot)$ converts a homogeneous transformation to a vector $(\Delta x,\, \Delta y,\, \Delta\theta)^\top$. % chktex 3
+\end{tcolorbox}
+
+When $x_i$ and $x_j$ are consistent with the measurement $Z_{ij}$, the argument of $\mathrm{t2v}$ is the identity and $e_{ij} = 0$.
+
+\subsubsection{Objective Function}
+
+The total cost is a sum of weighted squared errors over all edges $\mathcal{E}$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{SLAM Objective}]
+\[
+    x^* = \arg\min_{x} \sum_{(i,j) \in \mathcal{E}} e_{ij}(x_i, x_j)^{\top} \Omega_{ij}\, e_{ij}(x_i, x_j), % chktex 3
+\]
+where $\Omega_{ij} = \Sigma_{ij}^{-1}$ is the information matrix (inverse covariance) of the constraint.
+\end{tcolorbox}
+
+This is a nonlinear least-squares problem. The Gauss-Newton method solves it by iteratively linearizing the error functions.
+
+\subsubsection{Linearization}
+
+Around the current estimate $\bar{x}$, linearize each error:
+\[
+    e_{ij}(x + \Delta x) \approx e_{ij}(\bar{x}) + J_{ij}\,\Delta x,
+\]
+where $J_{ij} = \frac{\partial e_{ij}}{\partial x}\big|_{\bar{x}}$ is the Jacobian of the error with respect to \emph{all} poses (sparse: non-zero only in the columns corresponding to $x_i$ and $x_j$).
+
+Substituting into the cost and minimizing over $\Delta x$ gives the \textbf{normal equations}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Normal Equations (Gauss-Newton)}]
+\[
+    H\,\Delta x = -b,
+\]
+\begin{align*}
+    H &= \sum_{(i,j)\in\mathcal{E}} J_{ij}^\top\,\Omega_{ij}\,J_{ij}, \\
+    b &= \sum_{(i,j)\in\mathcal{E}} J_{ij}^\top\,\Omega_{ij}\,e_{ij}.
+\end{align*}
+\end{tcolorbox}
+
+The Hessian $H$ is a sparse, positive semi-definite matrix. Its sparsity pattern reflects the graph topology: $H_{ij} \ne 0$ only when nodes $i$ and $j$ share an edge. The system is solved with sparse Cholesky factorization; the poses are updated as $\bar{x} \leftarrow \bar{x} + \Delta x$ and the procedure is iterated until convergence.
+
+\subsection{Sparsity and Scalability}
+
+\begin{itemize}
+    \item Each edge contributes only to $4 \times 4$ (2D) or $6 \times 6$ (3D) diagonal blocks of $H$ and the corresponding off-diagonal blocks.
+    \item For a trajectory with $n$ poses and $O(n)$ edges (odometry-only), $H$ is block-tridiagonal and solvable in $O(n)$ time.
+    \item Loop closures add fill-in but the matrix remains sparse for realistic graphs. Variable reordering (e.g., nested dissection) preserves sparsity.
+    \item This sparsity is the fundamental reason graph-based SLAM scales to large environments with thousands of poses.
+\end{itemize}
+
+\begin{remark}
+The iSAM (Kaess et al., 2008) and $g^2o$ (K\"{u}mmerle et al., 2011) frameworks implement efficient incremental and batch graph-based SLAM, respectively. The approach extends naturally to 3D\@ ($SE(3)$ poses) and is the backbone of modern LiDAR and visual SLAM systems.
+\end{remark}
+
+% ========================================
+\section{SLAM in Practice}
+% ========================================
+
+\subsection{Comparison of Approaches}
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+\textbf{Approach} & \textbf{Map type} & \textbf{Strengths} & \textbf{Limitations} \\
+\hline
+RBPF (GMapping) & Occupancy grid & Dense, intuitive & Particle degeneracy at scale \\
+Graph-based & Feature/grid & Scalable, sparse solve & Requires good front-end \\
+EKF-SLAM & Feature & Principled covariance & $O(n^2)$ cost in landmarks \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Data Association}
+
+Data association --- determining which observation corresponds to which previously seen landmark or scan --- is the most failure-prone step in any SLAM system. Common strategies:
+
+\begin{itemize}
+    \item \textbf{Nearest-neighbor (NN)}: match each measurement to the closest known landmark. Fast but fragile in ambiguous environments.
+    \item \textbf{Joint compatibility branch and bound (JCBB)}: jointly validate assignment hypotheses using chi-squared gating. More robust but exponential in the worst case.
+    \item \textbf{Scan-to-scan / scan-to-map matching}: ICP-based; avoids explicit landmark extraction by working directly with point clouds.
+    \item \textbf{Descriptor matching}: use appearance descriptors (ORB, SIFT, etc.) for loop closure detection in visual SLAM.
+\end{itemize}
+
+\subsection{Loop Closure}
+
+Loop closure is the event of revisiting a previously mapped location after a long traverse. It is the mechanism by which globally consistent maps are built:
+
+\begin{enumerate}
+    \item Detect a potential loop closure (e.g., via place recognition, scan matching score, or appearance similarity).
+    \item Compute the relative pose constraint via ICP or descriptor-based alignment.
+    \item Add the constraint as a new edge in the pose graph.
+    \item Re-run back-end optimization to distribute the correction globally.
+\end{enumerate}
+
+Without loop closure, odometric drift accumulates and the map becomes globally inconsistent even if locally accurate.
+
+% ========================================
+\part{Occupancy Grid Maps}
+% ========================================
+
+\section{Map Representations}
+
+\subsection{Why Maps Matter}
+
+A map is a representation of the environment that a robot uses for virtually every high-level task: localization, obstacle avoidance, path planning, and activity planning. Choosing the right representation is a fundamental design decision.
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Type} & \textbf{Representation} & \textbf{Key trade-off} \\
+\hline
+Feature maps & Geometric primitives (corners, lines, landmarks) & Compact but requires feature extraction \\
+Volumetric maps & Occupancy of discretized space (grids) & Complete but memory intensive \\
+\hline
+\end{tabular}
+\end{center}
+
+Occupancy grid maps are \textbf{volumetric}: they directly model which regions of space are occupied without relying on any intermediate feature-extraction step.
+
+\subsection{Mapping with and without Known Poses}
+
+Two problem settings arise depending on whether the robot trajectory is known:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Mapping with Known Poses}]
+Given sensor data $z_{1:t}$ and a known trajectory $x_{1:t}$, recover the most likely map:
+\[
+    m^* = \arg\max_{m}\, P(m \mid x_{1:t},\, z_{1:t}).
+\]
+This is the setting studied in this part; it decouples mapping from localization.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Mapping without Known Poses (SLAM)}]
+Without known poses, both the map and trajectory must be estimated jointly:
+\[
+    m^* = \arg\max_{m}\, P(m \mid u_{1:t},\, z_{1:t}).
+\]
+This is the full SLAM problem (Part X).
+\end{tcolorbox}
+
+% ========================================
+\section{Occupancy Grid Maps}
+% ========================================
+
+\subsection{Definition and Assumptions}
+
+An occupancy grid divides the environment into a regular grid of $N$ cells $\{m_1, m_2, \ldots, m_N\}$. Each cell $m_i$ is a binary random variable:
+\[
+    m_i = \begin{cases} 1 & \text{cell is occupied,} \\ 0 & \text{cell is free.} \end{cases}
+\]
+Three modelling assumptions make the problem tractable:
+
+\begin{enumerate}
+    \item \textbf{Binary occupancy}: each cell is either completely occupied or completely free; the area of one cell is small enough that this is a good approximation.
+    \item \textbf{Static environment}: occupancy states do not change over time. A cell that is occupied remains occupied and vice versa.
+    \item \textbf{Cell independence}: the random variables $\{m_i\}$ are mutually independent. This is the critical assumption that allows the joint map distribution to factorize.
+\end{enumerate}
+
+\subsection{Factorization of the Map Distribution}
+
+Under the independence assumption, the joint posterior over the entire map decomposes into a product of per-cell marginals:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Map Posterior Factorization}]
+\[
+    P(m \mid z_{1:t},\, x_{1:t})
+    = \prod_{i=1}^{N} P(m_i \mid z_{1:t},\, x_{1:t}).
+\]
+\end{tcolorbox}
+
+This is a crucial simplification: instead of maintaining a joint distribution over $2^N$ map configurations (exponential in $N$), we maintain $N$ independent Bernoulli posteriors.
+
+% ========================================
+\section{Binary Bayes Filter for Static States}
+% ========================================
+
+\subsection{Derivation of the Update Rule}
+
+Each cell is estimated independently using a \textbf{static-state binary Bayes filter}. Because the state (occupancy) does not change, there is no prediction step; only the correction step is needed.
+
+Starting from Bayes' rule and applying the Markov assumption (the current measurement $z_t$ is conditionally independent of past measurements given the current pose and cell state):
+\[
+    P(m_i \mid z_{1:t},\, x_{1:t})
+    \propto P(z_t \mid m_i,\, x_t)\, P(m_i \mid z_{1:t-1},\, x_{1:t-1}).
+\]
+
+To avoid numerical issues with repeated multiplication of small probabilities, we work with the \textbf{odds ratio}:
+\[
+    \text{Odds}(m_i \mid z_{1:t},\, x_{1:t})
+    = \frac{P(m_i \mid z_{1:t},\, x_{1:t})}{1 - P(m_i \mid z_{1:t},\, x_{1:t})}.
+\]
+
+Computing the ratio $P(m_i \mid z_{1:t},\, x_{1:t})\,/\,P(\lnot m_i \mid z_{1:t},\, x_{1:t})$ via Bayes' rule applied twice (once for occupied, once for free) and cancelling the normalizer yields:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Odds Update Rule}]
+\[
+    \frac{P(m_i \mid z_{1:t},\, x_{1:t})}{1 - P(m_i \mid z_{1:t},\, x_{1:t})}
+    =
+    \frac{P(m_i \mid z_t,\, x_t)}{1 - P(m_i \mid z_t,\, x_t)}
+    \cdot
+    \frac{P(m_i \mid z_{1:t-1},\, x_{1:t-1})}{1 - P(m_i \mid z_{1:t-1},\, x_{1:t-1})}
+    \cdot
+    \frac{1 - P(m_i)}{P(m_i)}.
+\]
+The three factors are: the \emph{inverse sensor model} odds, the \emph{previous posterior} odds, and the \emph{prior} odds (inverted).
+\end{tcolorbox}
+
+\subsection{Log Odds Representation}
+
+Taking the logarithm of the odds turns the product into a sum, making the update $O(1)$ per cell per time step:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Log Odds Definition and Update}]
+Define the log odds of a probability $p$ as:
+\[
+    l(p) = \log\frac{p}{1-p}.
+\]
+Recover probability from log odds:
+\[
+    p = 1 - \frac{1}{1 + e^{l}}.
+\]
+The occupancy mapping update in log odds form is:
+\[
+    l_{t,i} = \underbrace{l(m_i \mid z_t,\, x_t)}_{\text{inverse sensor model}} + \underbrace{l_{t-1,i}}_{\text{previous log odds}} - \underbrace{l_0}_{\text{prior log odds}},
+\]
+where $l_0 = l(P(m_i))$ encodes the prior belief (typically $l_0 = 0$ for $P(m_i) = 0.5$).
+\end{tcolorbox}
+
+\begin{remark}
+The log odds form is the reason occupancy mapping is computationally cheap. Each cell update is a single floating-point addition. The inverse sensor model precomputes a lookup table indexed by range and angle, so the total cost per scan is proportional to the number of cells in the sensor's perceptual field --- far fewer than $N$ in practice.
+\end{remark}
+
+% ========================================
+\section{Occupancy Grid Mapping Algorithm}
+% ========================================
+
+\begin{algorithm}
+\caption{Occupancy Grid Mapping}
+\begin{algorithmic}
+\STATE \textbf{Input}: $\{l_{t-1,i}\}$ (log odds for all cells), pose $x_t$, measurement $z_t$
+\STATE \textbf{Output}: $\{l_{t,i}\}$ (updated log odds)
+\FOR{all cells $m_i$}
+    \IF{$m_i$ is in the perceptual field of $z_t$}
+        \STATE $l_{t,i} \leftarrow l_{t-1,i} + \text{InverseSensorModel}(m_i,\, x_t,\, z_t) - l_0$
+    \ELSE
+        \STATE $l_{t,i} \leftarrow l_{t-1,i}$
+    \ENDIF
+\ENDFOR
+\STATE \textbf{Return} $\{l_{t,i}\}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Efficiency}: only cells inside the sensor's perceptual field receive an update; cells outside are untouched. For a laser rangefinder with a narrow beam, this is a small fraction of the total grid.
+
+% ========================================
+\section{Inverse Sensor Models}
+% ========================================
+
+\subsection{Role of the Inverse Sensor Model}
+
+The \textbf{inverse sensor model} $P(m_i \mid z_t, x_t)$ --- equivalently its log odds $l(m_i \mid z_t, x_t)$ --- answers: given that the sensor at pose $x_t$ returned measurement $z_t$, how does that update the belief that cell $m_i$ is occupied?
+
+It is the reverse of the \emph{forward} sensor model $P(z_t \mid m_i, x_t)$; deriving it analytically via Bayes' rule is possible but requires a prior and a forward model. In practice, simple geometric models are used directly.
+
+\subsection{Laser Rangefinder Model}
+
+A laser rangefinder returns a distance $z_r$ along beam direction $\phi$. The geometric interpretation is:
+
+\begin{itemize}
+    \item \textbf{Occupied}: the cell through which the beam terminates (at range $z_r \pm \alpha/2$, where $\alpha$ is a thickness parameter) is very likely occupied $\rightarrow$ return $l_\mathrm{occ}$.
+    \item \textbf{Free}: cells along the beam path between the sensor and the endpoint are very likely free $\rightarrow$ return $l_\mathrm{free}$.
+    \item \textbf{Unknown}: cells beyond the beam endpoint or outside the beam cone $\rightarrow$ return $l_0$ (no update).
+\end{itemize}
+
+\begin{algorithm}
+\caption{Inverse Range Sensor Model (Laser)}
+\begin{algorithmic}
+\STATE Let $(x_i, y_i)$ be the center of cell $m_i$
+\STATE $r \leftarrow \sqrt{(x_i - x)^2 + (y_i - y)^2}$ \hfill (distance to cell center) % chktex 3
+\STATE $\theta \leftarrow \mathrm{atan2}(y_i - y,\, x_i - x) - \phi_\mathrm{robot}$ \hfill (bearing to cell)
+\STATE $k \leftarrow \arg\min_k |\theta - \phi_k|$ \hfill (nearest beam index)
+\IF{$r > \min(z_\mathrm{max},\, z_k + \alpha/2)$ \textbf{or} $|\theta - \phi_k| > \beta/2$} % chktex 35
+    \RETURN $l_0$ \hfill (outside perceptual field)
+\ENDIF
+\IF{$z_k < z_\mathrm{max}$ \textbf{and} $|r - z_k| < \alpha/2$} % chktex 35
+    \RETURN $l_\mathrm{occ}$ \hfill (at beam endpoint: occupied)
+\ENDIF
+\IF{$r < z_k$}
+    \RETURN $l_\mathrm{free}$ \hfill (between sensor and endpoint: free)
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+Parameters: $z_\mathrm{max}$ is the maximum sensor range; $\alpha$ is the hit-region half-thickness; $\beta$ is the beam's angular width; $l_\mathrm{occ} > l_0 > l_\mathrm{free}$. % chktex 35
+
+\subsection{Sonar Model}
+
+Ultrasonic sensors emit a cone-shaped acoustic pulse. The model is qualitatively similar to the laser model but smeared angularly:
+
+\begin{itemize}
+    \item Cells on the beam axis near range $z_r$ are most likely occupied.
+    \item Cells within the cone but not on the axis are less certain (reduced $l_\mathrm{occ}$ weight).
+    \item Cells inside the cone and between sensor and $z_r$ are free.
+\end{itemize}
+
+Because of the wide beam angle, sonar maps are noisier and boundaries are less sharp compared to laser-based maps.
+
+% ========================================
+\section{Map Quality and Practical Considerations}
+% ========================================
+
+\subsection{Sensor Comparison}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Sensor} & \textbf{Resolution} & \textbf{Map quality} \\
+\hline
+24-beam sonar array & Wide cone, noisy & Blurry boundaries, uncertain occupancy \\
+Laser rangefinder & Narrow beam, precise & Sharp boundaries, accurate free space \\
+\hline
+\end{tabular}
+\end{center}
+
+The quality of the occupancy map is bounded by sensor precision. A laser scanner with sub-centimetre range accuracy and $0.25^\circ$ angular resolution produces maps visually indistinguishable from architectural blueprints, whereas sonar maps are only suitable for coarse obstacle avoidance.
+
+\subsection{Comparison with Feature Maps}
+
+Feature maps (lines, corners, landmarks) are compact and support closed-form probabilistic updates (EKF-SLAM), but they require reliable feature extraction, which fails in featureless or repetitive environments. Occupancy grids require no feature detection: any sensor that returns range data or image intensity can be used. The cost is memory: a $100\,\mathrm{m} \times 100\,\mathrm{m}$ environment at $5\,\mathrm{cm}$ resolution requires $4 \times 10^6$ cells, which is manageable in 2D but prohibitive in 3D without volumetric compression (e.g., OctoMap).
+
+\subsection{Summary of Key Properties}
+
+\begin{itemize}
+    \item \textbf{Non-parametric}: the grid itself is the map; no structural assumptions about the environment.
+    \item \textbf{Efficient update}: $O(K)$ per scan where $K$ is the number of cells in the perceptual field, not the total grid size $N$.
+    \item \textbf{Numerically stable}: log odds avoids probability underflow from repeated multiplication.
+    \item \textbf{Extendable}: the same framework supports 3D grids, probabilistic truncated signed distance fields (TSDF), and multi-resolution representations.
+    \item \textbf{Limitation}: assumes a static world; dynamic obstacles violate the static-state assumption and must be handled by extensions (e.g., dynamic occupancy grids with particle-based cell state tracking).
+\end{itemize}
+
+% ========================================
+\part{Probabilistic Observation Models}
+% ========================================
+
+\section{Role of the Observation Model}
+
+The observation model $P(z_t \mid x_t, m)$ is the core ingredient of the Bayes filter correction step. Recall the recursive state estimation equations:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bayes Filter: Prediction and Correction}]
+\begin{align*}
+    \overline{\mathrm{Bel}}(x_t) &= \int P(x_t \mid x_{t-1},\, u_t)\,\mathrm{Bel}(x_{t-1})\,\mathrm{d}x_{t-1}, \\
+    \mathrm{Bel}(x_t) &= \eta\, P(z_t \mid x_t)\,\overline{\mathrm{Bel}}(x_t).
+\end{align*}
+\end{tcolorbox}
+
+The \emph{motion model} $P(x_t \mid x_{t-1}, u_t)$ propagates belief through controls. The \emph{observation model} $P(z_t \mid x_t, m)$ weights the predicted belief by how well a measurement $z_t$ is explained by each candidate pose $x_t$ given the map $m$. The quality of localization is therefore directly determined by the accuracy of this model.
+
+\section{Range Sensors and the Scan Factorization}
+
+Range sensors (laser scanners, ultrasound) are the primary sensor type in range-based localization. A full scan $z_t$ at time $t$ consists of $K$ individual beam measurements:
+\[
+    z_t = \{z_t^1, z_t^2, \ldots, z_t^K\}.
+\]
+
+Under the \textbf{conditional independence assumption} --- each beam is independent of all others given the robot pose and map --- the joint scan likelihood factorizes:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Scan Likelihood Factorization}]
+\[
+    P(z_t \mid x_t,\, m) = \prod_{k=1}^{K} P(z_t^k \mid x_t,\, m).
+\]
+\end{tcolorbox}
+
+This reduces the problem from modelling a joint distribution over all beams simultaneously (exponential in $K$) to modelling each beam independently. All models below specify $P(z_t^k \mid x_t, m)$ for a single beam $k$.
+
+% ========================================
+\section{Beam-Based Model (Advanced Ray-Cast Model)}
+% ========================================
+
+\subsection{Physical Decomposition}
+
+A laser rangefinder can fail in several physically distinct ways. The beam-based model captures all of them via a \textbf{mixture of four components}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Beam-Based Mixture Model}]
+\[
+    P(z_t^k \mid x_t,\, m)
+    = z_{\mathrm{hit}}\, p_{\mathrm{hit}}
+    + z_{\mathrm{short}}\, p_{\mathrm{short}}
+    + z_{\mathrm{rand}}\, p_{\mathrm{rand}}
+    + z_{\mathrm{max}}\, p_{\mathrm{max}}, % chktex 35
+\]
+with mixing weights satisfying $z_{\mathrm{hit}} + z_{\mathrm{short}} + z_{\mathrm{rand}} + z_{\mathrm{max}} = 1$. % chktex 35
+\end{tcolorbox}
+
+Let $z_t^{k*}$ denote the \emph{expected} range for beam $k$ at pose $x_t$, obtained by ray-casting the map $m$.
+
+\subsection{Component 1: Correct Range with Gaussian Noise ($p_{\mathrm{hit}}$)}
+
+\textbf{Physical cause}: the beam hits the correct obstacle and the measurement is corrupted only by small sensor noise.
+
+\[
+    p_{\mathrm{hit}}(z_t^k \mid x_t, m) =
+    \begin{cases}
+        \eta\,\mathcal{N}(z_t^k;\, z_t^{k*},\, \sigma_{\mathrm{hit}}^2) & 0 \le z_t^k \le z_{\mathrm{max}}, \\ % chktex 35
+        0 & \text{otherwise,}
+    \end{cases}
+\]
+where $\eta = \bigl(\int_0^{z_{\mathrm{max}}} \mathcal{N}(z;\, z_t^{k*},\, \sigma_{\mathrm{hit}}^2)\,\mathrm{d}z\bigr)^{-1}$ normalizes the truncated Gaussian to $[0, z_{\mathrm{max}}]$. The parameter $\sigma_{\mathrm{hit}}$ captures the sensor's range precision. % chktex 3 chktex 35
+
+\subsection{Component 2: Unexpected Obstacle ($p_{\mathrm{short}}$)}
+
+\textbf{Physical cause}: an unmodelled object (person, furniture, dynamic obstacle) sits between the robot and the mapped obstacle, causing an early return.
+
+\[
+    p_{\mathrm{short}}(z_t^k \mid x_t, m) =
+    \begin{cases}
+        \eta\,\lambda_{\mathrm{short}}\,e^{-\lambda_{\mathrm{short}}\,z_t^k} & 0 \le z_t^k \le z_t^{k*}, \\
+        0 & \text{otherwise,}
+    \end{cases}
+\]
+with normalization $\eta = (1 - e^{-\lambda_{\mathrm{short}}\,z_t^{k*}})^{-1}$. The exponential distribution assigns higher probability to short readings than to readings near the true range $z_t^{k*}$, consistent with an obstacle that could be anywhere between the robot and the mapped surface. % chktex 3
+
+\subsection{Component 3: Random Measurement ($p_{\mathrm{rand}}$)}
+
+\textbf{Physical cause}: completely erratic readings due to multi-path reflections, sensor crosstalk, or electronic noise.
+
+\[
+    p_{\mathrm{rand}}(z_t^k \mid x_t, m) =
+    \begin{cases}
+        \dfrac{1}{z_{\mathrm{max}}} & 0 \le z_t^k \le z_{\mathrm{max}}, \\[4pt] % chktex 35
+        0 & \text{otherwise.}
+    \end{cases}
+\]
+
+A uniform distribution over $[0, z_{\mathrm{max}}]$ models complete uncertainty: the reading carries no information about the environment. % chktex 35
+
+\subsection{Component 4: Maximum Range Failure ($p_{\mathrm{max}}$)} % chktex 35
+
+\textbf{Physical cause}: the beam misses all obstacles (e.g., hits glass, dark surface, or goes out the window) and the sensor saturates at $z_{\mathrm{max}}$. % chktex 35
+
+\[
+    p_{\mathrm{max}}(z_t^k \mid x_t, m) =
+    \begin{cases}
+        1 & z_t^k = z_{\mathrm{max}}, \\ % chktex 35
+        0 & \text{otherwise.}
+    \end{cases}
+\]
+
+This is a point mass (Dirac delta) at the maximum range value. In practice, a reading of exactly $z_{\mathrm{max}}$ is a strong signal that the beam failed to detect any obstacle. % chktex 35
+
+\subsection{Parameter Learning}
+
+The mixing weights $(z_{\mathrm{hit}}, z_{\mathrm{short}}, z_{\mathrm{rand}}, z_{\mathrm{max}})$ and the noise parameters $(\sigma_{\mathrm{hit}}, \lambda_{\mathrm{short}})$ can be learned from real sensor data via maximum likelihood estimation. In practice, they are often set by hand after visual inspection of histograms of residuals $z_t^k - z_t^{k*}$. % chktex 35
+
+\begin{remark}
+The beam-based model is the most physically accurate model for laser rangefinders. Its main drawback is computational cost: for each candidate pose $x_t$, each of the $K$ beams requires a ray-cast query against the map to compute $z_t^{k*}$. For particle filters with thousands of particles, this dominates the runtime.
+\end{remark}
+
+% ========================================
+\section{Likelihood Field Model}
+% ========================================
+
+\subsection{Motivation}
+
+The likelihood field model trades some accuracy for a large speedup by replacing per-particle ray-casting with a precomputed lookup table.
+
+\subsection{Construction}
+
+Given a 2D occupancy grid map $m$, the \textbf{likelihood field} $\ell(p)$ for a point $p = (x_p, y_p)$ in the map frame is defined as:
+\[
+    \ell(p) = \exp\!\left(-\frac{d^2(p,\, m)}{2\sigma^2}\right),
+\]
+where $d(p, m)$ is the Euclidean distance from $p$ to the nearest occupied cell in $m$. This is precomputed once for the entire map and stored as a 2D image.
+
+\subsection{Sensor Update}
+
+For a candidate robot pose $x_t = (x, y, \theta)$ and a range reading $z_t^k$ at beam angle $\phi_k$ relative to the robot:
+
+\begin{enumerate}
+    \item Project the beam endpoint into the map frame:
+    \[
+        \begin{pmatrix} x_z \\ y_z \end{pmatrix}
+        =
+        \begin{pmatrix} x \\ y \end{pmatrix}
+        + z_t^k
+        \begin{pmatrix} \cos(\theta + \phi_k) \\ \sin(\theta + \phi_k) \end{pmatrix}.
+    \]
+    \item Look up the precomputed likelihood at the projected point: $\ell(x_z, y_z)$.
+    \item The per-beam likelihood is:
+    \[
+        P(z_t^k \mid x_t, m) = z_{\mathrm{hit}}\,\ell(x_z, y_z) + z_{\mathrm{rand}}\,\tfrac{1}{z_{\mathrm{max}}} + z_{\mathrm{max}}\,\mathcal{I}(z_t^k = z_{\mathrm{max}}). % chktex 35
+    \]
+    (The $p_{\mathrm{short}}$ component is typically omitted for speed.)
+\end{enumerate}
+
+No ray-casting against the map is required: the entire update is a table lookup followed by a simple formula.
+
+\begin{remark}
+The likelihood field ignores the physical structure of the beam path (it does not check whether the beam is occluded before reaching the endpoint). This can cause wrong weights when walls obstruct the line of sight, but in practice the approach is robust and widely used in real-time systems.
+\end{remark}
+
+\subsection{Comparison of Beam and Likelihood Field Models}
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+\textbf{Model} & \textbf{Accuracy} & \textbf{Speed} & \textbf{Primary use} \\
+\hline
+Simple ray-cast & Low & Fast & Idealized/debug \\
+Beam-based (mixture) & High & Slow & Offline, accurate localization \\
+Likelihood field & Medium & Fast & Real-time particle filter \\
+\hline
+\end{tabular}
+\end{center}
+
+% ========================================
+\section{Landmark-Based Observation Models}
+% ========================================
+
+\subsection{Range-Bearing Model}
+
+When the environment contains identifiable landmarks (beacons, visual markers, mapped corners), a range-bearing sensor at robot pose $x_t = (x, y, \theta)^\top$ observing landmark $j$ at map position $(m_{j,x}, m_{j,y})^\top$ produces: % chktex 3
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Range-Bearing Observation Model}]
+\[
+    \begin{pmatrix} r_t^j \\ \phi_t^j \end{pmatrix}
+    =
+    \begin{pmatrix}
+        \sqrt{(m_{j,x} - x)^2 + (m_{j,y} - y)^2} \\[4pt] % chktex 3
+        \mathrm{atan2}(m_{j,y} - y,\, m_{j,x} - x) - \theta
+    \end{pmatrix}
+    +
+    \begin{pmatrix} \epsilon_{r^j} \\ \epsilon_{\phi^j} \end{pmatrix},
+\]
+where $\epsilon_{r^j} \sim \mathcal{N}(0, \sigma_r^2)$ and $\epsilon_{\phi^j} \sim \mathcal{N}(0, \sigma_\phi^2)$ are independent Gaussian noise terms.
+\end{tcolorbox}
+
+The likelihood of an observation $(r_t^j, \phi_t^j)$ given pose $x_t$ and known landmark $j$ is:
+\[
+    P(z_t^j \mid x_t, m) = \mathcal{N}(r_t^j;\, \hat{r}^j,\, \sigma_r^2)\,\mathcal{N}(\phi_t^j;\, \hat{\phi}^j,\, \sigma_\phi^2),
+\]
+where $\hat{r}^j$ and $\hat{\phi}^j$ are the expected range and bearing computed from $x_t$ and the map.
+
+\subsection{Bearing-Only Model}
+
+If the sensor provides only bearing (angle) with no range information:
+\[
+    \phi_t^j = \mathrm{atan2}(m_{j,y} - y,\, m_{j,x} - x) - \theta + \epsilon_{\phi^j}.
+\]
+
+A single bearing observation constrains the robot to lie on a ray from the landmark direction but leaves its distance along that ray uncertain. The posterior after one bearing observation is therefore a ring-shaped distribution in pose space (a distribution over $(x, y, \theta)$ concentrated along a manifold at the observed angle from the landmark). This is illustrated clearly by particle filters: the particle cloud forms an arc consistent with observing a landmark at angle $\phi$ from distance unknown.
+
+\begin{example}
+In the AIBO RoboCup soccer domain, robots self-localize on the pitch using coloured beacons and white-line detections. A single landmark observed at bearing $30^\circ$ and range $5\,\mathrm{m}$ constrains the robot to be on a circle of radius $5\,\mathrm{m}$ centred at the landmark, at an angle consistent with the observed bearing. Multiple such observations rapidly collapse the distribution to a narrow cluster.
+\end{example}
+
+% ========================================
+\section{Summary}
+% ========================================
+
+\begin{itemize}
+    \item The observation model $P(z_t \mid x_t, m)$ is the likelihood of a measurement given a pose; it is the key component of the Bayes filter correction step.
+    \item For range sensors, the independence assumption over beams yields $P(z_t \mid x_t, m) = \prod_k P(z_t^k \mid x_t, m)$, making the model tractable.
+    \item The \textbf{beam-based model} is a four-component mixture capturing Gaussian sensor noise, unexpected short returns, random errors, and max-range failures. It is physically accurate but requires per-particle ray-casting.
+    \item The \textbf{likelihood field model} precomputes a distance-to-obstacle map and replaces ray-casting with a table lookup, enabling real-time sensor updates in particle filters at modest accuracy cost.
+    \item \textbf{Landmark range-bearing models} give Gaussian likelihoods directly from the geometric observation equation; bearing-only observations produce ring-shaped posteriors, requiring multiple observations to localize.
+\end{itemize}
+
+% ========================================
+\part{Probabilistic Motion Models}
+% ========================================
+
+\section{Motion Uncertainty and the Motion Model}
+
+\subsection{Why Model Uncertainty?}
+
+Real robot motion is never perfect. Even when a robot commands a specific displacement, the actual trajectory deviates due to:
+\begin{itemize}
+    \item terrain irregularities (bumps, carpet, slopes),
+    \item wheel slippage and unequal wheel diameters,
+    \item discretization and quantization in encoders,
+    \item violations of the kinematic rolling constraint under high lateral forces.
+\end{itemize}
+
+These errors compound: a robot navigating over several metres accumulates significant pose uncertainty. The \textbf{probabilistic motion model} $P(x_t \mid u_t, x_{t-1})$ encodes this uncertainty as a probability distribution over the next pose $x_t$, given control input $u_t$ and previous pose $x_{t-1}$.
+
+\subsection{Role in the Bayes Filter}
+
+The motion model is the prediction step of the Bayes filter:
+\[
+    \overline{\mathrm{Bel}}(x_t) = \int P(x_t \mid u_t,\, x_{t-1})\,\mathrm{Bel}(x_{t-1})\,\mathrm{d}x_{t-1}.
+\]
+Without sensing, integrating $P(x_t \mid u_t, x_{t-1})$ over time causes uncertainty to grow without bound. Sensor corrections (the correction step) are required to keep the belief concentrated.
+
+\subsection{Two Model Families}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Model} & \textbf{Input} & \textbf{Use case} \\
+\hline
+Odometry-based & Encoder readings $(\delta_{\mathrm{rot1}},\, \delta_{\mathrm{trans}},\, \delta_{\mathrm{rot2}})$ & When wheel encoders are available \\
+Velocity-based & Velocity commands $(v,\, \omega)$ & When encoders are unavailable (dead reckoning) \\
+\hline
+\end{tabular}
+\end{center}
+
+% ========================================
+\section{Odometry Motion Model}
+% ========================================
+
+\subsection{Motion Decomposition}
+
+Odometry decomposes each motion step into three primitive actions: an initial in-place rotation $\delta_{\mathrm{rot1}}$, a straight-line translation $\delta_{\mathrm{trans}}$, and a final in-place rotation $\delta_{\mathrm{rot2}}$. Let the previous pose be $x_{t-1} = (\bar{x}, \bar{y}, \bar{\theta})^\top$ and the current pose $x_t = (x', y', \theta')^\top$ as reported by the encoders. Then: % chktex 3
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Odometry Decomposition}]
+\begin{align*}
+    \delta_{\mathrm{trans}} &= \sqrt{(x' - \bar{x})^2 + (y' - \bar{y})^2}, \\ % chktex 3
+    \delta_{\mathrm{rot1}}  &= \mathrm{atan2}(y' - \bar{y},\; x' - \bar{x}) - \bar{\theta}, \\
+    \delta_{\mathrm{rot2}}  &= \theta' - \bar{\theta} - \delta_{\mathrm{rot1}}.
+\end{align*}
+The odometry reading is $u_t = (\delta_{\mathrm{rot1}},\, \delta_{\mathrm{trans}},\, \delta_{\mathrm{rot2}})^\top$. % chktex 3
+\end{tcolorbox}
+
+\subsection{Noise Model}
+
+Each of the three odometry components is corrupted by zero-mean noise whose standard deviation scales with the magnitudes of the motion components (larger motions cause larger errors):
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Odometry Noise Model}]
+\begin{align*}
+    \hat{\delta}_{\mathrm{rot1}}  &= \delta_{\mathrm{rot1}}  + \varepsilon\!\left(\alpha_1|\delta_{\mathrm{rot1}}| + \alpha_2|\delta_{\mathrm{trans}}|\right), \\
+    \hat{\delta}_{\mathrm{trans}} &= \delta_{\mathrm{trans}} + \varepsilon\!\left(\alpha_3|\delta_{\mathrm{trans}}| + \alpha_4(|\delta_{\mathrm{rot1}}| + |\delta_{\mathrm{rot2}}|)\right), \\
+    \hat{\delta}_{\mathrm{rot2}}  &= \delta_{\mathrm{rot2}}  + \varepsilon\!\left(\alpha_1|\delta_{\mathrm{rot2}}| + \alpha_2|\delta_{\mathrm{trans}}|\right),
+\end{align*}
+where $\varepsilon(\sigma^2)$ denotes zero-mean noise with variance $\sigma^2$, and $\alpha_1, \ldots, \alpha_4 > 0$ are platform-specific noise coefficients determined empirically.
+\end{tcolorbox}
+
+\textbf{Interpretation of noise coefficients}:
+\begin{itemize}
+    \item $\alpha_1$: rotation error proportional to rotation (encoder inaccuracy in turning).
+    \item $\alpha_2$: rotation error proportional to translation (heading drift during straight motion).
+    \item $\alpha_3$: translation error proportional to translation (wheel-radius mismatch, slippage).
+    \item $\alpha_4$: translation error proportional to rotation (turning radius variations).
+\end{itemize}
+
+\subsection{Noise Distributions}
+
+Two distributions are commonly used for $\varepsilon(\sigma^2)$:
+
+\textbf{Gaussian}: $\varepsilon_{\sigma^2}(x) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left(-\frac{x^2}{2\sigma^2}\right)$. Unbounded support; natural for continuous measurement noise.
+
+\textbf{Triangular}: $\varepsilon_{\sigma^2}(x) = \max\!\left\{0,\; \frac{1}{\sqrt{6}\,\sigma} - \frac{|x|}{6\sigma^2}\right\}$. Bounded support on $[-\sqrt{6}\,\sigma,\, \sqrt{6}\,\sigma]$; piecewise linear; often more realistic for hardware noise and cheaper to compute.
+
+Corresponding sampling algorithms:
+\[
+    \texttt{sample\_normal}(\sigma^2) = \frac{1}{12}\sum_{i=1}^{12}\mathrm{rand}(-\sigma, \sigma),
+    \qquad
+    \texttt{sample\_triangular}(\sigma^2) = \frac{\sqrt{6}}{2}\!\left[\mathrm{rand}(-\sigma,\sigma) + \mathrm{rand}(-\sigma,\sigma)\right],
+\]
+where $\mathrm{rand}(a,b)$ draws uniformly from $[a,b]$. The normal sampler uses the central limit theorem (sum of 12 uniforms); the triangular sampler uses convolution of two uniforms.
+
+\subsection{Computing $P(x_t \mid u_t, x_{t-1})$: Density Evaluation}
+
+Given a query pair $(x_{t-1}, x_t)$ and odometry $u_t$, the true motion components are:
+\begin{align*}
+    \delta_{\mathrm{trans}}^* &= \sqrt{(x_t^x - x_{t-1}^x)^2 + (x_t^y - x_{t-1}^y)^2}, \\ % chktex 3
+    \delta_{\mathrm{rot1}}^*  &= \mathrm{atan2}(x_t^y - x_{t-1}^y,\; x_t^x - x_{t-1}^x) - x_{t-1}^\theta, \\
+    \delta_{\mathrm{rot2}}^*  &= x_t^\theta - x_{t-1}^\theta - \delta_{\mathrm{rot1}}^*.
+\end{align*}
+The probability is then the product of three independent noise densities:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Odometry Model: Density Evaluation}]
+\begin{align*}
+    p_1 &= \mathrm{prob}\!\left(\delta_{\mathrm{rot1}}^* - \delta_{\mathrm{rot1}},\;\; \alpha_1|\delta_{\mathrm{rot1}}| + \alpha_2|\delta_{\mathrm{trans}}|\right), \\
+    p_2 &= \mathrm{prob}\!\left(\delta_{\mathrm{trans}}^* - \delta_{\mathrm{trans}},\;\; \alpha_3|\delta_{\mathrm{trans}}| + \alpha_4(|\delta_{\mathrm{rot1}}| + |\delta_{\mathrm{rot2}}|)\right), \\
+    p_3 &= \mathrm{prob}\!\left(\delta_{\mathrm{rot2}}^* - \delta_{\mathrm{rot2}},\;\; \alpha_1|\delta_{\mathrm{rot2}}| + \alpha_2|\delta_{\mathrm{trans}}|\right), \\
+    P(x_t \mid u_t, x_{t-1}) &= p_1 \cdot p_2 \cdot p_3,
+\end{align*}
+where $\mathrm{prob}(a, \sigma^2)$ evaluates the chosen noise density (Gaussian or triangular) at $a$ with variance $\sigma^2$.
+\end{tcolorbox}
+
+\subsection{Sampling from $P(x_t \mid u_t, x_{t-1})$: Particle Generation}
+
+For particle filters, we need to draw samples $x_t \sim P(x_t \mid u_t, x_{t-1})$ rather than evaluate the density. The algorithm adds noise to each odometry component and then applies the kinematic update:
+
+\begin{algorithm}
+\caption{Sample Odometry Motion Model}
+\begin{algorithmic}
+\STATE \textbf{Input}: $x_{t-1} = (x, y, \theta)^\top$, odometry $u_t = (\delta_{\mathrm{rot1}},\, \delta_{\mathrm{trans}},\, \delta_{\mathrm{rot2}})^\top$ % chktex 3
+\STATE Extract raw odometry components from $u_t$
+\STATE $\hat{\delta}_{\mathrm{rot1}}  \leftarrow \delta_{\mathrm{rot1}}  - \mathrm{sample}\!\left(\alpha_1|\delta_{\mathrm{rot1}}| + \alpha_2|\delta_{\mathrm{trans}}|\right)$
+\STATE $\hat{\delta}_{\mathrm{trans}} \leftarrow \delta_{\mathrm{trans}} - \mathrm{sample}\!\left(\alpha_3|\delta_{\mathrm{trans}}| + \alpha_4(|\delta_{\mathrm{rot1}}| + |\delta_{\mathrm{rot2}}|)\right)$
+\STATE $\hat{\delta}_{\mathrm{rot2}}  \leftarrow \delta_{\mathrm{rot2}}  - \mathrm{sample}\!\left(\alpha_1|\delta_{\mathrm{rot2}}| + \alpha_2|\delta_{\mathrm{trans}}|\right)$
+\STATE $x'      \leftarrow x + \hat{\delta}_{\mathrm{trans}}\cos(\theta + \hat{\delta}_{\mathrm{rot1}})$
+\STATE $y'      \leftarrow y + \hat{\delta}_{\mathrm{trans}}\sin(\theta + \hat{\delta}_{\mathrm{rot1}})$
+\STATE $\theta' \leftarrow \theta + \hat{\delta}_{\mathrm{rot1}} + \hat{\delta}_{\mathrm{rot2}}$
+\STATE \textbf{Return} $(x', y', \theta')^\top$ % chktex 3
+\end{algorithmic}
+\end{algorithm}
+
+Each call generates one sample; running this for $N$ particles in parallel implements the prediction step of a particle filter.
+
+% ========================================
+\section{Velocity-Based Motion Model}
+% ========================================
+
+\subsection{Kinematics}
+
+When wheel encoders are unavailable, the robot's commanded linear velocity $v$ and angular velocity $\omega$ serve as the motion input. For a robot following a circular arc of radius $v/\omega$ over time interval $\Delta t$, the ideal (noiseless) state update is:
+\begin{align*}
+    x'      &= x - \frac{v}{\omega}\sin\theta + \frac{v}{\omega}\sin(\theta + \omega\Delta t), \\
+    y'      &= y + \frac{v}{\omega}\cos\theta - \frac{v}{\omega}\cos(\theta + \omega\Delta t), \\
+    \theta' &= \theta + \omega\Delta t.
+\end{align*}
+
+\subsection{Noise Model}
+
+Additive zero-mean noise is applied to both velocity components before integrating the kinematics:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Velocity Noise Model}]
+\begin{align*}
+    \hat{v}      &= v + \varepsilon(\alpha_1|v| + \alpha_2|\omega|), \\
+    \hat{\omega} &= \omega + \varepsilon(\alpha_3|v| + \alpha_4|\omega|), \\
+    \hat{\gamma} &= \varepsilon(\alpha_5|v| + \alpha_6|\omega|).
+\end{align*}
+The term $\hat{\gamma}$ is an additional independent noise component that models final-heading uncertainty (e.g., slippage affecting orientation but not the arc trajectory). It is absent in a naive two-parameter noise model, which underestimates heading error.
+\end{tcolorbox}
+
+\subsection{State Update with Noise}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Velocity Model: Noisy State Update}]
+\begin{align*}
+    x'      &= x - \frac{\hat{v}}{\hat{\omega}}\sin\theta + \frac{\hat{v}}{\hat{\omega}}\sin(\theta + \hat{\omega}\Delta t), \\
+    y'      &= y + \frac{\hat{v}}{\hat{\omega}}\cos\theta - \frac{\hat{v}}{\hat{\omega}}\cos(\theta + \hat{\omega}\Delta t), \\
+    \theta' &= \theta + \hat{\omega}\Delta t + \hat{\gamma}\Delta t.
+\end{align*}
+The ratio $\hat{v}/\hat{\omega}$ is the noisy radius of curvature. The $\hat{\gamma}\Delta t$ term adds independent rotational drift to the final heading.
+\end{tcolorbox}
+
+\begin{remark}
+The velocity model is less accurate than the odometry model when encoders are available, because it relies on commanded velocities rather than direct wheel measurements. However, it is general enough to apply to any wheeled or aerial platform described by $(v, \omega)$.
+\end{remark}
+
+\subsection{Resulting Distributions}
+
+The distribution $P(x_t \mid u_t, x_{t-1})$ under either model is in general non-Gaussian and multi-modal when projected onto 2D. Running the sample algorithm $N$ times from a single starting pose and visualising the particle cloud reveals:
+\begin{itemize}
+    \item \textbf{Straight motion}: the cloud is elongated along the direction of travel (translation noise dominates).
+    \item \textbf{Turning motion}: the cloud fans out in orientation (rotation noise dominates).
+    \item \textbf{Long sequences}: the cloud diffuses rapidly; without sensor corrections, particles spread across the entire reachable space.
+\end{itemize}
+
+% ========================================
+\section{Summary}
+% ========================================
+
+\begin{itemize}
+    \item The motion model $P(x_t \mid u_t, x_{t-1})$ is the prediction ingredient of the Bayes filter; it propagates uncertainty forward in time.
+    \item \textbf{Odometry model}: decomposes motion into $(\delta_{\mathrm{rot1}}, \delta_{\mathrm{trans}}, \delta_{\mathrm{rot2}})$; noise scales with motion magnitude via four coefficients $\alpha_{1:4}$.
+    \item \textbf{Velocity model}: integrates noisy $(v, \omega)$ along a circular arc; an additional $\gamma$ term models heading drift not captured by velocity noise alone.
+    \item Both models support two operations: \emph{density evaluation} (used in grid-based filters) and \emph{sampling} (used in particle filters). The sampling form is the prediction step of Monte Carlo Localization.
+    \item Gaussian and triangular distributions are the standard choices for the noise density; the triangular distribution is bounded and cheaper to sample.
+\end{itemize}
+
+% ========================================
+\part{Robot Motion Planning and Navigation}
+% ========================================
+
+\section{Overview and Historical Context}
+
+\subsection{What is Motion Planning?}
+
+\textbf{Motion planning} is the problem of determining a set of actions (a plan) that brings a robot from a known start state to a known goal state while satisfying constraints. The term encompasses several sub-disciplines:
+
+\begin{itemize}
+    \item \textbf{Action planning}: find a sequence of symbolic actions that realize a given objective.
+    \item \textbf{Path planning}: find a valid geometric path from one configuration to another; local reactive avoidance handles inaccuracies and dynamic obstacles.
+    \item \textbf{Planning under uncertainty}: find a policy that maximizes long-term reward (MDPs, POMDPs).
+\end{itemize}
+
+\subsection{Historical Development}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Era} & \textbf{Paradigm} & \textbf{Characteristics} \\
+\hline
+Mid-1970s & Classic robotics & Exact models, no sensing (Voronoi diagrams) \\
+Mid-1980s & Reactive planning & No models; sensor-only; high-speed avoidance \\
+Early 1990s & Hybrid/hierarchical & Models at high level, reactive at low level \\
+Mid-1990s+ & Probabilistic planning & Uncertainty in models and sensors throughout \\
+\hline
+\end{tabular}
+\end{center}
+
+Modern systems combine a \textbf{global planner} (low frequency, map-based, e.g.\ Dijkstra or A*) with a \textbf{local planner} (high frequency, reactive, e.g.\ DWA), as in the ROS navigation stack.
+
+% ========================================
+\section{Configuration Space}
+% ========================================
+
+\subsection{Definitions}
+
+Let $\mathcal{W} = \mathbb{R}^m$ be the \textbf{work space} with obstacle region $\mathcal{O} \subset \mathcal{W}$. For a robot in configuration $q \in \mathcal{C}$, let $A(q) \subset \mathcal{W}$ denote the set of points occupied by the robot.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Configuration Space Partition}]
+\begin{align*}
+    \mathcal{C}_{\mathrm{free}} &= \{q \in \mathcal{C} \mid A(q) \cap \mathcal{O} = \emptyset\}, \\
+    \mathcal{C}_{\mathrm{obs}}  &= \mathcal{C} \setminus \mathcal{C}_{\mathrm{free}}.
+\end{align*}
+The \textbf{motion planning problem}: find a continuous path $\tau : [0,1] \to \mathcal{C}_{\mathrm{free}}$ with $\tau(0) = q_i$ (start) and $\tau(1) = q_G$ (goal).
+\end{tcolorbox}
+
+\subsection{Mobile Robot C-Space Simplifications}
+
+A mobile robot's configuration is $(x, y, \theta) \in \mathbb{R}^2 \times S^1$. In practice, two simplifications reduce this to 2D:
+\begin{enumerate}
+    \item \textbf{Ignore kinematic constraints} (treat the robot as holonomic — valid for differential-drive robots that can rotate in place; non-holonomic constraints are then delegated to the local planner, e.g.\ DWA).
+    \item \textbf{Treat the robot as a point} by \textbf{inflating obstacles} by the robot's radius (Minkowski sum).
+\end{enumerate}
+Under both simplifications, the C-space reduces to a 2D grid with inflated obstacles, which is identical to the occupancy map used for localization.
+
+% ========================================
+\section{Combinatorial C-Space Representations}
+% ========================================
+
+\subsection{General Strategy}
+
+Combinatorial approaches decompose $\mathcal{C}_{\mathrm{free}}$ and capture its connectivity in a graph, then apply a graph-search algorithm. They are \textbf{complete} but suffer from the \textbf{curse of dimensionality}: the number of cells grows exponentially with the dimension of $\mathcal{C}$, making them intractable for manipulation or molecular planning.
+
+\subsection{Visibility Graph}
+
+Connect every pair of vertices (obstacle corners, start, goal) with a straight line segment that lies entirely in $\mathcal{C}_{\mathrm{free}}$. Path planning reduces to a shortest-path search on this graph.
+
+\begin{itemize}
+    \item[\textbf{+}] Complete; geometrically optimal path length; fast for polygonal environments.
+    \item[\textbf{--}] Paths graze obstacle surfaces; unsafe without inflation.
+\end{itemize}
+
+\subsection{Voronoi Diagram}
+
+Partition $\mathcal{C}_{\mathrm{free}}$ into regions equidistant from two or more obstacles. The Voronoi edges form a roadmap that maximizes clearance from obstacles.
+
+\begin{itemize}
+    \item[\textbf{+}] Complete; maximizes distance from obstacles (safe paths).
+    \item[\textbf{--}] Path length is not optimal; sparse coverage problematic for short-range sensors.
+\end{itemize}
+
+\subsection{Exact Cell Decomposition}
+
+Decompose $\mathcal{C}_{\mathrm{free}}$ into cells whose boundaries coincide with geometric critical points of the obstacles. Adjacent cells are linked in a connectivity graph; path planning finds a sequence of adjacent cells.
+
+\begin{itemize}
+    \item[\textbf{+}] Complete; efficient in sparse environments.
+    \item[\textbf{--}] Difficult to implement; inefficient in dense environments.
+\end{itemize}
+
+\subsection{Approximate Cell Decomposition}
+
+Overlay a regular grid; every cell is labeled \emph{free} or \emph{occupied}. This is the standard occupancy grid representation used for mapping.
+
+\begin{itemize}
+    \item[\textbf{+}] Unified representation with the map; de-facto standard in robotics.
+    \item[\textbf{--}] Narrow passages may disappear at coarse resolution; limits path shapes.
+\end{itemize}
+
+\textbf{Adaptive (quadtree) decomposition} refines grid resolution near obstacles, improving accuracy at the cost of variable-time preprocessing.
+
+% ========================================
+\section{Potential Field Methods}
+% ========================================
+
+Potential field methods define a scalar field $U(q)$ over $\mathcal{C}$ whose gradient drives the robot toward the goal and away from obstacles.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Potential Field Components}]
+\begin{align*}
+    U_{\mathrm{att}}(q) &= \tfrac{1}{2} k_{\mathrm{att}}\,\rho_{\mathrm{goal}}^2(q), \\
+    U_{\mathrm{rep}}(q) &=
+    \begin{cases}
+        \tfrac{1}{2} k_{\mathrm{rep}}\!\left(\dfrac{1}{\rho(q)} - \dfrac{1}{\rho_0}\right)^{\!2} & \text{if } \rho(q) \le \rho_0, \\[6pt] % chktex 3
+        0 & \text{otherwise,}
+    \end{cases}
+\end{align*}
+where $\rho_{\mathrm{goal}}(q)$ is the distance to the goal, $\rho(q)$ is the distance to the nearest obstacle, and $\rho_0$ is the influence radius of obstacles.
+\end{tcolorbox}
+
+The robot velocity (or force) is set proportional to the negative gradient:
+\[
+    F(q) = -\nabla U_{\mathrm{att}}(q) - \nabla U_{\mathrm{rep}}(q).
+\]
+
+\begin{itemize}
+    \item[\textbf{+}] Closed-form control law; very fast to evaluate.
+    \item[\textbf{--}] Not complete: local minima (where $F = 0$ but $q \neq q_G$) cause the robot to stall; oscillations can occur near concave obstacles.
+\end{itemize}
+
+% ========================================
+\section{Sampling-Based Methods}
+% ========================================
+
+\subsection{Motivation}
+
+Combinatorial methods become intractable for high-dimensional $\mathcal{C}$. Sampling-based methods avoid explicit representation of $\mathcal{C}_{\mathrm{free}}$: they \emph{probe} $\mathcal{C}$ by sampling configurations and querying a collision-detection oracle. They are \textbf{probabilistically complete} (probability of failure decays to zero as sample count grows) but not complete in the strict sense.
+
+\subsection{Probabilistic Road Map (PRM)}
+
+\begin{enumerate}
+    \item \textbf{Learning phase}: sample random configurations in $\mathcal{C}$, retain those in $\mathcal{C}_{\mathrm{free}}$, and attempt to connect nearby samples with a simple local planner. Successfully connected pairs become graph edges.
+    \item \textbf{Query phase}: connect $q_i$ and $q_G$ to the graph and apply a graph-search (e.g.\ A*).
+\end{enumerate}
+
+\begin{itemize}
+    \item[\textbf{+}] Simple and effective; handles high-dimensional spaces.
+    \item[\textbf{--}] Sub-optimal; poor coverage of narrow passages; requires dense sampling.
+\end{itemize}
+
+\subsection{Rapidly Exploring Random Trees (RRT)}
+
+\begin{enumerate}
+    \item Initialize a tree $\mathcal{T}$ rooted at $q_i$.
+    \item Sample a random configuration $q_{\mathrm{rand}}$; find the nearest tree node $q_{\mathrm{near}}$.
+    \item Extend $q_{\mathrm{near}}$ toward $q_{\mathrm{rand}}$ by a step size; add the new node $q_{\mathrm{new}}$ if the extension is collision-free.
+    \item Repeat until $q_G$ is reached or a budget is exhausted.
+\end{enumerate}
+
+\begin{itemize}
+    \item[\textbf{+}] Naturally handles kinodynamic constraints; suitable for dynamic environments.
+    \item[\textbf{--}] Sub-optimal; paths are jagged and difficult to smooth; non-deterministic.
+\end{itemize}
+
+% ========================================
+\section{Graph-Search Algorithms}
+% ========================================
+
+\subsection{Problem Setup and Complexity Metrics}
+
+Once the environment is represented as a graph, path planning is a graph-search problem. Algorithm complexity is measured by:
+\begin{itemize}
+    \item $b$: branching factor (max successors per node).
+    \item $d$: depth of the least-cost solution.
+    \item $m$: maximum depth of the state space.
+    \item $C^*$: cost of the optimal solution; $\varepsilon$: minimum edge cost.
+\end{itemize}
+
+\begin{remark}
+\textbf{Tree search} re-expands nodes; \textbf{graph search} maintains a closed set to avoid revisiting nodes, reducing time complexity at the cost of memory.
+\end{remark}
+
+\subsection{Uninformed Search: Algorithm Comparison}
+
+\begin{center}
+\begin{tabular}{lllll}
+\hline
+\textbf{Algorithm} & \textbf{Complete} & \textbf{Time} & \textbf{Space} & \textbf{Optimal} \\
+\hline
+BFS            & Yes$^*$  & $b^d$                        & $b^d$                        & Yes$^*$ \\
+UCS (Dijkstra) & Yes      & $b^{\lceil C^*/\varepsilon \rceil}$ & $b^{\lceil C^*/\varepsilon \rceil}$ & Yes \\
+DFS            & No       & $b^m$                        & $bm$                         & No \\
+IDS            & Yes$^*$  & $b^d$                        & $bd$                         & Yes$^*$ \\
+\hline
+\end{tabular}
+\end{center}
+{\small $^*$ If branching factor is finite and (for optimality) step costs are equal.}
+
+\subsection{A* Search}
+
+A* is an informed search algorithm that expands nodes in order of $f(n) = g(n) + h(n)$, where:
+\begin{itemize}
+    \item $g(n)$: exact cost from start to node $n$.
+    \item $h(n)$: heuristic estimate of cost from $n$ to goal.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{A* Optimality Conditions}]
+\begin{itemize}
+    \item \textbf{Admissible heuristic}: $h(n) \le h^*(n)$ (never overestimates true cost) $\Rightarrow$ A* \emph{tree search} is optimal.
+    \item \textbf{Consistent heuristic}: $h(n) \le c(n, a, n') + h(n')$ for all edges $(n, n')$ $\Rightarrow$ A* \emph{graph search} is optimal and optimally efficient.
+    \item Consistency $\Rightarrow$ admissibility (converse does not hold).
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Typical heuristics}: Euclidean distance, Manhattan distance. $h \equiv 0$ reduces A* to Dijkstra/UCS.
+
+\textbf{Optimality efficiency}: A* expands all nodes with $f(n) < C^*$, some with $f(n) = C^*$, and none with $f(n) > C^*$ — no other optimal algorithm expands fewer nodes (for a given $h$).
+
+% ========================================
+\section{Multi-Agent Path Finding (MAPF)}
+% ========================================
+
+\subsection{Problem Definition}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{MAPF Problem}]
+Given $n$ agents on a known graph, each with a start location $s_i$ and goal location $g_i$, find collision-free paths for all agents minimizing an objective:
+\begin{itemize}
+    \item \textbf{Makespan}: $\max_i$ (arrival time of agent $i$).
+    \item \textbf{Flowtime} (Sum of Costs): $\sum_i$ (path length of agent $i$).
+\end{itemize}
+\textbf{Theorem (Yu and LaValle)}: MAPF is NP-hard to solve optimally for both objectives.
+\end{tcolorbox}
+
+\subsection{Naive Approach and Its Limitations}
+
+The joint state is the tuple of all agent positions. A* on the joint state space has branching factor $b^n$ and state space $|V|^n$, which is intractable for large $n$.
+
+\textbf{SIC heuristic} (Sum of Individual Costs): $h = \sum_i h_i$, where $h_i$ is the single-agent optimal cost. It is easy to compute and admissible, but the joint state space remains exponential.
+
+\subsection{Independent Detection (ID)}
+
+\begin{algorithm}
+\caption{Independent Detection}
+\begin{algorithmic}
+\STATE Plan independently for each agent
+\WHILE{any two agents collide}
+    \STATE Group all mutually colliding agents together
+    \STATE Re-plan jointly for each group using A* + SIC
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Issue}: when many agents share a bottleneck (e.g., a corridor), groups merge quickly and the joint problem becomes intractable again.
+
+\subsection{Conflict-Based Search (CBS)}
+
+CBS operates on a two-level search (Sharon et al., AIJ 2015). The low level plans single-agent paths subject to \emph{constraints}; the high level resolves \emph{conflicts} by adding constraints.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{CBS Definitions}]
+\begin{itemize}
+    \item \textbf{Conflict}: $\langle A, B, x, t \rangle$ — agents $A$ and $B$ both occupy location $x$ at time $t$.
+    \item \textbf{Constraint}: $\langle \text{agent}, x, t \rangle$ — agent is forbidden from occupying $x$ at time $t$.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{algorithm}
+\caption{Conflict-Based Search (CBS)}
+\begin{algorithmic}
+\STATE Plan independently for each agent (no constraints); form root node of constraint tree
+\WHILE{current node has a conflict $\langle A, B, x, t \rangle$}
+    \STATE Branch: create two child nodes
+    \STATE In child 1: add constraint $\langle A, x, t \rangle$; replan for $A$
+    \STATE In child 2: add constraint $\langle B, x, t \rangle$; replan for $B$
+    \STATE Expand lowest-cost node (best-first)
+\ENDWHILE
+\STATE \textbf{Return} current node's paths
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Key trade-off}: CBS expands $O(m)$ nodes where ID expands $O(m^2)$ in bottleneck scenarios. However, in open environments with many conflicts, the joint-state approach (ID with A*) may be faster. \textbf{Meta-Agent CBS} (CBS + A*) switches adaptively. CBS scales to approximately 40 agents depending on the map.
+
+% ========================================
+\section{Multi-Agent Pickup and Delivery (MAPD)}
+% ========================================
+
+\subsection{From One-Shot to Lifelong Planning}
+
+\textbf{MAPF} is a one-shot problem: each agent has one pre-determined goal. In \textbf{MAPD}, agents execute a continuous stream of pickup-and-delivery tasks (e.g., a warehouse with arriving orders). The system must remain responsive (low latency) while maintaining good throughput.
+
+\subsection{Well-Formed MAPD Instances}
+
+A MAPD instance is \textbf{well-formed} if:
+\begin{enumerate}
+    \item The number of tasks is finite.
+    \item The number of non-task parking locations $\ge$ number of agents.
+    \item For any two parking locations, a path exists that traverses no other parking location.
+\end{enumerate}
+These conditions guarantee that agents can always park without blocking each other, ensuring solvability.
+
+\subsection{Token Passing (TP)}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Token Passing Algorithm}]
+\begin{enumerate}
+    \item A shared \emph{token} stores all current tasks and all currently planned paths.
+    \item Agents take turns holding the token (round-robin).
+    \item The token-holder greedily assigns itself to the best available task (shortest A* path, no endpoint conflict with already-assigned tasks).
+    \item The agent plans a collision-free path using A*, then releases the token.
+\end{enumerate}
+\end{tcolorbox}
+
+TP solves all well-formed MAPD instances. \textbf{Token Passing with Task Swaps (TPTS)} extends TP by allowing an agent to take over a task from another agent if it can complete it faster.
+
+\subsection{Centralized Assignment (CENTRAL)}
+
+CENTRAL assigns agents to tasks globally using the \textbf{Hungarian method} (optimal bipartite matching), then plans all paths jointly by solving the resulting one-shot MAPF.
+
+\subsection{Algorithm Trade-offs}
+
+\begin{center}
+\begin{tabular}{lllll}
+\hline
+\textbf{Metric} & \textbf{TP} & \textbf{TPTS} & \textbf{CENTRAL} & \textbf{Best} \\
+\hline
+Service time  & worst & mid  & best & CENTRAL \\
+Throughput    & worst & mid  & best & CENTRAL \\
+Makespan      & worst & mid  & best & CENTRAL \\
+Runtime/step  & 10 ms & 200 ms & 4000 ms & TP \\
+\hline
+\end{tabular}
+\end{center}
+
+CENTRAL achieves the best solution quality at the cost of much higher computation per time step.
+
+\textbf{Multi-Item MAPD}: robots carry more than one item per task (multiple pickups $s^1_i, \ldots, s^n_i$ and deliveries $g^1_i, \ldots, g^m_i$). Token Passing is extended so that agents may hold multiple tasks simultaneously; the token-holder allocates itself greedily considering all active tasks and releases the token if no valid assignment exists.
+
+% ========================================
+\section{Obstacle Avoidance}
+% ========================================
+
+Local obstacle avoidance runs online at high frequency, reacting to sensor readings to modify the robot's trajectory without full replanning.
+
+\subsection{Bug Algorithms}
+
+The Bug family provides simple reactive strategies:
+\begin{itemize}
+    \item \textbf{Bug~1}: fully circumnavigate each obstacle once, then depart from the point on its boundary closest to the goal. \emph{Complete} but highly inefficient. % chktex 12
+    \item \textbf{Bug~2}: follow the obstacle boundary but depart as soon as the straight line to the goal is unobstructed. More efficient than Bug 1 in practice but \emph{incomplete} (can loop on certain obstacle configurations).
+\end{itemize}
+
+\subsection{Dynamic Window Approach (DWA)}
+
+DWA searches in the robot's \textbf{velocity space} $(v, \omega)$ for a safe, efficient command:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{DWA Velocity Space}]
+\begin{align*}
+    V_s &= \text{all feasible velocities (platform limits)}, \\
+    V_d &= \{(v, \omega) \mid \text{reachable in one time step given current} (v, \omega) \text{ and acceleration limits}\}, \\
+    V_o &= \{(v, \omega) \mid \text{robot can stop before hitting an obstacle}\}, \\
+    V_r &= V_s \cap V_d \cap V_o \quad \text{(admissible velocities)}.
+\end{align*}
+\end{tcolorbox}
+
+The command is selected by maximizing an objective over $V_r$:
+\[
+    (v^*, \omega^*) = \arg\max_{(v,\omega) \in V_r}\; a \cdot \mathrm{heading}(v,\omega) + b \cdot \mathrm{velocity}(v,\omega) + c \cdot \mathrm{dist}(v,\omega),
+\]
+where $\mathrm{heading}$ measures alignment with the goal direction, $\mathrm{velocity}$ encourages forward progress, and $\mathrm{dist}$ penalizes proximity to obstacles. Weights $a, b, c$ are tunable.
+
+\textbf{Key properties}:
+\begin{itemize}
+    \item Respects kinodynamic limits (acceleration and deceleration constraints).
+    \item Fast enough for real-time execution (the dynamic window reduces the search to a small 2D region).
+    \item Prone to local optima; addressed by the \textbf{Global DWA} variant, which replaces $\mathrm{heading}$ with a wavefront-computed distance-to-goal map.
+    \item DWA is the default local planner in the ROS navigation stack.
+\end{itemize}
+
+% ========================================
+\section{Summary}
+% ========================================
+
+\begin{itemize}
+    \item The \textbf{configuration space} (C-space) unifies robot geometry and workspace obstacles into a single planning domain; mobile robots commonly reduce to 2D with inflated obstacles.
+    \item \textbf{Combinatorial methods} (visibility graphs, Voronoi, cell decomposition) are complete but scale poorly with dimension.
+    \item \textbf{Potential fields} provide a reactive closed-form control law but are incomplete due to local minima.
+    \item \textbf{Sampling-based methods} (PRM, RRT) are probabilistically complete and scale to high-dimensional C-spaces at the cost of sub-optimality.
+    \item \textbf{A*} is the standard informed graph-search; admissibility guarantees optimality; consistency further guarantees optimal efficiency.
+    \item \textbf{MAPF} is NP-hard; practical solvers decompose the problem (ID, CBS) or leverage structure (Meta-Agent CBS). CBS is preferred when conflicts are sparse; joint search (ID) when they are dense.
+    \item \textbf{MAPD} extends MAPF to lifelong task streams; Token Passing is the fastest solver; CENTRAL achieves the best solution quality.
+    \item \textbf{DWA} is the standard local obstacle avoidance method in practice, combining kinodynamic feasibility with an objective function over the admissible velocity window.
+\end{itemize}
+
+% ========================================
+\part{Value-Based Deep Reinforcement Learning}
+% ========================================
+
+\section{Markov Decision Processes}
+
+\subsection{Formal Definition}
+
+An MDP is a tuple $(\mathcal{S}, \mathcal{A}, R, P)$:
+\begin{itemize}
+    \item $\mathcal{S}$: finite state space, $|\mathcal{S}| = n$.
+    \item $\mathcal{A}$: finite action space, $|\mathcal{A}| = m$.
+    \item \textbf{Transition function}: $p(s' \mid s, a) = \Pr[S_{t+1} = s' \mid S_t = s, A_t = a]$.
+    \item \textbf{Reward function}: $r(s, a) = \mathbb{E}[R_{t+1} \mid S_t = s, A_t = a]$.
+\end{itemize}
+
+\subsection{Markov and Stationarity Assumptions}
+
+The Markov property states that the future is conditionally independent of the past given the present:
+\[
+    \Pr\{R_{t+1}, S_{t+1} \mid S_t, A_t\} = \Pr\{R_{t+1}, S_{t+1} \mid S_0, A_0, \ldots, S_t, A_t\}.
+\]
+Stationarity further requires this distribution to be time-invariant. Together these two assumptions make the MDP framework tractable: the entire history collapses to a single state.
+
+\subsection{MDP Formulation for Mobile Robots}
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+\textbf{MDP element} & \textbf{Robotics counterpart} \\
+\hline
+State $s$         & Robot pose $(x, y, \theta)$ \\
+Action $a$        & Control command $u = (v, \omega)$ \\
+Transition $p$    & Motion model $p(x' \mid x, u)$ \\
+Reward $r$        & Task-dependent (e.g., $+1$ at goal, $-\delta$ per step, $-C$ on collision) \\
+\hline
+\end{tabular}
+\end{center}
+
+% ========================================
+\section{Value Functions and Q-Values}
+% ========================================
+
+\subsection{State Value Function}
+
+The \textbf{value} of state $s$ under policy $\pi$ is the expected discounted return when starting at $s$ and following $\pi$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{State Value Function}]
+\[
+    V_\pi(s) = \mathbb{E}\!\left[\sum_{t=0}^{\infty} \gamma^t R_{t+1} \;\middle|\; S_0 = s,\, \pi\right],
+\]
+where $0 \le \gamma < 1$ is the \textbf{discount factor}, downweighting future rewards exponentially.
+\end{tcolorbox}
+
+A discount factor close to 1 gives nearly equal weight to all future rewards (far-sighted); close to 0 makes the agent myopic.
+
+\subsection{Action-Value (Q) Function}
+
+The \textbf{Q-value} extends the value function to state-action pairs:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Action-Value Function}]
+\[
+    Q_\pi(s, a) = \mathbb{E}\!\left[\sum_{t=0}^{\infty} \gamma^t R_{t+1} \;\middle|\; S_0 = s,\, A_0 = a,\, \pi\right]
+    = r(s, a) + \gamma \int p(s' \mid s, a)\, V_\pi(s')\,\mathrm{d}s'.
+\]
+The value and Q-value are related by $V_\pi(s) = Q_\pi(s, \pi(s))$.
+\end{tcolorbox}
+
+Once $Q_\pi$ is known, the optimal policy is simply $\pi^*(s) = \arg\max_a Q_\pi(s, a)$.
+
+% ========================================
+\section{Tabular Q-Learning}
+% ========================================
+
+\subsection{Model-Free RL}
+
+In RL, the agent does not know $p(s' \mid s, a)$ or $r(s, a)$. It must learn $Q$ from interaction:
+\begin{itemize}
+    \item \textbf{Model-based}: learn $p$ and $r$ first, then plan. Fewer environment interactions needed, but model complexity can introduce bias.
+    \item \textbf{Model-free}: estimate $Q$ (or $\pi$) directly from experience. Simpler; no model bias; typically requires more data.
+\end{itemize}
+
+\subsection{Q-Learning Update Rule}
+
+Q-learning is an off-policy, model-free algorithm. After executing action $a$ in state $s$, observing reward $r$ and next state $s'$, the Q-table is updated:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Tabular Q-Learning Update}]
+\[
+    Q(s, a) \;\leftarrow\; Q(s, a) + \alpha\!\left[r + \gamma \max_{a'} Q(s', a') - Q(s, a)\right],
+\]
+where $0 < \alpha \le 1$ is the learning rate. The term in brackets is the \textbf{TD error}: difference between the current estimate and the bootstrapped target $r + \gamma \max_{a'} Q(s', a')$.
+\end{tcolorbox}
+
+\begin{algorithm}
+\caption{Tabular Q-Learning}
+\begin{algorithmic}
+\STATE Initialize $Q(s, a)$ arbitrarily for all $s, a$; observe initial state $s$
+\LOOP
+    \STATE Select action $a$ using $\varepsilon$-greedy policy on $Q$
+    \STATE Execute $a$; observe reward $r$ and next state $s'$
+    \STATE $Q(s, a) \leftarrow Q(s, a) + \alpha\bigl[r + \gamma \max_{a'} Q(s', a') - Q(s, a)\bigr]$
+    \STATE $s \leftarrow s'$
+\ENDLOOP
+\end{algorithmic}
+\end{algorithm}
+
+Q-learning converges to $Q^*$ under mild conditions (all state-action pairs visited infinitely often, step-size satisfying the stochastic approximation conditions). The $\varepsilon$-greedy policy ensures exploration during training.
+
+\subsection{Limitations of Tabular Q-Learning}
+
+Tabular Q-learning stores one scalar per $(s, a)$ pair. For continuous or very large state spaces — such as robot pose, sensor readings, or image pixels — the table is intractable. \textbf{Function approximation} is required.
+
+% ========================================
+\section{Neural Network Function Approximation}
+% ========================================
+
+\subsection{Feedforward Neural Networks}
+
+A feedforward network with $L$ layers computes a function $f(x; w)$ by composing affine transformations and pointwise nonlinearities:
+\[
+    h^{(l)} = \sigma\!\left(W^{(l)} h^{(l-1)} + b^{(l)}\right), \quad h^{(0)} = x,
+\]
+where $W^{(l)}, b^{(l)}$ are the weight matrix and bias at layer $l$, and $\sigma$ is an activation function. The output layer is typically linear for regression tasks such as Q-value estimation.
+
+\subsection{Activation Functions}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Name} & \textbf{Formula} & \textbf{Properties} \\
+\hline
+Threshold  & $\mathbf{1}[x \ge 0]$                                     & Non-differentiable \\
+Sigmoid    & $\sigma(x) = (1 + e^{-x})^{-1}$                          & Saturates; output in $(0,1)$ \\ % chktex 3
+Tanh       & $\tanh(x) = (e^x - e^{-x})/(e^x + e^{-x})$              & Saturates; zero-centered \\
+ReLU       & $\max(0, x)$                                              & No saturation for $x>0$; sparse \\
+Softplus   & $\log(1 + e^x)$                                           & Smooth ReLU approximation \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Universal Approximation Theorem}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Universal Approximation (Hornik et al., 1989; Cybenko, 1989)}]
+A feedforward network with a linear output layer and at least one hidden layer with a continuous squashing activation (sigmoid, tanh) can approximate any continuous function on a compact subset of $\mathbb{R}^n$ to arbitrary precision, given sufficient hidden units.
+\end{tcolorbox}
+
+This theorem justifies using neural networks as Q-function approximators. \textbf{Deep networks} (many hidden layers) achieve high expressivity with compact parameterizations, enabling representation of complex Q-value landscapes.
+
+\subsection{Training: Gradient Descent and Backpropagation}
+
+Given a dataset $\{(x_n, y_n)\}$, training minimizes the mean squared loss:
+\[
+    \mathcal{L}(w) = \sum_n \bigl(f(x_n; w) - y_n\bigr)^2. % chktex 3
+\]
+The loss is non-convex; it is minimized by gradient descent. Each weight is updated by:
+\[
+    w_{ij} \leftarrow w_{ij} - \eta\, \frac{\partial \mathcal{L}}{\partial w_{ij}},
+\]
+where $\eta$ is the learning rate. \textbf{Backpropagation} computes $\partial \mathcal{L}/\partial w$ efficiently via the chain rule, propagating error gradients backward through the computation graph.
+
+\subsection{Vanishing Gradients and ReLU}
+
+Saturating activations (sigmoid, tanh) have derivatives bounded above by 1. In deep networks, multiplying many such derivatives during backpropagation causes gradients to decay exponentially toward the early layers — the \textbf{vanishing gradient problem}.
+
+\textbf{ReLU} ($h(x) = \max(0, x)$) mitigates this: its gradient is exactly 1 for $x > 0$ and 0 elsewhere, preventing exponential decay. Additional solutions include batch normalization, skip connections (residual networks), and careful weight initialization.
+
+% ========================================
+\section{Deep Q-Learning}
+% ========================================
+
+\subsection{Gradient Q-Learning}
+
+Replace the Q-table with a neural network $Q_w(s, a)$ parametrized by weights $w$. The training objective is to minimize the squared TD error:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Deep Q-Learning Objective}]
+\[
+    \mathrm{Err}(w) = \Bigl(Q_w(s,a) - \underbrace{\bigl[r + \gamma \max_{a'} Q_w(s', a')\bigr]}_{\text{target}}\Bigr)^2. % chktex 3
+\]
+\end{tcolorbox}
+
+The gradient with respect to $w$ is:
+\[
+    \frac{\partial\,\mathrm{Err}(w)}{\partial w} = 2\Bigl(Q_w(s,a) - r - \gamma\max_{a'}Q_w(s',a')\Bigr)\frac{\partial Q_w(s,a)}{\partial w}.
+\]
+
+\begin{algorithm}
+\caption{Gradient Q-Learning}
+\begin{algorithmic}
+\STATE Initialize weights $w$ randomly; observe initial state $s$
+\LOOP
+    \STATE Select and execute action $a$; observe $r$, $s'$
+    \STATE $\delta \leftarrow Q_w(s,a) - r - \gamma\max_{a'} Q_w(s',a')$
+    \STATE $w \leftarrow w - \alpha\,\delta\,\dfrac{\partial Q_w(s,a)}{\partial w}$
+    \STATE $s \leftarrow s'$
+\ENDLOOP
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Convergence Issues}
+
+With nonlinear approximation, gradient Q-learning is not guaranteed to converge. Each weight update changes $Q_w$ everywhere in state-action space, not just at the current $(s, a)$ — updates intended to reduce error at one point can increase it at others, causing oscillations or divergence.
+
+Two structural remedies stabilize training:
+
+\subsubsection{Experience Replay}
+
+Instead of updating on the latest transition, store all experienced tuples $(s, a, r, s')$ in a \textbf{replay buffer}. At each step, sample a random mini-batch from the buffer and update on it.
+
+\begin{itemize}
+    \item \textbf{Decorrelates} successive samples: consecutive environment steps are highly correlated; random mini-batches break this dependency, improving gradient stability.
+    \item \textbf{Data efficiency}: each experience can be used multiple times.
+\end{itemize}
+
+\subsubsection{Target Network}
+
+Maintain a second network $Q_{w'}$ — the \textbf{target network} — whose weights $w'$ are held fixed for $c$ steps. The update becomes:
+\[
+    w \leftarrow w - \alpha\Bigl(Q_w(s,a) - r - \gamma\max_{a'}Q_{w'}(s',a')\Bigr)\frac{\partial Q_w(s,a)}{\partial w}.
+\]
+Every $c$ steps, synchronize: $w' \leftarrow w$. Fixing the target prevents the moving-target problem, where chasing a target that itself changes at every step causes instability.
+
+% ========================================
+\section{Deep Q-Network (DQN)}
+% ========================================
+
+\subsection{Algorithm}
+
+DQN (Mnih et al., Nature 2015) combines gradient Q-learning, deep neural networks, experience replay, and a target network:
+
+\begin{algorithm}
+\caption{Deep Q-Network (DQN)}
+\begin{algorithmic}
+\STATE Initialize weights $w$, $w'$ randomly; initialize replay buffer $\mathcal{B}$; observe $s$
+\LOOP
+    \STATE Select $a$ via $\varepsilon$-greedy on $Q_w$; execute; observe $r$, $s'$
+    \STATE Add $(s, a, r, s')$ to $\mathcal{B}$
+    \STATE Sample mini-batch $\mathcal{M} \subset \mathcal{B}$
+    \FOR{each $(s, a, r, s') \in \mathcal{M}$}
+        \STATE $\delta \leftarrow Q_w(s,a) - r - \gamma\max_{a'} Q_{w'}(s',a')$
+        \STATE $w \leftarrow w - \alpha\,\delta\,\dfrac{\partial Q_w(s,a)}{\partial w}$
+    \ENDFOR
+    \STATE $s \leftarrow s'$
+    \STATE Every $c$ steps: $w' \leftarrow w$
+\ENDLOOP
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{DQN Key Innovations}]
+\begin{enumerate}
+    \item \textbf{Deep neural network} as $Q$-function approximator — enables high-dimensional state spaces (e.g., raw pixel inputs for Atari games).
+    \item \textbf{Experience replay} — breaks temporal correlations, improves sample efficiency.
+    \item \textbf{Target network} — stabilizes the regression target, prevents divergence.
+\end{enumerate}
+DQN achieved above human-level performance on a majority of 49 Atari games using raw pixel inputs, demonstrating that a single architecture and learning algorithm can master diverse sequential decision tasks.
+\end{tcolorbox}
+
+% ========================================
+\section{DRL for Robotics}
+% ========================================
+
+\subsection{Challenges and Sim-to-Real Transfer}
+
+Training directly on a physical robot is slow, costly, and potentially unsafe. The standard approach is \textbf{sim-to-real transfer}:
+\begin{enumerate}
+    \item Train the neural network agent in a high-fidelity simulator (e.g., Unity, Gazebo).
+    \item Transfer the learned weights to the real robot, possibly with a fine-tuning step.
+\end{enumerate}
+The main challenge is the \textbf{reality gap}: discrepancies between simulator physics and the real world degrade policy performance. Domain randomization (varying simulator parameters during training) is a common mitigation.
+
+\subsection{Continuous vs Discrete Action Spaces}
+
+Most DRL algorithms for robotics use continuous action spaces (PPO, DDPG), which naturally handle continuous motor commands. However, continuous approaches are computationally expensive.
+
+\textbf{Discrete DQN for mapless navigation} (Macchesini and Farinelli, ICRA 2020): proper discretization of the action space allows DQN to train in approximately 1 hour versus 20 hours for continuous methods, with comparable navigation performance. The agent takes as input the target heading, target distance, and 19 sparse laser scan values from a 45° forward cone, and outputs a discrete angular velocity command.
+
+\subsection{Extensions to Non-Stationary Environments}
+
+In aquatic navigation, the environment is non-stationary (currents, waves). DRL agents trained with domain randomization, combined with formal verification tools to detect safety violations, have been shown to navigate successfully under such conditions (Macchesini et al., IROS 2021; Covi et al., RLC 2024).
+
+% ========================================
+\section{Summary}
+% ========================================
+
+\begin{itemize}
+    \item An \textbf{MDP} $(\mathcal{S}, \mathcal{A}, R, P)$ formalizes sequential decision making under uncertainty. The Markov property reduces history to the current state.
+    \item The \textbf{Q-function} $Q_\pi(s,a)$ measures the expected discounted return of taking action $a$ in state $s$ under policy $\pi$. The optimal policy is $\pi^*(s) = \arg\max_a Q^*(s,a)$.
+    \item \textbf{Tabular Q-learning} converges to $Q^*$ but requires an explicit table — intractable for large or continuous state spaces.
+    \item \textbf{Neural networks} are universal function approximators suitable for representing $Q_w(s,a)$. ReLU activations mitigate the vanishing gradient problem that affects sigmoid/tanh networks.
+    \item \textbf{Gradient Q-learning} minimizes the squared TD error via gradient descent but may not converge with nonlinear approximation.
+    \item \textbf{DQN} stabilizes learning with (i) experience replay (decorrelates updates, improves efficiency) and (ii) a target network (fixes the regression target for $c$ steps). This combination achieved superhuman Atari performance.
+    \item In robotics, sim-to-real transfer is the standard training pipeline. Discretizing the action space enables DQN to train orders of magnitude faster than continuous methods at comparable performance.
+\end{itemize}
+
+% ========================================
+\part{Policy-Based and Actor-Critic Deep RL}
+% ========================================
+
+\section{Taxonomy of Deep RL Approaches}
+
+The three main families of deep RL methods differ in what they represent explicitly:
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Family} & \textbf{Explicit representation} & \textbf{Key characteristic} \\
+\hline
+Value-based (e.g.\ DQN)   & $Q_w(s,a)$ only           & Policy is implicit: $\pi(s) = \arg\max_a Q_w(s,a)$ \\
+Policy-based (e.g.\ REINFORCE) & $\pi_\theta(a|s)$ only & No value function; direct policy search \\
+Actor-Critic (e.g.\ A2C, PPO)  & Both $\pi_\theta$ and $V_w$ & Actor updates policy; Critic evaluates it \\
+\hline
+\end{tabular}
+\end{center}
+
+Policy-based and actor-critic methods support \textbf{stochastic policies}, handle \textbf{continuous action spaces} naturally, and are better suited to robotics than pure value-based methods.
+
+% ========================================
+\section{Stochastic Policy Representations}
+% ========================================
+
+A parametric stochastic policy defines a conditional distribution over actions:
+\[
+    \pi_\theta(a \mid s) = \Pr(a \mid s;\, \theta).
+\]
+
+\textbf{Softmax policy} (discrete actions): assign a real-valued score $h(s,a,\theta)$ to each action and normalize:
+\[
+    \pi_\theta(a \mid s) = \frac{\exp\bigl(h(s,a,\theta)\bigr)}{\displaystyle\sum_{a'}\exp\bigl(h(s,a',\theta)\bigr)}.
+\]
+The score can be \emph{linear}: $h(s,a,\theta) = \theta^\top \phi(s,a)$, or \emph{nonlinear}: a neural network $h = \mathrm{ANN}(s,a,\theta)$.
+
+\textbf{Gaussian policy} (continuous actions):
+\[
+    \pi_\theta(a \mid s) = \mathcal{N}\!\bigl(a;\, \mu(s,\theta),\, \Sigma(s,\theta)\bigr).
+\]
+A neural network maps the state $s$ to the parameters $(\mu, \sigma)$ of the distribution. The mean $\mu$ is the nominal action; the standard deviation $\sigma$ provides learnable exploration noise. No activation is applied to the output layer since $\mu$ and $\sigma$ can take any real value (with $\sigma$ exponentiated afterward to enforce positivity).
+
+% ========================================
+\section{The Policy Gradient Theorem}
+% ========================================
+
+\subsection{Objective}
+
+Define the performance objective as the value of the start state $s_0$ under the current policy:
+\[
+    J(\theta) = V_\theta(s_0) = \sum_a \pi_\theta(a \mid s_0)\, Q_\theta(s_0, a).
+\]
+The goal is to find $\theta^* = \arg\max_\theta J(\theta)$ via gradient ascent.
+
+\subsection{Theorem Statement}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Policy Gradient Theorem}]
+\[
+    \nabla_\theta J(\theta) \;\propto\; \sum_s \mu_\theta(s) \sum_a \nabla_\theta \pi_\theta(a \mid s)\, Q_\theta(s, a),
+\]
+where $\mu_\theta(s)$ is the on-policy stationary state distribution under $\pi_\theta$, and $Q_\theta(s,a)$ is the action-value function under $\pi_\theta$.
+\end{tcolorbox}
+
+\begin{remark}
+Using the log-derivative trick $\nabla_\theta \pi_\theta = \pi_\theta \nabla_\theta \log \pi_\theta$, the theorem can be rewritten as an expectation:
+\[
+    \nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\!\left[\nabla_\theta \log \pi_\theta(A \mid S)\, Q_\theta(S, A)\right].
+\]
+This form is directly estimable from sampled trajectories.
+\end{remark}
+
+% ========================================
+\section{REINFORCE (Monte Carlo Policy Gradient)}
+% ========================================
+
+\subsection{Algorithm}
+
+REINFORCE estimates the policy gradient using full-episode Monte Carlo returns $G_n = \sum_{k=0}^{T-n-1} \gamma^k R_{n+k+1}$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{REINFORCE Update}]
+\[
+    \theta \;\leftarrow\; \theta + \alpha\, \gamma^n G_n\, \nabla_\theta \log \pi_\theta(A_n \mid S_n).
+\]
+\end{tcolorbox}
+
+\begin{algorithm}
+\caption{REINFORCE (Monte Carlo Policy Gradient)}
+\begin{algorithmic}
+\STATE Initialize policy parameters $\theta$ arbitrarily
+\WHILE{not converged}
+    \STATE Generate episode $S_0, A_0, R_1, \ldots, S_{T-1}, A_{T-1}, R_T$ following $\pi_\theta$
+    \FOR{$n = 0, \ldots, T-1$}
+        \STATE $G_n \leftarrow \sum_{k=n+1}^{T} \gamma^{k-n-1} R_k$
+        \STATE $\theta \leftarrow \theta + \alpha\, \gamma^n G_n\, \nabla_\theta \log \pi_\theta(A_n \mid S_n)$
+    \ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Interpretation of the Update}
+
+The update step has three factors:
+\begin{itemize}
+    \item $G_n$: scales the update by how good the trajectory was — good returns reinforce the actions that produced them.
+    \item $\nabla_\theta \log \pi_\theta(A_n \mid S_n)$: the direction that increases the probability of action $A_n$ in state $S_n$.
+    \item $1/\pi_\theta(A_n \mid S_n)$ (implicit in the log-derivative): down-weights actions that are already selected frequently, preventing the update from over-fitting to high-probability actions regardless of their returns.
+\end{itemize}
+
+\subsection{Limitation: High Variance}
+
+REINFORCE has high variance because $G_n$ depends on the entire future trajectory, which is noisy. This is addressed by subtracting a baseline.
+
+% ========================================
+\section{Baseline and Variance Reduction}
+% ========================================
+
+\subsection{Adding a Baseline}
+
+Any function $b(s)$ that does not depend on the action can be subtracted from $Q_\theta(s,a)$ without biasing the gradient:
+\[
+    \sum_a \nabla_\theta \pi_\theta(a \mid s)\, b(s)
+    = b(s)\, \nabla_\theta \underbrace{\sum_a \pi_\theta(a \mid s)}_{=1} = 0.
+\]
+Therefore:
+\[
+    \nabla_\theta J(\theta) \propto \sum_s \mu_\theta(s) \sum_a \nabla_\theta \pi_\theta(a \mid s)\,\bigl[Q_\theta(s,a) - b(s)\bigr].
+\]
+
+\subsection{Advantage Function}
+
+The natural baseline choice is $b(s) = V^\pi(s)$, which gives the \textbf{advantage function}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Advantage Function}]
+\[
+    A(s, a) = Q(s, a) - V^\pi(s).
+\]
+$A(s,a) > 0$ means action $a$ is better than average in state $s$; $A(s,a) < 0$ means it is worse. The policy update becomes:
+\[
+    \theta \leftarrow \theta + \alpha\, \gamma^n A(S_n, A_n)\, \nabla_\theta \log \pi_\theta(A_n \mid S_n).
+\]
+\end{tcolorbox}
+
+\subsection{REINFORCE with Baseline}
+
+Maintain a separate value-function estimator $V_w(s)$ trained alongside the policy:
+
+\begin{algorithm}
+\caption{REINFORCE with Baseline}
+\begin{algorithmic}
+\STATE Initialize $\theta$, $w$ arbitrarily
+\WHILE{not converged}
+    \STATE Generate episode $S_0, A_0, R_1, \ldots, S_{T-1}, A_{T-1}, R_T$ following $\pi_\theta$
+    \FOR{$n = 0, \ldots, T-1$}
+        \STATE $G_n \leftarrow \sum_{k=n+1}^{T} \gamma^{k-n-1} R_k$
+        \STATE $\delta_n \leftarrow G_n - V_w(S_n)$
+        \STATE $w \leftarrow w + \alpha^w\, \delta_n\, \nabla_w V_w(S_n)$
+        \STATE $\theta \leftarrow \theta + \alpha^\theta\, \delta_n\, \nabla_\theta \log \pi_\theta(A_n \mid S_n)$
+    \ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+% ========================================
+\section{Actor-Critic Methods}
+% ========================================
+
+\subsection{From Monte Carlo to Temporal Difference}
+
+REINFORCE requires a complete episode before updating. Actor-critic methods replace the Monte Carlo return $G_n$ with a \textbf{one-step TD target}, enabling online updates:
+\[
+    \delta_n = R_{n+1} + \gamma V_w(S_{n+1}) - V_w(S_n).
+\]
+This is the TD error — a lower-variance (but biased) estimate of the advantage.
+
+\subsection{Actor-Critic (AC) Algorithm}
+
+\begin{algorithm}
+\caption{Actor-Critic (AC)}
+\begin{algorithmic}
+\STATE Initialize $\theta$, $w$ arbitrarily; $S \leftarrow s_0$; $I \leftarrow 1$
+\WHILE{not converged}
+    \WHILE{$S$ not terminal}
+        \STATE $A \sim \pi_\theta(\cdot \mid S)$; take $A$; observe $R$, $S'$
+        \STATE $\delta \leftarrow R + \gamma V_w(S') - V_w(S)$ \hfill (TD error)
+        \STATE $w \leftarrow w + \alpha^w\, \delta\, \nabla_w V_w(S)$
+        \STATE $\theta \leftarrow \theta + \alpha^\theta\, I\, \delta\, \nabla_\theta \log \pi_\theta(A \mid S)$
+        \STATE $I \leftarrow \gamma I$;\quad $S \leftarrow S'$
+    \ENDWHILE
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Advantage Actor-Critic (A2C)}
+
+A2C replaces the TD error with the full advantage, using a $Q$-value critic:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{A2C Advantage Estimate}]
+\begin{align*}
+    \delta  &= R + \gamma \max_{a'} Q_w(S', a') - Q_w(S, A), \\
+    A(S, A) &= R + \gamma \max_{a'} Q_w(S', a') - \sum_a \pi_\theta(a \mid S)\, Q_w(S, a).
+\end{align*}
+Updates: $w \leftarrow w + \alpha^w \delta\, \nabla_w Q_w(S, A)$; \quad $\theta \leftarrow \theta + \alpha^\theta A(S,A)\, \nabla_\theta \log \pi_\theta(A \mid S)$.
+\end{tcolorbox}
+
+The advantage properly measures how much better action $A$ is relative to the policy's average, leading to faster convergence than the plain TD error.
+
+% ========================================
+\section{Deterministic Policy Gradient (DPG)}
+% ========================================
+
+For continuous action spaces, stochastic policies require integrating over actions to compute gradients. \textbf{Deterministic policies} $\pi_\theta(s) \to a$ sidestep this:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Deterministic Policy Gradient Theorem (Silver et al., ICML 2014)}]
+\[
+    \nabla_\theta J(\theta) \propto \mathbb{E}_{s \sim \mu_\theta}\!\left[\nabla_\theta \pi_\theta(s)\, \nabla_a Q_\theta(s, a)\big|_{a = \pi_\theta(s)}\right].
+\]
+\end{tcolorbox}
+
+The gradient flows from the Q-function through the policy: the actor is updated to move in the direction that the critic says increases Q.
+
+\begin{algorithm}
+\caption{Deterministic Policy Gradient (DPG)}
+\begin{algorithmic}
+\STATE Initialize $\theta$, $w$; $S \leftarrow s_0$; $I \leftarrow 1$
+\WHILE{not converged}
+    \WHILE{$S$ not terminal}
+        \STATE $A = \pi_\theta(S)$; take $A$; observe $R$, $S'$
+        \STATE $\delta \leftarrow R + \gamma Q_w(S', \pi_\theta(S')) - Q_w(S, A)$
+        \STATE $w \leftarrow w + \alpha^w\, \delta\, \nabla_w Q_w(S, A)$
+        \STATE $\theta \leftarrow \theta + \alpha^\theta\, \nabla_\theta \pi_\theta(S)\, \nabla_a Q_w(S, a)\big|_{a=\pi_\theta(S)}$
+        \STATE $I \leftarrow \gamma I$;\quad $S \leftarrow S'$
+    \ENDWHILE
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}
+DDPG (Deep Deterministic Policy Gradient) combines DPG with the DQN stabilization techniques: experience replay and a target network, enabling stable training on high-dimensional continuous control tasks.
+\end{remark}
+
+% ========================================
+\section{Trust Region Methods}
+% ========================================
+
+\subsection{Step-Size Problem in Policy Gradient}
+
+The learning rate $\alpha$ in policy gradient is critical:
+\begin{itemize}
+    \item Too small: slow convergence.
+    \item Too large: the policy changes drastically, potentially collapsing to a bad region from which recovery is difficult.
+\end{itemize}
+Gradient descent in parameter space $\theta$ is problematic because small $\Delta\theta$ can cause large changes in $\pi_\theta$ and hence in $V$.
+
+\subsection{Trust Region Optimization}
+
+Trust region methods replace unconstrained gradient steps with constrained optimization: find the best update within a region where the local approximation is trusted.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Trust Region Update}]
+Given a surrogate objective $\tilde{f}(x)$ (e.g., quadratic Taylor approximation of $f$ around $x_0$):
+\[
+    x^* = \arg\min_{x:\, \|x - x_0\|_2 \le \delta}\; \tilde{f}(x).
+\]
+If $f(x^*) < f(x_0)$: accept the step and enlarge $\delta$. Otherwise: reject and shrink $\delta$.
+\end{tcolorbox}
+
+\subsection{KL Divergence as Policy Distance}
+
+Constraining $\|\theta - \theta'\|$ is a poor measure of policy change. The preferred measure is the KL divergence between the old and new policy distributions:
+\[
+    D_{\mathrm{KL}}\!\left(\pi_\theta(\cdot \mid s),\, \pi_{\theta'}(\cdot \mid s)\right)
+    = \sum_a \pi_\theta(a \mid s)\, \log\frac{\pi_\theta(a \mid s)}{\pi_{\theta'}(a \mid s)}.
+\]
+A small KL divergence guarantees the policy distribution has not changed much, which implies a small change in the value function.
+
+% ========================================
+\section{Trust Region Policy Optimization (TRPO)}
+% ========================================
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{TRPO Objective (Schulman et al., ICML 2015)}]
+\[
+    \theta \leftarrow \arg\max_{\theta'}\; \mathbb{E}_{s \sim \mu_\theta,\, a \sim \pi_\theta}\!\left[\frac{\pi_{\theta'}(a \mid s)}{\pi_\theta(a \mid s)}\, A_\theta(s, a)\right]
+    \quad \text{subject to} \quad
+    \mathbb{E}_{s \sim \mu_\theta}\!\left[D_{\mathrm{KL}}\!\left(\pi_\theta(\cdot \mid s),\, \pi_{\theta'}(\cdot \mid s)\right)\right] \le \delta.
+\]
+\end{tcolorbox}
+
+The ratio $\pi_{\theta'}(a \mid s)/\pi_\theta(a \mid s)$ is an \textbf{importance weight} that corrects for the fact that actions were sampled under the old policy $\pi_\theta$. The KL constraint (relaxed from $\max_s$ to $\mathbb{E}_s$ for computational tractability) prevents the new policy from deviating too far.
+
+% ========================================
+\section{Proximal Policy Optimization (PPO)}
+% ========================================
+
+\subsection{Clipped Surrogate Objective}
+
+TRPO requires solving a constrained optimization problem at each step, which is expensive. PPO approximates the trust-region constraint by \textbf{clipping} the importance-weight ratio directly in the objective:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{PPO Clipped Objective}]
+Let $r_t(\theta) = \dfrac{\pi_\theta(A_t \mid S_t)}{\pi_{\theta_{\mathrm{old}}}(A_t \mid S_t)}$. Then:
+\[
+    \mathcal{L}^{\mathrm{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\left(r_t(\theta)\, A_t,\;\; \mathrm{clip}\!\left(r_t(\theta),\, 1-\varepsilon,\, 1+\varepsilon\right) A_t\right)\right],
+\]
+where $\mathrm{clip}(x, 1-\varepsilon, 1+\varepsilon)$ clamps $x$ to the interval $[1-\varepsilon, 1+\varepsilon]$.
+\end{tcolorbox}
+
+When $A_t > 0$ (action was better than average), clipping prevents $r_t$ from growing above $1+\varepsilon$, limiting how much the policy shifts toward that action. When $A_t < 0$, clipping prevents $r_t$ from falling below $1-\varepsilon$, limiting the shift away from it. The $\min$ ensures the objective is a pessimistic lower bound.
+
+\subsection{PPO Algorithm}
+
+\begin{algorithm}
+\caption{Proximal Policy Optimization (PPO)}
+\begin{algorithmic}
+\STATE Initialize policy $\theta$, critic $w$
+\WHILE{not converged}
+    \STATE Sample $s_0$
+    \FOR{$n = 0, \ldots, N-1$}
+        \STATE $a_n \sim \pi_\theta(\cdot \mid s_n)$; execute; observe $r_n$, $s_{n+1}$
+        \STATE $\delta' \leftarrow r_n + \gamma\max_{a'} Q_w(s_{n+1}, a') - Q_w(s_n, a_n)$
+        \STATE $A(s_n, a_n) \leftarrow r_n + \gamma\max_{a'} Q_w(s_{n+1}, a') - \sum_a \pi_\theta(a \mid s_n) Q_w(s_n, a)$
+        \STATE $w \leftarrow w + \alpha^w \gamma^n \delta'\, \nabla_w Q_w(s_n, a_n)$
+    \ENDFOR
+    \STATE $\theta \leftarrow \arg\max_{\theta'} \dfrac{1}{N}\sum_{n=0}^{N-1} \min\!\left\{r_n(\theta')\, A(s_n, a_n),\; \mathrm{clip}(r_n(\theta'), 1-\varepsilon, 1+\varepsilon)\, A(s_n, a_n)\right\}$
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+PPO is the \textbf{de facto standard policy gradient method} in robotics and game-playing (e.g., OpenAI's RoboSoccer, dexterous robotic hand reorientation).
+
+% ========================================
+\section{Soft Actor-Critic (SAC)}
+% ========================================
+
+\subsection{Entropy Regularization}
+
+Standard RL maximizes $\mathbb{E}[\sum_t \gamma^t R_t]$. SAC adds an \textbf{entropy bonus} to the reward at each step:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Soft MDP Objective}]
+\[
+    J_{\mathrm{soft}}(\pi) = \mathbb{E}\!\left[\sum_t \gamma^t \Bigl(R(s_t, a_t) + \lambda\, H\!\bigl(\pi(\cdot \mid s_t)\bigr)\Bigr)\right],
+    \quad H(\pi(\cdot \mid s)) = -\sum_a \pi(a \mid s)\log \pi(a \mid s).
+\]
+$\lambda > 0$ controls the trade-off between reward maximization and entropy maximization.
+\end{tcolorbox}
+
+\subsection{Soft Greedy Policy}
+
+In the soft MDP, the greedy policy with respect to the soft Q-function is the softmax:
+\[
+    \pi_{\mathrm{greedy}}(\cdot \mid s) = \mathrm{softmax}\!\left(\frac{Q^{\mathrm{soft}}(s, \cdot)}{\lambda}\right).
+\]
+As $\lambda \to 0$, the entropy term vanishes and the soft greedy policy recovers the standard $\arg\max$.
+
+\subsection{Benefits}
+
+\begin{itemize}
+    \item \textbf{Exploration}: maximizing entropy encourages the policy to try all actions proportionally to their value, avoiding premature convergence to suboptimal deterministic strategies.
+    \item \textbf{Robustness}: an entropic policy generalizes better to perturbations of the environment.
+    \item \textbf{Off-policy}: SAC is off-policy (uses a replay buffer), making it sample-efficient.
+\end{itemize}
+
+SAC is one of the most widely used off-policy baselines in robotics research, performing competitively with or better than PPO, A2C, TRPO, and DDPG on standard MuJoCo benchmarks (Hopper, Walker, HalfCheetah, Ant, Humanoid).
+
+% ========================================
+\section{Summary}
+% ========================================
+
+\begin{itemize}
+    \item \textbf{Policy gradient theorem}: $\nabla J \propto \mathbb{E}[\nabla_\theta \log \pi_\theta(A \mid S)\, Q(S,A)]$ — the gradient of the value function is an expectation estimable from sampled trajectories.
+    \item \textbf{REINFORCE}: Monte Carlo policy gradient; unbiased but high-variance. A baseline $b(s) \approx V^\pi(s)$ reduces variance without introducing bias.
+    \item \textbf{Advantage function} $A(s,a) = Q(s,a) - V(s)$: measures how much better an action is than the policy's average; the natural signal for actor updates.
+    \item \textbf{Actor-Critic (AC)}: replaces MC returns with TD targets for online, low-variance updates. A2C uses the full advantage estimate for faster convergence.
+    \item \textbf{DPG}: deterministic actor for continuous actions; gradient flows through the Q-function. DDPG adds experience replay and a target network for stability.
+    \item \textbf{Trust regions}: constrain policy updates via KL divergence rather than parameter distance, preventing destructive large updates.
+    \item \textbf{TRPO}: maximizes a surrogate objective subject to a KL constraint; guaranteed monotonic improvement but expensive per step.
+    \item \textbf{PPO}: approximates the trust-region constraint by clipping the importance-weight ratio; simple, scalable, and the standard method in robotics.
+    \item \textbf{SAC}: adds entropy regularization to the reward, producing a stochastic off-policy actor-critic that explores broadly and generalizes well; widely used in robotics.
+\end{itemize}
+
+% ========================================
+\part{Planning under Uncertainty}
+% ========================================
+
+\section{From Path Planning to Decision-Theoretic Planning}
+
+\subsection{The Two Regimes}
+
+Classical path planning (Parts XII to XIV) assumes a \textbf{known state} and \textbf{deterministic actions}: the solution is a fixed sequence of movements. Planning under uncertainty relaxes both assumptions:
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+ & \textbf{Path planning} & \textbf{Planning under uncertainty} \\
+\hline
+Goals        & Explicit goal state          & Utility function (reward) \\
+Actions      & Deterministic                & Stochastic (transition model) \\
+State        & Fully known                  & Partially observable \\
+Solution     & Sequence of actions          & Policy $\pi : s \to a$ \\
+\hline
+\end{tabular}
+\end{center}
+
+The key shift is from computing a \emph{plan} to computing a \emph{policy} that maps every possible situation to the best action.
+
+\subsection{Problem Taxonomy}
+
+\begin{itemize}
+    \item \textbf{MDP} (Markov Decision Process): stochastic actions, fully observable state.
+    \item \textbf{POMDP} (Partially Observable MDP): stochastic actions, state only partially observable through noisy sensors.
+\end{itemize}
+
+POMDPs strictly generalise MDPs and are the natural model for mobile robots, which always have imperfect knowledge of their own pose.
+
+% ========================================
+\section{Markov Decision Processes (MDPs)}
+% ========================================
+
+\subsection{Formal Definition}
+
+An MDP is a tuple $(\mathcal{S}, \mathcal{A}, R, P)$:
+\begin{itemize}
+    \item $\mathcal{S}$: finite state space with $|\mathcal{S}| = n$.
+    \item $\mathcal{A}$: finite action space with $|\mathcal{A}| = m$.
+    \item \textbf{Transition model}: $p(s' \mid s, a) = \Pr[S_{t+1} = s' \mid S_t = s, A_t = a]$.
+    \item \textbf{Reward function}: $r(s, a) = \mathbb{E}[R_{t+1} \mid S_t = s, A_t = a]$.
+\end{itemize}
+
+The \textbf{Markov property} asserts that $\Pr[R_{t+1}, S_{t+1} \mid S_t, A_t]$ does not depend on the history $S_0, A_0, \ldots, S_{t-1}, A_{t-1}$. Stationarity further requires this distribution to be time-invariant.
+
+\subsection{Policies}
+
+\begin{itemize}
+    \item \textbf{Stationary}: $\pi : \mathcal{S} \to \mathcal{A}$ — the same action is chosen in state $s$ regardless of time.
+    \item \textbf{Non-stationary}: $\pi : \mathcal{S} \times \mathbb{N} \to \mathcal{A}$ — actions can depend on the remaining horizon.
+    \item \textbf{Stochastic}: $\pi(a \mid s)$ — a conditional distribution over actions.
+\end{itemize}
+
+For infinite-horizon discounted MDPs, an optimal stationary policy always exists.
+
+\subsection{Cumulative Reward and Planning Horizon}
+
+The agent maximizes the expected discounted return:
+\[
+    R_T = \mathbb{E}\!\left[\sum_{\tau=1}^{T} \gamma^\tau r_{t+\tau}\right].
+\]
+Three regimes:
+\begin{itemize}
+    \item $T=1$: greedy — simple but often suboptimal.
+    \item $1 < T < \infty$: finite horizon — typically $\gamma = 1$; optimal policy may be non-stationary.
+    \item $T = \infty$: infinite horizon with $\gamma < 1$ — return is bounded by $r_{\max}/(1-\gamma)$; optimal policy is stationary.
+\end{itemize}
+
+\subsection{Value and Q-Functions}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Value and Action-Value Functions}]
+\begin{align*}
+    V_\pi(s) &= \mathbb{E}\!\left[\sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \;\middle|\; S_t = s,\, \pi\right], \\[4pt]
+    Q_\pi(s, a) &= \gamma\!\left[r(s,a) + \int p(s' \mid s, a)\, V_\pi(s')\,\mathrm{d}s'\right], \\[4pt]
+    V_\pi(s) &= Q_\pi(s, \pi(s)).
+\end{align*}
+\end{tcolorbox}
+
+\subsection{Optimal Policy and Bellman Equations}
+
+The optimal policy $\pi^*$ satisfies $V_{\pi^*}(s) \ge V_\pi(s)$ for all $s$ and all $\pi$. Its value function $V^*$ obeys the \textbf{Bellman optimality equation}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bellman Optimality Equation}]
+\[
+    V^*(s) = \gamma\max_a \!\left[r(s, a) + \int p(s' \mid s, a)\, V^*(s')\,\mathrm{d}s'\right].
+\]
+This is a \emph{self-consistency condition}: the value of each state must equal the best immediate reward plus the discounted future value reachable from it. The optimal policy recovers as $\pi^*(s) = \arg\max_a Q^*(s,a)$.
+\end{tcolorbox}
+
+% ========================================
+\section{Solving MDPs}
+% ========================================
+
+\subsection{Value Iteration}
+
+Value iteration turns the Bellman optimality equation into an iterative update rule. Starting from arbitrary $\hat{V}^{(0)}$, at each sweep every state is backed up:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bellman Backup (Discrete)}]
+\[
+    \hat{V}^{(k+1)}(s_i) = \gamma\max_a \!\left[r(s_i, a) + \sum_{j=1}^{N} p(s_j \mid s_i, a)\, \hat{V}^{(k)}(s_j)\right].
+\]
+\end{tcolorbox}
+
+\begin{algorithm}
+\caption{Discrete Value Iteration}
+\begin{algorithmic}
+\STATE Initialize $\hat{V}(s_i) \leftarrow r_{\min}$ for all $i$
+\WHILE{not converged}
+    \FOR{$i = 1$ \TO $N$}
+        \STATE $\hat{V}(s_i) \leftarrow \gamma\max_a \left[r(s_i, a) + \sum_{j=1}^{N} p(s_j \mid s_i, a)\,\hat{V}(s_j)\right]$
+    \ENDFOR
+\ENDWHILE
+\STATE \textbf{Return} $\hat{V}$
+\end{algorithmic}
+\end{algorithm}
+
+Once $\hat{V}$ has converged, extract the policy greedily:
+\[
+    \pi(s) = \arg\max_a \!\left[r(s, a) + \sum_{j=1}^{N} p(s_j \mid s, a)\,\hat{V}(s_j)\right].
+\]
+
+\textbf{Properties}: guaranteed convergence to $V^*$; convergence rate is linear in $\gamma$. Complexity per sweep is $O(|\mathcal{S}|^2 |\mathcal{A}|)$.
+
+\subsection{Policy Iteration}
+
+Policy iteration alternates between two steps until the policy stabilises:
+\begin{enumerate}
+    \item \textbf{Policy evaluation}: for the current fixed $\pi$, solve the linear system
+    \[
+        \hat{V}(s_i) = \gamma\!\left[r(s_i, \pi(s_i)) + \sum_{j=1}^{N} p(s_j \mid s_i, \pi(s_i))\,\hat{V}(s_j)\right]
+    \]
+    for all $i$ (can be done exactly or by truncated iteration).
+    \item \textbf{Policy improvement}: update $\pi$ greedily with respect to $\hat{V}$. Each improvement step strictly increases $V_\pi$ or terminates at optimality.
+\end{enumerate}
+Policy iteration typically converges in fewer iterations than value iteration, but each step is more expensive (requires solving a linear system).
+
+% ========================================
+\section{Partially Observable MDPs (POMDPs)}
+% ========================================
+
+\subsection{Motivation: Partial Observability}
+
+In most realistic robot scenarios, the state $s$ is \emph{not} directly observable. Sensors provide noisy, ambiguous measurements $z$; the robot cannot know its exact pose. Defining a policy $\pi(s)$ over the true state is therefore ill-posed.
+
+A common but flawed workaround is to replace the true state with the \textbf{maximum likelihood estimate} $\hat{s}_t = \arg\max_s p(s_t \mid z_{1:t}, u_{1:t})$, ignoring estimation uncertainty. This can lead to catastrophic decisions near regions of high belief ambiguity.
+
+\subsection{Belief State}
+
+The principled solution is to maintain a \textbf{belief}:
+\[
+    b_t(s) = p(s_t \mid z_{1:t}, u_{1:t}).
+\]
+The belief is a probability distribution over states, updated recursively via Bayes filtering (as in Parts VII to IX). The belief is a \textbf{sufficient statistic} for the entire history.
+
+\subsection{POMDP Formulation}
+
+A POMDP extends the MDP with an observation model:
+\begin{itemize}
+    \item $\mathcal{Z}$: observation space.
+    \item $O(z \mid s', a) = \Pr[Z_{t+1} = z \mid S_{t+1} = s', A_t = a]$: observation model.
+\end{itemize}
+
+The policy now maps beliefs to actions: $\pi : \mathcal{B} \to \mathcal{A}$, where $\mathcal{B}$ is the space of all probability distributions over $\mathcal{S}$. The Bellman equation becomes:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{POMDP Bellman Equation}]
+\[
+    V_T(b) = \gamma\max_a\!\left[r(b, a) + \int p(b' \mid b, a)\, V_{T-1}(b')\,\mathrm{d}b'\right],
+\]
+where $r(b, a) = \sum_s b(s)\, r(s, a)$ is the expected reward under belief $b$.
+\end{tcolorbox}
+
+\subsection{Exact Solution: $\alpha$-Vectors}
+
+For finite state/action/observation spaces and a finite horizon $T$, the value function $V_T(b)$ is \textbf{piecewise linear and convex} (PWLC) in the belief $b$:
+\[
+    V_T(b) = \max_{\alpha \in \Gamma_T} \sum_s \alpha(s)\, b(s),
+\]
+where $\Gamma_T$ is a finite set of $|\mathcal{S}|$-dimensional vectors called \textbf{$\alpha$-vectors}. Each $\alpha$-vector corresponds to a conditional plan (a policy tree). The set $\Gamma_T$ is built inductively by incorporating actions and observations into the beliefs.
+
+\begin{remark}
+The number of $\alpha$-vectors can grow doubly exponentially with the horizon, making exact POMDP solvers tractable only for small problems. Approximate methods are essential for robotics.
+\end{remark}
+
+% ========================================
+\section{Monte Carlo Tree Search (MCTS)}
+% ========================================
+
+\subsection{Core Idea}
+
+MCTS is an anytime, sample-based tree-search algorithm that focuses computational effort on promising parts of the search space. It requires only a \textbf{black-box simulator} $(s_{t+1}, o_{t+1}, r_{t+1}) \sim \mathcal{G}(s_t, a_t)$ rather than an explicit model.
+
+Each node stores an estimated value $\bar{V}$ and a visit count $n$. The algorithm iterates four phases:
+
+\begin{enumerate}
+    \item \textbf{Selection}: traverse the existing tree from the root, at each node choosing the child that maximises the \textbf{UCB1} criterion:
+    \[
+        \mathrm{UCB1}(i) = \bar{V}_i + C\sqrt{\frac{\ln N}{n_i}},
+    \]
+    where $N$ is the parent's visit count, $n_i$ is child $i$'s visit count, and $C$ balances exploration vs exploitation.
+    \item \textbf{Expansion}: once a node with unexplored children is reached, add one (or all) new child nodes to the tree.
+    \item \textbf{Simulation (rollout)}: from the newly expanded node, simulate to a terminal state using a \emph{default policy} (e.g., random action selection).
+    \item \textbf{Backpropagation}: propagate the terminal reward back up the traversed path, updating $\bar{V}$ and $n$ for each ancestor.
+\end{enumerate}
+
+\begin{algorithm}
+\caption{MCTS: Selection and Expansion}
+\begin{algorithmic}
+\STATE $\mathrm{Current} \leftarrow S_0$
+\WHILE{$\mathrm{Current}$ is not a leaf}
+    \STATE $\mathrm{Current} \leftarrow$ child maximising $\mathrm{UCB1}$
+\ENDWHILE
+\IF{$n_{\mathrm{Current}} = 0$}
+    \STATE $\mathrm{Rollout}(\mathrm{Current})$
+\ELSE
+    \STATE Add all children of $\mathrm{Current}$ to the tree
+    \STATE $\mathrm{Current} \leftarrow$ first new child
+    \STATE $\mathrm{Rollout}(\mathrm{Current})$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{MCTS: Rollout}
+\begin{algorithmic}
+\WHILE{$S_i$ is not terminal}
+    \STATE $A_i \leftarrow \mathrm{random}(\mathrm{available\_actions}(S_i))$
+    \STATE $S_i \leftarrow \mathrm{simulate}(A_i, S_i)$
+\ENDWHILE
+\STATE \textbf{Return} $\mathrm{Value}(S_i)$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Key properties}:
+\begin{itemize}
+    \item \textbf{Anytime}: can be stopped at any point; more iterations improve the estimate.
+    \item \textbf{Asymmetric}: deeper exploration of promising branches.
+    \item UCB1 ensures that, given enough simulations, MCTS converges to the optimal action.
+    \item Embarrassingly parallelisable.
+    \item Does \emph{not} require a closed-form dynamics model — only a simulator.
+\end{itemize}
+
+% ========================================
+\section{POMCP: Monte Carlo Planning in POMDPs}
+% ========================================
+
+\subsection{Challenges of Exact POMDP Solvers}
+
+Exact POMDP value iteration suffers from two curses:
+\begin{itemize}
+    \item \textbf{Curse of dimensionality}: belief space $\mathcal{B}$ is a continuous $(|\mathcal{S}|-1)$-simplex.
+    \item \textbf{Curse of history}: the number of distinct histories grows exponentially with time.
+\end{itemize}
+
+\subsection{POMCP Approach}
+
+POMCP (Silver and Veness, NeurIPS 2010) solves both curses simultaneously:
+\begin{itemize}
+    \item Replace the belief simplex with an \textbf{unweighted particle filter}.
+    \item Replace full tree search with \textbf{MCTS over histories}.
+\end{itemize}
+
+\subsubsection{Tree Structure}
+
+Each node corresponds to a history $h = (a_1, o_1, a_2, o_2, \ldots)$ and stores:
+\begin{itemize}
+    \item $N(h)$: number of times history $h$ was visited.
+    \item $V(h)$: average simulated return from $h$.
+    \item $B(h)$: particle set approximating $b(s \mid h) = p(s \mid h)$.
+\end{itemize}
+
+Action selection within the tree uses UCB:
+\[
+    V^{\mathrm{UCB}}(ha) = V(ha) + C\sqrt{\frac{\ln N(h)}{N(ha)}}.
+\]
+
+\subsubsection{Belief Update via Particle Filter}
+
+At each simulation step, a particle is sampled from $B(h_t)$, passed to the black-box simulator to obtain a candidate next state $s'$ and observation $o'$. The particle is \emph{accepted} only if $o' = o_t$ (matches the real observation). The process repeats until $K$ particles are collected for $B(h_{t+1})$.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{POMCP Belief Approximation}]
+\[
+    \bar{B}(s, h_t) = \frac{1}{K}\sum_{i=1}^{K} \mathbf{1}[s_i = s], \quad s_i \in B(h_t).
+\]
+As $K \to \infty$, $\bar{B}(\cdot, h_t) \to p(\cdot \mid h_t)$. In practice, \textbf{particle degeneracy} can occur for long histories; reinitialisation or prior knowledge injection mitigates this.
+\end{tcolorbox}
+
+\subsubsection{Convergence}
+
+If the belief state is correctly maintained, POMCP converges to the optimal policy for any finite-horizon POMDP as the number of simulations grows. The policy is never explicitly represented — it is implicitly encoded in the search tree, which is rebuilt online at each decision step.
+
+\subsection{Comparison: MDP vs POMDP Planning}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+ & \textbf{MDP} & \textbf{POMDP / POMCP} \\
+\hline
+State known?         & Yes (fully observable)    & No (belief maintained) \\
+Optimal solution     & Value / policy iteration  & $\alpha$-vectors (exact), POMCP (approx.) \\
+Belief representation & N/A                      & Gaussian (KF/EKF), particles (PF) \\
+Scalability          & $O(|\mathcal{S}|^2 |\mathcal{A}|)$ & POMCP scales via simulation budget \\
+Model required       & Explicit $p$, $r$         & Black-box simulator sufficient \\
+\hline
+\end{tabular}
+\end{center}
+
+% ========================================
+\section{Summary}
+% ========================================
+
+\begin{itemize}
+    \item \textbf{MDPs} model stochastic-action, fully-observable sequential decision problems. The optimal policy satisfies the Bellman optimality equation; it is found by value iteration ($O(|\mathcal{S}|^2|\mathcal{A}|)$ per sweep) or policy iteration (fewer iterations, more expensive per step).
+    \item The \textbf{Bellman backup} $\hat{V}(s) \leftarrow \gamma \max_a [r(s,a) + \sum_{s'} p(s' \mid s,a)\hat{V}(s')]$ is the fundamental update rule; repeated application converges to $V^*$.
+    \item \textbf{POMDPs} extend MDPs to partially observable settings. The belief $b(s) = p(s \mid z_{1:t}, u_{1:t})$ is a sufficient statistic; the policy maps beliefs to actions.
+    \item The POMDP value function is piecewise linear and convex in $b$, representable by $\alpha$-vectors. Exact solvers are intractable for large problems.
+    \item \textbf{MCTS} is an anytime, simulator-driven tree search. UCB1 balances exploration and exploitation; the algorithm is asymptotically optimal given enough simulations and does not require a closed-form model.
+    \item \textbf{POMCP} combines MCTS with an unweighted particle filter to solve large POMDPs. Histories replace belief-space points; Monte Carlo rollouts estimate values; the belief is updated by acceptance sampling against real observations.
+\end{itemize}
+
 \end{document}

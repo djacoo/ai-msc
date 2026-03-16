@@ -377,4 +377,572 @@ RL methods are not limited to two-player games. They apply to:
 \end{itemize}
 
 
+% ========================================
+\part{The $k$-Armed Bandit Problem}
+% ========================================
+
+\section{Evaluative vs Instructive Feedback}
+
+A central distinction in learning theory separates two types of training signal:
+
+\begin{itemize}
+    \item \textbf{Instructive feedback} (supervised learning): the learner is told the correct action independently of what it actually did. The feedback specifies the right answer.
+    \item \textbf{Evaluative feedback} (RL): the feedback only says \emph{how good} the action taken was, without indicating whether it was the best or worst possible. The signal depends entirely on the action chosen.
+\end{itemize}
+
+Evaluative feedback requires \textbf{active exploration}: the agent must try actions to learn which are good; no external supervisor reveals the optimal choice. The $k$-armed bandit is the canonical setting for studying evaluative feedback in isolation, before adding the full complexity of state transitions.
+
+% ========================================
+\section{Problem Formulation}
+% ========================================
+
+\subsection{Setup}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{$k$-Armed Bandit}]
+At each discrete time step $t$, the agent selects one of $k$ actions $a \in \mathcal{A} = \{1, \ldots, k\}$. After selection it receives a scalar reward $R_t$ drawn i.i.d.\ from a stationary distribution that depends only on the action chosen. The objective is to maximize the expected cumulative reward over a time horizon $T$.
+\end{tcolorbox}
+
+The name originates from a slot machine (\emph{one-armed bandit}) with $k$ levers; pulling a lever yields a random payout.
+
+\subsection{Action Values}
+
+The \textbf{true value} of action $a$ is its expected reward:
+\[
+    q_*(a) = \mathbb{E}[R_t \mid A_t = a].
+\]
+The agent does not know $q_*(a)$ and must estimate it. Let $Q_t(a)$ denote the \textbf{estimated value} of action $a$ at time $t$. The goal is to make $Q_t(a) \approx q_*(a)$.
+
+\begin{remark}
+The bandit problem is \textbf{non-associative}: there is only one situation (state). In full RL, actions must be associated with the situation in which they are taken.
+\end{remark}
+
+% ========================================
+\section{Exploration vs Exploitation}
+% ========================================
+
+\subsection{The Dilemma}
+
+At any time $t$, the \textbf{greedy action} is $\arg\max_a Q_t(a)$ — the action with the highest current estimate. Choosing it is \textbf{exploitation}: it maximizes expected immediate reward given current knowledge.
+
+Choosing a non-greedy action is \textbf{exploration}: it may yield lower immediate reward but produces information that can improve future decisions.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Exploration-Exploitation Dilemma}]
+Exploitation maximizes reward on a one-step horizon. Exploration may produce greater cumulative reward in the long run. The two cannot be pursued simultaneously; any single action either exploits or explores.
+\end{tcolorbox}
+
+No universally optimal balance exists without strong assumptions. Most practical methods incorporate heuristics or theoretically motivated exploration bonuses.
+
+% ========================================
+\section{Action-Value Methods}
+% ========================================
+
+\subsection{Sample-Average Estimator}
+
+The simplest estimator averages all rewards received for action $a$:
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Sample-Average Method}]
+\[
+    Q_t(a) = \frac{\displaystyle\sum_{i=1}^{t-1} R_i \cdot \mathbf{1}_{A_i = a}}{\displaystyle\sum_{i=1}^{t-1} \mathbf{1}_{A_i = a}}.
+\]
+By the law of large numbers, $Q_t(a) \to q_*(a)$ as the denominator $\to \infty$.
+\end{tcolorbox}
+
+\subsection{Action Selection Rules}
+
+\textbf{Greedy selection}:
+\[
+    A_t = \arg\max_a Q_t(a).
+\]
+Always exploits; zero exploration. Can converge to a suboptimal action.
+
+\textbf{$\varepsilon$-greedy selection}: with probability $1 - \varepsilon$ select the greedy action; with probability $\varepsilon$ select uniformly at random from all $k$ actions. Formally:
+\[
+    A_t =
+    \begin{cases}
+        \arg\max_a Q_t(a) & \text{with probability } 1 - \varepsilon, \\
+        \text{uniform sample from } \mathcal{A} & \text{with probability } \varepsilon.
+    \end{cases}
+\]
+As $t \to \infty$, every action is sampled infinitely often, guaranteeing $Q_t(a) \to q_*(a)$ for all $a$.
+
+\begin{remark}
+Larger $\varepsilon$ explores more aggressively; smaller $\varepsilon$ exploits more. If reward variance is zero (deterministic actions), $\varepsilon = 0$ works: a single trial identifies the best action and greedy is optimal. In \textbf{nonstationary} environments, continued exploration is necessary even with zero variance, because $q_*(a)$ can change over time.
+\end{remark}
+
+\subsection{The 10-Armed Testbed}
+
+A standard benchmark: 2000 randomly generated bandit instances, each with $k = 10$ arms. For each instance, $q_*(a) \sim \mathcal{N}(0, 1)$ and $R_t \mid A_t = a \sim \mathcal{N}(q_*(a), 1)$. Methods are evaluated on average reward and percentage of times the optimal action is chosen, averaged over all runs and steps.
+
+Key empirical findings:
+\begin{itemize}
+    \item Greedy ($\varepsilon = 0$) converges fast initially but levels off below optimal because it locks onto a suboptimal action.
+    \item $\varepsilon = 0.1$ explores more and eventually achieves a higher percentage of optimal selections.
+    \item $\varepsilon = 0.01$ is intermediate: slower to improve but ultimately closer to optimal than $\varepsilon = 0.1$ (less wasted exploration at steady state).
+    \item With higher reward variance, $\varepsilon$-greedy methods outperform greedy by an even larger margin.
+\end{itemize}
+
+% ========================================
+\section{Incremental Implementation}
+% ========================================
+
+\subsection{Efficient Update Rule}
+
+Recomputing sample averages from scratch at each step costs $O(n)$ time and memory. A constant-time, constant-memory update is derived as follows. Let $Q_n$ be the estimate after $n-1$ selections of a given action:
+
+\begin{align*}
+    Q_{n+1} &= \frac{1}{n}\sum_{i=1}^{n} R_i
+    = \frac{1}{n}\!\left(R_n + (n-1)Q_n\right)
+    = Q_n + \frac{1}{n}\!\left[R_n - Q_n\right].
+\end{align*}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Incremental Update (General Form)}]
+\[
+    \text{NewEstimate} \;\leftarrow\; \text{OldEstimate} + \alpha\,\bigl[\text{Target} - \text{OldEstimate}\bigr],
+\]
+where $\alpha = 1/n$ for the sample average. The term $[\text{Target} - \text{OldEstimate}]$ is the \textbf{error}: it is reduced by stepping toward the target. This pattern recurs throughout RL.
+\end{tcolorbox}
+
+Only $Q_n$ and $n$ need to be stored; each update requires three arithmetic operations.
+
+\subsection{Complete Simple Bandit Algorithm}
+
+\begin{algorithm}
+\caption{Simple Bandit ($\varepsilon$-greedy, sample average)}
+\begin{algorithmic}
+\STATE Initialize: $Q(a) \leftarrow 0$, $N(a) \leftarrow 0$ for all $a \in \{1, \ldots, k\}$
+\LOOP
+    \STATE With probability $1-\varepsilon$: $A \leftarrow \arg\max_a Q(a)$ (break ties randomly)
+    \STATE With probability $\varepsilon$: $A \leftarrow$ uniform sample from $\{1,\ldots,k\}$
+    \STATE $R \leftarrow \textsc{Bandit}(A)$
+    \STATE $N(A) \leftarrow N(A) + 1$
+    \STATE $Q(A) \leftarrow Q(A) + \dfrac{1}{N(A)}\bigl[R - Q(A)\bigr]$
+\ENDLOOP
+\end{algorithmic}
+\end{algorithm}
+
+% ========================================
+\section{Tracking a Nonstationary Problem}
+% ========================================
+
+\subsection{Constant Step-Size Parameter}
+
+In \textbf{nonstationary} environments, $q_*(a)$ drifts over time. Giving equal weight to all past rewards (sample average) is inappropriate; recent rewards should matter more. This is achieved by using a \textbf{constant} step-size $\alpha$ with $0 < \alpha \le 1$:
+\[
+    Q_{n+1} = Q_n + \alpha\bigl[R_n - Q_n\bigr].
+\]
+
+\subsection{Exponentially Weighted Average}
+
+Unrolling the recurrence:
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Exponentially Weighted (Recency-Biased) Average}]
+\[
+    Q_{n+1} = (1-\alpha)^n Q_1 + \sum_{i=1}^{n} \alpha(1-\alpha)^{n-i} R_i. % chktex 3
+\]
+The weight of reward $R_i$ decays geometrically as $(1-\alpha)^{n-i}$, so more recent rewards have higher influence. This is a valid weighted average: % chktex 3
+\[
+    (1-\alpha)^n + \sum_{i=1}^{n} \alpha(1-\alpha)^{n-i} = 1. % chktex 3
+\]
+\end{tcolorbox}
+
+\subsection{Convergence Conditions}
+
+Let $\alpha_n(a)$ be the step-size at the $n$-th selection of action $a$. \textbf{Stochastic approximation theory} guarantees convergence of $Q_n \to q_*(a)$ with probability 1 if and only if:
+\[
+    \sum_{n=1}^{\infty} \alpha_n(a) = \infty
+    \qquad \text{and} \qquad
+    \sum_{n=1}^{\infty} \alpha_n^2(a) < \infty.
+\]
+
+\begin{itemize}
+    \item \textbf{First condition}: steps must be large enough to eventually overcome any initial conditions or random fluctuations.
+    \item \textbf{Second condition}: steps must eventually become small enough for the estimates to converge.
+\end{itemize}
+
+$\alpha_n = 1/n$ satisfies both conditions (second sum is $\pi^2/6$ by the Basel result). A constant $\alpha$ with $0 < \alpha \le 1$ violates the second condition — estimates \emph{never fully converge} but continue to track changes in $q_*(a)$, which is precisely the desirable behavior in nonstationary settings.
+
+% ========================================
+\section{Optimistic Initial Values}
+% ========================================
+
+All action-value methods are biased by the initial estimates $Q_1(a)$. This bias can be exploited constructively.
+
+\textbf{Optimistic initialization}: set $Q_1(a) \gg \mathbb{E}[R]$ for all $a$ (e.g., $Q_1(a) = 5$ when true values are near 0). Under greedy selection, any action selected yields a reward below the estimate, so the agent is disappointed and switches to a different action. This forces early exploration of all arms even without explicit randomization.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Properties of Optimistic Initialization}]
+\begin{itemize}
+    \item Simple to implement; no extra hyperparameters beyond the initial value.
+    \item Provides a natural way to encode prior knowledge about expected reward magnitude.
+    \item Effective on \textbf{stationary} problems: exploration pressure fades as estimates converge.
+    \item \textbf{Not suited for nonstationary problems}: the exploratory drive is temporary and cannot adapt to later changes in $q_*(a)$.
+\end{itemize}
+\end{tcolorbox}
+
+% ========================================
+\section{Upper Confidence Bound (UCB) Action Selection}
+% ========================================
+
+\subsection{Motivation}
+
+$\varepsilon$-greedy exploration selects non-greedy actions \emph{uniformly at random}, ignoring structure: an action with a barely-below-greedy estimate and high uncertainty is treated identically to one that is clearly suboptimal. A principled improvement is to select among non-greedy actions according to their \textbf{potential} to be optimal, accounting for both the estimate and its uncertainty.
+
+\subsection{UCB Formula}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{UCB Action Selection}]
+\[
+    A_t = \arg\max_a \left[Q_t(a) + c\sqrt{\frac{\ln t}{N_t(a)}}\right],
+\]
+where $N_t(a)$ is the number of times action $a$ has been selected before time $t$, $t$ is the total steps taken so far, and $c > 0$ controls exploration intensity. Any action with $N_t(a) = 0$ is treated as maximally uncertain and selected first.
+\end{tcolorbox}
+
+\subsection{Interpretation}
+
+The term $c\sqrt{\ln t\,/\,N_t(a)}$ is an \textbf{upper confidence bound} on $q_*(a)$: it is an optimistic estimate of how high the true value might be, derived from concentration-of-measure arguments (Hoeffding's inequality). Key properties:
+
+\begin{itemize}
+    \item The bound \textbf{grows} with $t$ (as more time passes, an un-tried action becomes increasingly suspicious).
+    \item The bound \textbf{shrinks} with $N_t(a)$ (more evidence reduces uncertainty).
+    \item Actions are tried according to how uncertain they are, not merely how infrequently.
+\end{itemize}
+
+\textbf{Performance}: UCB (with $c = 2$) typically outperforms $\varepsilon$-greedy on stationary testbeds.
+
+\textbf{Limitations}: UCB is difficult to extend to the full RL setting with state-dependent value functions, especially with function approximation.
+
+% ========================================
+\section{Gradient Bandit Algorithms}
+% ========================================
+
+\subsection{Preference-Based Action Selection}
+
+Instead of estimating action values, gradient bandits learn a \textbf{numerical preference} $H_t(a) \in \mathbb{R}$ for each action. Preferences have no direct interpretation as expected rewards; only relative differences matter. Action probabilities follow a \textbf{softmax} (Gibbs/Boltzmann) distribution:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Softmax Action Probabilities}]
+\[
+    \pi_t(a) = \Pr\{A_t = a\} = \frac{e^{H_t(a)}}{\displaystyle\sum_{b=1}^{k} e^{H_t(b)}}.
+\]
+Initially $H_1(a) = 0$ for all $a$, so all actions are equiprobable.
+\end{tcolorbox}
+
+\subsection{Stochastic Gradient Ascent Update}
+
+At step $t$, action $A_t$ is drawn from $\pi_t$, reward $R_t$ is observed, and preferences are updated by stochastic gradient ascent on $\mathbb{E}[R_t]$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Gradient Bandit Update}]
+\begin{align*}
+    H_{t+1}(A_t) &= H_t(A_t) + \alpha(R_t - \bar{R}_t)(1 - \pi_t(A_t)), \\
+    H_{t+1}(a)   &= H_t(a)   - \alpha(R_t - \bar{R}_t)\,\pi_t(a), \quad \forall a \neq A_t,
+\end{align*}
+where $\alpha > 0$ is the step-size and $\bar{R}_t$ is the running average of all rewards received up to time $t$, computed incrementally.
+\end{tcolorbox}
+
+\subsection{Role of the Baseline}
+
+$\bar{R}_t$ acts as a \textbf{reward baseline}:
+\begin{itemize}
+    \item If $R_t > \bar{R}_t$: the probability of $A_t$ \emph{increases}; all other actions decrease.
+    \item If $R_t < \bar{R}_t$: the probability of $A_t$ \emph{decreases}; all other actions increase.
+\end{itemize}
+
+The baseline does not affect the expected gradient (it is an unbiased estimate of $\mathbb{E}[R_t]$), but it \textbf{reduces variance} of the gradient estimate, leading to faster and more stable learning. Without the baseline ($\bar{R}_t = 0$), performance degrades significantly, particularly when the reward scale shifts (e.g., all $q_*(a)$ shifted by $+4$: without baseline, the algorithm must first discover the new scale, while with baseline it adapts immediately).
+
+% ========================================
+\section{Comparative Summary}
+% ========================================
+
+\subsection{Algorithm Comparison}
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+\textbf{Method} & \textbf{Exploration mechanism} & \textbf{Key parameter} & \textbf{Notes} \\
+\hline
+Greedy            & None                        & ---         & Exploits only; can get stuck \\
+$\varepsilon$-greedy  & Random with prob.\ $\varepsilon$ & $\varepsilon \in [0,1]$ & Simple, robust \\
+Optimistic init.  & Forced early exploration     & $Q_1(a)$    & Stationary only \\
+UCB               & Uncertainty bonus           & $c > 0$     & Principled; harder to extend \\
+Gradient bandit   & Softmax preferences         & $\alpha > 0$ & No value estimates needed \\
+\hline
+\end{tabular}
+\end{center}
+
+Each method has a parameter that controls the exploration-exploitation balance. Performance across all methods, measured as average reward over the first 1000 steps, forms a hump-shaped curve as a function of the parameter: too little exploration (small $\varepsilon$, $c$, $\alpha$, or $Q_0$) causes suboptimal convergence; too much wastes reward.
+
+\subsection{Toward Full RL: Associative Search}
+
+Bandit problems are \textbf{non-associative}: a single, static situation. In general RL there are \textbf{multiple situations} and the agent must learn a mapping $\text{situation} \to \text{action}$ (a policy).
+
+\textbf{Contextual bandits} (associative search) are an intermediate case: the agent observes a context (situation) at each step, which may determine which bandit instance is active. The agent must associate different actions with different contexts, combining trial-and-error learning with situation-action association. This is the bridge toward full sequential RL with delayed rewards and state transitions.
+
+
+
+%=============================================================
+\part{Markov Decision Processes}
+%=============================================================
+
+Markov Decision Processes (MDPs) provide the formal mathematical framework for sequential decision-making under uncertainty. Unlike the bandit setting, actions in an MDP affect not only the immediate reward but also the future state of the environment, introducing the problem of \textbf{delayed reward} and the need to trade off immediate versus long-term gains.
+
+%-------------------------------------------------------------
+\section{The Agent-Environment Interface}
+%-------------------------------------------------------------
+
+An MDP models the interaction between a \textbf{learner/decision-maker} (the agent) and the world it operates in (the environment). At each discrete time step $t = 0, 1, 2, \ldots$ the agent observes a state, selects an action, and receives a scalar reward.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={MDP Tuple}]
+A finite MDP is defined by:
+\begin{itemize}
+    \item $\mathcal{S}$: finite set of states
+    \item $\mathcal{A}$: finite set of actions (may depend on state: $\mathcal{A}(s)$)
+    \item $\mathcal{R} \subset \mathbb{R}$: finite set of rewards
+    \item \textbf{Dynamics function}:
+    \[
+        p(s', r \mid s, a) \;=\; \Pr\{S_t = s',\, R_t = r \mid S_{t-1} = s,\, A_{t-1} = a\}
+    \]
+    with normalization $\sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) = 1$ for all $s, a$.
+\end{itemize}
+\end{tcolorbox}
+
+The dynamics function $p$ completely characterizes the environment. From it one derives:
+\[
+    p(s' \mid s, a) = \sum_{r \in \mathcal{R}} p(s', r \mid s, a) \qquad \text{(state-transition probabilities)}
+\]
+\[
+    r(s, a) = \mathbb{E}[R_t \mid S_{t-1}=s, A_{t-1}=a] = \sum_{r} r \sum_{s'} p(s', r \mid s, a) \qquad \text{(expected reward)}
+\]
+\[
+    r(s, a, s') = \sum_{r} r \,\frac{p(s', r \mid s, a)}{p(s' \mid s, a)} \qquad \text{(expected reward for transitions)}
+\]
+
+\textbf{Markov property.} The state $S_t$ must encode all information relevant for future decisions: $p(s', r \mid s, a)$ depends only on the current state and action, not on any earlier history. The trajectory takes the form
+\[
+    S_0,\; A_0,\; R_1,\; S_1,\; A_1,\; R_2,\; S_2,\; A_2,\; R_3,\; \ldots
+\]
+
+\begin{remark}
+The boundary between agent and environment is not physical but \emph{functional}: it separates what the agent can control (actions) from what it cannot arbitrarily control (the rest). An agent may have complete knowledge of the environment dynamics and still face a non-trivial RL problem. This flexibility makes MDPs broadly applicable — the \textbf{art of RL} lies in choosing the right state representation.
+\end{remark}
+
+\subsection{Example: Recycling Robot}
+
+A mobile robot collects cans; its battery level is the only state. The MDP has:
+\begin{itemize}
+    \item $\mathcal{S} = \{\text{high}, \text{low}\}$
+    \item $\mathcal{A}(\text{high}) = \{\text{search}, \text{wait}\}$; $\mathcal{A}(\text{low}) = \{\text{search}, \text{wait}, \text{recharge}\}$
+\end{itemize}
+Transitions and rewards are parameterised by $\alpha$ (probability of staying high after searching from high), $\beta$ (probability of staying low after searching from low), $r_s > r_w > 0$ (search and wait rewards), and a large penalty $-3$ for running out of battery.
+
+\begin{center}
+\begin{tabular}{llllr}
+\hline
+$s$ & $a$ & $s'$ & $p(s'\mid s,a)$ & $r(s,a,s')$ \\
+\hline
+high & search & high & $\alpha$      & $r_s$ \\
+high & search & low  & $1-\alpha$    & $r_s$ \\
+high & wait   & high & $1$           & $r_w$ \\
+low  & search & high & $1-\beta$     & $-3$  \\
+low  & search & low  & $\beta$       & $r_s$ \\
+low  & wait   & low  & $1$           & $r_w$ \\
+low  & recharge& high& $1$           & $0$   \\
+\hline
+\end{tabular}
+\end{center}
+
+%-------------------------------------------------------------
+\section{Goals and Rewards}
+%-------------------------------------------------------------
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Reward Hypothesis}]
+All goals and purposes of an agent can be formalized as the maximization of the expected value of the cumulative sum of a scalar signal called the \emph{reward}.
+\end{tcolorbox}
+
+The reward signal specifies \textbf{what} the agent should achieve, not \textbf{how}. For example:
+\begin{itemize}
+    \item Chess: $+1$ for winning, $0$ for draw, $-1$ for losing.
+    \item Robot locomotion: $+1$ per step the robot moves forward.
+    \item Resource management: reward proportional to profit.
+\end{itemize}
+Encoding prior knowledge in the reward (rather than in hand-crafted sub-goals) allows the agent to discover better strategies than those a human designer might anticipate.
+
+%-------------------------------------------------------------
+\section{Returns and Episodes}
+%-------------------------------------------------------------
+
+\subsection{Episodic Tasks}
+
+In \textbf{episodic} tasks the interaction naturally breaks into episodes ending in a \textbf{terminal state} $S_T$. The return is simply the finite sum:
+\[
+    G_t \;=\; R_{t+1} + R_{t+2} + \cdots + R_T
+\]
+
+\subsection{Continuing Tasks and Discounted Return}
+
+In \textbf{continuing} tasks there is no terminal state. To keep the return finite, a \textbf{discount factor} $\gamma \in [0, 1)$ is introduced: % chktex 9
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Discounted Return}]
+\[
+    G_t \;=\; \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}
+    \;=\; R_{t+1} + \gamma G_{t+1}
+\]
+\end{tcolorbox}
+
+For a constant reward $R_{t+k+1} = c$ the return is $G_t = c/(1-\gamma)$ (geometric series). Key interpretations:
+\begin{itemize}
+    \item $\gamma \to 0$: \textbf{myopic} — only immediate reward matters.
+    \item $\gamma \to 1$: \textbf{far-sighted} — all future rewards weighted nearly equally (requires finite sums).
+    \item $\gamma$ can be interpreted as the probability of survival at each step.
+\end{itemize}
+
+\begin{example}
+\textbf{CartPole.} In the episodic formulation the agent receives $+1$ per step; an infinite-duration pole balance yields infinite return. The continuing formulation instead gives reward $-1$ on failure (pole falls at step $K$), leading to $G_0 = -\gamma^K$: the agent must survive as long as possible while discounting the inevitable termination penalty.
+\end{example}
+
+%-------------------------------------------------------------
+\section{Policies and Value Functions}
+%-------------------------------------------------------------
+
+A \textbf{policy} is a mapping from states to probabilities over actions:
+\[
+    \pi(a \mid s) \;=\; \Pr\{A_t = a \mid S_t = s\}
+\]
+RL algorithms specify how the policy changes with experience.
+
+\subsection{Value Functions}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={State-Value and Action-Value Functions}]
+\[
+    v_\pi(s) \;=\; \mathbb{E}_\pi\!\left[G_t \mid S_t = s\right]
+    \;=\; \mathbb{E}_\pi\!\left[\sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \;\middle|\; S_t = s\right]
+\]
+\[
+    q_\pi(s, a) \;=\; \mathbb{E}_\pi\!\left[G_t \mid S_t = s,\, A_t = a\right]
+\]
+\end{tcolorbox}
+
+Both $v_\pi$ and $q_\pi$ can be estimated from experience by averaging sampled returns.
+
+\subsection{Bellman Equation for $v_\pi$}
+
+Expanding the expectation using the law of total expectation and the recursive form of the return:
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Bellman Expectation Equation}]
+\[
+    v_\pi(s) \;=\; \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)
+    \Bigl[r + \gamma\, v_\pi(s')\Bigr]
+\]
+\end{tcolorbox}
+
+This is a system of $|\mathcal{S}|$ linear equations with a \textbf{unique solution} $v_\pi$. The \textbf{backup diagram} for $v_\pi$ shows the current state (open circle) branching to state-action pairs (filled circles) via $\pi$, then to successor states (open circles) via $p$.
+
+\begin{remark}
+The term \emph{backup} refers to the transfer of value information from successor states back to the current state. Backup operators are the computational primitive underlying all DP and RL algorithms.
+\end{remark}
+
+\subsection{Gridworld Example}
+
+A $5 \times 5$ grid with actions $\{\text{N}, \text{S}, \text{E}, \text{W}\}$; off-grid transitions return reward $-1$ and leave the state unchanged. Special states: $A \to A'$ with reward $+10$; $B \to B'$ with reward $+5$. The value function under the equiprobable random policy with $\gamma = 0.9$ is obtained by solving the Bellman equations; values near $A$ are highest due to the $+10$ teleport.
+
+\subsection{Golf Example}
+
+State = ball location; reward $= -1$ per stroke; hole = terminal state. The value function under a \emph{putter-only} policy assigns negative values proportional to the expected number of strokes from each location. Locations near the hole have values close to $-1$.
+
+%-------------------------------------------------------------
+\section{Optimal Policies and Value Functions}
+%-------------------------------------------------------------
+
+\subsection{Partial Ordering of Policies}
+
+A policy $\pi$ is \textbf{at least as good as} $\pi'$ if $v_\pi(s) \geq v_{\pi'}(s)$ for all $s \in \mathcal{S}$. There always exists at least one \textbf{optimal policy} $\pi^*$ that is simultaneously better than or equal to all other policies.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Optimal Value Functions}]
+\[
+    v^*(s) \;=\; \max_\pi\, v_\pi(s) \qquad \forall s
+\]
+\[
+    q^*(s, a) \;=\; \max_\pi\, q_\pi(s, a)
+    \;=\; \mathbb{E}\!\left[R_{t+1} + \gamma\, v^*(S_{t+1}) \mid S_t = s,\, A_t = a\right]
+\]
+\end{tcolorbox}
+
+\subsection{Bellman Optimality Equations}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Bellman Optimality Equations}]
+\begin{align*}
+    v^*(s) &\;=\; \max_a \sum_{s', r} p(s', r \mid s, a)\Bigl[r + \gamma\, v^*(s')\Bigr] \\[6pt]
+    q^*(s, a) &\;=\; \sum_{s', r} p(s', r \mid s, a)\Bigl[r + \gamma \max_{a'} q^*(s', a')\Bigr]
+\end{align*}
+\end{tcolorbox}
+
+These are \textbf{nonlinear} fixed-point equations (the $\max$ replaces the policy-weighted sum). They have a unique solution for finite MDPs with $\gamma < 1$ or guaranteed termination.
+
+\subsection{Extracting the Optimal Policy}
+
+\begin{itemize}
+    \item Given $v^*$: take the \textbf{greedy} action — one-step lookahead
+    \[
+        \pi^*(s) \;=\; \arg\max_a \sum_{s', r} p(s', r \mid s, a)\Bigl[r + \gamma\, v^*(s')\Bigr]
+    \]
+    \item Given $q^*$: take the greedy action directly — \textbf{zero-step} lookahead
+    \[
+        \pi^*(s) \;=\; \arg\max_a\, q^*(s, a)
+    \]
+    Knowing $q^*$ means no environment model is needed at decision time.
+\end{itemize}
+
+\subsection{Recycling Robot: Bellman Optimality Equations}
+
+\begin{align*}
+    v^*(h) &= \max\!\begin{cases}
+        \alpha\bigl[r_s + \gamma\, v^*(h)\bigr] + (1-\alpha)\bigl[r_s + \gamma\, v^*(l)\bigr] \\
+        r_w + \gamma\, v^*(h)
+    \end{cases} \\[6pt]
+    v^*(l) &= \max\!\begin{cases}
+        \beta\bigl[r_s + \gamma\, v^*(l)\bigr] + (1-\beta)\bigl[-3 + \gamma\, v^*(h)\bigr] \\
+        r_w + \gamma\, v^*(l) \\
+        \gamma\, v^*(h)
+    \end{cases}
+\end{align*}
+
+%-------------------------------------------------------------
+\section{Optimality and Approximation}
+%-------------------------------------------------------------
+
+Solving the Bellman optimality equations exactly requires:
+\begin{enumerate}
+    \item Accurate knowledge of the environment dynamics $p(s', r \mid s, a)$.
+    \item Sufficient computational resources (matrix inversion: $O(|\mathcal{S}|^3)$).
+    \item The Markov property to hold.
+\end{enumerate}
+In practice these conditions rarely hold simultaneously. Backgammon, for instance, has approximately $10^{20}$ states — tabular methods are infeasible.
+
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!80!black, title={Tabular vs.\ Approximate Methods}]
+\begin{itemize}
+    \item \textbf{Small state spaces} (tabular methods): store $v$ or $q$ in a table; guaranteed convergence to optimal.
+    \item \textbf{Large state spaces} (function approximation): parameterise $v_\theta(s) \approx v^*(s)$ or $q_\theta(s,a) \approx q^*(s,a)$ using neural networks or other function classes; sacrifice exact optimality for tractability.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Categorization of RL Algorithms}
+
+RL algorithms can be organized along two orthogonal axes:
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Category} & \textbf{Value function $V$} & \textbf{Policy $\pi$} \\
+\hline
+Value-based   & Explicit & Implicit (greedy) \\
+Policy-based  & None     & Explicit           \\
+Actor-Critic  & Explicit & Explicit           \\
+\hline
+\end{tabular}
+\end{center}
+
+A second axis concerns the use of a \textbf{model} of the environment:
+\begin{itemize}
+    \item \textbf{Model-based}: dynamics $p(s', r \mid s, a)$ are known or learned; planning is possible.
+    \item \textbf{Model-free}: dynamics are unknown; the agent interacts directly and learns from experience.
+\end{itemize}
+
+\begin{remark}
+The MDP framework introduced in this chapter is the foundation for all algorithms discussed in subsequent chapters. Tabular methods (dynamic programming, Monte Carlo, TD learning) will be covered first, followed by function approximation methods that scale to high-dimensional state spaces.
+\end{remark}
+
 \end{document}

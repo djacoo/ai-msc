@@ -1162,5 +1162,366 @@ Key architectural components:
 
 Transformers are now the dominant architecture for NLP (BERT, GPT) and are increasingly applied to computer vision (Vision Transformer, ViT).
 
+
+% ========================================
+\part{Image Classification}
+% ========================================
+
+\section{The Image Classification Problem}
+
+\subsection{Task Definition and Applications}
+
+Image classification is the task of assigning a discrete semantic label $y \in \{1,\ldots,C\}$ to an input image $\mathbf{x}$.
+The label is drawn from a fixed, finite vocabulary of $C$ categories.
+Applications span a broad range:
+
+\begin{itemize}
+    \item \textbf{Medical imaging}: distinguishing benign from malignant tissue (Levy et al., 2016), cell type identification, pathology grading.
+    \item \textbf{Scientific discovery}: galaxy morphology classification (Dieleman et al., 2014), satellite imagery analysis.
+    \item \textbf{Wildlife monitoring}: individual animal recognition (e.g., Kaggle whale recognition challenges).
+\end{itemize}
+
+Classification also serves as the \textbf{canonical building block} for more complex visual tasks:
+\begin{itemize}
+    \item \textbf{Object detection}: apply a classifier at every candidate bounding box.
+    \item \textbf{Image segmentation}: assign a class to every pixel.
+    \item \textbf{Image captioning} and \textbf{visual question answering}: build on image-level representations learned for classification.
+    \item \textbf{Video understanding}: classify per frame or temporal clip.
+\end{itemize}
+
+\subsection{Statistical Learning Framework}
+
+The standard framework formalizes image classification as supervised learning:
+
+\[
+    y = f(\mathbf{x})
+\]
+
+where $\mathbf{x}$ is a feature representation of the image, $y$ is the output label, and $f$ is the \textbf{prediction function} to be learned.
+
+\paragraph{Training phase.} Given a labeled training set $\{(\mathbf{x}_1, y_1), \ldots, (\mathbf{x}_N, y_N)\}$, learn $f$ by minimizing prediction error on the training set.
+
+\paragraph{Testing phase.} Given an unlabeled test instance $\mathbf{x}$, predict $y = f(\mathbf{x})$. The learned function must generalize to inputs not seen during training.
+
+\paragraph{Pipeline.} The standard supervised pipeline is:
+\[
+    \text{Training images} \;\xrightarrow{\;\text{image features}\;}\; \text{Training} \;\xrightarrow{}\; \text{Learned model}
+\]
+At test time: test image $\xrightarrow{\;\text{image features}\;}$ Prediction (using learned model) $\xrightarrow{}$ label.
+
+
+\section{Classic Recognition Pipeline}
+
+Before deep learning, recognition systems decoupled feature extraction from classification into two independent stages:
+
+\[
+    \text{Image (pixels)} \;\longrightarrow\; \underbrace{\text{Feature representation}}_{\text{hand-crafted}} \;\longrightarrow\; \underbrace{\text{Trainable classifier}}_{\text{off-the-shelf}} \;\longrightarrow\; \text{Class label}
+\]
+
+\textbf{Hand-crafted features} had to encode the visual properties that discriminate classes while being robust to nuisance variation (illumination, viewpoint, scale, occlusion).
+Representations were organized in a hierarchy:
+
+\begin{itemize}
+    \item \textbf{Low level}: SIFT (scale-invariant feature transforms), HoG (histogram of oriented gradients), GIST, edge maps.
+    \item \textbf{Mid level}: Bag of words (Fisher vectors, VLAD), sliding window detectors, deformable part models.
+    \item \textbf{High level}: Contextual dependence, scene-level priors.
+\end{itemize}
+
+The trainable classifier (SVM, logistic regression, random forest) operated on these fixed features.
+The critical insight from Torralba \& Efros is that \textbf{three factors} govern recognition performance, roughly in decreasing order of impact:
+
+\begin{enumerate}
+    \item \textbf{Data}: more labeled data is almost always better (quality matters more than quantity in the low-data regime). Annotation is the bottleneck.
+    \item \textbf{Representation}: a richer, more invariant feature hierarchy matters more than the choice of classifier.
+    \item \textbf{Learning technique}: the choice of classifier or inference method is the least decisive factor once data and features are fixed.
+\end{enumerate}
+
+\begin{remark}
+Deep learning merges stages 1 and 2: the network learns both the feature hierarchy and the classifier end-to-end from data, replacing hand-crafted features with \emph{deep learned features}.
+\end{remark}
+
+
+\section{Classification Fundamentals}
+
+\subsection{Binary and Multiclass Classification}
+
+A classifier assigns an input $\mathbf{x} \in \mathbb{R}^d$ to one of $C$ classes.
+A \textbf{decision rule} partitions the input space into \textbf{decision regions} --- one per class --- separated by \textbf{decision boundaries}.
+
+\begin{itemize}
+    \item \textbf{Binary classification} ($C=2$): a single decision boundary separates two regions.
+    \item \textbf{Multiclass classification} ($C > 2$): the input space is partitioned into $C$ regions. One-vs-one or one-vs-all strategies reduce multiclass to binary; alternatively, a single model can output a $C$-dimensional score vector.
+\end{itemize}
+
+\subsection{Classification Methods}
+
+The main families of classification methods, roughly in historical and complexity order:
+
+\begin{center}
+\begin{tabular}{ll}
+    \hline
+    \textbf{Method} & \textbf{Characteristic} \\
+    \hline
+    $k$-Nearest Neighbours & Non-parametric; decision boundary from local vote \\
+    Linear classifiers    & Hyperplane boundary; closed-form or convex optimization \\
+    Support Vector Machines & Maximum-margin linear classifier; kernel trick for non-linearity \\
+    Random Forests        & Ensemble of decision trees; handle discrete features naturally \\
+    Neural Networks       & Learnable non-linear decision boundaries; trained by SGD \\
+    Deep Networks         & Deep hierarchical feature learning; state of the art on vision \\
+    \hline
+\end{tabular}
+\end{center}
+
+
+\section{Neural Networks for Classification}
+
+\subsection{Linear Machine}
+
+The simplest parameterized classifier maps the input $\mathbf{x} \in \mathbb{R}^d$ to a score vector $\mathbf{s} \in \mathbb{R}^C$ via a linear \textbf{score function}:
+\[
+    \mathbf{s} = W\mathbf{x}
+\]
+where $W \in \mathbb{R}^{C \times d}$ is the weight matrix. Each row of $W$ is a \textbf{class template}: the score for class $c$ is the dot product of $\mathbf{x}$ with the $c$-th template.
+
+\begin{example}
+For a $32 \times 32$ RGB image, the input is flattened to $\mathbf{x} \in \mathbb{R}^{3072}$.
+With $C = 10$ classes, $W \in \mathbb{R}^{10 \times 3072}$ has $30{,}720$ parameters.
+The output $\mathbf{s} \in \mathbb{R}^{10}$ gives one score per class.
+\end{example}
+
+\subsection{Two-Layer and Three-Layer Networks}
+
+Adding one hidden layer with ReLU non-linearity gives a \textbf{2-layer neural network}:
+\[
+    \mathbf{s} = W_2 \max(0,\, W_1 \mathbf{x})
+\]
+where the hidden vector $\mathbf{h} = \max(0, W_1 \mathbf{x})$ has dimension $H$.
+The network is also called a \emph{1-hidden-layer network}.
+
+A \textbf{3-layer (2-hidden-layer) network} adds a further non-linear stage:
+\[
+    \mathbf{s} = W_3 \max\!\bigl(0,\; W_2 \max(0,\, W_1 \mathbf{x})\bigr)
+\]
+These stacked non-linearities are collectively referred to as \textbf{Multi-Layer Perceptrons} (MLPs).
+
+\begin{example}
+For CIFAR-10: $d = 3072$, $H = 100$ hidden units, $C = 10$ classes.
+\begin{align*}
+    W_1 &\in \mathbb{R}^{100 \times 3072} \quad (100 \times 3072\text{ parameters}) \\
+    W_2 &\in \mathbb{R}^{10 \times 100}  \quad (10 \times 100\text{ parameters})
+\end{align*}
+Total: $3{,}072 \times 100 + 100 \times 10 = 308{,}200$ parameters.
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Neural Networks: Pros and Cons}]
+\begin{tabular}{ll}
+    \textbf{Pros} & Flexible and general function approximation framework \\
+                  & Scalable depth: adding layers increases model capacity \\[4pt]
+    \textbf{Cons} & Hard to analyze theoretically; training prone to local optima \\
+                  & Requires large amounts of training data and compute \\
+                  & Huge hyperparameter space (architecture, learning rate, \ldots) \\
+\end{tabular}
+\end{tcolorbox}
+
+
+\section{Softmax Classifier and Cross-Entropy Loss}
+
+\subsection{From Scores to Probabilities}
+
+The \textbf{softmax classifier} (multinomial logistic regression) interprets the raw score vector $\mathbf{s} = f(\mathbf{x}_i; W) \in \mathbb{R}^C$ as \textbf{unnormalized log-probabilities} (logits).
+To obtain a proper probability distribution, apply the \textbf{softmax function}:
+\[
+    P(Y = k \mid X = \mathbf{x}_i) = \frac{e^{s_k}}{\displaystyle\sum_j e^{s_j}}
+\]
+
+\begin{example}
+Given raw scores $\mathbf{s} = [3.2,\; 5.1,\; -1.7]$ for classes (cat, car, frog):
+\[
+\begin{array}{l|r|r|r} % chktex 44
+    \text{class} & \text{score (logit)} & \text{unnorm.\ prob.\ } (e^s) & \text{prob.} \\
+    \hline
+    \text{cat}  & 3.2  & 24.5  & 0.13 \\
+    \text{car}  & 5.1  & 164.0 & 0.87 \\
+    \text{frog} & -1.7 & 0.18  & 0.00 \\
+\end{array}
+\]
+If the true class is ``cat'', the predicted probability is $0.13$.
+\end{example}
+
+\subsection{Cross-Entropy Loss}
+
+Training minimizes the \textbf{negative log-likelihood} (cross-entropy) of the correct class:
+\[
+    L_i = -\log P(Y = y_i \mid X = \mathbf{x}_i) = -\log \frac{e^{s_{y_i}}}{\sum_j e^{s_j}}
+\]
+
+Continuing the example with true class ``cat'' ($y_i = \text{cat}$):
+\[
+    L_i = -\log(0.13) = 2.04
+\]
+
+The loss is low when the model assigns high probability to the correct class, and high otherwise.
+Minimizing $L_i$ is equivalent to \textbf{maximum likelihood estimation}: choose $W$ to maximize $\prod_i P(Y = y_i \mid X = \mathbf{x}_i)$.
+
+\subsection{Dataset Loss}
+
+The full training objective averages per-sample losses over the dataset:
+\[
+    L(W) = \frac{1}{N} \sum_{i=1}^{N} L_i\!\bigl(f(\mathbf{x}_i, W),\, y_i\bigr)
+\]
+
+Training finds $W^* = \arg\min_W L(W)$ by gradient descent:
+\[
+    W \leftarrow W - \alpha \frac{\partial L}{\partial W}
+\]
+
+\begin{remark}
+Cross-entropy compares the predicted probability vector with the \textbf{one-hot} ground-truth vector (1 for the correct class, 0 elsewhere). Perfect predictions yield $L_i = 0$; random predictions over $C$ classes give $L_i = \log C$.
+\end{remark}
+
+
+\section{CNN Spatial Arithmetic}
+
+\subsection{Stride and the Integer-Fit Constraint}
+
+A filter of size $F$ applied to an input of size $N$ with stride $s$ (no padding) produces an output of size:
+\[
+    \left\lfloor \frac{N - F}{s} \right\rfloor + 1 \quad \text{(must be an integer)}
+\]
+
+\begin{example}
+$N = 7$, $F = 3$:
+\begin{align*}
+    s = 1 &: \frac{7-3}{1} + 1 = 5 \quad (\text{valid}) \\
+    s = 2 &: \frac{7-3}{2} + 1 = 3 \quad (\text{valid}) \\
+    s = 3 &: \frac{7-3}{3} + 1 = 2.33 \quad (\text{does not fit --- stride 3 cannot tile this input evenly})
+\end{align*}
+\end{example}
+
+Not all combinations of $N$, $F$, $s$ are valid. In practice, $s$ and $F$ must be chosen so that $(N - F)/s$ is an integer.
+
+\subsection{Zero Padding}
+
+To prevent the spatial dimensions from shrinking at every convolutional layer, it is common to \textbf{zero-pad} the input with $p$ pixels on each border before applying the filter. With padding, the output size generalizes to:
+\[
+    \frac{N + 2p - F}{s} + 1
+\]
+
+\paragraph{Size-preserving padding.}
+To keep the spatial dimensions unchanged at stride $s = 1$, set $p = (F-1)/2$:
+\[
+    \frac{N + 2 \cdot \frac{F-1}{2} - F}{1} + 1 = N
+\]
+This requires $F$ to be odd. Common cases:
+\begin{center}
+\begin{tabular}{cc}
+    \hline
+    $F$ & $p$ (to preserve size at stride 1) \\
+    \hline
+    3   & 1 \\
+    5   & 2 \\
+    7   & 3 \\
+    \hline
+\end{tabular}
+\end{center}
+
+\begin{example}
+Input $32 \times 32 \times 3$, 10 filters of size $5 \times 5$, stride 1, padding 2.
+\begin{align*}
+    \text{Output spatial size} &: \frac{32 + 2 \cdot 2 - 5}{1} + 1 = 32 \quad \Rightarrow \quad 32 \times 32 \times 10 \\
+    \text{Parameters} &: \text{each filter has } 5 \times 5 \times 3 + 1 = 76 \text{ weights} \;\Rightarrow\; 10 \times 76 = 760
+\end{align*}
+\end{example}
+
+\begin{remark}
+Without padding, repeated convolutions shrink the spatial dimensions rapidly. A $32 \times 32$ input convolved with $5 \times 5$ filters at stride 1 becomes $28 \times 28 \to 24 \times 24 \to \cdots$. This is too aggressive for deep networks, making zero-padding essential.
+\end{remark}
+
+\subsection{$1 \times 1$ Convolutions}
+
+A $1 \times 1$ convolutional layer applies a filter of spatial size $1 \times 1 \times C_{\text{in}}$ at every spatial location.
+Each filter computes a \textbf{$C_{\text{in}}$-dimensional dot product}, mixing channels without touching neighboring spatial positions.
+This effectively performs a \textbf{linear channel projection}: $C_{\text{in}} \to C_{\text{out}}$ depth-wise at each pixel independently.
+
+\begin{example}
+Input $56 \times 56 \times 64$, apply 32 filters of size $1 \times 1 \times 64$:
+\[
+    \text{output} = 56 \times 56 \times 32
+\]
+Spatial dimensions are preserved; channel depth is reduced from 64 to 32.
+Parameters: $32 \times (1 \times 1 \times 64 + 1) = 2{,}080$.
+\end{example}
+
+$1 \times 1$ convolutions are used as bottleneck projections in GoogLeNet/Inception and ResNet to reduce computation before expensive $3 \times 3$ or $5 \times 5$ convolutions.
+
+\subsection{Translation Equivariance}
+
+A convolutional layer is \textbf{translation equivariant}: applying a spatial translation to the input and then convolving produces the same result as convolving and then applying the same translation to the output.
+Formally, if $T_{\delta}$ denotes translation by offset $\delta$:
+\[
+    \text{CONV}(T_{\delta}(\mathbf{x})) \approx T_{\delta}(\text{CONV}(\mathbf{x}))
+\]
+(exact at interior positions; boundary effects break equivariance at the edges due to padding).
+
+This is a direct consequence of weight sharing: the same filter detects the same pattern regardless of where it appears in the input. Equivariance is distinct from \textbf{invariance} (where the output does not change at all with translation, as max-pooling approximately achieves).
+
+\subsection{Receptive Field}
+
+The \textbf{receptive field} of a unit in a feature map is the region of the input image that influences its value.
+Two factors enlarge the receptive field:
+\begin{itemize}
+    \item \textbf{Number of layers}: each additional layer increases the effective receptive field.
+    \item \textbf{Filter size}: larger filters see more of the input at each layer.
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Parameter Efficiency: Stacked Small Filters}]
+Two stacked $3 \times 3$ conv layers have the same $5 \times 5$ receptive field as a single $5 \times 5$ layer, but with fewer parameters and an extra non-linearity:
+\begin{align*}
+    \text{One } 5\times5 \text{ layer}: &\quad 5 \times 5 + 1 = 26 \text{ parameters per filter} \\
+    \text{Two } 3\times3 \text{ layers}: &\quad 2 \times (3 \times 3 + 1) = 20 \text{ parameters per filter}
+\end{align*}
+This is the design principle behind VGGNet.
+\end{tcolorbox}
+
+\paragraph{Effect of max-pooling on receptive field.}
+Max-pooling with stride $> 1$:
+\begin{itemize}
+    \item \textbf{Increases} the effective receptive field of subsequent layers (each unit now covers a larger input region).
+    \item \textbf{Decreases} spatial resolution (fewer feature map positions).
+    \item \textbf{Discards} precise spatial information --- the exact location of the maximum within a pooling window is lost.
+\end{itemize}
+This trade-off is fundamental to CNN design: high-resolution features are needed for localization tasks, while large receptive fields are needed for recognition. Fully convolutional architectures (strided convolutions instead of pooling) can preserve more spatial information.
+
+
+\section{Training Best Practices}
+
+\subsection{Train / Validation / Test Split}
+
+The goal of training is a classifier with good \textbf{generalization} to never-before-seen data. The standard protocol enforces three non-overlapping data splits:
+
+\begin{enumerate}
+    \item \textbf{Training set}: learn model \emph{parameters} (weights) by minimizing the training loss.
+    \item \textbf{Validation set} (held-out): tune \emph{hyperparameters} (architecture, learning rate, regularization, \ldots) by evaluating validation performance. Iterate steps 1 and 2.
+    \item \textbf{Test set}: evaluate final model performance \emph{once}. Looking at test performance during development is data snooping and invalidates the evaluation.
+\end{enumerate}
+
+\begin{remark}
+The validation set acts as a proxy for the test set during development. Selecting hyperparameters to maximize validation accuracy \emph{does} use the validation set, so validation accuracy is an optimistic estimate of generalization. The test set, used exactly once, gives an unbiased estimate.
+\end{remark}
+
+\subsection{Training Dynamics}
+
+During training, four curves are monitored:
+\begin{itemize}
+    \item \textbf{Training loss}: decreases monotonically as the optimizer minimizes the objective.
+    \item \textbf{Validation loss}: decreases initially, then rises when overfitting begins.
+    \item \textbf{Training accuracy}: increases; should reach near 100\% for an expressive model on a small dataset.
+    \item \textbf{Validation accuracy}: increases initially, then plateaus or decreases.
+\end{itemize}
+
+A growing gap between training and validation loss/accuracy is the diagnostic signature of \textbf{overfitting}.
+The optimal stopping point (early stopping) is the epoch at which validation loss is minimal.
+
 \end{document}
+
 

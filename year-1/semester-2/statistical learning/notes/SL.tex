@@ -1,0 +1,967 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+
+% Code listings
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2}
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{SL}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Statistical Learning}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{II Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+
+% ========================================
+\part{Introduction to Statistical Learning}
+% ========================================
+
+\section{Motivations}
+
+\subsection{What is Statistical Learning?}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Statistical Learning}]
+Statistical learning refers to a vast set of \textbf{tools for understanding data}. These tools enable us to model, predict, and draw inferences from complex datasets across a wide range of application domains.
+\end{tcolorbox}
+
+The central goal is to \textbf{understand correlations between data}. Depending on what we want to predict and what kind of output we have, this takes three main forms:
+
+\begin{itemize}
+    \item \textbf{Regression}: predicting a \textit{continuous} (quantitative) output variable.\\
+    \textit{Example}: predicting wage as a function of age, year of experience, and education level.
+    \item \textbf{Classification}: predicting a \textit{discrete} (categorical) output variable.\\
+    \textit{Example}: predicting the direction of S\&P 500 daily movement (up/down) from previous days' percentage changes.
+    \item \textbf{Clustering}: \textit{grouping} data points based on observed characteristics, with no output label available.\\
+    \textit{Example}: grouping cell lines by gene expression profiles (unsupervised — no cancer type label used during grouping).
+\end{itemize}
+
+\subsection{A Brief History}
+
+\begin{itemize}
+    \item \textbf{Early 1800s} — Legendre and Gauss: least squares method, linear regression.
+    \item \textbf{Early 1936} — Fisher: Linear Discriminant Analysis, classification.
+    \item \textbf{Mid 1980s} — Breiman, Friedman, Olshen, Stone: classification and regression trees; tree-based methods and cross-validation for model selection.
+    \item \textbf{Present} — Machine Learning, Data Science, Deep Learning.
+\end{itemize}
+
+\subsection{Why Study Statistical Learning?}
+
+Statistical learning methods are key assets for a wide range of disciplines:
+\begin{itemize}
+    \item Artificial Intelligence, Machine Learning, Economics, Business, Social Sciences, Medicine, Biotechnology, Public Policies
+    \item Finance, Manufacturing, Pharmaceutical, Logistics, Entertainment, Politics, Tourism
+\end{itemize}
+
+Three core principles motivate this course:
+\begin{enumerate}
+    \item Statistical learning methods should \textbf{not} be treated as black boxes: to select the best method you must understand how they work.
+    \item You do not need to re-implement state-of-the-art methods, but you must \textbf{understand them and know when and how to use them}.
+    \item The goal is to develop competence in the \textbf{application of statistical learning methods to real-world problems} (data science).
+\end{enumerate}
+
+\subsection{Real-World Applications}
+
+Two representative application areas illustrate the scope of the discipline.
+
+\subsubsection{District Heating Networks}
+
+\textbf{Goal}: predict heating load in the next 48 hours.
+\begin{itemize}
+    \item \textbf{Data}: multivariate time series (heat demand of previous days, external temperature, humidity, \ldots)
+    \item \textbf{Model}: a set of linear autoregressive models
+    \item \textbf{Output}: load demand forecast for the next 48 hours
+\end{itemize}
+This is a regression problem. Evaluation metrics used in practice include RMSE and MAPE across different regimes (weekdays, weekends, holidays).
+
+\subsubsection{Environmental Monitoring — Autonomous Water Drones}
+
+\textbf{Goal}: recognize what a drone is doing from its sensor stream (activity recognition).
+\begin{itemize}
+    \item \textbf{Data}: multivariate time series from GPS, engine control, battery, electrical conductivity, dissolved oxygen, temperature sensors
+    \item \textbf{Task}: find time intervals representing important situations (e.g., drone moving against current)
+    \item \textbf{Approach}: unsupervised learning — K-means, Affinity Propagation, Gaussian Mixture Models, Hidden Markov Models
+\end{itemize}
+Key result: it is possible to \textbf{segment time series} and identify meaningful clusters without knowing the labels. For upstream/downstream navigation, K-means identifies average direction of movement, average voltage to motors, and standard deviation of battery voltage as the most relevant features.
+
+
+\section{Key Elements of Statistical Learning}
+
+\subsection{The Core Idea}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Core idea}]
+Statistical learning is about \textbf{automatically building models starting from data}. In all cases, what we learn is a \textbf{function}.
+\end{tcolorbox}
+
+There are three main types of learning, distinguished by what information is available during training:
+
+\begin{itemize}
+    \item \textbf{Supervised learning}: $y = f(x)$ — given pairs $(x, y)$, learn $f(\cdot)$ [function approximation].
+    \item \textbf{Unsupervised learning}: $f(x)$ — given only $x$, learn $f(\cdot)$ as a compact representation of $x$ [clustering].
+    \item \textbf{Reinforcement learning}: $y = f(x),\, z$ — given $(x, z)$, learn $f(\cdot)$ that generates $y$, where $x$ is the state and $z$ is the reward signal [sequential decision making].
+\end{itemize}
+
+\subsection{Supervised Learning}
+
+In supervised learning we have:
+\begin{itemize}
+    \item A \textbf{training set} of labeled examples: known inputs $x$ and corresponding labels $t$.
+    \item A \textbf{model} $y(x)$ that maps inputs to predicted outputs.
+    \item A \textbf{test set} of new, unseen inputs: the model is applied to evaluate generalization.
+\end{itemize}
+
+\textit{Example}: recognizing hand-written digits. Training data consists of images $x$ and digit labels $t$. The model learns a mapping $y(x)$; at test time it predicts the digit for new images.
+
+\subsection{Unsupervised Learning}
+
+In unsupervised learning there are \textbf{no labels}. The goal is to build a model that \textbf{groups similar} data points — by columns, rows, or both (bi-clustering).
+
+\textit{Example}: gene expression data. Rows are genes, columns are cell lines, each entry is the expression level. No cancer-type label is used; the task is to discover structure in the data.
+
+\subsection{Reinforcement Learning}
+
+Reinforcement learning is a \textbf{control problem with sequential decision making}:
+\begin{itemize}
+    \item A \textbf{reward signal} drives the agent's actions (e.g., high reward when reaching a target).
+    \item The agent must \textbf{interact with the environment} to learn.
+    \item It uses data-driven statistical techniques but the focus is on \textbf{control}, not data analysis.
+\end{itemize}
+
+\subsection{Basic Concepts and Terminology}
+
+\begin{itemize}
+    \item \textbf{Input variables} (independent variables, predictors, features): denoted $X$ when scalar, $X_1, X_2, \ldots, X_p$ when there are $p$ predictors.
+    \item \textbf{Output variable} (response, dependent variable): denoted $Y$.
+    \item \textbf{Quantitative variables}: numerical values (temperature, height, income, \ldots).
+    \item \textbf{Qualitative variables} (categorical): values from one of $K$ classes (gender, brand, \ldots).
+    \item \textbf{Regression}: quantitative output.
+    \item \textbf{Classification}: qualitative output.
+\end{itemize}
+
+
+\section{Why Estimate \texorpdfstring{$f$}{f}?}
+
+\subsection{The General Setup}
+
+Assume $Y = f(X) + \epsilon$, where $f$ is an unknown function of $X = (X_1, X_2, \ldots, X_p)$ and $\epsilon$ is a \textbf{random error term} independent of $X$. Statistical learning is concerned with estimating $f$.
+
+There are two main motivations for estimating $f$: \textbf{prediction} and \textbf{inference}.
+
+\subsection{Prediction}
+
+When inputs $X$ are easy to observe but output $Y$ is difficult to measure directly, we build a model $\hat{f}(\cdot)$ to compute:
+\[
+    \hat{Y} = \hat{f}(X)
+\]
+In prediction, the exact form of $\hat{f}$ is not of primary interest — it acts as a \textbf{black box} as long as predictions are accurate.
+
+\subsubsection{Reducible and Irreducible Error}
+
+The accuracy of $\hat{Y}$ as a prediction of $Y$ depends on two quantities:
+
+\begin{itemize}
+    \item \textbf{Reducible error}: error that arises because $\hat{f}$ is not a perfect estimate of $f$. This can in principle be reduced by using better models or more data.
+    \item \textbf{Irreducible error}: variability of $\epsilon$ (the random error), which is independent of $X$ and cannot be eliminated regardless of how well we estimate $f$.
+\end{itemize}
+
+Formally, the expected squared prediction error decomposes as:
+\[
+    E\!\left[(Y - \hat{Y})^2\right]
+    = E\!\left[(f(X) - \hat{f}(X))^2\right] + \mathrm{Var}(\epsilon)
+    = \underbrace{E\!\left[(f(X) - \hat{f}(X))^2\right]}_{\text{Reducible error}} + \underbrace{\mathrm{Var}(\epsilon)}_{\text{Irreducible error}}
+\]
+
+where $E(X)$ is the expected value (population average) of $X$ and $\mathrm{Var}(X)$ is its variance.
+
+\subsection{Inference}
+
+When the goal is to \textbf{understand how $Y$ changes as $X$ changes}, prediction accuracy is secondary — we need to know the \textbf{form} of $f(\cdot)$, so $\hat{f}$ cannot be a black box.
+
+Typical questions in inference:
+\begin{itemize}
+    \item Which independent variables are \textbf{associated} with the response? (key for interpretability)
+    \item What is the \textbf{relationship} between the response and each predictor: positive or negative effect?
+    \item Can the relationship between $Y$ and $X$ be captured by a \textbf{linear model}? Linear models are simpler and easier to use but have limited representational power.
+\end{itemize}
+
+\subsection{Estimating \texorpdfstring{$f$}{f}: General Setup}
+
+Given:
+\begin{itemize}
+    \item $n$ training data-points, $p$ predictors
+    \item $x_{ij}$: value of observation $i$ for predictor $j$, where $i = 1, \ldots, n$ and $j = 1, \ldots, p$
+    \item $y_i$: response value for observation $i$
+    \item Training set: $(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)$ where $x_i = (x_{i1}, x_{i2}, \ldots, x_{ip})^T$
+\end{itemize}
+
+\textbf{Goal}: find $\hat{f}(\cdot)$ such that $Y \approx \hat{f}(X)$ for any observation $(X, Y)$.
+
+
+\section{How Do We Estimate \texorpdfstring{$f$}{f}?}
+
+\subsection{Parametric Methods}
+
+Parametric methods follow a \textbf{two-step procedure}:
+
+\begin{enumerate}
+    \item \textbf{Assume a form} for $f(\cdot)$. For example, assume $f$ is \textit{linear}:
+    \[
+        f(X) = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_p X_p
+    \]
+    A model is then completely identified by $p+1$ parameters $\beta_0, \beta_1, \ldots, \beta_p$.
+    \item \textbf{Fit or train} the model using the training data. For a linear model this means estimating $\beta_0, \beta_1, \ldots, \beta_p$ such that
+    \[
+        Y \approx \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_p X_p
+    \]
+    The most common approach is \textbf{Least Squares}.
+\end{enumerate}
+
+The key point: by assuming a parametric form we reduce the problem of estimating an arbitrary function $f$ to estimating a finite set of parameters.
+
+\subsection{Non-Parametric Methods}
+
+Non-parametric methods make \textbf{no assumption on the form of $f(\cdot)$} and instead try to fit $f$ as closely as possible to the training data.
+
+\begin{itemize}
+    \item \textbf{Pros}: can approximate the training data very well, no structural assumption.
+    \item \textbf{Cons}: require a very large number of observations; can result in \textbf{overfitting}.
+\end{itemize}
+
+A typical example is thin-plate splines. A smooth spline fits the data well while generalizing; a rough spline interpolates the training points almost exactly but overfits.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Overfitting}]
+Overfitting occurs when a model fits the training data too closely, capturing noise rather than the true underlying pattern. The model performs well on training data but poorly on new, unseen data.
+\end{tcolorbox}
+
+
+\section{Prediction Accuracy vs.\ Model Interpretability}
+
+There is a fundamental \textbf{trade-off between flexibility and interpretability} in statistical learning methods. Along the flexibility axis, from most interpretable to most flexible:
+
+\begin{enumerate}
+    \item \textbf{Subset selection, Lasso} — high interpretability, low flexibility
+    \item \textbf{Least Squares} — moderate interpretability
+    \item \textbf{Generalized Additive Models, Trees} — moderate
+    \item \textbf{Bagging, Boosting} — low interpretability, high flexibility
+    \item \textbf{Support Vector Machines} — low interpretability, high flexibility
+\end{enumerate}
+
+More flexible methods tend to achieve better \textbf{prediction accuracy} on complex data but at the cost of \textbf{interpretability}. When inference is the goal, simpler models are preferred; when prediction accuracy is paramount and the model is used as a black box, more flexible methods may be appropriate.
+
+
+\section{Assessing Model Accuracy}
+
+\subsection{The Problem of Model Selection}
+
+No method outperforms all others on all datasets. Selecting the best approach for a given problem is a challenging and crucial task. The key question is: how do we measure \textbf{quality of fit} — how far is the predicted response from the true response?
+
+\subsection{Mean Squared Error}
+
+For regression problems, the standard measure is the \textbf{Mean Squared Error (MSE)}:
+\[
+    \mathrm{MSE} = \frac{1}{n} \sum_{i=1}^{n} \bigl(y_i - \hat{f}(x_i)\bigr)^2
+\]
+
+\begin{itemize}
+    \item \textbf{Training MSE}: MSE computed on the training data. Minimizing training MSE is how models are typically fit.
+    \item \textbf{Test MSE}: MSE computed on new, unseen data. This is what we actually care about.
+\end{itemize}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black]
+There is \textbf{no guarantee} that the method with minimum training MSE will achieve minimum test MSE. A model that fits the training data too well (low training MSE) often performs worse on test data (high test MSE) — overfitting.
+\end{tcolorbox}
+
+\subsection{The Bias-Variance Trade-off}
+
+The expected test MSE at a given point $x_0$ can always be decomposed into three components:
+
+\[
+    E\!\left[\bigl(y_0 - \hat{f}(x_0)\bigr)^2\right]
+    = \mathrm{Var}\!\left(\hat{f}(x_0)\right) + \left[\mathrm{Bias}\!\left(\hat{f}(x_0)\right)\right]^2 + \mathrm{Var}(\epsilon)
+\]
+
+\begin{itemize}
+    \item \textbf{Variance} $\mathrm{Var}(\hat{f}(x_0))$: how much $\hat{f}$ would change if estimated on a different training set. More flexible models have \textbf{higher variance}.
+    \item \textbf{Bias} $[\mathrm{Bias}(\hat{f}(x_0))]^2$: error introduced by the assumptions made on the model. Simpler models (e.g., linear) have \textbf{higher bias}.
+    \item \textbf{Irreducible error} $\mathrm{Var}(\epsilon)$: irreducible noise, independent of the model.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bias-Variance Trade-off}]
+As model flexibility increases, \textbf{variance increases} and \textbf{bias decreases}. The optimal model minimizes the sum of variance and squared bias. This trade-off is unavoidable — there is no universally best model.
+\end{tcolorbox}
+
+Different datasets exhibit different bias-variance trade-offs (different rates of change). In practice, we cannot compute the test MSE directly, but we can \textbf{estimate} it — for example, using \textbf{cross-validation}.
+
+
+% ========================================
+\part{Linear Regression}
+% ========================================
+
+Linear regression is a useful tool for predicting a \textbf{quantitative} response. It is a simple yet powerful approach that introduces the supervised learning perspective, and serves as a jumping-off point for more modern statistical learning methods — many of which can be seen as generalizations or extensions of linear regression.
+
+\section{Simple Linear Regression}
+
+\subsection{The Model}
+
+Simple linear regression predicts a quantitative response $Y$ on the basis of a \textbf{single predictor} $X$:
+\[
+    Y \approx \beta_0 + \beta_1 X
+\]
+We read $\approx$ as ``is approximately modelled as''. The \textbf{intercept} $\beta_0$ and the \textbf{slope} $\beta_1$ are the model \textbf{coefficients} (or parameters). Once we have estimated $\hat{\beta}_0$ and $\hat{\beta}_1$ from training data, predictions are computed as:
+\[
+    \hat{y} = \hat{\beta}_0 + \hat{\beta}_1 x
+\]
+
+\textit{Running example}: the Advertising dataset contains sales of a product in 200 different markets, together with advertising budgets for TV, radio, and newspaper. We can regress sales $Y$ on TV spending $X$:
+\[
+    \text{sales} \approx \beta_0 + \beta_1 \times \text{TV}
+\]
+
+\subsection{Estimating the Coefficients via Least Squares}
+
+$\beta_0$ and $\beta_1$ are unknown. Starting from $n$ observation pairs $(x_1, y_1), \ldots, (x_n, y_n)$, we define the \textbf{residual} for observation $i$ as:
+\[
+    e_i = y_i - \hat{y}_i
+\]
+the difference between the $i$-th observed and predicted response. The \textbf{Residual Sum of Squares (RSS)} is:
+\[
+    \mathrm{RSS} = e_1^2 + \cdots + e_n^2
+    = \sum_{i=1}^{n}(y_i - \hat{\beta}_0 - \hat{\beta}_1 x_i)^2
+\]
+The least squares estimates minimize the RSS. The closed-form solution is:
+\[
+    \hat{\beta}_1 = \frac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^{n}(x_i - \bar{x})^2}, \qquad
+    \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}
+\]
+where $\bar{x} = \frac{1}{n}\sum_{i=1}^n x_i$ and $\bar{y} = \frac{1}{n}\sum_{i=1}^n y_i$ are the sample means.
+
+For the TV advertising example: $\hat{\beta}_0 = 7.03$, $\hat{\beta}_1 = 0.0475$.
+
+\subsection{The Population Regression Line}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Population Regression Line}]
+When $f$ can be approximated by a linear function, the \textbf{population regression line} is the model
+\[
+    Y = \beta_0 + \beta_1 X + \epsilon
+\]
+that defines the best linear approximation to the \textbf{true relationship} between $X$ and $Y$.
+\begin{itemize}
+    \item $\beta_0$: the intercept — expected value of $Y$ when $X = 0$.
+    \item $\beta_1$: the slope — average increase in $Y$ associated with a one-unit increase in $X$.
+\end{itemize}
+\end{tcolorbox}
+
+The least squares line is an \textbf{estimate} of the population regression line, just as the sample mean $\hat{\mu}$ estimates the population mean $\bar{\mu}$. The least squares line differs from the true line but is close, in the same way that the sample mean is different from but close to the population mean.
+
+\subsection{Bias and Standard Error}
+
+An estimator is \textbf{unbiased} if it does not systematically over- or under-estimate the true parameter. The sample mean $\hat{\mu}$ is an unbiased estimator of $\bar{\mu}$: over many datasets, the average of $\hat{\mu}$ coincides with $\bar{\mu}$.
+
+To quantify how far a single estimator $\hat{\mu}$ will be from $\bar{\mu}$, we use the \textbf{Standard Error}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Standard Error}]
+\[
+    \mathrm{Var}(\hat{\mu}) = \mathrm{SE}(\hat{\mu})^2 = \frac{\sigma^2}{n}
+\]
+where $\sigma$ is the standard deviation of each $y_i$ in $Y$. The more observations we have, the smaller the standard error.
+\end{tcolorbox}
+
+Analogously, the standard errors of $\hat{\beta}_0$ and $\hat{\beta}_1$ are:
+\[
+    \mathrm{SE}(\hat{\beta}_0)^2 = \sigma^2\!\left[\frac{1}{n} + \frac{\bar{x}^2}{\sum_{i=1}^{n}(x_i - \bar{x})^2}\right], \qquad
+    \mathrm{SE}(\hat{\beta}_1)^2 = \frac{\sigma^2}{\sum_{i=1}^{n}(x_i - \bar{x})^2}
+\]
+where $\sigma^2 = \mathrm{Var}(\epsilon)$. Since $\sigma^2$ is not known, it is estimated from data via the \textbf{Residual Standard Error}:
+\[
+    \mathrm{RSE} = \sqrt{\frac{\mathrm{RSS}}{n-2}}
+\]
+
+\subsection{Confidence Intervals}
+
+A \textbf{95\% confidence interval} is a range of values such that there is a 95\% probability that the range contains the true unknown value of the parameter. For $\beta_i$, assuming a Gaussian distribution, the 95\% CI approximately takes the form:
+\[
+    \hat{\beta}_i \pm 2 \cdot \mathrm{SE}(\hat{\beta}_i)
+\]
+That is, there is approximately a 95\% chance that the interval $\bigl[\hat{\beta}_i - 2\,\mathrm{SE}(\hat{\beta}_i),\; \hat{\beta}_i + 2\,\mathrm{SE}(\hat{\beta}_i)\bigr]$ contains the true value of $\beta_i$.
+
+\subsection{Hypothesis Testing}
+
+Standard errors can also be used to perform \textbf{hypothesis tests} on the coefficients. The most common test is:
+\[
+    H_0: \beta_1 = 0 \quad \text{(no relationship between } X \text{ and } Y\text{)}
+\]
+versus
+\[
+    H_a: \beta_1 \neq 0 \quad \text{(some relationship exists)}
+\]
+To test $H_0$, we need to assess whether $\hat{\beta}_1$ is sufficiently far from zero. We compute the \textbf{$t$-statistic}:
+\[
+    t = \frac{\hat{\beta}_1 - 0}{\mathrm{SE}(\hat{\beta}_1)}
+\]
+which measures the number of standard deviations that $\hat{\beta}_1$ is away from 0. We then compute the \textbf{$p$-value}: the probability of observing any value of the $t$-statistic equal to $|t|$ or larger, assuming $\beta_1 = 0$. A \textbf{small $p$-value} implies there is an association between the predictor and the response, so we can \textbf{reject the null hypothesis}. Typical cut-offs are $0.01$ and $0.05$.
+
+\subsection{Assessing Model Accuracy: RSE and \texorpdfstring{$R^2$}{R2}}
+
+Two standard measures quantify how well the model fits the data.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Residual Standard Error (RSE)}]
+\[
+    \mathrm{RSE} = \sqrt{\frac{1}{n-2}\,\mathrm{RSS}} = \sqrt{\frac{1}{n-2}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
+\]
+RSE estimates the standard deviation of $\epsilon$. It measures the \textbf{lack of fit} of the linear model to the data, in the units of $Y$.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{$R^2$ Statistic}]
+\[
+    R^2 = \frac{\mathrm{TSS} - \mathrm{RSS}}{\mathrm{TSS}} = 1 - \frac{\mathrm{RSS}}{\mathrm{TSS}}
+\]
+where $\mathrm{TSS} = \sum(y_i - \bar{y})^2$ is the \textbf{total sum of squares}. $R^2$ is a proportion (between 0 and 1), independent of the scale of $Y$.
+\end{tcolorbox}
+
+Interpretation:
+\begin{itemize}
+    \item TSS measures total variance in $Y$ \textit{before} regression; RSS measures the variance remaining \textit{after} regression.
+    \item $R^2$ measures the \textbf{proportion of variability in $Y$ explained by $X$}.
+    \item $R^2 \approx 1$: the regression explains most of the variability — good linear fit.
+    \item $R^2 \approx 0$: the regression explains little — the linear model is wrong or $\sigma^2$ is high.
+\end{itemize}
+
+In simple linear regression, $R^2 = r^2$ where $r = \mathrm{Cor}(X, Y)$ is the sample correlation:
+\[
+    \mathrm{Cor}(X, Y) = \frac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}^{n}(x_i - \bar{x})^2}\sqrt{\sum_{i=1}^{n}(y_i - \bar{y})^2}}
+\]
+
+
+\section{Multiple Linear Regression}
+
+\subsection{The Model}
+
+With $p$ predictors, the model generalizes to:
+\[
+    Y = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p + \epsilon
+\]
+$\beta_j$ represents the \textbf{average effect on $Y$ of a one-unit increase in $X_j$, holding all other predictors fixed}. For the advertising example:
+\[
+    \text{sales} = \beta_0 + \beta_1 \times \text{TV} + \beta_2 \times \text{radio} + \beta_3 \times \text{newspaper} + \epsilon
+\]
+
+\subsection{Estimating the Coefficients}
+
+$\beta_0, \beta_1, \ldots, \beta_p$ are unknown and must be estimated. Given estimates $\hat{\beta}_0, \hat{\beta}_1, \ldots, \hat{\beta}_p$, predictions are made via:
+\[
+    \hat{y} = \hat{f}(X_p) = \hat{\beta}_0 + \sum_{j=1}^{p} \hat{\beta}_j x_j
+\]
+We choose $\hat{\beta}_0, \hat{\beta}_1, \ldots, \hat{\beta}_p$ to minimize the RSS:
+\[
+    \mathrm{RSS} = \sum_{i=1}^{n}(y_i - \hat{y}_i)^2 = \sum_{i=1}^{n}\!\left(y_i - \hat{\beta}_0 - \sum_{j=1}^{p}\hat{\beta}_j x_{ij}\right)^{\!2}
+\]
+Unlike simple linear regression, the minimizers do not have a simple closed form and are computed via matrix algebra (normal equations).
+
+\begin{remark}
+Correlation between predictors can make individual coefficient estimates difficult to interpret. In the advertising example, newspaper has a significant positive coefficient in simple regression ($p < 0.001$) but a near-zero, non-significant coefficient ($p = 0.86$) in multiple regression. This is because newspaper is correlated with radio ($r = 0.354$): in markets with high radio budgets, newspaper budgets also tend to be high, and sales are driven by radio, not newspaper.
+\end{remark}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black]
+\textbf{Correlation $\neq$ causality.} A predictor may appear significant in simple regression only because it is correlated with the true driving variable. Multiple regression helps disentangle these effects but does not establish causation.
+\end{tcolorbox}
+
+\subsection{Important Questions in Multiple Regression}
+
+\subsubsection{Question 1: Is at least one predictor useful?}
+
+We test the joint null hypothesis $H_0: \beta_1 = \beta_2 = \cdots = \beta_p = 0$ against $H_a$: at least one $\beta_j \neq 0$ using the \textbf{$F$-statistic}:
+\[
+    F = \frac{(\mathrm{TSS} - \mathrm{RSS})/p}{\mathrm{RSS}/(n-p-1)}
+\]
+where $\mathrm{TSS} = \sum(y_i - \bar{y})^2$ and $\mathrm{RSS} = \sum(y_i - \hat{y}_i)^2$. Small values of $F$ indicate no response-predictor relationship.
+
+\subsubsection{Question 2: Which predictors are important?}
+
+When $p$ is large, testing all $2^p$ subsets is infeasible. Three classical automated approaches exist:
+
+\begin{itemize}
+    \item \textbf{Forward selection}: start with the null model (intercept only). Fit $p$ simple regressions and add the variable with the lowest RSS. Continue adding variables that most reduce RSS, until a stopping rule is satisfied.
+    \item \textbf{Backward selection}: start with all $p$ variables. Remove the variable with the largest $p$-value (least statistically significant). Refit with $p-1$ variables and repeat, until all remaining variables have $p$-value below a threshold.
+    \item \textbf{Mixed selection}: start with no variables and add the best fitting variable one at a time. If the $p$-value for any current variable rises above a threshold as new variables are added, remove it. Continue until all variables in the model have a sufficiently low $p$-value.
+\end{itemize}
+
+\subsubsection{Question 3: Model fit}
+
+In multiple regression, the RSE is defined as:
+\[
+    \mathrm{RSE} = \sqrt{\frac{1}{n-p-1}\,\mathrm{RSS}}
+\]
+Adding more predictors to the model will always increase $R^2$ (even if the additional predictor is weakly related to the response). Graphical summaries — such as residual plots — can reveal problems not visible from numerical statistics alone. For example, a non-linear pattern in the residuals suggests a \textbf{synergy} or \textbf{interaction effect} between predictors.
+
+\subsubsection{Question 4: Predictions}
+
+Three sources of uncertainty are associated with regression predictions:
+\begin{enumerate}
+    \item The least squares plane is only an estimate for the true population regression plane (different datasets yield different coefficients).
+    \item Model bias: assuming a linear $f(X)$ is almost always an approximation of reality (reducible error).
+    \item Even knowing the true $f(X)$, an irreducible error $\epsilon$ is always present — we use \textbf{prediction intervals} to account for this.
+\end{enumerate}
+
+
+\section{Considerations about the Regression Model}
+
+\subsection{Qualitative Predictors}
+
+\subsubsection{Two-Level Qualitative Predictors}
+
+When a qualitative predictor (factor) has two levels, we create an \textbf{indicator} or \textbf{dummy variable} that takes two numerical values. For example, to encode gender in a credit card balance study:
+\[
+    x_i = \begin{cases} 1 & \text{if the } i\text{-th person is female} \\ 0 & \text{if the } i\text{-th person is male} \end{cases}
+\]
+The regression equation becomes:
+\[
+    y_i = \beta_0 + \beta_1 x_i + \epsilon_i = \begin{cases} \beta_0 + \beta_1 + \epsilon_i & \text{if female} \\ \beta_0 + \epsilon_i & \text{if male} \end{cases}
+\]
+Interpretation: $\beta_0$ is the average balance among males; $\beta_0 + \beta_1$ is the average among females; $\beta_1$ is the average difference in balance between females and males.
+
+\subsubsection{Qualitative Predictors with More than Two Levels}
+
+A single dummy variable cannot encode more than two levels. For a qualitative predictor with $K$ levels we create $K-1$ dummy variables. For instance, for a three-level ethnicity variable (Asian, Caucasian, African American):
+\[
+    x_{i1} = \begin{cases} 1 & \text{Asian} \\ 0 & \text{otherwise} \end{cases}
+    \qquad
+    x_{i2} = \begin{cases} 1 & \text{Caucasian} \\ 0 & \text{otherwise} \end{cases}
+\]
+The model becomes $y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \epsilon_i$, which gives:
+\[
+    y_i = \begin{cases} \beta_0 + \beta_1 + \epsilon_i & \text{Asian} \\ \beta_0 + \beta_2 + \epsilon_i & \text{Caucasian} \\ \beta_0 + \epsilon_i & \text{African American} \end{cases}
+\]
+The level with no dummy variable is the \textbf{baseline}.
+
+\subsection{Extensions of the Linear Model}
+
+The standard linear model assumes the relationship between predictors and response is \textbf{linear and additive}:
+\begin{itemize}
+    \item \textbf{Additivity}: the effect of $X_j$ on $Y$ is independent of the other predictors.
+    \item \textbf{Linearity}: the change in $Y$ due to a one-unit change in $X_j$ is constant.
+\end{itemize}
+
+\subsubsection{Interaction Effects}
+
+The \textbf{synergy} (or \textbf{interaction}) effect occurs when the effect of one predictor depends on the value of another. To accommodate it, we include an \textbf{interaction term} $X_1 X_2$:
+\[
+    Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_1 X_2 + \epsilon
+\]
+Defining $\tilde{\beta}_1 = (\beta_1 + \beta_3 X_2)$, this can be rewritten as $Y = \beta_0 + \tilde{\beta}_1 X_1 + \beta_2 X_2 + \epsilon$. The effect of $X_1$ on $Y$ is no longer constant: adjusting $X_2$ changes the impact of $X_1$ on $Y$.
+
+\subsubsection{Non-linear Relationships}
+
+\textbf{Polynomial regression} extends the linear model to accommodate non-linear relationships while remaining a linear model in the coefficients:
+\[
+    \text{mpg} = \beta_0 + \beta_1 \times \text{horsepower} + \beta_2 \times \text{horsepower}^2 + \epsilon
+\]
+The second predictor is $X_2 = \text{horsepower}^2$; the model is still linear in $\beta_0, \beta_1, \beta_2$.
+
+\subsection{Potential Problems}
+
+\subsubsection{1. Non-linearity of the Data}
+
+The linear model assumes a linear relationship between $X$ and $Y$. \textbf{Residual plots} (plotting $e_i = y_i - \hat{y}_i$ versus fitted values $\hat{y}_i$) help identify non-linearity: a pattern in the residuals signals that the linear assumption is violated. A simple remedy is to apply \textbf{non-linear transformations} of the predictors, such as $\log X$ or $\sqrt{X}$.
+
+\subsubsection{2. Correlation of Error Terms}
+
+An important assumption is that the error terms $\epsilon_1, \epsilon_2, \ldots, \epsilon_n$ are \textbf{uncorrelated}. If there is correlation among errors:
+\begin{itemize}
+    \item Estimated standard errors will underestimate the true standard error.
+    \item Confidence intervals will be narrower than they should be.
+    \item $p$-values will be lower than they should be — parameters may be declared erroneously significant.
+\end{itemize}
+Correlated errors create an \textbf{unwarranted sense of confidence} in the model. This problem frequently arises in time series data.
+
+\subsubsection{3. Non-constant Variance of Error Terms}
+
+Linear regression also assumes \textbf{homoscedasticity}: $\mathrm{Var}(\epsilon_i) = \sigma^2$ (constant). When the variance of the errors increases with the fitted values, this is called \textbf{heteroscedasticity}. It is identifiable from a funnel-shaped residual plot. A common solution is to transform the response with a concave function such as $\log(Y)$.
+
+\subsubsection{4. Outliers}
+
+An \textbf{outlier} is a point $y_i$ that is far from the value predicted by the model (arising, for instance, from incorrect recording). Outliers have little effect on the least squares fit itself but can cause problems with \textbf{confidence intervals and $p$-values}: for example, an outlier may inflate the RSE, making all confidence intervals wider and $p$-values less significant.
+
+\subsubsection{5. Collinearity}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Collinearity}]
+\textbf{Collinearity} refers to the situation in which two or more predictor variables are closely related to each other.
+\end{tcolorbox}
+
+Collinearity makes it difficult to separate out the individual effects of collinear variables on the response. Geometrically, the RSS contour becomes elongated: there are many pairs $(\hat{\beta}_{\text{limit}}, \hat{\beta}_{\text{rating}})$ with a similar RSS, so the minimum is not well-determined. Consequences:
+\begin{itemize}
+    \item Estimates $\hat{\beta}_j$ become very uncertain (high standard errors).
+    \item The $t$-statistic for each collinear predictor declines, inflating $p$-values — a truly associated variable may fail to have a small $p$-value.
+\end{itemize}
+Collinearity can be detected from the \textbf{correlation matrix} of predictors. When more than two variables are involved, the \textbf{Variance Inflation Factor (VIF)} is used; its presence motivates variable selection methods such as those covered in subsequent chapters.
+
+
+% ========================================
+\part{Cross-Validation}
+% ========================================
+
+\section{Resampling Methods}
+
+\textbf{Resampling methods} involve repeatedly drawing samples from a training set and refitting a model of interest on each sample in order to obtain additional information about that model. For example, we can estimate the variability of a linear regression fit by drawing different samples from the training data and fitting a linear regression to each one. The main drawback is computational cost — fitting the same statistical method multiple times using different subsets of the training data — but this is generally not prohibitive.
+
+The two most commonly used resampling methods are \textbf{cross-validation} and \textbf{bootstrapping}. Cross-validation is used to estimate the test error associated with a given statistical learning method and to select the appropriate level of model flexibility.
+
+\section{Test Error vs.\ Training Error}
+
+\begin{itemize}
+    \item The \textbf{test error} is the average error that results from using a statistical learning method to predict the response on a \textbf{new observation} — a measurement not used for training. A method can be considered warranted if it produces models with low test error.
+    \item The \textbf{training error} can be easily calculated by applying the method to the observations used in its training. Unfortunately, the training error rate often \textbf{underestimates} the test error rate considerably.
+\end{itemize}
+
+When a dedicated test set is not available, we consider methods that estimate the test error by \textbf{holding out} a subset of training observations from the fitting process and then evaluating the error on that held-out subset.
+
+\section{The Validation Set Approach}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Validation Set Approach}]
+Randomly divide the available observations into two parts: a \textbf{training set} and a \textbf{validation set} (or hold-out set) of approximately equal size. Fit the model on the training set, then evaluate predictions on the validation set. The resulting \textbf{validation set error rate} — typically the MSE — provides an estimate of the test error rate.
+\end{tcolorbox}
+
+\subsection{Drawbacks}
+
+\begin{enumerate}
+    \item The validation estimate of the test error rate can be \textbf{highly variable}, depending on which observations happen to be included in the training set and which in the validation set.
+    \item Only a subset of observations is used to fit the model. Since statistical methods generally perform better with more data, the \textbf{validation set error rate may overestimate} the test error rate for the model fit on the entire dataset.
+\end{enumerate}
+
+\textit{Example}: on the Auto dataset, using the validation set approach to estimate the test MSE for a polynomial regression of \texttt{mpg} on \texttt{horsepower}, the estimated MSE varies substantially across different random splits of the data (right panel of the plot shows the high variability across ten random splits).
+
+\section{Leave-One-Out Cross-Validation (LOOCV)}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Leave-One-Out Cross-Validation}]
+LOOCV involves splitting the observations into two parts. Instead of two comparable-size subsets, a \textbf{single observation} $(x_1, y_1)$ is used as the validation set, and the remaining $n-1$ observations $(x_2, y_2), \ldots, (x_n, y_n)$ form the training set.
+\end{tcolorbox}
+
+The model is fit on $n-1$ observations and a prediction $\hat{y}_1$ is made for the excluded observation using $x_1$. Since $(x_1, y_1)$ was not used in fitting:
+\[
+    \mathrm{MSE}_1 = (y_1 - \hat{y}_1)^2
+\]
+is an approximately unbiased estimate of the test error. However, it is a \textbf{poor estimate} on its own because it is based on a single observation and hence highly variable.
+
+Repeating the procedure by selecting each $(x_i, y_i)$ in turn as the validation observation produces $n$ squared errors $\mathrm{MSE}_1, \ldots, \mathrm{MSE}_n$. The LOOCV estimate for the test MSE averages these:
+\[
+    \mathrm{CV}(n) = \frac{1}{n} \sum_{i=1}^{n} \mathrm{MSE}_i
+\]
+
+\subsection{Advantages over the Validation Set Approach}
+
+\begin{enumerate}
+    \item \textbf{Far less bias}: each training set contains $n-1$ observations, almost as many as the full dataset. LOOCV therefore tends not to overestimate the test error rate as much as the validation set approach.
+    \item \textbf{No randomness}: LOOCV always yields the same result — there is no randomness in the training/validation split.
+\end{enumerate}
+
+LOOCV is a very general method and can be used with any kind of predictive modeling (logistic regression, linear discriminant analysis, etc.).
+
+\section{\texorpdfstring{$k$}{k}-Fold Cross-Validation}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{$k$-Fold Cross-Validation}]
+Randomly divide the set of observations into $k$ groups (folds) of approximately equal size.
+\begin{enumerate}
+    \item Treat the first fold as the validation set and fit the method on the remaining $k-1$ folds; compute $\mathrm{MSE}_1$ on the validation fold.
+    \item Repeat $k$ times, each time using a different fold as the validation set.
+    \item This yields $k$ estimates $\mathrm{MSE}_1, \ldots, \mathrm{MSE}_k$. The $k$-fold CV estimate is:
+\end{enumerate}
+\[
+    \mathrm{CV}(k) = \frac{1}{k} \sum_{i=1}^{k} \mathrm{MSE}_i
+\]
+\end{tcolorbox}
+
+LOOCV is a special case of $k$-fold CV in which $k = n$.
+
+\subsection{Advantages of \texorpdfstring{$k$}{k}-fold CV over LOOCV}
+
+In practice, $k$-fold CV is typically performed with $k = 5$ or $k = 10$. The advantages over LOOCV are:
+
+\begin{enumerate}
+    \item \textbf{Computational}: LOOCV requires fitting the model $n$ times, which can be prohibitively expensive for large $n$. $k$-fold CV with $k = 10$ requires fitting only 10 times.
+    \item \textbf{Bias-variance trade-off}: each random split of observations estimates the test error differently. The variability in $k$-fold CV estimates is lower than the variability in the validation set approach, though higher than LOOCV's variability.
+\end{enumerate}
+
+\subsection{Bias-Variance Trade-off in Cross-Validation}
+
+The choice of $k$ in $k$-fold CV involves a bias-variance trade-off:
+
+\begin{itemize}
+    \item \textbf{Validation set approach}: each training set contains only about half the observations $\Rightarrow$ \textbf{high bias} (overestimates test error), low variance issues come from using a single split.
+    \item \textbf{LOOCV}: each training set contains $n-1$ observations $\Rightarrow$ \textbf{approximately unbiased} estimates of the test error. However, LOOCV has \textbf{higher variance} than $k$-fold CV.
+    \item \textbf{$k$-fold CV} ($k < n$): each training set contains $(k-1)n/k$ observations $\Rightarrow$ \textbf{intermediate level of bias}.
+\end{itemize}
+
+\subsubsection{Why does LOOCV have higher variance?}
+
+When performing LOOCV we average the outputs of $n$ fitted models, each trained on an almost identical set of observations. These outputs are therefore \textbf{highly (positively) correlated} with each other. In contrast, with $k$-fold CV ($k < n$) we average the outputs of $k$ fitted models whose training sets overlap less — they are \textbf{less correlated}. Since the mean of many highly correlated quantities has higher variance than the mean of less correlated quantities, the test error estimate from LOOCV tends to have higher variance than that from $k$-fold CV.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black]
+From the perspective of \textbf{bias reduction}, LOOCV should be preferred to $k$-fold CV. However, accounting for \textbf{variance}, $k$-fold CV with $k = 5$ or $k = 10$ is typically the preferred choice: these values have been shown empirically to yield test error rate estimates that suffer neither from excessively high bias nor from very high variance.
+\end{tcolorbox}
+
+\subsection{CV Curves and the True Test MSE}
+
+When examining real data, the true test MSE is unknown, so it is difficult to assess the accuracy of the CV estimate directly. On simulated data, where the true test MSE can be computed, CV curves have the \textbf{correct general shape} — they identify the right level of flexibility — but they tend to \textbf{underestimate} the true test MSE slightly. For model selection purposes (choosing among competing models or selecting the degree of flexibility), what matters is the shape of the curve rather than its absolute value.
+
+
+% ========================================
+\part{Linear Model Selection}
+% ========================================
+
+\section{Introduction}
+
+\subsection{Why Use Alternative Fitting Procedures?}
+
+The standard linear model $Y = \beta_0 + \sum_{j=1}^p \beta_j X_j + \epsilon$ fit by least squares is a workhorse of statistical learning: it offers strong inference guarantees and, on real-world problems, is often surprisingly competitive with non-linear methods. However, plain least squares can be improved by replacing it with \textbf{alternative fitting procedures}, for two reasons.
+
+\subsubsection{Prediction Accuracy}
+
+\begin{itemize}
+    \item If $n \gg p$ (observations much larger than variables), least squares estimates have low variance and perform well on test observations.
+    \item If $n$ is \textbf{not much larger than} $p$, there can be substantial variability in the least squares fit, leading to overfitting and poor predictions on unseen data.
+    \item If $p > n$, there is \textbf{no unique least squares estimate}: variance is infinite and the method cannot be used at all.
+\end{itemize}
+
+\subsubsection{Model Interpretability}
+
+In multiple regression, some predictors are often \textbf{not associated with the response}, introducing unnecessary complexity. Setting the corresponding coefficient estimates to zero produces a more interpretable model. This is the goal of \textbf{feature selection} (or \textbf{variable selection}).
+
+\subsection{The Prediction Accuracy vs.\ Interpretability Trade-off}
+
+\begin{center}
+\begin{tabular}{lll}
+ & \textbf{Fewer predictors} & \textbf{More predictors} \\
+\hline
+Interpretability & Easy & Difficult \\
+Overfitting risk & Low & High \\
+Prediction accuracy & Low & High \\
+Computational cost & Low & High \\
+\end{tabular}
+\end{center}
+
+\subsection{Three Classes of Approaches}
+
+There are three main strategies for fitting $Y = \beta_0 + \sum_{i=1}^p \beta_i X_i + \epsilon$ beyond plain least squares:
+
+\begin{itemize}
+    \item \textbf{Subset Selection}: select a subset of the $p$ predictors and fit the model by least squares on the reduced set.
+    \item \textbf{Shrinkage} (regularization): fit the model on all $p$ predictors but shrink the estimated coefficients towards zero. This reduces variance; some coefficients may be shrunk to exactly zero, performing variable selection implicitly.
+    \item \textbf{Dimension Reduction}: project the $p$ predictors into an $M$-dimensional subspace ($M < p$) by computing $M$ linear combinations of the variables, then fit a linear regression model on these $M$ projections using least squares.
+\end{itemize}
+
+
+\section{Best Subset Selection}
+
+\subsection{Algorithm}
+
+Best subset selection fits a separate least squares regression for \textbf{every possible combination} of the $p$ predictors.
+
+\begin{enumerate}
+    \item Let $\mathcal{M}_0$ denote the \textbf{null model} — no predictors, predicts the sample mean for every observation.
+    \item For $k = 1, \ldots, p$:
+        \begin{enumerate}[label=(\alph*)]
+            \item Fit all $\binom{p}{k} = \frac{p!}{k!(p-k)!}$ models that contain exactly $k$ predictors.
+            \item Choose the best among these models (smallest RSS / highest $R^2$) and call it $\mathcal{M}_k$.
+        \end{enumerate}
+    \item Select a single best model from $\mathcal{M}_0, \ldots, \mathcal{M}_p$ using \textbf{cross-validated prediction error}, $C_p$, AIC, BIC, or adjusted $R^2$.
+\end{enumerate}
+
+\begin{remark}
+RSS decreases monotonically and $R^2$ increases monotonically as $k$ grows — they cannot be used to select among $\mathcal{M}_0, \ldots, \mathcal{M}_p$ directly, as they always favour the largest model. Step 3 requires a criterion that accounts for model complexity.
+\end{remark}
+
+\subsection{Computational Limitation}
+
+The total number of models is $2^p$. This grows rapidly with $p$:
+\begin{itemize}
+    \item $p = 10$: $\approx 1{,}000$ models.
+    \item $p = 20$: $> 1{,}000{,}000$ models.
+\end{itemize}
+Best subset selection is \textbf{computationally infeasible for large $p$}.
+
+
+\section{Forward Stepwise Selection}
+
+\subsection{Algorithm}
+
+Forward stepwise selection is a \textbf{computationally efficient alternative} that considers a much smaller set of models. It starts with no predictors and adds them one at a time.
+
+\begin{enumerate}
+    \item Let $\mathcal{M}_0$ denote the \textbf{null model} with no predictors.
+    \item For $k = 0, \ldots, p-1$:
+        \begin{enumerate}[label=(\alph*)]
+            \item Consider all $p - k$ models that augment $\mathcal{M}_k$ with one additional predictor.
+            \item Choose the best among these (smallest RSS or highest $R^2$) and call it $\mathcal{M}_{k+1}$.
+        \end{enumerate}
+    \item Select a single best model from $\mathcal{M}_0, \ldots, \mathcal{M}_p$ using cross-validation, $C_p$, AIC, BIC, or adjusted $R^2$.
+\end{enumerate}
+
+\subsection{Computational Cost}
+
+Forward stepwise selection fits $1 + \sum_{k=0}^{p-1}(p - k) = 1 + p(p+1)/2$ models in total. For $p = 20$: only \textbf{211 models} versus 1,048,576 for best subset selection.
+
+\begin{remark}
+Forward stepwise selection does \textbf{not} guarantee finding the globally best model among all $2^p$ subsets, since it follows a greedy path. However, it can be applied even when $n < p$, whereas best subset selection cannot.
+\end{remark}
+
+
+\section{Backward Stepwise Selection}
+
+\subsection{Algorithm}
+
+Backward stepwise selection is an efficient alternative that begins with the \textbf{full model} and iteratively removes the least useful predictor.
+
+\begin{enumerate}
+    \item Let $\mathcal{M}_p$ denote the \textbf{full model} with all $p$ predictors.
+    \item For $k = p, p-1, \ldots, 1$:
+        \begin{enumerate}[label=(\alph*)]
+            \item Consider all $k$ models that contain all but one of the predictors in $\mathcal{M}_k$ (i.e., $k-1$ predictors each).
+            \item Choose the best (smallest RSS) and call it $\mathcal{M}_{k-1}$.
+        \end{enumerate}
+    \item Select a single best model from $\mathcal{M}_0, \ldots, \mathcal{M}_p$ using cross-validation, $C_p$, AIC, BIC, or adjusted $R^2$.
+\end{enumerate}
+
+Like forward stepwise, backward stepwise searches through only $1 + p(p+1)/2$ models. It \textbf{requires $n > p$} so that the full model can be fit. Forward stepwise can be used when $n < p$ and is therefore the only viable stepwise method in the high-dimensional setting.
+
+\subsection{Comparison of the Three Algorithms}
+
+The three algorithms generally give \textbf{similar but not identical} models. A \textbf{hybrid approach} also exists: variables are added sequentially (like forward selection) but any variable whose $p$-value rises above a threshold after new variables are added is removed (like backward selection), attempting to mimic best subset selection while retaining the computational advantages of stepwise methods.
+
+
+\section{Choosing the Optimal Model}
+
+All three subset selection procedures produce a sequence of models $\mathcal{M}_0, \ldots, \mathcal{M}_p$. To select the best among them we need to estimate the \textbf{test error}. RSS and $R^2$ track training error and cannot be used directly. There are two approaches.
+
+\subsection{Approach 1: Adjusting the Training Error}
+
+The training MSE ($= \mathrm{RSS}/n$) systematically underestimates the test MSE. Four criteria adjust for model size $d$ (number of predictors).
+
+\subsubsection{Mallow's \texorpdfstring{$C_p$}{Cp}}
+
+\[
+    C_p = \frac{1}{n}\bigl(\mathrm{RSS} + 2d\hat{\sigma}^2\bigr)
+\]
+where $\hat{\sigma}^2$ is an estimate of $\mathrm{Var}(\epsilon)$. The penalty $2d\hat{\sigma}^2$ increases with $d$, correcting for the tendency of training RSS to underestimate test error. We select the model with the \textbf{lowest} $C_p$.
+
+\subsubsection{AIC — Akaike Information Criterion}
+
+Defined for models fit by maximum likelihood. For a multivariate linear model with Gaussian errors, maximum likelihood and least squares are equivalent, giving:
+\[
+    \mathrm{AIC} = \frac{1}{n\hat{\sigma}^2}\bigl(\mathrm{RSS} + 2d\hat{\sigma}^2\bigr)
+\]
+AIC and $C_p$ are proportional in this setting and select the same model.
+
+\subsubsection{BIC — Bayesian Information Criterion}
+
+\[
+    \mathrm{BIC} = \frac{1}{n}\bigl(\mathrm{RSS} + \log(n)\,d\hat{\sigma}^2\bigr)
+\]
+BIC replaces the factor $2$ in $C_p$ with $\log(n)$. Since $\log(n) > 2$ for $n > 7$, BIC places a \textbf{heavier penalty} on models with many variables and tends to select \textbf{smaller models} than $C_p$. We select the model with the lowest BIC.
+
+\subsubsection{Adjusted \texorpdfstring{$R^2$}{R2}}
+
+Standard $R^2$ always increases as more variables are added. The adjusted $R^2$ corrects for this:
+\[
+    \text{Adjusted } R^2 = 1 - \frac{\mathrm{RSS}/(n - d - 1)}{\mathrm{TSS}/(n-1)}
+\]
+A large adjusted $R^2$ indicates a small test error. Unlike $R^2$, adding an unnecessary variable will decrease adjusted $R^2$ because the decrease in RSS is small relative to the increase in $d$. We select the model with the \textbf{highest} adjusted $R^2$.
+
+\subsection{Approach 2: Direct Estimation of Test Error}
+
+We can directly estimate the test error using the \textbf{validation set approach} or \textbf{cross-validation}. Plotting the validation set error or $k$-fold CV error as a function of the number of predictors $d$ typically shows a clear minimum, identifying the optimal model size.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black]
+All four indirect criteria ($C_p$, AIC, BIC, adjusted $R^2$) and the direct CV approach tend to \textbf{agree} in practice, identifying the same optimal model. When they disagree, direct CV is generally preferred as it makes fewer assumptions about the error distribution.
+\end{tcolorbox}
+
+
+\end{document}
