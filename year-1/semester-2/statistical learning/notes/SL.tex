@@ -964,4 +964,183 @@ All four indirect criteria ($C_p$, AIC, BIC, adjusted $R^2$) and the direct CV a
 \end{tcolorbox}
 
 
+%=============================================================
+\part{Regularization}
+%=============================================================
+
+Subset selection methods (best subset, forward/backward stepwise) reduce model complexity by selecting a \textbf{subset of predictors}. An alternative strategy is to fit a model containing \textbf{all $p$ predictors} but to \textbf{constrain} (regularize) the coefficient estimates, shrinking them toward zero. This can significantly \textbf{reduce variance} at the cost of a small increase in bias, often leading to better prediction accuracy. The two best-known shrinkage techniques are \textbf{ridge regression} and the \textbf{lasso}.
+
+%-------------------------------------------------------------
+\section{Shrinkage Methods}
+%-------------------------------------------------------------
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Shrinkage Methods}]
+Shrinkage methods fit a model that contains all $p$ predictors using a technique that \textbf{constrains} or \textbf{regularizes} the coefficient estimates, equivalently \textbf{shrinking} them toward zero. Shrinking the coefficient estimates can significantly \textbf{reduce their variance}.
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Ridge Regression}
+%-------------------------------------------------------------
+
+\subsection{Formulation}
+
+Recall that the ordinary least squares (OLS) estimates $\hat{\beta}_0, \hat{\beta}_1, \ldots, \hat{\beta}_p$ minimize the residual sum of squares:
+\[
+    \mathrm{RSS} = \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} \beta_j x_{ij}\right)^{\!2}
+\]
+
+\textbf{Ridge regression} is very similar, but the coefficient estimates $\hat{\beta}^R_\lambda$ minimize a \textbf{penalized} objective:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Ridge Regression Objective}]
+\[
+    \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} \beta_j x_{ij}\right)^{\!2} + \lambda \sum_{j=1}^{p} \beta_j^2
+    \;=\; \mathrm{RSS} + \lambda \sum_{j=1}^{p} \beta_j^2
+\]
+where $\lambda \geq 0$ is a \textbf{tuning parameter}.
+\end{tcolorbox}
+
+Like OLS, ridge regression seeks coefficients that fit the data well by making the RSS small. However, the second term --- the \textbf{shrinkage penalty} $\lambda \sum_j \beta_j^2$ (an $\ell_2$ penalty) --- is small when $\beta_1, \ldots, \beta_p$ are close to zero.
+
+\subsection{The Tuning Parameter $\lambda$}
+
+The parameter $\lambda$ controls the \textbf{relative impact} of the two terms:
+\begin{itemize}
+    \item $\lambda = 0$: the penalty has no effect $\Rightarrow$ ridge regression coincides with \textbf{least squares}.
+    \item $\lambda \to \infty$: the penalty dominates $\Rightarrow$ all coefficient estimates are driven toward zero.
+\end{itemize}
+Ridge regression produces a \textbf{different set of coefficient estimates} $\hat{\beta}^R_\lambda$ for each value of $\lambda$. As $\lambda$ increases from zero, the ridge coefficient estimates shrink toward zero.
+
+\begin{remark}
+The shrinkage penalty is \textbf{not} applied to $\beta_0$, which is simply the mean of the response when all predictors are centered. Only $\beta_1, \ldots, \beta_p$ are penalized.
+\end{remark}
+
+\subsection{Scale Sensitivity and Standardization}
+
+Unlike least squares, ridge regression is \textbf{not scale invariant}: multiplying a predictor $X_j$ by a constant $c$ changes the ridge coefficient estimates because the penalty $\lambda \sum_j \beta_j^2$ depends on the scale of each predictor. Therefore, one should \textbf{standardize the predictors} before applying ridge regression:
+\[
+    \tilde{x}_{ij} = \frac{x_{ij} - \bar{x}_j}{\sigma_j}
+    \qquad \text{where} \qquad
+    \sigma_j = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(x_{ij} - \bar{x}_j)^2}
+\]
+so that all predictors are on the same scale and the final fit does not depend on the units of measurement.
+
+\subsection{The $\ell_2$ Norm Perspective}
+
+Let the $\ell_2$ norm of the coefficient vector be $\|\beta\|_2 = \sqrt{\sum_{j=1}^{p} \beta_j^2}$. The ratio $\|\hat{\beta}^R_\lambda\|_2 / \|\hat{\beta}\|_2$ ranges from 1 (when $\lambda = 0$, recovering OLS) to 0 (when $\lambda = \infty$). This ratio measures the \textbf{amount by which} the ridge regression coefficients have been shrunk toward zero relative to the OLS solution.
+
+\subsection{Bias-Variance Trade-off in Ridge Regression}
+
+The advantage of ridge regression over least squares is rooted in the \textbf{bias-variance trade-off}:
+\begin{itemize}
+    \item As $\lambda$ increases, the \textbf{flexibility} of the ridge regression fit \textbf{decreases}: variance decreases but bias increases.
+    \item For an intermediate value of $\lambda$, the MSE can be \textbf{considerably lower} than the OLS MSE, because the reduction in variance more than compensates for the increase in bias.
+\end{itemize}
+
+\subsection{When to Use Ridge Regression}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{When Ridge Regression Helps}]
+\begin{itemize}
+    \item When the relationship between response and predictors is close to \textbf{linear}, the OLS estimates have low bias but may have \textbf{high variance} --- a small change in the training data can cause large changes in the coefficient estimates.
+    \item In particular, when $p$ is almost as large as $n$, OLS estimates are \textbf{extremely variable}.
+    \item If $p > n$, OLS does not even have a \textbf{unique solution}, whereas ridge regression performs well by trading a small increase in bias for a large decrease in variance.
+    \item Ridge regression has substantial \textbf{computational advantages} over best subset selection: fitting $2^p$ models vs.\ a single model for any value of $\lambda$.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{remark}
+With \textbf{multicollinearity} among predictors, the OLS loss surface is a long valley (a ``ridge''), making the solution unstable. The $\ell_2$ penalty turns this ridge into a \textbf{more regular} (better conditioned) function, stabilizing the estimates.
+\end{remark}
+
+%-------------------------------------------------------------
+\section{The Lasso}
+%-------------------------------------------------------------
+
+\subsection{Motivation}
+
+Ridge regression has one important \textbf{disadvantage}: it includes \textbf{all $p$ predictors} in the final model. The penalty shrinks all coefficients toward zero, but it does \textbf{not} set any of them \textbf{exactly to zero} (unless $\lambda = \infty$). This is not a problem for prediction accuracy, but it can hinder \textbf{model interpretability}, especially when $p$ is large.
+
+\subsection{Formulation}
+
+The \textbf{Lasso} (Least Absolute Shrinkage and Selection Operator) overcomes this disadvantage. The lasso coefficient estimates $\hat{\beta}^L_\lambda$ minimize:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Lasso Objective}]
+\[
+    \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} \beta_j x_{ij}\right)^{\!2} + \lambda \sum_{j=1}^{p} |\beta_j|
+    \;=\; \mathrm{RSS} + \lambda \sum_{j=1}^{p} |\beta_j|
+\]
+The lasso uses an $\ell_1$ penalty instead of the $\ell_2$ penalty: $\|\beta\|_1 = \sum_{j=1}^{p} |\beta_j|$.
+\end{tcolorbox}
+
+\subsection{Variable Selection}
+
+The $\ell_1$ penalty has the effect of \textbf{forcing some coefficient estimates to be exactly zero} when $\lambda$ is sufficiently large. As a consequence, the lasso performs \textbf{variable selection}, yielding \textbf{sparse models} that involve only a subset of the predictors.
+
+\begin{itemize}
+    \item $\lambda = 0$: the lasso gives the \textbf{OLS} fit.
+    \item $\lambda$ sufficiently large: the lasso gives the \textbf{null model} (all coefficients equal to zero).
+    \item Between these extremes, the lasso produces models with \textbf{any number of variables}, depending on $\lambda$.
+\end{itemize}
+
+In contrast, ridge regression always includes all variables in the model (with magnitude depending on $\lambda$). Selecting a good value for the lasso parameter is critical --- as with ridge regression, \textbf{cross-validation} is used to select the optimal $\lambda$.
+
+%-------------------------------------------------------------
+\section{Constrained Formulation}
+%-------------------------------------------------------------
+
+The lasso and ridge regression objectives can be equivalently written as \textbf{constrained optimization} problems:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Constrained Formulations}]
+\textbf{Lasso:}
+\[
+    \min_\beta \left\{\sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} \beta_j x_{ij}\right)^{\!2}\right\}
+    \qquad \text{subject to} \qquad
+    \sum_{j=1}^{p} |\beta_j| \leq s
+\]
+\textbf{Ridge:}
+\[
+    \min_\beta \left\{\sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} \beta_j x_{ij}\right)^{\!2}\right\}
+    \qquad \text{subject to} \qquad
+    \sum_{j=1}^{p} \beta_j^2 \leq s
+\]
+\end{tcolorbox}
+
+We seek coefficient estimates that make the RSS as small as possible, subject to the requirement that the $\ell_1$ (lasso) or $\ell_2$ (ridge) norm does not exceed a \textbf{budget} $s$. The budget $s$ absorbs the role of $\lambda$: when $s$ is extremely large, the constraint is not restrictive and the regression yields the OLS solution; when $s$ is small, the coefficients must be small to avoid budget violation.
+
+\subsection{Geometric Interpretation}
+
+For $p = 2$, the constraint region of the lasso is a \textbf{diamond} ($|\beta_1| + |\beta_2| \leq s$), while the constraint region of ridge regression is a \textbf{disk} ($\beta_1^2 + \beta_2^2 \leq s$). The elliptical contours of the RSS expand outward from the OLS solution $\hat{\beta}$. The regularized solution is the point where the contours first \textbf{touch} the constraint region.
+
+Because the lasso constraint has \textbf{corners} (at the axes), the contours are more likely to intersect the constraint at a corner, where one coefficient is exactly zero. The ridge constraint, being smooth, has no corners, so the intersection almost never occurs at an axis --- hence ridge rarely produces exact zeros.
+
+%-------------------------------------------------------------
+\section{Lasso vs Ridge Regression}
+%-------------------------------------------------------------
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Comparison}]
+\begin{itemize}
+    \item \textbf{Lasso advantage}: produces simpler and more \textbf{interpretable} models that involve only a \textbf{subset of the predictors}, generating more accurate predictions when few predictors are truly related to the response.
+    \item \textbf{Ridge advantage}: performs better when the response is a function of \textbf{many predictors}, all with coefficients of roughly equal size.
+    \item The number of predictors related to the response is \textbf{never known a priori} in real problems.
+    \item \textbf{Cross-validation} is used to determine the better approach on a particular dataset.
+\end{itemize}
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Selecting the Tuning Parameter}
+%-------------------------------------------------------------
+
+Both ridge regression and the lasso require a method for selecting the tuning parameter $\lambda$ (or equivalently the budget $s$).
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Tuning Parameter Selection via Cross-Validation}]
+\begin{enumerate}
+    \item Choose a grid of $\lambda$ values.
+    \item Compute the cross-validation error $\mathrm{CV}_\lambda$ for each $\lambda$.
+    \item Select the value of $\lambda$ that minimizes the cross-validation error.
+    \item Re-fit the model using all available training data and the selected $\lambda$.
+\end{enumerate}
+\end{tcolorbox}
+
+The cross-validation error as a function of $\lambda$ is typically a U-shaped curve: too little regularization (small $\lambda$) leads to overfitting (high variance), while too much regularization (large $\lambda$) leads to underfitting (high bias). The optimal $\lambda$ balances the two.
+
+
 \end{document}

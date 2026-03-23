@@ -1522,6 +1522,256 @@ During training, four curves are monitored:
 A growing gap between training and validation loss/accuracy is the diagnostic signature of \textbf{overfitting}.
 The optimal stopping point (early stopping) is the epoch at which validation loss is minimal.
 
+
+% ========================================
+\part{Recurrent Neural Networks and LSTM}
+% ========================================
+
+\section{Sequential Data and Problem Formulation}
+
+\subsection{Dealing with Sequential Data}
+
+Standard feedforward networks assume i.i.d.\ inputs with fixed size. Many real-world modalities are instead \textbf{sequences}: audio signals, natural language text, time series (IoT sensors, ECG), financial data, video frames. Processing these requires architectures that respect temporal structure.
+
+\subsection{Approaches to Sequence Modelling}
+
+Two classical statistical approaches exist before neural sequence models:
+
+\begin{itemize}
+    \item \textbf{Autoregressive models}: predict $X_{t+1}$ directly from a window of recent observations $X_{t-1}, X_t$ using learned weights $w_{t-1}, w_t$.
+    \item \textbf{Hidden state models}: introduce a latent \textit{hidden} variable that summarises past information; the next observation is generated from the hidden state.
+\end{itemize}
+
+A good sequence model must handle:
+\begin{itemize}
+    \item Sequences of \textbf{different lengths}.
+    \item Both \textbf{short} and \textbf{long-term dependencies}.
+    \item \textbf{Order} between elements.
+    \item \textbf{Parameter sharing} across positions in the sequence.
+\end{itemize}
+
+\subsection{Problem Formulations}
+
+Taking text as the running example, the same architecture can be instantiated in four regimes:
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Regime} & \textbf{Input} & \textbf{Output / Example} \\
+\hline
+One-to-many   & single vector   & sequence (image captioning) \\
+Many-to-one   & sequence        & single vector (sentiment analysis) \\
+Direct many-to-many  & sequence & aligned sequence (video captioning) \\
+Delayed many-to-many & sequence & offset sequence (machine translation) \\
+\end{tabular}
+\end{center}
+
+\subsection{Representing Text: Word Embeddings}
+
+ML cannot directly consume raw text; a numerical descriptor is required. The pipeline is:
+
+\begin{enumerate}
+    \item Build a \textbf{vocabulary} from the corpus.
+    \item \textbf{Index} each word (e.g.\ \texttt{a}$\to$0, \texttt{dog}$\to$2, \texttt{walk}$\to N$).
+    \item Represent each word as a vector.
+\end{enumerate}
+
+Two representation strategies:
+
+\begin{itemize}
+    \item \textbf{One-hot encoding}: a vocabulary-length binary vector with a single 1 at the word's index. Very sparse, high-dimensional, hard-coded, and orthogonal --- no semantic similarity between words.
+    \item \textbf{Word embeddings}: dense, lower-dimensional vectors \emph{learned from data}. Semantically similar words are close in embedding space (e.g.\ \textit{happy}/\textit{sad} cluster together; \textit{dog}/\textit{cat} cluster together).
+\end{itemize}
+
+\subsection{Why Fixed-Window Approaches Fail}
+
+Three naive approaches to next-word prediction illustrate the fundamental difficulties:
+
+\begin{enumerate}
+    \item \textbf{Small fixed window + one-hot}: concatenate one-hot vectors for the last $k$ words and feed to a classifier. \textit{Problem}: the window may not contain the informative context (long-range dependency).
+    \item \textbf{Bag of all available words}: encode the full preceding context as a single binary vector. \textit{Problem}: word order is discarded (``food was good, not bad'' vs.\ ``food was bad, not good'' have the same representation).
+    \item \textbf{Large fixed window}: concatenate one-hot vectors for all preceding words. \textit{Problem}: no parameter sharing --- knowledge about a word at position $i$ does not transfer to the same word appearing at position $j$.
+\end{enumerate}
+
+The fundamental requirements --- variable-length input, order preservation, parameter sharing, long-range dependencies --- motivate the RNN.
+
+
+\section{Recurrent Neural Networks}
+
+\subsection{The Recurrence Relation}
+
+An RNN applies the \textbf{same function and the same weights} at every time step, maintaining a \textbf{hidden state} $h_t$ that summarises all past information:
+
+\begin{definition}[RNN recurrence]
+\[
+    h_t = f_W(h_{t-1},\, x_t)
+\]
+where $W$ are shared weight matrices, $x_t$ is the input at step $t$, and $h_{t-1}$ is the hidden state from the previous step.
+\end{definition}
+
+The explicit forward-pass equations are:
+\begin{align}
+    h_t &= \sigma(W_{hh}\,h_{t-1} + W_{xh}\,x_t) \\
+    y_t &= W_{hy}\,h_t
+\end{align}
+
+where $W_{hh}$ weights the recurrent connection, $W_{xh}$ weights the input, and $W_{hy}$ maps the hidden state to the output.
+
+\subsection{Key Properties}
+
+\begin{itemize}
+    \item \textbf{Memory}: recurrence adds memory --- the decision at step $t-1$ influences the decision at step $t$.
+    \item \textbf{Causal modelling}: the network models causal relationships between observations.
+    \item \textbf{Two sources of input}: the present ($x_t$) and the recent past ($h_{t-1}$).
+    \item \textbf{Weight sharing}: $W_{hh}$, $W_{xh}$, and $W_{hy}$ are shared across all time steps. They act as \emph{filters} that determine how much importance to give to the present input and the past hidden state.
+\end{itemize}
+
+\subsection{Unrolling Over Time}
+
+An RNN with a self-loop can equivalently be viewed as a sequence of multiple communicating copies of the same network, one per time step. This is called \textbf{unrolling} (or unfolding) and makes the computational graph acyclic, enabling standard backpropagation.
+
+\subsection{Loss and Backpropagation Through Time (BPTT)}
+
+In the many-to-many setting, each step $t$ produces a local loss $L_t$. The total loss is:
+\[
+    L = \sum_{t=1}^{T} L_t
+\]
+
+The gradient of $L_t$ with respect to the shared weight $W_{hh}$ requires differentiating through all earlier hidden states (chain rule over time):
+\[
+    \frac{\partial L_t}{\partial W_{hh}} = \frac{\partial L_t}{\partial y_t}\frac{\partial y_t}{\partial h_t}
+    \left(\sum_{k=1}^{t} \frac{\partial h_t}{\partial h_k}\frac{\partial h_k}{\partial W_{hh}}\right),
+    \qquad \frac{\partial h_t}{\partial h_k} = \prod_{i=k+1}^{t} \frac{\partial h_i}{\partial h_{i-1}}
+\]
+
+The term $\partial h_t / \partial h_k$ is computed as a \textbf{product of consecutive Jacobians} along the time axis, one per step from $k$ to $t$.
+
+\subsection{Gradient Pathologies}
+
+This product of Jacobians causes two numerical instabilities:
+
+\begin{itemize}
+    \item \textbf{Vanishing gradients}: if many factors are $< 1$, the product collapses to zero. Gradient signals from distant time steps vanish, so model weights are updated only with respect to recent effects. Long-term dependencies cannot be learned.
+    \item \textbf{Exploding gradients}: if many factors are $> 1$, the product diverges. SGD steps become arbitrarily large, destabilising training. A practical fix is \textbf{gradient clipping}: if the gradient norm exceeds a threshold $\tau$, rescale it to $\tau$ before the update:
+    \[
+        \Theta_{\mathrm{new}} = \Theta_{\mathrm{old}} - \alpha \nabla_\Theta L(\Theta),
+        \quad \text{with } \nabla_\Theta \leftarrow \frac{\tau}{\|\nabla_\Theta\|}\nabla_\Theta \text{ if } \|\nabla_\Theta\| > \tau
+    \]
+\end{itemize}
+
+The solution to vanishing gradients requires a fundamentally different cell architecture: \textbf{gated cells}.
+
+\subsection{RNN Applications}
+
+RNNs have been successfully applied to: NLP, language modelling, text generation ($x_{t+1} = o_t$), machine translation, image caption generation, speech recognition, and action recognition in video.
+
+
+\section{Long Short-Term Memory (LSTM)}
+
+\subsection{Motivation}
+
+Proposed by Hochreiter and Schmidhuber (1997), the LSTM addresses the vanishing gradient problem by introducing:
+\begin{itemize}
+    \item \textbf{Connection weights that may change at each time step} --- unlike vanilla RNNs with fixed $W_{hh}$.
+    \item A \textbf{cell state} $c_t$ that accumulates information over long durations, separate from the hidden state $h_t$.
+    \item \textbf{Gated units} that learn \emph{when} to forget old state and when to store new information.
+\end{itemize}
+
+\subsection{Gated Cells}
+
+A \textbf{gate} is a sigmoid layer followed by a pointwise multiplication. The sigmoid outputs values in $[0, 1]$: a value of $0$ means ``let nothing through''; a value of $1$ means ``let everything through''. Gates are differentiable, so their parameters are learned end-to-end.
+
+\subsection{LSTM Cell State}
+
+The LSTM cell maintains two vectors of length $n$:
+\begin{itemize}
+    \item \textbf{Cell state} $c_t$: the long-term memory. LSTM can erase, write, and read from $c_t$ via three corresponding gates.
+    \item \textbf{Hidden state} $h_t$: the short-term memory / output, analogous to the vanilla RNN hidden state.
+\end{itemize}
+
+Gate values are dynamic: they are computed from the current context $(h_{t-1}, x_t)$ at each step, not fixed.
+
+\subsection{The Four Steps of an LSTM Cell}
+
+\paragraph{Step 1 --- Forget.}
+The \textbf{forget gate} $f_t$ decides which information to discard from the previous cell state:
+\[
+    f_t = \sigma(W_f h_{t-1} + U_f x_t)
+\]
+$f_t \in (0,1)^n$; element-wise multiplication $c_{t-1} \cdot f_t$ selectively erases components of the cell state.
+
+\paragraph{Step 2 --- Store input.}
+The \textbf{input gate} $i_t$ decides what new information to write into the cell state, and $\tilde{c}_t$ is the candidate cell content:
+\begin{align}
+    i_t &= \sigma(W_i h_{t-1} + U_i x_t) \\
+    \tilde{c}_t &= \tanh(W_c h_{t-1} + U_c x_t)
+\end{align}
+$i_t$ answers ``is the new data worth remembering?''; $\tilde{c}_t$ determines how much each component of the cell state should be updated.
+
+\paragraph{Step 3 --- Update cell state.}
+The new cell state combines the selectively forgotten old state with the selectively written new content:
+\[
+    c_t = c_{t-1} \cdot f_t + i_t \cdot \tilde{c}_t
+\]
+The element-wise multiplication by $f_t$ erases; the addition of $i_t \cdot \tilde{c}_t$ writes.
+
+\paragraph{Step 4 --- Output hidden state.}
+The \textbf{output gate} $o_t$ filters which parts of the (now updated) cell state are exposed as the hidden state:
+\begin{align}
+    o_t &= \sigma(W_o h_{t-1} + U_o x_t) \\
+    h_t &= \tanh(c_t) \cdot o_t
+\end{align}
+$\tanh(c_t)$ squashes the cell state to $[-1,1]$; $o_t$ gates which components are passed on. $h_t$ is then used to produce the output $y_t$.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={LSTM full equations summary}]
+\begin{align*}
+    f_t &= \sigma(W_f h_{t-1} + U_f x_t) & &\text{(forget gate)} \\
+    i_t &= \sigma(W_i h_{t-1} + U_i x_t) & &\text{(input gate)} \\
+    \tilde{c}_t &= \tanh(W_c h_{t-1} + U_c x_t) & &\text{(candidate cell)} \\
+    c_t &= f_t \cdot c_{t-1} + i_t \cdot \tilde{c}_t & &\text{(cell state update)} \\
+    o_t &= \sigma(W_o h_{t-1} + U_o x_t) & &\text{(output gate)} \\
+    h_t &= \tanh(c_t) \cdot o_t & &\text{(hidden state)}
+\end{align*}
+\end{tcolorbox}
+
+\begin{remark}
+The cell state $c_t$ flows through the network with only element-wise multiplications and additions --- no matrix multiplications along the temporal axis. This additive structure is why gradients do not vanish as severely as in vanilla RNNs.
+\end{remark}
+
+
+\section{Variants}
+
+\subsection{Gated Recurrent Unit (GRU)}
+
+Introduced by Cho et al.\ (2014), the \textbf{Gated Recurrent Unit (GRU)} simplifies the LSTM by:
+\begin{itemize}
+    \item Merging the forget and input gates into a single \textbf{update gate} $z_t$.
+    \item Adding a \textbf{reset gate} $r_t$ that controls how much past information to forget.
+    \item Merging the cell state and hidden state into a single hidden state $h_t$.
+\end{itemize}
+
+The GRU equations are:
+\begin{align}
+    z_t &= \sigma(W_z \cdot [h_{t-1},\, x_t]) \\
+    r_t &= \sigma(W_r \cdot [h_{t-1},\, x_t]) \\
+    \tilde{h}_t &= \tanh(W \cdot [r_t * h_{t-1},\, x_t]) \\
+    h_t &= (1 - z_t) * h_{t-1} + z_t * \tilde{h}_t
+\end{align}
+
+The resulting model has fewer parameters than a standard LSTM, is computationally cheaper, and has become increasingly popular in practice.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+K. Cho, B. van Merri{\"e}nboer et al.\ (2014). ``Learning Phrase Representations using RNN Encoder--Decoder for Statistical Machine Translation''. \textit{EMNLP 2014}.
+\end{tcolorbox}
+
+\subsection{Transformers}
+
+The \textbf{Transformer} (Vaswani et al., 2017) replaces recurrence entirely with a self-attention mechanism. At each step, the model attends to \emph{all} other positions in the sequence simultaneously, deciding which parts are most relevant. This eliminates the sequential bottleneck of RNNs, enables massively parallel training, and handles long-range dependencies more effectively.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+A. Vaswani et al.\ (2017). ``Attention Is All You Need''. \textit{NeurIPS 2017}. \texttt{arXiv:1706.03762}.
+\end{tcolorbox}
+
+
 \end{document}
 
 

@@ -945,4 +945,270 @@ A second axis concerns the use of a \textbf{model} of the environment:
 The MDP framework introduced in this chapter is the foundation for all algorithms discussed in subsequent chapters. Tabular methods (dynamic programming, Monte Carlo, TD learning) will be covered first, followed by function approximation methods that scale to high-dimensional state spaces.
 \end{remark}
 
+
+%=============================================================
+\part{Dynamic Programming}
+%=============================================================
+
+\textbf{Dynamic Programming (DP)} refers to a collection of algorithms that compute optimal policies given a perfect model of the environment (i.e., the full dynamics $p(s', r \mid s, a)$). DP methods are \textbf{model-based} and assume complete knowledge of the MDP. This is a strong requirement that limits their direct applicability, but DP is foundational: it provides the theoretical backbone on which model-free methods (Monte Carlo, TD learning) are built.
+
+Key characteristics of DP:
+\begin{itemize}
+    \item \textbf{High computational cost}, but polynomial in $|\mathcal{S}|$ and $|\mathcal{A}|$.
+    \item Applied to \textbf{finite MDPs}. For continuous state/action spaces, a common approach is to \textbf{quantize} the spaces and apply DP to the resulting finite MDP.
+    \item DP computes value functions by using the \textbf{Bellman equations as iterative update rules}, progressively improving value approximations.
+\end{itemize}
+
+%-------------------------------------------------------------
+\section{Policy Evaluation (Prediction)}
+%-------------------------------------------------------------
+
+The \textbf{prediction problem} asks: given a fixed policy $\pi$, compute its state-value function $v_\pi$. This is also called \textbf{policy evaluation}.
+
+\subsection{Bellman Equation as Update Rule}
+
+Recall the Bellman expectation equation:
+\[
+    v_\pi(s) \;=\; \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \bigl[r + \gamma\, v_\pi(s')\bigr]
+\]
+This is a system of $|\mathcal{S}|$ simultaneous linear equations. Rather than solving it directly (e.g., by matrix inversion), we use it as an \textbf{iterative update rule}. Starting from an arbitrary initial approximation $v_0$, we define the sequence:
+\[
+    v_{k+1}(s) \;\doteq\; \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \bigl[r + \gamma\, v_k(s')\bigr]
+\]
+where $v_k$ is the current approximation and $v_{k+1}$ is the updated one. The fixed point of this iteration is $v_\pi$.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Convergence of Iterative Policy Evaluation}]
+The sequence $\{v_k\}$ can be shown to \textbf{converge} to $v_\pi$ as $k \to \infty$ under the conditions that guarantee the existence of $v_\pi$ (either $\gamma < 1$ or guaranteed termination).
+\end{tcolorbox}
+
+\subsection{Iterative Policy Evaluation Algorithm}
+
+In practice the update is performed \textbf{in place}: a single array $V(s)$ is maintained, and each state is updated using the most recent values available (including values already updated in the current sweep).
+
+\begin{algorithm}
+\caption{Iterative Policy Evaluation (in-place), estimating $V \approx v_\pi$}
+\begin{algorithmic}
+\STATE \textbf{Input:} policy $\pi$ to be evaluated
+\STATE \textbf{Parameter:} threshold $\theta > 0$ (accuracy of estimation)
+\STATE Initialize $V(s)$ for all $s \in \mathcal{S}^+$ arbitrarily, except $V(\text{terminal}) = 0$
+\REPEAT
+    \STATE $\Delta \leftarrow 0$
+    \FOR{each $s \in \mathcal{S}$}
+        \STATE $v \leftarrow V(s)$
+        \STATE $V(s) \leftarrow \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\bigl[r + \gamma\, V(s')\bigr]$
+        \STATE $\Delta \leftarrow \max(\Delta,\; |v - V(s)|)$
+    \ENDFOR
+\UNTIL{$\Delta < \theta$}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity:} $O(|\mathcal{S}|^2 \cdot |\mathcal{A}|)$ per sweep.
+
+\subsection{Example: Gridworld}
+
+Consider a $4 \times 4$ grid with nonterminal states $\mathcal{S} = \{1, 2, \ldots, 14\}$ and two terminal states (top-left and bottom-right corners). Actions $\mathcal{A} = \{\text{up}, \text{down}, \text{left}, \text{right}\}$; the transition model is deterministic; reward $R_t = -1$ on all transitions (undiscounted episodic task).
+
+Under the equiprobable random policy ($\pi(a \mid s) = 0.25$ for all $a$), iterative policy evaluation produces a sequence of value functions $v_0, v_1, v_2, \ldots$ converging to $v_\pi$. As $k$ increases, the greedy policy with respect to $v_k$ quickly stabilizes to the optimal policy even before $v_\pi$ is fully converged --- for instance, iterations beyond $k = 3$ no longer change the greedy policy in this example.
+
+%-------------------------------------------------------------
+\section{Policy Improvement}
+%-------------------------------------------------------------
+
+Given the value function $v_\pi$ for a policy $\pi$, we want to determine whether a \textbf{better policy} exists by changing the action in some state.
+
+\subsection{The Improvement Criterion}
+
+Consider selecting a new action $a$ in state $s$ and then following $\pi$ thereafter. The value of this strategy is the \textbf{action-value function}:
+\[
+    q_\pi(s, a) \;=\; \sum_{s', r} p(s', r \mid s, a) \bigl[r + \gamma\, v_\pi(s')\bigr]
+\]
+
+If $q_\pi(s, a) \geq v_\pi(s)$, then selecting $a$ in state $s$ and following $\pi$ thereafter is at least as good as following $\pi$ entirely. In this case, action $a$ should be \textbf{substituted} for the action prescribed by $\pi(s)$.
+
+\subsection{Policy Improvement Theorem}
+
+\begin{theorem}[Policy Improvement]
+Let $\pi$ and $\pi'$ be any pair of deterministic policies such that for all $s \in \mathcal{S}$:
+\[
+    q_\pi\bigl(s,\, \pi'(s)\bigr) \;\geq\; v_\pi(s)
+\]
+Then $\pi'$ is at least as good as $\pi$:
+\[
+    v_{\pi'}(s) \;\geq\; v_\pi(s) \qquad \forall\, s \in \mathcal{S}
+\]
+If the first inequality is \textbf{strict} at any state, then the second inequality must be strict at at least one state.
+\end{theorem}
+
+\begin{proof}[Proof (sketch)]
+Starting from $v_\pi(s) \leq q_\pi(s, \pi'(s))$ and expanding using the Bellman equation, we repeatedly substitute $v_\pi(S_{t+1}) \leq q_\pi(S_{t+1}, \pi'(S_{t+1}))$:
+\begin{align*}
+    v_\pi(s) &\;\leq\; q_\pi(s, \pi'(s)) \\
+    &= \mathbb{E}[R_{t+1} + \gamma\, v_\pi(S_{t+1}) \mid S_t = s,\, A_t = \pi'(s)] \\
+    &= \mathbb{E}_{\pi'}[R_{t+1} + \gamma\, v_\pi(S_{t+1}) \mid S_t = s] \\
+    &\leq \mathbb{E}_{\pi'}[R_{t+1} + \gamma\, q_\pi(S_{t+1}, \pi'(S_{t+1})) \mid S_t = s] \\
+    &= \mathbb{E}_{\pi'}[R_{t+1} + \gamma\, R_{t+2} + \gamma^2 v_\pi(S_{t+2}) \mid S_t = s] \\
+    &\leq \;\cdots \\
+    &\leq \mathbb{E}_{\pi'}[R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots \mid S_t = s] \\
+    &= v_{\pi'}(s). \qedhere
+\end{align*}
+\end{proof}
+
+\subsection{Greedy Policy Construction}
+
+\textbf{Policy improvement} extends the single-state idea to \textbf{all states and actions}, constructing a new \textbf{greedy} policy $\pi'$:
+\[
+    \pi'(s) \;\doteq\; \arg\max_a\, q_\pi(s, a)
+    \;=\; \arg\max_a \sum_{s', r} p(s', r \mid s, a) \bigl[r + \gamma\, v_\pi(s')\bigr]
+\]
+By construction, $\pi'$ satisfies $q_\pi(s, \pi'(s)) \geq v_\pi(s)$ for all $s$, so by the policy improvement theorem it is at least as good as $\pi$.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Optimality Condition}]
+If $v_\pi = v_{\pi'}$ (the greedy policy does not improve), then $v_\pi$ satisfies the Bellman optimality equation:
+\[
+    v_{\pi'}(s) \;=\; \max_a \sum_{s', r} p(s', r \mid s, a) \bigl[r + \gamma\, v_{\pi'}(s')\bigr]
+\]
+and both $\pi$ and $\pi'$ are \textbf{optimal policies}. This theory extends to stochastic policies $\pi(a \mid s)$.
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Policy Iteration}
+%-------------------------------------------------------------
+
+The \textbf{Policy Iteration} algorithm alternates between policy evaluation and policy improvement, producing a sequence of monotonically improving policies and value functions:
+\[
+    \pi_0 \;\xrightarrow{\text{E}}\; v_{\pi_0} \;\xrightarrow{\text{I}}\; \pi_1 \;\xrightarrow{\text{E}}\; v_{\pi_1} \;\xrightarrow{\text{I}}\; \pi_2 \;\xrightarrow{\text{E}}\; \cdots \;\xrightarrow{\text{I}}\; \pi_* \;\xrightarrow{\text{E}}\; v_*
+\]
+where $\xrightarrow{\text{E}}$ denotes policy evaluation and $\xrightarrow{\text{I}}$ denotes policy improvement.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Key Properties of Policy Iteration}]
+\begin{itemize}
+    \item \textbf{Convergence} in a finite number of iterations is guaranteed for finite MDPs, since the number of deterministic policies is finite ($|\mathcal{A}|^{|\mathcal{S}|}$) and each iteration strictly improves the policy (unless already optimal).
+    \item Each policy evaluation step is \textbf{initialized} with the value function from the previous policy, which greatly accelerates convergence.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Policy Iteration Algorithm}
+
+\begin{algorithm}
+\caption{Policy Iteration (using iterative policy evaluation), estimating $\pi \approx \pi_*$}
+\begin{algorithmic}
+\STATE \textbf{1. Initialization}
+\STATE $V(s) \in \mathbb{R}$ and $\pi(s) \in \mathcal{A}(s)$ arbitrarily for all $s \in \mathcal{S}$
+\STATE
+\STATE \textbf{2. Policy Evaluation}
+\REPEAT
+    \STATE $\Delta \leftarrow 0$
+    \FOR{each $s \in \mathcal{S}$}
+        \STATE $v \leftarrow V(s)$
+        \STATE $V(s) \leftarrow \sum_{s', r} p(s', r \mid s, \pi(s))\bigl[r + \gamma\, V(s')\bigr]$
+        \hfill $\triangleright$ Deterministic policy assumed
+        \STATE $\Delta \leftarrow \max(\Delta,\; |v - V(s)|)$
+    \ENDFOR
+\UNTIL{$\Delta < \theta$}
+\STATE
+\STATE \textbf{3. Policy Improvement}
+\STATE $\textit{policy-stable} \leftarrow \textbf{true}$
+\FOR{each $s \in \mathcal{S}$}
+    \STATE $\textit{old-action} \leftarrow \pi(s)$
+    \STATE $\pi(s) \leftarrow \arg\max_a \sum_{s', r} p(s', r \mid s, a)\bigl[r + \gamma\, V(s')\bigr]$
+    \IF{$\textit{old-action} \neq \pi(s)$}
+        \STATE $\textit{policy-stable} \leftarrow \textbf{false}$
+    \ENDIF
+\ENDFOR
+\IF{$\textit{policy-stable}$}
+    \STATE \textbf{stop} and return $V \approx v_*$ and $\pi \approx \pi_*$
+\ELSE
+    \STATE go to \textbf{2}
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+%-------------------------------------------------------------
+\section{Value Iteration}
+%-------------------------------------------------------------
+
+Policy iteration requires a full policy evaluation (itself an iterative procedure) at each step. The \textbf{Value Iteration} algorithm truncates policy evaluation to a \textbf{single sweep}, combining it with policy improvement in one update rule.
+
+\subsection{Update Rule}
+
+The value iteration update combines policy improvement and single-step policy evaluation:
+\[
+    v_{k+1}(s) \;\doteq\; \max_a \sum_{s', r} p(s', r \mid s, a) \bigl[r + \gamma\, v_k(s')\bigr]
+\]
+
+This is equivalent to turning the \textbf{Bellman optimality equation} into an update rule. The policy evaluation step of policy iteration can be truncated in several ways without losing convergence guarantees; value iteration is the extreme case of stopping after a single backup.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Value Iteration vs Policy Evaluation}]
+The value iteration update is identical to the policy evaluation update, except that it takes the \textbf{maximum} over all actions rather than the expectation under a fixed policy. Value iteration does not explicitly represent or improve the policy --- the policy is extracted from the converged value function at the end.
+\end{tcolorbox}
+
+\subsection{Value Iteration Algorithm}
+
+\begin{algorithm}
+\caption{Value Iteration, estimating $\pi \approx \pi_*$}
+\begin{algorithmic}
+\STATE \textbf{Parameter:} threshold $\theta > 0$ (accuracy of estimation)
+\STATE Initialize $V(s)$ for all $s \in \mathcal{S}^+$ arbitrarily, except $V(\text{terminal}) = 0$
+\REPEAT
+    \STATE $\Delta \leftarrow 0$
+    \FOR{each $s \in \mathcal{S}$}
+        \STATE $v \leftarrow V(s)$
+        \STATE $V(s) \leftarrow \max_a \sum_{s', r} p(s', r \mid s, a)\bigl[r + \gamma\, V(s')\bigr]$
+        \STATE $\Delta \leftarrow \max(\Delta,\; |v - V(s)|)$
+    \ENDFOR
+\UNTIL{$\Delta < \theta$}
+\STATE
+\STATE Output deterministic policy $\pi \approx \pi_*$ such that:
+\STATE $\pi(s) = \arg\max_a \sum_{s', r} p(s', r \mid s, a)\bigl[r + \gamma\, V(s')\bigr]$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity:} $O(|\mathcal{S}|^2 \cdot |\mathcal{A}|)$ per sweep (same as policy evaluation).
+
+%-------------------------------------------------------------
+\section{Asynchronous Dynamic Programming}
+%-------------------------------------------------------------
+
+Standard DP performs \textbf{synchronous} sweeps: each iteration updates every state exactly once. \textbf{Asynchronous DP} relaxes this requirement by ordering updates to let value information propagate from state to state more efficiently.
+
+\begin{itemize}
+    \item Some states may not need their values updated as often as others.
+    \item States irrelevant to optimal behavior can be skipped entirely.
+    \item The agent's experience can guide which states to update (e.g., update states as the agent visits them).
+    \item The update can be focused on the parts of the state set that are most relevant.
+\end{itemize}
+
+Asynchronous DP can \textbf{improve performance} in general and allows DP algorithms to be applied to domains with \textbf{large state spaces}, where full synchronous sweeps are prohibitively expensive.
+
+%-------------------------------------------------------------
+\section{Generalized Policy Iteration}
+%-------------------------------------------------------------
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Generalized Policy Iteration (GPI)}]
+\textbf{Generalized Policy Iteration} (GPI) refers to the general schema of letting policy evaluation and policy improvement interact, regardless of the granularity or scheduling of each process. Both policy iteration and value iteration are instances of GPI:
+\begin{itemize}
+    \item \textbf{Policy iteration}: full evaluation to convergence, then one improvement step.
+    \item \textbf{Value iteration}: single evaluation sweep, interleaved with improvement.
+    \item \textbf{Asynchronous DP}: partial, state-selective updates.
+\end{itemize}
+In all cases, evaluation pushes the value function toward $v_\pi$ (consistency with the current policy), while improvement pushes the policy toward greedy with respect to the current value function. These two processes \textbf{compete} (evaluation targets a moving policy; improvement changes the policy the value function is tracking) yet \textbf{cooperate} (both drive toward the optimum). At the fixed point where neither process induces change, both the Bellman equation and the Bellman optimality equation are satisfied: $v = v_\pi = v_*$ and $\pi = \pi_*$.
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Efficiency of Dynamic Programming}
+%-------------------------------------------------------------
+
+DP may not be practical for very large problems, but it is remarkably \textbf{efficient} compared to alternatives:
+\begin{itemize}
+    \item DP methods are \textbf{polynomial} in $|\mathcal{S}|$ and $|\mathcal{A}|$, requiring fewer operations than some polynomial function of these quantities per iteration.
+    \item The total number of deterministic policies to search is $|\mathcal{A}|^{|\mathcal{S}|}$, exponential in $|\mathcal{S}|$; DP avoids exhaustive enumeration.
+    \item \textbf{Linear programming} methods become impractical at a much smaller number of states than DP methods.
+    \item In practice, DP methods can solve MDPs with \textbf{millions of states}; both policy iteration and value iteration are used routinely.
+    \item It is not clear which of the two algorithms is universally better; both are \textbf{faster than their theoretical worst-case run times} when started with good initial value functions or policies.
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Bootstrapping}]
+DP methods \textbf{update estimates} of the values of states \textbf{based on estimates} of the values of \textbf{successor states}: they update estimates on the basis of other estimates. This property is called \textbf{bootstrapping} and is shared by all DP methods. Monte Carlo methods (Lecture 5) do \textit{not} require a model and do \textit{not} bootstrap; Temporal-Difference methods (Lecture 6) do \textit{not} require a model but \textit{do} bootstrap.
+\end{tcolorbox}
+
 \end{document}
