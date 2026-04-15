@@ -1143,4 +1143,879 @@ Both ridge regression and the lasso require a method for selecting the tuning pa
 The cross-validation error as a function of $\lambda$ is typically a U-shaped curve: too little regularization (small $\lambda$) leads to overfitting (high variance), while too much regularization (large $\lambda$) leads to underfitting (high bias). The optimal $\lambda$ balances the two.
 
 
+% ========================================
+\part{Dimension Reduction}
+% ========================================
+
+Subset selection and shrinkage control variance by working with a subset of predictors or by shrinking their coefficients. A complementary family of approaches instead \textbf{transforms the predictors} and then fits a model in the transformed space — this is the idea behind \textbf{dimension reduction}.
+
+% ========================================
+\section{Dimension Reduction Methods}
+% ========================================
+
+\subsection{The General Framework}
+
+Let $Z_1, Z_2, \ldots, Z_M$ denote $M$ \textbf{linear combinations} of the original $p$ predictors, where $M < p$:
+\[
+    Z_m = \sum_{j=1}^{p} \phi_{jm} X_j
+\]
+for some constants $\phi_{1m}, \phi_{2m}, \ldots, \phi_{pm}$ and $m = 1, \ldots, M$. We then fit a linear regression model using least squares on these $M$ transformed predictors:
+\[
+    y_i = \theta_0 + \sum_{m=1}^{M} \theta_m z_{im}, \qquad i = 1, \ldots, n.
+\]
+
+\subsection{Why Dimension Reduction?}
+
+The dimension of the regression problem is \textbf{reduced}: instead of estimating $p + 1$ coefficients $\beta_0, \beta_1, \ldots, \beta_p$, we only need to estimate $M + 1$ coefficients $\theta_0, \theta_1, \ldots, \theta_M$, where $M < p$.
+
+Dimension reduction works in \textbf{two steps}:
+\begin{enumerate}
+    \item The transformed predictors $Z_1, Z_2, \ldots, Z_M$ are obtained.
+    \item A linear model is fit using these $M$ predictors via least squares.
+\end{enumerate}
+
+\subsection{Connection to Linear Regression}
+
+The reduced model is a \textbf{special case} of the original linear regression model. Substituting the definition of $Z_m$, one can show:
+\[
+    \beta_j = \sum_{m=1}^{M} \theta_m \phi_{jm}
+\]
+This imposes a \textbf{constraint} on the estimated $\beta_j$ coefficients, which introduces a potential bias. However:
+\begin{itemize}
+    \item When $p$ is large relative to $n$, selecting $M \ll p$ can significantly \textbf{reduce the variance} of the fitted coefficients — a worthwhile bias-variance trade-off.
+    \item When $M = p$ and all $Z_m$ are linearly independent, no constraints are imposed and fitting the reduced system is \textbf{equivalent} to fitting the original model with coefficients $\beta_j$.
+\end{itemize}
+
+The choice of $Z_1, \ldots, Z_M$ (i.e., the selection of $\phi_{jm}$) can be achieved in different ways. The two approaches covered here are \textbf{principal components} and \textbf{partial least squares}.
+
+% ========================================
+\section{Principal Components Analysis}
+% ========================================
+
+\subsection{Overview}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Principal Components Analysis (PCA)}]
+PCA is the process by which \textbf{principal components} are computed and used to understand the data. It derives a \textbf{low-dimensional set of features} from a large one, finding a small number of dimensions that are as \textbf{interesting} as possible — where ``interesting'' is measured by the amount that the observations \textbf{vary} along each dimension.
+\end{tcolorbox}
+
+Key properties of PCA:
+\begin{itemize}
+    \item PCA is an \textbf{unsupervised approach}: it involves only the features $X_1, X_2, \ldots, X_p$ and no associated response $Y$.
+    \item It is primarily a tool for \textbf{data visualization}, but is also useful in \textbf{supervised learning} (via Principal Components Regression).
+    \item Each dimension found by PCA is a \textbf{linear combination} of the $p$ features.
+\end{itemize}
+
+\subsection{Principal Component Directions}
+
+Consider $n$ observations with measurements on $p$ features. Each observation lives in a $p$-dimensional space, but \textbf{not all dimensions are equally interesting}. PCA seeks directions along which the data are most variable.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Principal Component Directions}]
+Principal component directions are the directions in feature space along which the original data are \textbf{most variable}.
+\end{tcolorbox}
+
+\textit{Example}: population size and ad spending for 100 cities. The \textbf{first principal component direction} (green solid line) captures the direction of maximum variance. The \textbf{second principal component direction} (blue dashed line) is perpendicular to the first and captures the remaining variance.
+
+\subsection{The First Principal Component}
+
+The \textbf{first principal component} of a set of $p$ features is the normalized linear combination of the features:
+\[
+    Z_1 = \phi_{11} X_1 + \phi_{21} X_2 + \cdots + \phi_{p1} X_p
+\]
+with the \textbf{largest variance}, subject to the normalization constraint $\sum_{j=1}^{p} \phi_{j1}^2 = 1$.
+
+The elements $\phi_{11}, \ldots, \phi_{p1}$ are the \textbf{loadings} of the first principal component; together they form the \textbf{loading vector} $\phi_1 = (\phi_{11}, \phi_{21}, \ldots, \phi_{p1})^T$.
+
+\subsubsection{Optimization Problem}
+
+We solve:
+\[
+    \max_{\phi_{11},\ldots,\phi_{p1}} \left\{ \frac{1}{n} \sum_{i=1}^{n} \left( \sum_{j=1}^{p} \phi_{j1} x_{ij} \right)^2 \right\}
+    \qquad \text{subject to} \qquad
+    \sum_{j=1}^{p} \phi_{j1}^2 = 1
+\]
+
+The values $z_{11}, \ldots, z_{n1}$ are known as the \textbf{principal component scores}: $z_{i1} = \sum_{j=1}^p \phi_{j1} x_{ij}$.
+
+\subsubsection{Geometric Interpretation}
+
+The loading vector $\phi_1$ defines the line in $p$-dimensional feature space that is \textbf{as close as possible to the data}, in the sense that it \textbf{minimizes the sum of squared perpendicular distances} between each point and the line. Projecting observations onto this line yields principal component scores.
+
+\textit{Example (advertising data)}: the first principal component is:
+\[
+    Z_1 = 0.839 \times (\mathit{pop} - \overline{\mathit{pop}}) + 0.544 \times (\mathit{ad} - \overline{\mathit{ad}})
+\]
+where $\phi_{11} = 0.839$ and $\phi_{21} = 0.544$ are the loadings; $\overline{\mathit{pop}}$ and $\overline{\mathit{ad}}$ are sample means (features are centered before computing PCA).
+
+\subsection{The Second Principal Component}
+
+We can construct up to $p$ distinct principal components. The \textbf{second principal component} $Z_2$ is the linear combination of the variables that:
+\begin{itemize}
+    \item has \textbf{largest variance} subject to being \textbf{uncorrelated with $Z_1$},
+    \item must be \textbf{perpendicular} (orthogonal) to the first principal component direction.
+\end{itemize}
+
+For the advertising data (with $p = 2$):
+\[
+    Z_2 = 0.544 \times (\mathit{pop} - \overline{\mathit{pop}}) + 0.839 \times (\mathit{ad} - \overline{\mathit{ad}})
+\]
+
+Since $p = 2$, the two principal components together contain \textbf{all of the information} in \textit{pop} and \textit{ad}.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Key Observation}]
+The second principal component scores $z_{i2}$ are much closer to zero than $z_{i1}$, indicating that the second component captures \textbf{less information}. Plots of $z_{i2}$ versus \textit{pop} and \textit{ad} show weak relationships: only the \textbf{first principal component is needed} to accurately represent both predictors.
+\end{tcolorbox}
+
+Additional components, if more predictors were available, would \textbf{successively maximize variance} subject to the constraint of being uncorrelated with all preceding components.
+
+% ========================================
+\section{Principal Components Regression}
+% ========================================
+
+\subsection{The PCR Approach}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Principal Components Regression (PCR)}]
+PCR constructs the first $M$ principal components $Z_1, \ldots, Z_M$, and then uses them as predictors in a \textbf{linear regression model fit by least squares}.
+\end{tcolorbox}
+
+\textbf{Key idea}: often a small number of principal components suffice to explain most of the variability in the data, as well as the relationship with the response.
+
+\textbf{Core assumption}: the directions that show the most variation in $X$ are also the most \textbf{associated with $Y$}. This assumption is not guaranteed to be true, but it is often reasonable and provides good empirical results.
+
+\subsection{Advantages of PCR}
+
+If the assumption above holds:
+\begin{itemize}
+    \item Fitting least squares to $Z_1, \ldots, Z_M$ yields \textbf{better results} than fitting to $X_1, \ldots, X_p$, since most or all of the information relevant to the response is contained in $Z_1, \ldots, Z_M$.
+    \item By estimating only $M \ll p$ coefficients we can \textbf{mitigate overfitting}.
+\end{itemize}
+
+\textit{Example}: for the advertising data, the first principal component explains most of the variance in both \textit{pop} and \textit{ad}. A PCR model using this single variable to predict \textit{sales} performs well.
+
+\subsection{Choosing $M$ via Cross-Validation}
+
+In PCR, the number of principal components $M$ is a \textbf{tuning parameter} typically chosen by \textbf{cross-validation}. The cross-validation MSE as a function of $M$ is examined; the optimal $M$ minimizes this error.
+
+\subsection{PCR is Not Feature Selection}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Important: PCR $\neq$ Feature Selection}]
+Even though PCR provides a simple way to perform regression using $M < p$ predictors, it is \textbf{not a feature selection method}. Each of the $M$ principal components used in the regression is a \textbf{linear combination of all $p$ original features}.
+\end{tcolorbox}
+
+For instance, the first principal component $Z_1$ was a linear combination of both \textit{pop} and \textit{ad}. In this sense, PCR is more closely related to \textbf{ridge regression} than to the lasso. Ridge regression can in fact be considered as a \textbf{continuous version of PCR}.
+
+\subsection{PCR vs Ridge Regression}
+
+Both PCR and ridge regression perform well on data where the first few principal components capture most of the variation relevant to the response. Empirically:
+\begin{itemize}
+    \item PCR shows a clear minimum in test MSE at some $M^* < p$, with bias dropping rapidly as $M$ increases.
+    \item Ridge regression provides a smooth, continuous regularization; PCR provides a discrete one (by choosing how many components to include).
+    \item On data designed to depend on the first five principal components, both PCR (at optimal $M$) and ridge outperform the lasso.
+\end{itemize}
+
+% ========================================
+\section{Partial Least Squares}
+% ========================================
+
+\subsection{Motivation: The Supervised Alternative to PCA}
+
+PCR identifies directions that best represent the predictors $X_1, \ldots, X_p$ in an \textbf{unsupervised} way: the response $Y$ plays no role in determining the principal component directions.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Main Drawback of PCR}]
+There is no guarantee that the directions that best explain the predictors will also be the best directions for \textbf{predicting the response}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Partial Least Squares (PLS)}]
+PLS is a \textbf{supervised} dimension reduction method. It identifies a new set of features $Z_1, \ldots, Z_M$ that are linear combinations of the original features, and then fits a linear model via least squares using these $M$ new features. Unlike PCR, PLS identifies the new features in a \textbf{supervised} way — making use of $Y$ to find directions that explain both the predictors and the response.
+\end{tcolorbox}
+
+\subsection{Computing PLS Directions}
+
+\textbf{First PLS direction $Z_1$}: after standardizing the $p$ predictors, PLS computes the first direction by setting each loading $\phi_{j1}$ equal to the \textbf{coefficient from the simple linear regression of $Y$ onto $X_j$}. This coefficient is proportional to the correlation between $Y$ and $X_j$. Hence:
+\[
+    Z_1 = \sum_{j=1}^{p} \phi_{j1} X_j
+\]
+places the \textbf{highest weight} on the variables most strongly correlated with the response.
+
+\textit{Example}: on the advertising data, the first PLS direction has less change in the \textit{ad} dimension per unit change in the \textit{pop} dimension, relative to PCA. This suggests that \textit{pop} is more highly correlated with the response than \textit{ad}.
+
+\textbf{Second PLS direction $Z_2$}: we first \textbf{adjust} each variable for $Z_1$, by regressing each variable on $Z_1$ and taking the \textbf{residuals} (the information not explained by the first PLS direction). We then compute $Z_2$ from this orthogonalized data in the same fashion as $Z_1$.
+
+This iterative procedure can be repeated up to $M$ times to identify PLS components $Z_1, \ldots, Z_M$.
+
+\subsection{Fitting and Tuning}
+
+At the end of the procedure, least squares is used to fit a linear model to predict $Y$ using $Z_1, \ldots, Z_M$. As with PCR, the \textbf{number $M$ of PLS directions is a tuning parameter} typically chosen by \textbf{cross-validation}.
+
+\begin{remark}
+While PLS can reduce bias relative to PCR (since it uses $Y$ to find directions), it can also \textbf{increase variance}. In practice, PLS often performs no better than ridge regression or PCR. The theoretical properties of PLS are less well understood than those of PCR.
+\end{remark}
+
+% ========================================
+\section{Considerations in High Dimensions}
+% ========================================
+
+\subsection{Low-Dimensional vs High-Dimensional Data}
+
+Most traditional statistical techniques for regression and classification are intended for the \textbf{low-dimensional setting} in which $n \gg p$ (many more observations than features).
+
+\textit{Example}: predicting a patient's blood pressure from age, gender, and BMI. Here $p = 3$ (or 4 with an intercept) and $n$ could be several thousand patients — clearly $n \gg p$, a low-dimensional problem.
+
+In the past 20 years, new technologies have enabled collection of an almost unlimited number of feature measurements ($p$ very large), while $n$ may be limited by cost or sample availability. Data sets with \textbf{more features than observations} ($p > n$) are called \textbf{high-dimensional}.
+
+\textit{Examples}:
+\begin{itemize}
+    \item Predicting blood pressure from half a million SNPs (single nucleotide polymorphisms): $n \approx 200$, $p \approx 500{,}000$.
+    \item Online shopping pattern analysis using the \textbf{bag-of-words} model: each search term is a binary feature; $p$ can easily exceed $n$.
+\end{itemize}
+
+\subsection{What Goes Wrong in High Dimensions?}
+
+Classical approaches such as \textbf{least squares linear regression are not appropriate} in the high-dimensional setting. When $p \geq n$, least squares will yield coefficient estimates that result in a \textbf{perfect fit to the training data} (residuals are exactly zero) — regardless of whether there truly is a relationship between the features and the response.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{The High-Dimensional Danger}]
+When $p \geq n$, least squares always produces a perfect fit to training data. This perfect fit \textbf{almost certainly leads to overfitting}: the model performs extremely poorly on an independent test set, since it is too flexible and captures noise.
+\end{tcolorbox}
+
+\textit{Illustration}: with $n = 20$ observations and $p = 1$ predictor, least squares does not perfectly fit the data. With only $n = 2$ observations, any line passes through both points — a perfect fit that generalizes nothing.
+
+\subsection{The Curse of Dimensionality in Practice}
+
+The principal issues in high-dimensional analysis are:
+\begin{itemize}
+    \item The \textbf{bias-variance trade-off} becomes critical: adding more features can increase variance dramatically.
+    \item The danger of \textbf{overfitting} is amplified when $p$ is large relative to $n$.
+    \item These considerations also apply when $p$ is only \textbf{slightly smaller} than $n$.
+\end{itemize}
+
+Empirically: simulating $n = 20$ observations with regression on $p$ varying from 1 to 20 (all features unrelated to the response):
+\begin{itemize}
+    \item $R^2$ \textbf{increases to 1} as $p$ increases — even though no feature is relevant.
+    \item Training MSE \textbf{decreases to 0} as $p$ increases.
+    \item Test MSE \textbf{increases dramatically} as $p$ increases.
+\end{itemize}
+
+Including additional predictors leads to a \textbf{huge increase in the variance of the coefficient estimates}. This highlights the importance of always evaluating model performance on an \textbf{independent test set}, and of \textbf{never relying solely on $R^2$ or training MSE} as measures of model quality.
+
+\subsection{Implications for Model Selection Criteria}
+
+Approaches for adjusting training RSS or $R^2$ to account for model size — such as $C_p$, AIC, and BIC — are \textbf{not appropriate in the high-dimensional setting}, because estimating $\hat{\sigma}^2$ is problematic when $p \geq n$ (the residual degrees of freedom become zero or negative).
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{High-Dimensional Takeaways}]
+\begin{itemize}
+    \item Regularization and dimension reduction methods (ridge, lasso, PCR, PLS) are essential in high dimensions.
+    \item Always report performance on an \textbf{independent test set} or via \textbf{cross-validation}.
+    \item Be cautious of $R^2$ and training MSE — they are unreliable indicators of model quality when $p$ is large.
+    \item The best model in high dimensions contains \textbf{only a small number of relevant features}: use regularization to enforce sparsity.
+\end{itemize}
+\end{tcolorbox}
+
+% ========================================
+\part{Classification}
+% ========================================
+
+Classification is the task of predicting a \textbf{qualitative} (categorical) response. Just as regression is used for quantitative outputs, classification methods are used when the output takes on one of $K$ discrete classes. Many of the core ideas from regression — bias-variance trade-off, training vs.\ test error, model selection — carry over with only minor modifications.
+
+% ========================================
+\section{Introduction to Classification}
+% ========================================
+
+\subsection{Qualitative Variables}
+
+In many situations, the response variable is \textbf{qualitative}: it takes values from a finite, unordered set of categories (e.g., eye color: blue, brown, green). The process of predicting a qualitative response is known as \textbf{classification} — it involves \textbf{assigning the observation to a category, or class}.
+
+Classifiers typically work by first \textbf{estimating the probability} that an observation belongs to each possible class, and then making a decision based on those probabilities. Three of the most widely used classifiers are:
+\begin{itemize}
+    \item \textbf{K-Nearest Neighbours (KNN)}
+    \item \textbf{Logistic Regression}
+    \item \textbf{Linear Discriminant Analysis (LDA)}
+\end{itemize}
+
+\textit{Example applications}:
+\begin{enumerate}
+    \item A patient arrives at the emergency room with a set of symptoms — classify into one of three medical conditions.
+    \item Fraud detection: determine whether a transaction is fraudulent, based on IP address, transaction history, etc.
+    \item Predict, on the basis of DNA sequence data, which mutations are disease-causing.
+\end{enumerate}
+
+\subsection{The Classification Setting}
+
+We seek to estimate the classification function $f$ from training observations $\{(x_1, y_1), \ldots, (x_n, y_n)\}$ where $y_1, \ldots, y_n$ are qualitative. The accuracy of $\hat{f}$ is quantified by the \textbf{training error rate}:
+\[
+    \varepsilon_{\text{train}} = \frac{1}{n} \sum_{i=1}^{n} I(y_i \neq \hat{y}_i)
+\]
+where $\hat{y}_i$ is the predicted class label and $I(\cdot)$ is the indicator function (1 if $y_i \neq \hat{y}_i$, zero otherwise). $\varepsilon_{\text{train}}$ is simply the fraction of incorrect classifications on the training data. The \textbf{test error rate} is computed from predictions on data not used for training — this is what we actually care about.
+
+\subsection{The Bayes Classifier}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{The Bayes Classifier}]
+The test error rate is minimized, on average, by a classifier that assigns each observation to the \textbf{most likely class given its predictor values}. That is, assign a test observation with predictor vector $x_0$ to the class $j$ for which
+\[
+    \Pr(Y = j \mid X = x_0)
+\]
+is the \textbf{largest}. This is the \textbf{Bayes classifier}.
+\end{tcolorbox}
+
+In a \textbf{two-class problem} (classes 1 and 2), the Bayes classifier assigns an observation to class 1 if $\Pr(Y = 1 \mid X = x_0) > 0.5$, and to class 2 otherwise.
+
+\subsubsection{Bayes Decision Boundary}
+
+The \textbf{Bayes decision boundary} is the set of points where the largest conditional class probability is exactly 0.5 (in the two-class case). Observations on one side of the boundary are assigned to one class, and observations on the other side to the other class.
+
+The Bayes classifier produces the \textbf{lowest possible test error rate}, called the \textbf{Bayes error rate}. At a given $X = x_0$, the error rate is $1 - \max_j \Pr(Y = j \mid X = x_0)$. The overall Bayes error rate is:
+\[
+    1 - \mathbb{E}\!\left[\max_j \Pr(Y = j \mid X)\right]
+\]
+where the expectation averages over all possible values of $X$.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{The Bayes Classifier is Unattainable}]
+For real data, we do \textbf{not} know the conditional distribution of $Y$ given $X$, so computing the Bayes classifier is \textbf{impossible}. It serves as an \textbf{unattainable gold standard} against which to compare other methods.
+\end{tcolorbox}
+
+% ========================================
+\section{K-Nearest Neighbours}
+% ========================================
+
+\subsection{The KNN Classifier}
+
+Many methods estimate the conditional distribution of $Y$ given $X$, and then classify an observation to the class with the highest estimated probability. One of the most widely used is the \textbf{K-Nearest Neighbours (KNN)} classifier.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{KNN Algorithm}]
+Given a positive integer $K$ and a test observation $x_0$, KNN:
+\begin{enumerate}
+    \item Identifies the $K$ training points closest to $x_0$ — call this set $\mathcal{N}_0$.
+    \item Estimates the conditional probability for class $j$ as the \textbf{fraction of points in $\mathcal{N}_0$ whose response equals $j$}:
+    \[
+        \Pr(Y = j \mid X = x_0) = \frac{1}{K} \sum_{i \in \mathcal{N}_0} I(y_i = j)
+    \]
+    \item Classifies $x_0$ to the class with the \textbf{largest probability}.
+\end{enumerate}
+\end{tcolorbox}
+
+\textit{Example with $K = 3$}: to predict the class of a test point (black cross), KNN finds the three closest training observations — suppose two are blue and one is orange. The estimated probabilities are $2/3$ for blue and $1/3$ for orange. KNN predicts the \textbf{blue class}.
+
+\subsection{Choice of $K$: Bias-Variance Trade-off}
+
+The value of $K$ is the key tuning parameter and controls the \textbf{flexibility} of the classifier:
+
+\begin{itemize}
+    \item \textbf{$K = 1$}: the decision boundary is \textbf{overly flexible}, fits patterns not corresponding to the Bayes boundary — \textbf{low bias, very high variance}. Training error rate is exactly 0.
+    \item \textbf{Large $K$} (e.g., $K = 100$): the boundary becomes \textbf{less flexible}, close to linear — \textbf{lower variance, higher bias}.
+    \item \textbf{Optimal $K$} (e.g., $K = 10$ on a simulated dataset): KNN decision boundary is close to the Bayes boundary; test error rate (0.1363) is close to the Bayes error rate (0.1304).
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Flexibility and Error in KNN}]
+As $1/K$ increases (more flexible), training error consistently decreases. However, the test error forms a characteristic \textbf{U-shape}: too flexible (small $K$) leads to overfitting and high test error; too rigid (large $K$) leads to underfitting. The optimal $K$ minimizes test error.
+\end{tcolorbox}
+
+% ========================================
+\part{Classification II --- Logistic Regression}
+% ========================================
+
+% ========================================
+\section{Why Not Linear Regression?}
+% ========================================
+
+\subsection{The Problem with Encoding Qualitative Responses}
+
+A natural first attempt at classification is to encode the classes as numbers and apply linear regression. However, this approach has a fundamental flaw: the \textbf{order of the encoding matters}.
+
+\textit{Example}: predict a medical condition — stroke, drug overdose, epileptic seizure. We could encode:
+\[
+    Y = \begin{cases} 1 & \text{if stroke} \\ 2 & \text{if drug overdose} \\ 3 & \text{if epileptic seizure} \end{cases}
+\]
+and use least squares to fit a linear model on the predictors $X_1, \ldots, X_p$. But this encoding \textbf{implies an ordering and equal spacing} between conditions that does not exist medically. A different encoding (e.g., stroke = 1, epileptic seizure = 2, drug overdose = 3) would produce \textbf{fundamentally different linear models} and hence different predictions.
+
+The only situation where a quantitative encoding is defensible is when the response classes have a \textbf{natural ordering and equal gaps} — for instance:
+\[
+    Y = \begin{cases} 1 & \text{if mild} \\ 2 & \text{if moderate} \\ 3 & \text{if severe} \end{cases}
+\]
+In general, there is \textbf{no natural way} to encode a qualitative response with more than two values into a single quantitative response.
+
+\subsection{The Binary Case: Linear Regression on a Dummy Variable}
+
+When the response has only \textbf{two classes}, we can use a binary (dummy variable) encoding:
+\[
+    Y = \begin{cases} 0 & \text{if stroke} \\ 1 & \text{if drug overdose} \end{cases}
+\]
+and fit a linear regression model to predict $\Pr(\text{drug overdose} \mid X) \approx X\hat{\beta}$. Then classify as drug overdose if $\hat{Y} > 0.5$, and stroke otherwise.
+
+This works for two classes, but has two critical issues:
+\begin{enumerate}
+    \item The linear regression estimate $X\hat{\beta}$ can fall \textbf{outside the interval $[0,1]$} — giving negative probabilities or probabilities above 1, which are not valid.
+    \item The approach \textbf{cannot be extended} to qualitative responses with more than two values.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Conclusion}]
+We need classification methods that are specifically designed for qualitative responses and that always produce \textbf{valid probability estimates in $[0, 1]$}.
+\end{tcolorbox}
+
+% ========================================
+\section{Logistic Regression}
+% ========================================
+
+\subsection{The Logistic Model}
+
+Rather than modelling $Y$ directly, logistic regression models the \textbf{probability that $Y$ belongs to a particular category}. For the Default dataset — response: default (Yes/No), predictor: credit card balance — we model:
+\[
+    p(\text{balance}) = \Pr(\text{default} = \text{Yes} \mid \text{balance})
+\]
+
+Using a linear model $p(X) = \beta_0 + \beta_1 X$ leads to estimates outside $[0,1]$ for extreme values of $X$. To avoid this, logistic regression uses the \textbf{logistic function}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{The Logistic Function}]
+\[
+    p(X) = \frac{e^{\beta_0 + \beta_1 X}}{1 + e^{\beta_0 + \beta_1 X}}
+\]
+\end{tcolorbox}
+
+The logistic function always produces outputs in $(0, 1)$ for any value of $X$, giving an \textbf{S-shaped curve} — always a reasonable probability prediction. The model is fit using \textbf{maximum likelihood}.
+
+\textit{Illustration}: for the Default data, linear regression produces some \textbf{negative} estimated probabilities of default. Logistic regression keeps all probabilities in $[0,1]$.
+
+\subsection{The Odds}
+
+After algebraic manipulation of the logistic function, we obtain:
+\[
+    \frac{p(X)}{1 - p(X)} = e^{\beta_0 + \beta_1 X}
+\]
+
+The quantity $p(X) / (1 - p(X))$ is called the \textbf{odds}, and ranges in $[0, \infty)$:
+\begin{itemize}
+    \item Odds close to 0: very low probability of the event.
+    \item Odds much larger than 1: very high probability.
+    \item \textit{Example}: $p(X) = 0.2 \Rightarrow$ odds $= 0.2/0.8 = 1/4$ (on average 1 in 5 people will default).
+    \item \textit{Example}: $p(X) = 0.9 \Rightarrow$ odds $= 0.9/0.1 = 9$ (9 out of 10 will default).
+\end{itemize}
+
+\subsection{The Logit (Log-Odds)}
+
+Taking the \textbf{logarithm} of both sides:
+\[
+    \log\!\left(\frac{p(X)}{1 - p(X)}\right) = \beta_0 + \beta_1 X
+\]
+
+The left-hand side is called the \textbf{logit} or \textbf{log-odds}. Key properties:
+\begin{itemize}
+    \item The logit is \textbf{linear in $X$}: the logistic regression model is linear on the log-odds scale.
+    \item Increasing $X$ by one unit changes the log odds by $\beta_1$, equivalently multiplying the odds by $e^{\beta_1}$.
+    \item The change in $p(X)$ per unit increase in $X$ \textbf{depends on the current value of $X$} (non-constant, unlike linear regression).
+    \item If $\beta_1 > 0$: increasing $X$ \textbf{increases} $p(X)$. If $\beta_1 < 0$: increasing $X$ \textbf{decreases} $p(X)$.
+\end{itemize}
+
+\subsection{Estimating the Coefficients}
+
+The coefficients $\beta_0$ and $\beta_1$ are estimated from training data. We could use (non-linear) least squares, but \textbf{maximum likelihood} is preferred as it has better statistical properties.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{The Likelihood Function}]
+We seek $\hat{\beta}_0$ and $\hat{\beta}_1$ such that predicted probabilities are \textbf{close to 1} for individuals who defaulted and \textbf{close to 0} for those who did not. This is formalized by the likelihood function:
+\[
+    \ell(\beta_0, \beta_1) = \prod_{i:\, y_i = 1} p(x_i) \prod_{i':\, y_{i'} = 0} \bigl(1 - p(x_{i'})\bigr)
+\]
+The estimates $\hat{\beta}_0$ and $\hat{\beta}_1$ are chosen to \textbf{maximize} $\ell(\beta_0, \beta_1)$.
+\end{tcolorbox}
+
+\begin{remark}
+Least squares in the linear regression setting is a special case of maximum likelihood. Logistic regression and other models can typically be fit using a standard statistical software package.
+\end{remark}
+
+\subsubsection{Coefficient Estimates for the Default Dataset}
+
+Fitting logistic regression on the Default data to predict $\Pr(\text{default} = \text{Yes} \mid \text{balance})$:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\hline
+ & Coefficient & Std.\ error & Z-statistic & P-value \\
+\hline
+Intercept & $-10.6513$ & $0.3612$ & $-29.5$ & $<0.0001$ \\
+balance   & $0.0055$   & $0.0002$ & $24.9$  & $<0.0001$ \\
+\hline
+\end{tabular}
+\end{center}
+
+$\hat{\beta}_1 = 0.0055$: a one-unit increase in balance increases the \textbf{log odds of default by 0.0055}.
+
+Many aspects of logistic regression are \textbf{analogous to linear regression}:
+\begin{itemize}
+    \item The \textbf{z-statistic} plays the role of the t-statistic: $z = \hat{\beta}_1 / \mathrm{SE}(\hat{\beta}_1)$. A large absolute value is evidence against $H_0: \beta_1 = 0$.
+    \item The \textbf{p-value} tests whether there is a statistically significant association between balance and default.
+\end{itemize}
+
+\subsubsection{Making Predictions}
+
+Once coefficients are estimated, computing probabilities is straightforward. For a balance of \$1000:
+\[
+    \hat{p}(X) = \frac{e^{-10.6513 + 0.0055 \times 1000}}{1 + e^{-10.6513 + 0.0055 \times 1000}} \approx 0.00576
+\]
+which is below 1\%. For a balance of \$2000 the predicted probability is $0.586 = 58.6\%$ — much higher.
+
+\subsubsection{Using Qualitative Predictors}
+
+Qualitative predictors are included via \textbf{dummy variables}. For the Default dataset, student status is encoded as 0 (non-student) and 1 (student):
+
+\begin{center}
+\begin{tabular}{lcccc}
+\hline
+ & Coefficient & Std.\ error & z-statistic & p-value \\
+\hline
+Intercept      & $-3.5041$ & $0.0707$ & $-49.55$ & $<0.0001$ \\
+student[Yes]   & $0.4049$  & $0.1150$ & $3.52$   & $0.0004$  \\
+\hline
+\end{tabular}
+\end{center}
+
+The \textbf{positive coefficient} for student[Yes] indicates that students have a \textbf{higher chance of default} than non-students (when using student status as the only predictor).
+
+% ========================================
+\section{Multiple Logistic Regression}
+% ========================================
+
+\subsection{Extending to Multiple Predictors}
+
+By analogy with the extension from simple to multiple linear regression, the logistic model generalizes to \textbf{multiple predictors} $X = (X_1, \ldots, X_p)$:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Multiple Logistic Regression}]
+\[
+    \log\!\left(\frac{p(X)}{1 - p(X)}\right) = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
+\]
+equivalently:
+\[
+    p(X) = \frac{e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p}}{1 + e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p}}
+\]
+Parameters $\beta_0, \beta_1, \ldots, \beta_p$ are estimated via \textbf{maximum likelihood}.
+\end{tcolorbox}
+
+\subsection{Example: Default Dataset with Three Predictors}
+
+Fitting logistic regression using balance, income, and student status simultaneously:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\hline
+ & Coefficient & Std.\ error & z-statistic & p-value \\
+\hline
+Intercept      & $-10.8690$ & $0.4923$ & $-22.08$ & $<0.0001$ \\
+balance        & $0.0057$   & $0.0002$ & $24.74$  & $<0.0001$ \\
+income         & $0.0030$   & $0.0082$ & $0.37$   & $0.7115$  \\
+student[Yes]   & $-0.6468$  & $0.2362$ & $-2.74$  & $0.0062$  \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Confounding: the Student Sign Reversal}]
+When using student status alone, the coefficient is \textbf{positive} (+0.4049): students appear to default more. When controlling for balance and income, the coefficient becomes \textbf{negative} ($-0.6468$): students actually default \textit{less} at a fixed balance level.
+
+This is a case of \textbf{confounding}: students tend to carry higher credit card balances, and high balance is the true driver of default. Once balance is held fixed, being a student is associated with \textbf{lower} default risk. This illustrates the importance of considering all relevant predictors simultaneously — a single-predictor model can give a misleading picture.
+\end{tcolorbox}
+
+% ========================================
+\part{Classification III --- Linear Discriminant Analysis}
+% ========================================
+
+% ========================================
+\section{Introduction}
+% ========================================
+
+\subsection{An Alternative Approach to Classification}
+
+Logistic regression models $\Pr(Y = k \mid X = x)$ \textbf{directly} using the logistic function. Linear Discriminant Analysis (LDA) takes a different, \textbf{less direct} approach:
+\begin{enumerate}
+    \item Model the distribution of the predictors $X$ \textbf{separately within each class} — i.e., estimate $f_k(x) = \Pr(X = x \mid Y = k)$ for each class $k$.
+    \item Use \textbf{Bayes' theorem} to flip these around into estimates of $\Pr(Y = k \mid X = x)$.
+\end{enumerate}
+
+When the within-class distributions are assumed to be \textbf{Gaussian}, the resulting model turns out to be very similar to logistic regression.
+
+\subsection{Why Use LDA?}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Advantages of LDA over Logistic Regression}]
+\begin{itemize}
+    \item When the classes are \textbf{well-separated}, parameter estimates for logistic regression are surprisingly \textbf{unstable}. LDA does not suffer from this problem.
+    \item When $n$ is \textbf{small} and the distribution of $X$ is approximately \textbf{normal} within each class, LDA is more stable than logistic regression.
+    \item LDA is naturally suited for problems with \textbf{more than two response classes}.
+\end{itemize}
+\end{tcolorbox}
+
+% ========================================
+\section{Bayes' Theorem for Classification}
+% ========================================
+
+\subsection{Setup}
+
+Suppose we wish to classify an observation into one of $K$ classes, where $K \geq 2$ — the categorical variable $Y$ takes $K$ possible distinct and unordered values. Define:
+\begin{itemize}
+    \item $\pi_k$ = \textbf{prior probability} that a randomly chosen observation comes from class $k$; this is the probability that a given observation belongs to the $k$-th category of $Y$.
+    \item $f_k(x) = \Pr(X = x \mid Y = k)$ = \textbf{density function} of $X$ for an observation from class $k$. $f_k(x)$ is large if it is highly probable that an observation in class $k$ has $X \approx x$, and small if it is very unlikely.
+\end{itemize}
+
+\subsection{Bayes' Theorem}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bayes' Theorem for Classification}]
+\[
+    p_k(x) = \Pr(Y = k \mid X = x) = \frac{\pi_k f_k(x)}{\displaystyle\sum_{j=1}^{K} \pi_j f_j(x)}
+\]
+\end{tcolorbox}
+
+$p_k(x)$ is the \textbf{posterior probability} that an observation $X = x$ belongs to class $k$ — i.e., the probability that the observation belongs to the $k$-th class, given the predictor value.
+
+\begin{itemize}
+    \item Estimating $\pi_k$ is \textbf{easy}: compute the \textbf{fraction of training observations} that belong to class $k$.
+    \item Estimating $f_k(x)$ is more \textbf{challenging} — we need to assume some form for these densities. LDA assumes they are Gaussian.
+\end{itemize}
+
+The Bayes classifier, which achieves the lowest possible error rate, assigns $X = x$ to the class with the largest $p_k(x)$. If we can estimate $f_k(x)$, we can build a classifier that \textbf{approximates the Bayes classifier}.
+
+% ========================================
+\section{Linear Discriminant Analysis for \texorpdfstring{$p = 1$}{p=1}}
+% ========================================
+
+\subsection{Gaussian Assumption}
+
+With a single predictor ($p = 1$), assume $f_k(x)$ is \textbf{normal (Gaussian)}:
+\[
+    f_k(x) = \frac{1}{\sqrt{2\pi}\,\sigma_k} \exp\!\left(-\frac{1}{2\sigma_k^2}(x - \mu_k)^2\right)
+\]
+where $\mu_k$ and $\sigma_k^2$ are the mean and variance for class $k$.
+
+LDA further assumes a \textbf{shared variance} across all $K$ classes: $\sigma_1^2 = \cdots = \sigma_K^2 = \sigma^2$.
+
+Plugging into the Bayes formula:
+\[
+    p_k(x) = \frac{\pi_k \dfrac{1}{\sqrt{2\pi}\,\sigma} \exp\!\left(-\dfrac{1}{2\sigma^2}(x - \mu_k)^2\right)}{\displaystyle\sum_{j=1}^{K} \pi_j \dfrac{1}{\sqrt{2\pi}\,\sigma} \exp\!\left(-\dfrac{1}{2\sigma^2}(x - \mu_j)^2\right)}
+\]
+
+The Bayes classifier assigns $X = x$ to the class for which this expression is largest.
+
+\subsection{Discriminant Functions}
+
+Taking the logarithm and rearranging, maximizing $p_k(x)$ over $k$ is equivalent to assigning $x$ to the class with the largest \textbf{linear discriminant function}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Linear Discriminant Function ($p = 1$)}]
+\[
+    \delta_k(x) = x \cdot \frac{\mu_k}{\sigma^2} - \frac{\mu_k^2}{2\sigma^2} + \log(\pi_k)
+\]
+\end{tcolorbox}
+
+These functions are \textbf{linear in $x$} — hence the name \textit{Linear} Discriminant Analysis.
+
+\textit{Example ($K = 2$, $\pi_1 = \pi_2$)}: the Bayes classifier assigns $x$ to class 1 if $2x(\mu_1 - \mu_2) > \mu_1^2 - \mu_2^2$, and to class 2 otherwise. The \textbf{Bayes decision boundary} is the point where $\delta_1(x) = \delta_2(x)$:
+\[
+    x = \frac{\mu_1^2 - \mu_2^2}{2(\mu_1 - \mu_2)} = \frac{\mu_1 + \mu_2}{2}
+\]
+
+\subsection{The LDA Algorithm}
+
+In practice, $\mu_k$, $\pi_k$, and $\sigma^2$ are unknown. LDA estimates them from training data:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{LDA Parameter Estimates}]
+\[
+    \hat{\mu}_k = \frac{1}{n_k} \sum_{i:\, y_i = k} x_i, \qquad
+    \hat{\sigma}^2 = \frac{1}{n - K} \sum_{k=1}^{K} \sum_{i:\, y_i = k} (x_i - \hat{\mu}_k)^2, \qquad
+    \hat{\pi}_k = \frac{n_k}{n}
+\]
+where $n$ is the total number of training observations and $n_k$ is the number in class $k$.
+\end{tcolorbox}
+
+\begin{itemize}
+    \item $\hat{\mu}_k$: average of all training observations from class $k$.
+    \item $\hat{\sigma}^2$: weighted average of the sample variances for each class.
+    \item $\hat{\pi}_k$: proportion of training observations in class $k$ (or the known prior, if available).
+\end{itemize}
+
+LDA plugs these estimates into $\delta_k(x)$ and assigns $X = x$ to the class for which:
+\[
+    \hat{\delta}_k(x) = x \cdot \frac{\hat{\mu}_k}{\hat{\sigma}^2} - \frac{\hat{\mu}_k^2}{2\hat{\sigma}^2} + \log(\hat{\pi}_k)
+\]
+is the largest.
+
+\subsection{Decision Boundary and Performance}
+
+\textit{Example}: 20 observations drawn from each of two Gaussian classes ($\mu_1 = -1.25$, $\mu_2 = 1.25$, $\sigma^2 = 1$). The two density functions overlap, so there is inherent uncertainty about class membership.
+
+Since $n_1 = n_2 = 20$, we have $\hat{\pi}_1 = \hat{\pi}_2$. The \textbf{LDA decision boundary} is the midpoint of the sample means:
+\[
+    \frac{\hat{\mu}_1 + \hat{\mu}_2}{2}
+\]
+The \textbf{Bayes decision boundary} (optimal) is at $(\mu_1 + \mu_2)/2 = 0$. The LDA boundary (solid line) is close to but not exactly at the Bayes boundary (dashed line), due to estimation from finite data.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{LDA Performance}]
+\begin{itemize}
+    \item Bayes error rate: \textbf{10.6\%} (theoretical minimum).
+    \item LDA test error rate: \textbf{11.1\%} — only 0.5\% above optimal.
+\end{itemize}
+LDA closely approximates the Bayes classifier when the Gaussian assumption is satisfied.
+\end{tcolorbox}
+
+% ========================================
+\section{Linear Discriminant Analysis for \texorpdfstring{$p > 1$}{p>1}}
+% ========================================
+
+\subsection{Multivariate Gaussian Distribution}
+
+For multiple predictors, LDA assumes $X = (X_1, \ldots, X_p)$ follows a \textbf{multivariate Gaussian distribution} $X \sim \mathcal{N}(\mu, \Sigma)$:
+\begin{itemize}
+    \item Each individual predictor follows a one-dimensional normal distribution, with some \textbf{correlation} between each pair of predictors.
+    \item $E(X) = \mu$ is a vector with $p$ components (the mean of $X$).
+    \item $\mathrm{Cov}(X) = \Sigma$ is the $p \times p$ \textbf{covariance matrix} of $X$.
+\end{itemize}
+
+The multivariate Gaussian density is:
+\[
+    f(x) = \frac{1}{(2\pi)^{p/2} |\Sigma|^{1/2}} \exp\!\left(-\frac{1}{2}(x - \mu)^T \Sigma^{-1}(x - \mu)\right)
+\]
+
+LDA assumes each class $k$ has its own \textbf{class-specific mean vector} $\mu_k$, but all classes \textbf{share a common covariance matrix} $\Sigma$.
+
+\subsection{Discriminant Functions for \texorpdfstring{$p > 1$}{p>1}}
+
+Plugging in the multivariate Gaussian density, the Bayes classifier assigns $X = x$ to the class for which the \textbf{multivariate linear discriminant function} is largest:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Linear Discriminant Function ($p > 1$)}]
+\[
+    \delta_k(x) = x^T \Sigma^{-1} \mu_k - \frac{1}{2} \mu_k^T \Sigma^{-1} \mu_k + \log \pi_k
+\]
+\end{tcolorbox}
+
+This is the vector/matrix generalization of the univariate formula. Note that $\delta_k(x)$ is a \textbf{linear function of $x$}: the LDA decision rule depends on $x$ only through a \textbf{linear combination} of its elements.
+
+LDA estimates the unknown parameters $\mu_1, \ldots, \mu_K$, $\pi_1, \ldots, \pi_K$, and $\Sigma$ from training data, plugs them into $\delta_k(x)$, and classifies to the class for which $\hat{\delta}_k(x)$ is the largest.
+
+\subsection{Example: Two Predictors, Three Classes}
+
+Three equally-sized Gaussian classes with class-specific mean vectors and a common covariance matrix. The \textbf{Bayes decision boundaries} (dashed lines) are defined by the set of values $x$ for which $\delta_k(x) = \delta_l(x)$, i.e.:
+\[
+    x^T \Sigma^{-1} \mu_k - \frac{1}{2}\mu_k^T \Sigma^{-1} \mu_k = x^T \Sigma^{-1} \mu_l - \frac{1}{2}\mu_l^T \Sigma^{-1} \mu_l \qquad \text{for } k \neq l
+\]
+
+With $K = 3$ classes there are three pairs, hence \textbf{three decision boundaries} dividing the predictor space into three regions. The Bayes classifier assigns an observation to the region in which it is located.
+
+With 20 observations drawn from each class, the \textbf{LDA decision boundaries} (solid lines) are close to the Bayes decision boundaries (dashed lines):
+\begin{itemize}
+    \item Bayes test error rate: \textbf{7.46\%}
+    \item LDA test error rate: \textbf{7.70\%}
+\end{itemize}
+LDA performs well on this data.
+
+% ========================================
+\section{Evaluating Classification Performance}
+% ========================================
+
+\subsection{Beyond the Overall Error Rate}
+
+A low overall error rate does not tell the full story. Consider LDA applied to the \textbf{Default dataset} (10,000 training samples, binary response: default Yes/No):
+\begin{itemize}
+    \item LDA training error rate: \textbf{2.75\%} — appears excellent.
+    \item But the \textbf{null classifier} (always predicts ``No default'') achieves \textbf{3.33\%} — barely worse.
+    \item Only 3.33\% of individuals actually defaulted, so a useless classifier is almost as good by the overall error rate metric alone.
+\end{itemize}
+
+A binary classifier can make two types of error:
+\begin{itemize}
+    \item \textbf{False Negative (FN)}: a true defaulter incorrectly assigned to the ``No default'' class.
+    \item \textbf{False Positive (FP)}: a non-defaulter incorrectly assigned to the ``Default'' class.
+\end{itemize}
+
+\subsection{The Confusion Matrix}
+
+A \textbf{confusion matrix} displays the counts of all four prediction outcomes:
+
+\begin{center}
+\begin{tabular}{llccc}
+\hline
+ & & \multicolumn{3}{c}{True default status} \\
+ & & No & Yes & Total \\
+\hline
+\multirow{2}{*}{Predicted default status} & No  & 9\,644 & 252 & 9\,896 \\
+                                           & Yes & 23     & 81  & 104    \\
+\hline
+ & Total & 9\,667 & 333 & 10\,000 \\
+\hline
+\end{tabular}
+\end{center}
+
+Reading the matrix: LDA predicted 104 people would default. Of these, 81 actually defaulted and 23 did not. Of the 333 true defaulters, \textbf{252 (75.7\%) were missed} by LDA — a very high miss rate.
+
+\subsection{Key Metrics}
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+Name & Definition & Synonyms \\
+\hline
+False Positive rate  & FP / N      & Type I error, 1 $-$ Specificity \\
+True Positive rate   & TP / P      & 1 $-$ Type II error, Sensitivity, Recall \\
+Positive Pred.\ value & TP / $P^*$ & Precision \\
+Negative Pred.\ value & TN / $N^*$ & --- \\
+\hline
+\end{tabular}
+\end{center}
+
+For the Default example:
+\begin{itemize}
+    \item \textbf{Sensitivity} (true defaulters correctly identified): $81/333 = 24.3\%$ — very low.
+    \item \textbf{Specificity} (non-defaulters correctly identified): $9{,}644/9{,}667 = 99.8\%$ — very high.
+\end{itemize}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Why Does LDA Miss So Many Defaulters?}]
+LDA approximates the Bayes classifier, which minimises the \textbf{total} error rate irrespective of which class the errors come from. Since only 3.33\% of observations default, the Bayes classifier sacrifices sensitivity on the minority class (defaulters) to keep the overall error low. A credit card company, however, may specifically want to \textbf{avoid missing defaulters}.
+\end{tcolorbox}
+
+\subsection{Adjusting the Decision Threshold}
+
+The Bayes classifier (and by extension LDA) uses a default threshold of \textbf{50\%}:
+\[
+    \Pr(\text{default} = \text{yes} \mid X = x) > 0.5 \implies \text{predict Default}
+\]
+
+To \textbf{increase sensitivity}, we can \textbf{lower the threshold}. Using 20\%:
+\[
+    \Pr(\text{default} = \text{yes} \mid X = x) > 0.2 \implies \text{predict Default}
+\]
+
+\begin{center}
+\begin{tabular}{llccc}
+\hline
+ & & \multicolumn{3}{c}{True default status} \\
+ & & No & Yes & Total \\
+\hline
+\multirow{2}{*}{Predicted default status} & No  & 9\,432 & 138 & 9\,570 \\
+                                           & Yes & 235    & 195 & 430    \\
+\hline
+ & Total & 9\,667 & 333 & 10\,000 \\
+\hline
+\end{tabular}
+\end{center}
+
+With a 20\% threshold: sensitivity rises to $195/333 = 58.6\%$ (vs.\ 24.3\% before), but 235 non-defaulters are now incorrectly classified and the overall error rate increases slightly to 3.73\%.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Threshold Trade-off}]
+Lowering the threshold \textbf{increases sensitivity} but \textbf{decreases specificity}. The optimal threshold depends on the \textbf{domain costs} associated with each error type and cannot be determined from the data alone — it requires external domain knowledge (e.g., the financial cost of a missed default vs.\ a false alarm).
+\end{tcolorbox}
+
+\subsection{The ROC Curve and AUC}
+
+Rather than evaluating at a single threshold, the \textbf{ROC curve} (Receiver Operating Characteristics) simultaneously displays both error types \textbf{for all possible thresholds}:
+\begin{itemize}
+    \item $y$-axis: \textbf{True Positive Rate} (sensitivity).
+    \item $x$-axis: \textbf{False Positive Rate} (1 $-$ specificity).
+\end{itemize}
+
+The \textbf{Area Under the ROC Curve (AUC)} summarises the overall classifier performance across all thresholds:
+\begin{itemize}
+    \item AUC $= 1$: perfect classifier.
+    \item AUC $= 0.5$: no better than random chance (diagonal dotted line).
+    \item The higher the AUC, the better the classifier.
+\end{itemize}
+
+For the LDA classifier on the Default data, AUC $= \mathbf{0.95}$ — excellent overall discrimination between defaulters and non-defaulters.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Key Takeaways for Classifier Evaluation}]
+\begin{itemize}
+    \item Never rely solely on the overall error rate: always inspect the \textbf{confusion matrix}.
+    \item Report \textbf{sensitivity} and \textbf{specificity} separately — they reveal class-specific performance.
+    \item Use the \textbf{ROC curve and AUC} to evaluate performance across all thresholds.
+    \item Choose the decision threshold based on \textbf{domain knowledge} about the costs of each error type.
+\end{itemize}
+\end{tcolorbox}
+
 \end{document}

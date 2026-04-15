@@ -1772,6 +1772,545 @@ A. Vaswani et al.\ (2017). ``Attention Is All You Need''. \textit{NeurIPS 2017}.
 \end{tcolorbox}
 
 
+% ========================================
+\part{Attention Mechanism \& Transformers}
+% ========================================
+
+\section{From RNNs to Transformers}
+
+\subsection{The Historical Context}
+
+Before Transformers, NLP tasks --- especially \textbf{sequence-to-sequence} (seq2seq) tasks such as machine translation --- relied on recurrent architectures: LSTMs and GRUs. In the visual domain, convolutions dominated for decades. The \textbf{attention mechanism} itself was introduced earlier, through ``fast weight controllers'' (Schmidhuber, 1992--1997), but it only became central to NLP architectures later.
+
+The Transformer architecture, introduced in 2017 in ``Attention Is All You Need'' (Vaswani et al.), stands on the shoulders of the encoder-decoder paradigm but departs from it in a fundamental way: \textbf{recurrence is eliminated entirely}.
+
+\subsection{Problems with RNNs/LSTMs}
+
+\begin{itemize}
+    \item \textbf{Sequential processing}: inputs are processed one after the other, making it impossible to fully exploit modern GPUs designed for parallel computation.
+    \item \textbf{Long-range dependencies}: information degrades as sequence length increases; the hidden state must compress an entire context into a fixed-size vector.
+    \item \textbf{Vanishing gradients}: gradients shrink over many time steps, making distant context hard to learn.
+\end{itemize}
+
+\subsection{Transformers: Key Advantages}
+
+\begin{itemize}
+    \item \textbf{No recurrence}: the entire sequence is processed in parallel.
+    \item \textbf{Self-attention}: any two tokens can interact directly, regardless of their distance in the sequence.
+    \item \textbf{Efficiency}: simple matrix operations that are fully parallelizable on modern hardware.
+    \item \textbf{Performance}: state-of-the-art on virtually all NLP benchmarks, and increasingly in vision.
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Core Idea}]
+Transformers replace recurrence with \textbf{self-attention mechanisms}, which analyze the relationships between \emph{all} elements in a sequence simultaneously. Self-attention assigns different importance (weights) to every token, capturing long-range dependencies efficiently and in parallel.
+\end{tcolorbox}
+
+
+\section{Transformer Architecture}
+
+The Transformer is an \textbf{encoder-decoder} architecture. Its high-level pipeline for a translation task proceeds as follows:
+
+\begin{enumerate}
+    \item \textbf{Pre-processing}: tokenization, embedding, positional encoding.
+    \item \textbf{Encoder}: encodes relations among all input elements, producing contextualized representations.
+    \item \textbf{Auto-regressive decoding}: generated outputs are fed back as additional decoder inputs.
+    \item \textbf{Output generation}: the decoder produces a probability vector over the vocabulary for the next token.
+    \item \textbf{De-tokenization}: convert the predicted logits back into words.
+\end{enumerate}
+
+\subsection{Encoder--Decoder Structure}
+
+\begin{definition}[Encoder]
+The encoder receives the entire input sequence and outputs an encoded sequence of the \emph{same length}. Its role is to build rich, contextualized representations of the input.
+\end{definition}
+
+\begin{definition}[Decoder]
+The decoder predicts one token at a time, conditioned on (a) the encoder output and (b) the previously predicted tokens. This generation is \textbf{auto-regressive} --- output elements are produced sequentially, so there is no parallelization at inference time.
+\end{definition}
+
+Both the encoder and the decoder are \textbf{stacks of $N$ identical layers} (the original paper uses $N=6$). All encoder layers share the same structure; all decoder layers share the same structure. Each decoder layer receives input from both the immediately preceding decoder layer \emph{and} the top encoder layer.
+
+\begin{example}[Translation]
+Input: ``How are you?'' $\to$ Encoder produces a matrix representation $\to$ Decoder iteratively generates: ``\textquestiondown C\'omo est\'as?''
+\end{example}
+
+
+\section{Encoder in Detail}
+
+\subsection{Components}
+
+An encoder transforms raw input tokens into \textbf{contextualized representations}. Each encoder layer consists of:
+
+\begin{enumerate}
+    \item \textbf{Input Embeddings} (bottom encoder only)
+    \item \textbf{Positional Encoding}
+    \item \textbf{Multi-Head Self-Attention} sub-layer
+    \item \textbf{Add \& Norm} (residual connection + layer normalization)
+    \item \textbf{Feed-Forward Neural Network} sub-layer
+    \item \textbf{Add \& Norm}
+\end{enumerate}
+
+\subsection{Input Embeddings}
+
+Input tokens (e.g., words) are converted into \textbf{numerical vectors} using an embedding algorithm. The embedding layer captures \textbf{semantic meaning}: semantically similar words map to nearby vectors. Embedding happens only at the bottom-most encoder; all subsequent encoder layers receive the output of the encoder directly below them. Each encoder receives a list of fixed-size vectors (e.g., dimension 512).
+
+\subsection{Positional Encoding}
+
+The Transformer has no inherent notion of order: without additional information, shuffling the input tokens would produce the same representation. \textbf{Positional encoding} injects position/order information by adding a positional vector of the same dimension as the embedding.
+
+The standard formula uses sine and cosine functions of different frequencies:
+\[
+    P(k,\, 2i)   = \sin\!\left(\frac{k}{n^{2i/d}}\right), \qquad
+    P(k,\, 2i+1) = \cos\!\left(\frac{k}{n^{2i/d}}\right)
+\]
+where:
+\begin{itemize}
+    \item $k$: position of the token in the input sequence, $0 \le k < L/2$
+    \item $d$: dimension of the output embedding space
+    \item $n$: user-defined scalar, set to 10\,000 in the original paper
+    \item $i$: column index, $0 \le i < d/2$; each $i$ controls both a sine and a cosine dimension
+\end{itemize}
+
+Each dimension is characterized by a unique frequency and offset. Values range in $[-1, 1]$, effectively representing each position. The output of the positional encoding layer is a matrix in which each row is an embedded word \emph{summed with} its positional information.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!60!black,title=\textbf{Effect of Positional Encoding}]
+After adding positional encodings, two words will be \emph{close} in the embedding space if they are both semantically similar \textbf{and} appear at nearby positions. Using combinations of sine and cosine functions allows the encoder to generalize to sequence lengths not seen during training.
+\end{tcolorbox}
+
+\subsection{Stack of Encoder Layers}
+
+Each encoder layer consists of \textbf{two sub-modules}:
+\begin{enumerate}
+    \item A \textbf{multi-head self-attention mechanism}.
+    \item A \textbf{pointwise feed-forward network}.
+\end{enumerate}
+Around each sub-module there is a \textbf{residual (skip) connection}, followed by \textbf{layer normalization}:
+\[
+    \text{output} = \mathrm{LayerNorm}(x + \mathrm{SubLayer}(x))
+\]
+Residual connections mitigate the vanishing gradient problem, enabling training of deep models.
+
+
+\section{Self-Attention Mechanism}
+
+\begin{definition}[Self-Attention]
+Self-attention is a mechanism for creating \textbf{arbitrarily long-range weighted dependencies} between tokens in a sequence. For each token being processed, it determines how much focus to place on every other token in the same sequence.
+\end{definition}
+
+Self-attention relates each word in the input to all other words, allowing the encoder to focus on different parts of the input as it processes each token. For example, when encoding the word ``it'' in ``The animal didn't cross the street because \textbf{it} was too tired'', self-attention can link ``it'' to ``animal'' rather than ``street''.
+
+\subsection{Query, Key, Value}
+
+Self-attention operates through three vectors derived from each token's embedding:
+
+\begin{itemize}
+    \item \textbf{Query ($Q$)}: represents the current token ``asking'' for relevant context.
+    \item \textbf{Key ($K$)}: represents each token ``announcing'' what it contains.
+    \item \textbf{Value ($V$)}: the actual content associated with a key; used to construct the output.
+\end{itemize}
+
+When a query and a key are highly aligned (high dot product), the corresponding value is \textbf{emphasized} in the output. The query, key, and value vectors are obtained by multiplying the embedding $X$ by three trainable weight matrices:
+\[
+    Q = X W^Q, \qquad K = X W^K, \qquad V = X W^V
+\]
+
+\subsection{Step-by-Step Computation}
+
+\begin{enumerate}
+    \item \textbf{Compute $Q$, $K$, $V$}: multiply embeddings by the learned weight matrices $W^Q$, $W^K$, $W^V$.
+    \item \textbf{Compute scores}: take the dot product of the query vector with the key vector of every other token. For token at position 1: $\text{score}_j = q_1 \cdot k_j$.
+    \item \textbf{Scale}: divide scores by $\sqrt{d_k}$ (e.g., $\sqrt{64} = 8$) to obtain more stable gradients.
+    \item \textbf{Softmax}: normalize the scaled scores so they are all positive and sum to 1. The softmax score indicates how much each word will be represented in the output at this position.
+    \item \textbf{Weight values}: multiply each value vector $v_j$ by its softmax score.
+    \item \textbf{Sum}: sum up the weighted value vectors to produce the output $z$ at this position.
+\end{enumerate}
+
+\subsection{Matrix Form}
+
+In practice, all tokens are processed simultaneously using matrix operations. Packing all embeddings as rows of $X$:
+
+\[
+    \boxed{\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left(\frac{Q K^T}{\sqrt{d_k}}\right) V}
+\]
+
+\begin{itemize}
+    \item $QK^T$ is the \textbf{score matrix}: entry $(i,j)$ measures how much token $i$ should attend to token $j$. Geometrically it is an unnormalized cosine similarity.
+    \item Dividing by $\sqrt{d_k}$ prevents the dot products from growing too large in high dimensions, keeping gradients stable.
+    \item Softmax normalizes each row into a valid probability distribution (attention weights).
+    \item Multiplying by $V$ produces the final attended representation.
+\end{itemize}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Key Property}]
+Soft attention is \textbf{differentiable}, which makes it directly integrable into end-to-end trained neural networks via backpropagation.
+\end{tcolorbox}
+
+
+\section{Multi-Head Self-Attention}
+
+\subsection{Motivation}
+
+A single attention function might be dominated by the token itself (e.g., $z_1$ contains mostly information about position 1). \textbf{Multi-head attention} extends the model's ability to jointly attend to information from \textbf{different representation subspaces} at different positions.
+
+Instead of one attention function, queries, keys, and values are \textbf{linearly projected $h$ times} with different learned projections. Each projection defines one \textbf{attention head}; all heads operate in parallel, each producing an $h$-dimensional output.
+
+\subsection{Mechanics}
+
+With $h$ heads and $d_\text{model}$ model dimension:
+\begin{itemize}
+    \item Each head $i$ has its own weight matrices $W_i^Q$, $W_i^K$, $W_i^V$ (randomly initialized, learned during training).
+    \item Each head independently projects the inputs and computes attention, producing $Z_i$.
+    \item The $h$ output matrices $Z_0, \ldots, Z_{h-1}$ are \textbf{concatenated} and multiplied by a learned projection matrix $W^O$:
+\end{itemize}
+\[
+    \mathrm{MultiHead}(Q, K, V) = \mathrm{Concat}(\mathrm{head}_1, \ldots, \mathrm{head}_h)\, W^O
+\]
+\[
+    \mathrm{head}_i = \mathrm{Attention}(Q W_i^Q,\; K W_i^K,\; V W_i^V)
+\]
+
+The result is a single matrix that captures information from all heads. The original paper uses $h = 8$ heads.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Why Multi-Head?}]
+Multiple heads allow the model to simultaneously focus on different aspects of context: one head might resolve coreference (``it'' $\to$ ``animal''), another might capture syntactic relations, and yet another might encode positional proximity.
+\end{tcolorbox}
+
+
+\section{Feed-Forward Network and Normalization}
+
+\subsection{Pointwise Feed-Forward Network}
+
+After the (multi-head) attention sub-layer, the output passes through a \textbf{pointwise feed-forward network} --- the same network applied independently to each position. In the original paper it consists of:
+\begin{enumerate}
+    \item Linear layer
+    \item ReLU activation
+    \item Linear layer
+\end{enumerate}
+\[
+    \mathrm{FFN}(x) = \max(0,\; x W_1 + b_1)\, W_2 + b_2
+\]
+The output merges with the input via another residual connection, followed by another layer normalization.
+
+\subsection{Add \& Norm Summary}
+
+Each sub-layer (self-attention and feed-forward) in every encoder \emph{and} decoder layer is wrapped with:
+\[
+    \mathrm{LayerNorm}(x + \mathrm{SubLayer}(x))
+\]
+This residual + normalization pattern stabilizes training and enables stacking many layers.
+
+
+\section{Decoder in Detail}
+
+\subsection{Structure}
+
+The decoder mirrors the encoder but has \textbf{three sub-layers} per layer instead of two:
+
+\begin{enumerate}
+    \item \textbf{Masked Multi-Head Self-Attention}
+    \item \textbf{Add \& Norm}
+    \item \textbf{Encoder-Decoder (Cross) Attention} --- the decoder's queries attend to the encoder's keys and values
+    \item \textbf{Add \& Norm}
+    \item \textbf{Feed-Forward Network}
+    \item \textbf{Add \& Norm}
+\end{enumerate}
+
+The decoder operates \textbf{auto-regressively}: it begins with a start token and generates tokens one by one, feeding each generated token back as part of its next input, until a special end token is produced.
+
+\subsection{Masked Multi-Head Self-Attention}
+
+\begin{definition}[Masking]
+Masking prevents each decoder position from attending to \emph{future} positions. This is enforced by adding a masking matrix $M$ to the scaled scores before softmax:
+\[
+    \mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}} + M\right) V
+\]
+\end{definition}
+
+The masking matrix $M$ contains:
+\begin{itemize}
+    \item $0$ for \textbf{allowed positions} (attending to past and current tokens).
+    \item $-\infty$ for \textbf{masked positions} (future tokens); after softmax these become 0 attention weight.
+\end{itemize}
+
+Concretely, for a sequence of length 3, the look-ahead mask is:
+\[
+M = \begin{pmatrix} 0 & -\infty & -\infty \\ 0 & 0 & -\infty \\ 0 & 0 & 0 \end{pmatrix}
+\]
+
+This ensures that predictions at position $t$ depend only on known outputs at positions $1, \ldots, t-1$, making the decoder's generation truly sequential and causal.
+
+\subsection{Encoder-Decoder Attention}
+
+In this sub-layer, the \textbf{queries come from the decoder} (previous decoder layer output), while the \textbf{keys and values come from the encoder} (top encoder layer output). This allows each decoder position to attend to all positions in the input sequence, integrating the encoder's rich contextual representations.
+
+\subsection{Output Stack}
+
+The final decoder layer feeds into:
+\begin{enumerate}
+    \item A \textbf{linear layer} acting as a classifier projecting to vocabulary size.
+    \item A \textbf{softmax} that converts logits to a probability distribution over the entire vocabulary.
+\end{enumerate}
+The token with the highest probability is selected (or sampled) as the next output token.
+
+
+\section{Language Pre-Training}
+
+Transformers are well-suited to \textbf{transfer learning}: pre-train on large unlabeled corpora in an unsupervised manner, then fine-tune on small labeled datasets for specific tasks.
+
+Three broad model families emerge depending on which part of the architecture is retained:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{llp{5.5cm}}
+    \hline
+    \textbf{Type} & \textbf{Examples} & \textbf{Use cases} \\
+    \hline
+    Encoder-only  & BERT, RoBERTa, Electra & Text classification, sentiment analysis, sentence similarity, NER \\
+    Decoder-only  & GPT series, Transformer-XL, DialoGPT & Text generation, machine translation, summarization, chatbots \\
+    Encoder-Decoder & T5, BART & Seq2seq tasks: translation, summarization, Q\&A \\
+    \hline
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Encoder-only models} output hidden states for each token; they do not generate text on their own. They are best for tasks requiring a deep understanding of the full input context.
+    \item \textbf{Decoder-only models} generate text sequentially in an auto-regressive fashion. GPT-3 has 175B parameters.
+    \item \textbf{Encoder-decoder models} use the full pipeline and excel at transformation tasks where both understanding and generation are required.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Key References}]
+\begin{itemize}[leftmargin=*]
+    \item A. Vaswani et al.\ (2017). ``Attention Is All You Need''. \textit{NeurIPS 2017}. \texttt{arXiv:1706.03762}.
+    \item A. Dosovitskiy et al.\ (2021). ``An Image is Worth 16$\times$16 Words: Transformers for Image Recognition at Scale''. \textit{ICLR 2021}. \texttt{arXiv:2010.11929}.
+\end{itemize}
+\end{tcolorbox}
+
+
+
+% ========================================
+\part{Beyond Supervised Learning: Unsupervised Learning, Clustering \& Self-Supervised Methods}
+% ========================================
+
+\section{Types of Learning: A Taxonomy}
+
+\subsection{Supervision Axes}
+
+Learning algorithms can be classified along two independent axes:
+
+\begin{itemize}
+    \item \textbf{With teacher vs.\ without teacher}: does the system receive explicit labels or target signals?
+    \item \textbf{Active vs.\ passive}: does the learner choose which examples to query, or is the data fixed?
+\end{itemize}
+
+This yields four quadrants:
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+ & \textbf{With Teacher} & \textbf{Without Teacher} \\
+\hline
+\textbf{Passive} & Supervised learning & Unsupervised learning \\
+\hline
+\textbf{Active} & Active learning & Exploration (RL) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Motivation for Unsupervised Learning}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{LeCun's Cake Analogy}]
+``If intelligence is a cake, the bulk of the cake is \textbf{unsupervised learning}, the icing on the cake is \textbf{supervised learning}, and the cherry on the cake is \textbf{reinforcement learning}.'' --- Yann LeCun
+\end{tcolorbox}
+
+The information-theoretic argument: a typical supervised dataset provides only 10--10{,}000 bits per sample (one label). The raw data itself contains millions of bits. Supervised learning therefore discards most of the available information. By contrast, unsupervised methods can exploit the \emph{full} data distribution.
+
+\textbf{Why unsupervised learning is hard:} unlike supervised learning, there is no clear objective function derived from labels. The ``right'' representation is task-dependent and not trivially defined.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Key Goals of Unsupervised Learning}]
+\begin{itemize}[leftmargin=*]
+    \item Learn the underlying structure of the data distribution.
+    \item Build \textbf{general-purpose representations} that transfer to downstream tasks.
+    \item Exploit the vastly larger pool of unlabeled data.
+\end{itemize}
+\end{tcolorbox}
+
+
+\section{Self-Supervised Learning}
+
+\subsection{Core Idea}
+
+\textbf{Self-supervised learning (SSL)} is a form of unsupervised learning in which the supervision signal is derived automatically from the data itself --- no human annotations are required. The procedure is:
+
+\begin{enumerate}
+    \item Design a \textbf{pretext task} whose labels can be generated automatically from the raw data.
+    \item Train a model to solve the pretext task.
+    \item Use the learned representation for downstream tasks (transfer learning).
+\end{enumerate}
+
+\begin{definition}[Pretext Task]
+A \textbf{pretext task} is an auxiliary learning objective created from the data structure itself (e.g., predicting the relative position of image patches). Solving the pretext task forces the model to learn semantically useful representations, even though the task itself may not be the end goal.
+\end{definition}
+
+\subsection{Context Prediction (Doersch et al., ICCV 2015)}
+
+One of the earliest successful SSL methods for visual representation learning. The key idea: given a central image patch, predict the \textbf{relative spatial position} of a surrounding patch (one of 8 possible positions).
+
+\begin{enumerate}
+    \item Sample a random $96\times 96$ patch from an image.
+    \item Sample one of its 8 neighbours.
+    \item Train a CNN to classify which of the 8 positions the neighbour occupies.
+    \item The CNN must understand spatial layout and object semantics to solve the task.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+C. Doersch, A. Gupta, A. Efros. ``Unsupervised Visual Representation Learning by Context Prediction''. \textit{ICCV 2015}.
+\end{tcolorbox}
+
+
+\section{Learning by Clustering}
+
+\subsection{General Framework}
+
+A natural approach to unsupervised representation learning: use cluster assignments as pseudo-labels to train a network.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Key Observation}]
+Even a \textbf{randomly-initialized CNN} already produces a feature space with non-trivial structure. Clustering in that space yields assignments that, used as pseudo-labels, can bootstrap meaningful representations.
+\end{tcolorbox}
+
+The iterative clustering loop:
+\begin{enumerate}
+    \item \textbf{Feature extraction}: pass all images through the current CNN; collect feature vectors.
+    \item \textbf{Clustering}: run $k$-means (or similar) on the feature vectors to obtain $k$ clusters.
+    \item \textbf{Pseudo-label assignment}: assign each image the index of its cluster.
+    \item \textbf{CNN fine-tuning}: train the CNN with cross-entropy loss on the pseudo-labels.
+    \item Repeat from step 1.
+\end{enumerate}
+
+
+\section{Progressive Unsupervised Learning (PUL)}
+
+\subsection{Problem Setting: Unsupervised Person Re-Identification}
+
+\textbf{Person re-identification (re-ID)} is the task of matching images of the same person across cameras with non-overlapping fields of view. It is challenging due to viewpoint, illumination, and appearance changes.
+
+In the \textbf{unsupervised} setting: no cross-camera identity labels are available. Only \emph{within-camera} tracklets (sequences of frames) provide weak supervision.
+
+\subsection{PUL: Formulation}
+
+\textbf{Progressive Unsupervised Learning} (Fan et al., ACM TOMM 2018) addresses this with an iterative self-paced scheme combining $k$-means clustering with CNN fine-tuning and selective sample inclusion.
+
+\begin{definition}[PUL Setup]
+Let $\mathcal{X} = \{x_i\}_{i=1}^N$ be the unlabeled cross-camera dataset, and let $\{\hat{y}_i\}$ be cluster pseudo-labels. The model learns a feature embedding $f_\theta$ such that same-identity images cluster together.
+\end{definition}
+
+The three core optimization objectives:
+
+\textbf{(1) Cluster assignment} --- find pseudo-labels $\hat{y}$ by $k$-means:
+\begin{equation}
+    \hat{y}_i = \arg\min_{k} \| f_\theta(x_i) - \mu_k \|_2^2
+\end{equation}
+where $\mu_k$ is the centroid of cluster $k$.
+
+\textbf{(2) Sample selection} --- include only samples close to their centroid:
+\begin{equation}
+    \mathcal{S} = \{ x_i : \| f_\theta(x_i) - \mu_{\hat{y}_i} \|_2^2 \leq \tau \}
+\end{equation}
+where $\tau$ is a distance threshold. This is the \textbf{self-paced} component: start with easy (unambiguous) samples, progressively include harder ones as the model improves.
+
+\textbf{(3) CNN fine-tuning} --- minimize cross-entropy on selected samples:
+\begin{equation}
+    \mathcal{L} = -\frac{1}{|\mathcal{S}|} \sum_{x_i \in \mathcal{S}} \log p(\hat{y}_i \mid x_i;\,\theta)
+\end{equation}
+
+\subsection{Algorithm 1: PUL}
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Algorithm: Progressive Unsupervised Learning}]
+\begin{enumerate}
+    \item \textbf{Initialise} CNN $f_\theta$ (pre-trained on a source domain with labels).
+    \item \textbf{Extract features}: $F = \{f_\theta(x_i)\}_{i=1}^N$.
+    \item \textbf{Run $k$-means} on $F$; obtain pseudo-labels $\{\hat{y}_i\}$ and centroids $\{\mu_k\}$.
+    \item \textbf{Self-paced selection}: form $\mathcal{S}$ using the distance threshold $\tau$.
+    \item \textbf{Fine-tune} $f_\theta$ on $\mathcal{S}$ with cross-entropy loss.
+    \item \textbf{Increase} $\tau$ (include more samples next round) and \textbf{decrease} $k$ (merge clusters) progressively.
+    \item \textbf{Repeat} steps 2--6 until convergence.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Self-Paced Learning Intuition}
+
+\begin{definition}[Self-Paced Learning]
+\textbf{Self-paced learning} is a curriculum strategy where the model is trained first on the easiest (most confident) examples, and progressively trained on harder ones as learning progresses. This prevents early-stage noise from corrupting the learned representation.
+\end{definition}
+
+In PUL:
+\begin{itemize}
+    \item Early iterations: small $\tau$ $\Rightarrow$ only samples very close to centroids are selected $\Rightarrow$ high-confidence pseudo-labels.
+    \item Later iterations: $\tau$ is increased $\Rightarrow$ more samples included, including ambiguous ones near cluster boundaries.
+    \item $k$ is decreased progressively: coarse-to-fine clustering, merging related pseudo-identities.
+\end{itemize}
+
+\subsection{Semi-Supervised Extension}
+
+PUL can be extended to the \textbf{semi-supervised} setting when a small number of labeled cross-camera pairs are available. The labeled pairs provide an additional supervised loss term:
+\begin{equation*}
+    \mathcal{L}_\text{total} = \mathcal{L}_\text{unsup} + \lambda\,\mathcal{L}_\text{sup}
+\end{equation*}
+This anchors the feature space, significantly reducing the noise in early cluster assignments.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+H. Fan, L. Zheng, C. Yan, Y. Yang. ``Unsupervised Person Re-identification: Clustering and Fine-tuning''. \textit{ACM TOMM 2018}.
+\end{tcolorbox}
+
+
+\section{DeepCluster}
+
+\subsection{Motivation}
+
+DeepCluster (Caron et al., ECCV 2018) scales the clustering-based SSL approach to ImageNet-scale data. The central observation: \textit{clustering and representation learning are mutually reinforcing} --- better features yield better clusters, and better pseudo-labels yield better features.
+
+\subsection{Pipeline}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{DeepCluster Pipeline}]
+\begin{enumerate}
+    \item \textbf{Feature extraction}: forward-pass the full dataset through the current ConvNet; collect the penultimate-layer (FC2-like) features.
+    \item \textbf{Pre-processing}: apply \textbf{PCA} for dimensionality reduction, then \textbf{L2 normalisation}.
+    \item \textbf{$k$-means clustering}: cluster all feature vectors into $k$ clusters (e.g., $k = 10{,}000$ for ImageNet).
+    \item \textbf{Pseudo-label assignment}: use cluster indices as class labels for the entire dataset.
+    \item \textbf{CNN training}: train the ConvNet with \textbf{cross-entropy loss} on the pseudo-labels via standard mini-batch SGD + backpropagation.
+    \item \textbf{Repeat} steps 1--5 for the next epoch.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Architecture and Implementation Details}
+
+\begin{itemize}
+    \item \textbf{Backbone}: AlexNet or VGG-16; ImageNet-scale experiments.
+    \item \textbf{Number of clusters}: $k = 10{,}000$ --- much larger than the 1{,}000 ImageNet ground-truth classes; allows finer granularity.
+    \item \textbf{Initial label generation}: features from the FC2 layer of the randomly-initialised network are already structurally non-trivial; the first $k$-means run gives a noisy but non-degenerate starting point.
+    \item \textbf{Data augmentation}: random crops and horizontal flips are applied during CNN training (consistent with supervised ImageNet training) to improve generalisation.
+    \item \textbf{Trivial solution prevention}: without countermeasures, $k$-means may collapse features onto a small number of clusters. DeepCluster addresses this by:
+    \begin{itemize}
+        \item Re-assigning empty clusters.
+        \item Uniform sampling within each cluster during mini-batch construction (to counter class-size imbalance).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Why It Works}
+
+\begin{example}[DeepCluster Feature Quality]
+After sufficient iterations, the convolutional filters of the DeepCluster-trained AlexNet closely resemble those of a supervised AlexNet --- oriented Gabor filters, colour blobs, and higher-level part detectors emerge purely from the clustering signal. The representations transfer competitively to PASCAL VOC classification and detection benchmarks.
+\end{example}
+
+\begin{itemize}
+    \item \textbf{Iteration 0} (random init): features are unstructured; clusters are noisy.
+    \item \textbf{After $E$ epochs}: features encode semantic content; clusters become semantically coherent.
+    \item The self-reinforcing loop drives the network toward semantically meaningful representations without any labels.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+M. Caron, P. Bojanowski, A. Joulin, M. Douze. ``Deep Clustering for Unsupervised Learning of Visual Features''. \textit{ECCV 2018}. \texttt{arXiv:1807.05520}.
+\end{tcolorbox}
+
+
 \end{document}
 
 
