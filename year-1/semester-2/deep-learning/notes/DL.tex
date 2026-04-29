@@ -2311,6 +2311,1610 @@ M. Caron, P. Bojanowski, A. Joulin, M. Douze. ``Deep Clustering for Unsupervised
 \end{tcolorbox}
 
 
+
+% ========================================
+\part{Self-Supervised Learning: Pretext Tasks and Contrastive Methods}
+% ========================================
+
+\section{Motivation and Problem Setting}
+
+\subsection{Two Practical Limitations of Supervised Deep Learning}
+
+Two intertwined limitations motivate self-supervision:
+
+\begin{enumerate}
+    \item \textbf{DNNs need a lot of data to generalise well.} The classical remedy is \textbf{pretraining on a large dataset for a related task} (e.g.\ ImageNet) and then transferring/fine-tuning. This still requires a large \emph{labelled} source dataset.
+    \item \textbf{Obtaining human annotations for large datasets is expensive or unfeasible.} The remedy is \textbf{unsupervised representation learning} --- learning without human annotation.
+\end{enumerate}
+
+\textbf{Self-supervised learning (SSL)} is the subset of unsupervised learning in which the supervision is not random or implicit, but is constructed automatically from the data itself.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Why Self-Supervision?}]
+\begin{itemize}[leftmargin=*]
+    \item Building custom labelled datasets for every task is expensive.
+    \item Annotation is almost impossible in some domains, e.g.\ medical imaging.
+    \item There is a vast supply of unlabelled images and videos (Facebook, YouTube, etc.).
+    \item Cognitively plausible: it resembles how children learn --- by interaction with the world rather than by being shown labels.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Definition of Self-Supervision}
+
+\begin{definition}[Self-Supervised Learning]
+A learning paradigm in which the supervision signal is \textbf{generated automatically from the data itself} (no human-provided labels). The general recipe is:
+\begin{itemize}
+    \item \textbf{Hide} part of the data;
+    \item Train a network to \textbf{predict the hidden part} given the visible part.
+\end{itemize}
+The auxiliary task must be designed so that, in order to solve it, the network is forced to learn a \emph{semantic representation}.
+\end{definition}
+
+
+\section{Pretext and Downstream Tasks}
+
+\subsection{Two-Stage Pipeline}
+
+Self-supervised feature learning proceeds in two stages:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Pretext + Downstream}]
+\begin{enumerate}
+    \item \textbf{Self-supervised pretext task training} --- on a large \emph{unlabelled} dataset. The ConvNet is trained to solve a pre-designed auxiliary (\textbf{pretext}) task whose labels come for free.
+    \item \textbf{Knowledge transfer} --- the learned weights are reused.
+    \item \textbf{Supervised downstream task training} --- on a possibly small \emph{labelled} dataset, using the pretrained features (linear evaluation, fine-tuning, etc.).
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{itemize}
+    \item \textbf{Pretext task}: pre-designed auxiliary objective; large data; no human annotation.
+    \item \textbf{Downstream task}: the actual goal (image classification, semantic segmentation, object detection, action recognition, $\ldots$); typically requires human annotations and is also used to \emph{evaluate} the quality of the learned features.
+    \item In some cases the pretext and downstream task coincide.
+\end{itemize}
+
+\subsection{Designing a Good Pretext Task}
+
+\begin{itemize}
+    \item Supervision \textbf{cannot come from humans} --- it must be derivable from the data itself (or, more arguably, from another algorithm).
+    \item The pretext task must require \textbf{visual reasoning}: solving it should be impossible without learning genuine visual or semantic features.
+\end{itemize}
+
+\subsection{Taxonomy of Pretext Tasks}
+
+Following the survey by Jing \& Tian (2019), four broad families exist:
+
+\begin{center}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Family} & \textbf{Examples} \\
+\hline
+Generation-based (image) & Image generation (GAN), super-resolution, inpainting, colorisation. \\
+\hline
+Generation-based (video) & Video generation (GAN), video colorisation, future-frame prediction. \\
+\hline
+Context-based (spatial) & Image jigsaw puzzle, geometric transformation prediction (rotation), relative position, clustering (context similarity). \\
+\hline
+Context-based (temporal) & Frame-order verification, frame-order recognition. \\
+\hline
+Cross-modal & Optical-flow / RGB correspondence, audio-visual correspondence, ego-motion. \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{remark}
+A separate category --- \emph{free semantic-label} methods (semantic/instance segmentation labels obtained by another algorithm) --- is sometimes listed but is conceptually weaker, because the supervision comes from a model rather than from the data itself.
+\end{remark}
+
+\subsection{Typical Downstream Tasks}
+
+\begin{itemize}
+    \item \textbf{Images}: image classification, semantic segmentation (e.g.\ FCN), object detection (e.g.\ Fast R-CNN).
+    \item \textbf{Videos}: human action recognition.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+L. Jing, Y. Tian. ``Self-supervised Visual Feature Learning with Deep Neural Networks: A Survey''. \texttt{arXiv:1902.06162}, 2019.
+\end{tcolorbox}
+
+
+\section{Generation-Based Pretext Tasks (Images)}
+
+The common idea: train a network to \emph{generate} or \emph{reconstruct} an image (or part of it). To produce realistic outputs the encoder must capture the statistics and semantics of natural images.
+
+\subsection{Autoencoder}
+
+The autoencoder is the foundational generation-based pretext task:
+
+\begin{itemize}
+    \item An \textbf{encoder} maps the input image to a low-dimensional \textbf{encoded representation}.
+    \item A \textbf{decoder} reconstructs the input from this representation.
+\end{itemize}
+
+The pretext objective is reconstruction error (e.g., pixel-wise $L_2$). The bottleneck forces the encoder to compress the data, learning useful features for downstream tasks.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+G.\ E.\ Hinton, R.\ R.\ Salakhutdinov. ``Reducing the dimensionality of data with neural networks''. \textit{Science}, 2006.
+\end{tcolorbox}
+
+\subsection{Generative Adversarial Networks (GANs)}
+
+A \textbf{GAN} consists of two networks trained in opposition:
+
+\begin{itemize}
+    \item A \textbf{generator} $G$ takes random noise and produces a fake image.
+    \item A \textbf{discriminator} $D$ receives both real images (from the training set) and fake images, and must classify them as real or fake.
+\end{itemize}
+
+Training is a minimax game: $G$ tries to fool $D$, while $D$ tries to distinguish. At equilibrium, the generator captures the data distribution. The discriminator's intermediate features can be transferred as a representation.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+I.\ Goodfellow et al. ``Generative Adversarial Nets''. \textit{NIPS 2014}.
+\end{tcolorbox}
+
+\subsection{Image Colorisation}
+
+\textbf{Pretext task}: given a monochrome (lightness $L$) input, predict the per-pixel colour ($a,b$ channels in Lab colour space).
+
+\begin{itemize}
+    \item Implementation as a \textbf{classification} problem over a quantised $(a,b)$ grid (313 bins), with \textbf{class re-balancing} based on ImageNet colour statistics to counter the dominance of grey/brown pixels.
+    \item Architecture: stack of dilated (\emph{à trous}) convolutions producing a $H/4 \times W/4 \times 313$ probability map; the predicted $(a,b)$ image is then upsampled and recombined with the input $L$ channel.
+\end{itemize}
+
+To predict colours plausibly the network must recognise objects (sky is blue, grass is green, faces are skin-toned), inducing semantic features.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+R.\ Zhang, P.\ Isola, A.\ A.\ Efros. ``Colorful image colorization''. \textit{ECCV 2016}.
+\end{tcolorbox}
+
+\subsection{Super-Resolution: SRGAN}
+
+\textbf{SRGAN} (Ledig et al., CVPR 2017) recovers a high-resolution image from a low-resolution input.
+
+\begin{itemize}
+    \item \textbf{Generator}: a deep residual network with skip connections; the resolution is increased via PixelShuffler upsampling layers.
+    \item \textbf{Discriminator}: a CNN with LeakyReLU activations and BatchNorm, ending in a sigmoid that outputs ``real high-res'' vs.\ ``super-resolved''.
+    \item \textbf{Loss}: the generator is trained with an $L_2$ pixel loss (or perceptual loss) \emph{plus} an adversarial loss; the discriminator uses binary cross-entropy.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+C.\ Ledig et al. ``Photo-realistic single image super-resolution using a generative adversarial network''. \textit{CVPR 2017}.
+\end{tcolorbox}
+
+\subsection{Image Inpainting (Context Encoders)}
+
+\textbf{Pretext task}: a square region is removed from the image; the network must predict the missing patch using only the surrounding context.
+
+\begin{itemize}
+    \item Combination of $L_2$ reconstruction loss (encourages average colour and rough structure) \textbf{and} an adversarial loss (encourages sharp, plausible details).
+    \item To produce a coherent inpainting the encoder must understand object structure and scene semantics.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+D.\ Pathak, P.\ Krähenbühl, J.\ Donahue, T.\ Darrell, A.\ Efros. ``Context encoders: Feature learning by inpainting''. \textit{CVPR 2016}.
+\end{tcolorbox}
+
+\subsection{Generation-Based Pretext Tasks (Videos)}
+
+The same generation principles extend to video:
+
+\begin{itemize}
+    \item \textbf{Video generation with GANs} --- VideoGAN (Vondrick et al., NIPS 2016).
+    \item \textbf{Video colorisation} --- end-to-end voxel-to-voxel prediction (Tran et al., CVPRW 2016).
+    \item \textbf{Future-frame generation} --- decomposing motion and content for natural video sequence prediction (Villegas et al., ICLR 2017).
+\end{itemize}
+
+
+\section{Context-Based Pretext Tasks (Images)}
+
+These tasks exploit \emph{spatial} structure: parts of the image are rearranged or transformed, and the network must recover the original arrangement.
+
+\subsection{Geometric Transformation: Image Rotations (RotNet)}
+
+\textbf{Pretext task}: an image is rotated by a multiple of $90^{\circ}$ ($0^{\circ}$, $90^{\circ}$, $180^{\circ}$, $270^{\circ}$) and the network must predict the angle (4-way classification).
+
+\begin{itemize}
+    \item Each input image $X$ generates four training samples $X^{0}, X^{1}, X^{2}, X^{3}$, one per rotation $g(X, y)$ with $y \in \{0,1,2,3\}$.
+    \item A single ConvNet $F(\cdot)$ is trained to maximise $F^{y}(X^{y})$ for the correct label $y$.
+    \item The intuition: to identify the canonical orientation the network must understand object semantics (sky is up, ground is down, animals stand in a particular pose).
+\end{itemize}
+
+\begin{example}[RotNet vs.\ other SSL methods (PASCAL VOC 2007/2012)]
+With AlexNet, RotNet reaches \textbf{72.97\% mAP} on classification (all layers fine-tuned), \textbf{54.4\% mAP} on detection, and \textbf{39.1\% mIoU} on segmentation, compared with 79.9 / 56.8 / 48.0 for fully supervised ImageNet labels and clearly above earlier SSL methods such as Egomotion, Context Encoders, Tracking, Context Prediction, Colorisation, Jigsaw, BiGAN, NAT, Split-Brain and Counting.
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+S.\ Gidaris, P.\ Singh, N.\ Komodakis. ``Unsupervised representation learning by predicting image rotations''. \textit{ICLR 2018}.
+\end{tcolorbox}
+
+\subsection{Relative Position of Patches}
+
+\textbf{Pretext task}: extract a central patch and one of its 8 neighbours from an image; predict the relative position of the neighbour (8-way classification).
+
+\begin{itemize}
+    \item Two AlexNet-style towers with shared weights process the two patches; their fc6 features (4096-dim) are concatenated and passed through fc7, fc8 (4096), and fc9 (8 outputs).
+    \item Solving the task requires understanding both low-level continuity (texture, edges) and high-level object structure.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+C.\ Doersch, A.\ Gupta, A.\ A.\ Efros. ``Unsupervised visual representation learning by context prediction''. \textit{ICCV 2015}.
+\end{tcolorbox}
+
+\subsection{Solving a Jigsaw Puzzle}
+
+A generalisation of the relative-position task:
+
+\begin{itemize}
+    \item An image is divided into $3 \times 3 = 9$ patches; the patches are shuffled according to a randomly selected permutation from a fixed set (e.g.\ 64 permutations).
+    \item Nine identical CNN towers (shared weights) extract per-patch features; their concatenated representation feeds fc6/fc7/fc8 with a softmax over the permutation set.
+    \item The network must reason about the global spatial layout, learning rich object-level features.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+M.\ Noroozi, P.\ Favaro. ``Unsupervised learning of visual representations by solving jigsaw puzzles''. \textit{ECCV 2016}.
+\end{tcolorbox}
+
+\subsection{Clustering as Context Similarity}
+
+A context-based pretext task in which the ``context'' is the global feature space:
+
+\begin{itemize}
+    \item The ConvNet extracts features from all images; \textbf{clustering} (e.g., $k$-means) yields pseudo-labels.
+    \item The pseudo-labels are used as classification targets; the ConvNet is updated by backpropagation.
+    \item The procedure is iterative: better features $\Rightarrow$ better clusters $\Rightarrow$ better pseudo-labels $\Rightarrow$ better features (DeepCluster).
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+M.\ Caron, P.\ Bojanowski, A.\ Joulin, M.\ Douze. ``Deep clustering for unsupervised learning of visual features''. \textit{ECCV 2018}.
+\end{tcolorbox}
+
+\subsection{Multi-Task Self-Supervised Learning}
+
+Combining several pretext tasks in a single network usually improves transfer:
+
+\begin{itemize}
+    \item Deeper networks (ResNet vs.\ AlexNet) help.
+    \item \textbf{Colour} and \textbf{Relative Position} are individually superior to \textbf{Exemplar}.
+    \item Combinations (Rel.\ Pos.\ + Colour, Rel.\ Pos.\ + Exemplar, all three) further close the gap with strong supervision.
+\end{itemize}
+
+\begin{example}[Multi-task transfer (ImageNet top-5 / PASCAL VOC mAP)]
+Rel.\ Pos.: 59.21 / 66.75; Colour: 62.48 / 65.47; Exemplar: 53.08 / 60.94; Rel.\ Pos.\ + Colour: 66.64 / 68.75; Rel.\ Pos.\ + Exemplar: 65.24 / 69.44; All three: 68.65 / 69.48; ImageNet labels (supervised): 85.10 / 74.17.
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+C.\ Doersch, A.\ Zisserman. ``Multi-task self-supervised visual learning''. \textit{ICCV 2017}.
+\end{tcolorbox}
+
+
+\section{Context-Based Pretext Tasks (Videos)}
+
+Videos add a \emph{temporal} axis. The supervision signal can be derived from frame ordering and the natural ``arrow of time''.
+
+\subsection{Frame-Order Recognition and Verification}
+
+Two related pretext tasks:
+
+\begin{itemize}
+    \item \textbf{Frame-order recognition} (Lee et al., ICCV 2017): given a shuffled set of frames, predict their correct chronological order.
+    \item \textbf{Frame-order verification} (Misra et al., ECCV 2016 --- ``Shuffle and Learn''): given a triplet of frames, decide whether the order is correct or shuffled. Three CNNs with shared parameters extract features for each frame; the features are fused and passed to a binary classifier (\textit{correct order} / \textit{incorrect order}).
+\end{itemize}
+
+To solve these tasks the network must understand motion, causality, and the typical dynamics of human actions.
+
+\subsection{Learning and Using the Arrow of Time}
+
+\textbf{Pretext task} (Wei et al., CVPR 2018): predict whether a video is being played \emph{forward} or \emph{backward}.
+
+The task can require:
+\begin{itemize}
+    \item \textbf{Low-level} understanding (e.g., physics --- smoke rising vs.\ falling);
+    \item \textbf{High-level} reasoning (e.g., semantics --- a horse rider mounting vs.\ dismounting);
+    \item Familiarity with very subtle effects (e.g., facial expressions during speech);
+    \item Familiarity with camera conventions (e.g., trains entering vs.\ leaving a station).
+\end{itemize}
+
+The paper investigates three questions:
+\begin{enumerate}
+    \item Can a reliable arrow-of-time classifier be trained on large-scale natural videos while \emph{avoiding artificial cues} introduced during video production?
+    \item What does the model learn about the visual world in order to solve the task?
+    \item Can this learned commonsense knowledge be applied to other tasks? $\rightarrow$ \textbf{video representation learning} and \textbf{video forensics}.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={References}]
+\begin{itemize}[leftmargin=*]
+    \item H.-Y.\ Lee, J.-B.\ Huang, M.\ Singh, M.-H.\ Yang. ``Unsupervised representation learning by sorting sequences''. \textit{ICCV 2017}.
+    \item I.\ Misra, C.\ L.\ Zitnick, M.\ Hebert. ``Shuffle and learn: unsupervised learning using temporal order verification''. \textit{ECCV 2016}.
+    \item D.\ Wei, J.\ Lim, W.\ Freeman, A.\ Zisserman. ``Learning and Using the Arrow of Time''. \textit{CVPR 2018}.
+\end{itemize}
+\end{tcolorbox}
+
+
+\section{Multimodal (Cross-Modal) Pretext Tasks: Sound + Vision}
+
+Videos provide a free pairing of two modalities: \textbf{vision} (frames) and \textbf{audio} (waveform). Naturally co-occurring audio-visual events are powerful supervision.
+
+\subsection{What Can Be Learnt by Watching and Listening?}
+
+\begin{itemize}
+    \item \textbf{Good representations}: both visual features and audio features.
+    \item \textbf{Intra- and cross-modal retrieval}: aligned audio and visual embeddings.
+    \item Localising \textbf{``what is making the sound''}: identify, in the image, the object that produced a given sound.
+\end{itemize}
+
+\subsection{Two Types of Audio-Visual Proxy Task}
+
+\begin{enumerate}
+    \item \textbf{Audio-visual correspondence (AVC)} --- predict whether an image and an audio clip come from the same video. Trains \emph{semantic} alignment.
+    \item \textbf{Audio-visual synchronisation (AVS)} --- predict whether the two streams are temporally synchronised. Trains \emph{attention} / fine temporal alignment.
+\end{enumerate}
+
+\subsection{Audio-Visual Correspondence: $L^{3}$-Net and AVE-Net}
+
+Both networks share a two-stream architecture (Arandjelović \& Zisserman, ICCV 2017 / ECCV 2018):
+
+\begin{itemize}
+    \item A \textbf{vision subnetwork} processes a $224\times 224\times 3$ image, output $14\times 14\times 512$.
+    \item An \textbf{audio subnetwork} processes a $257\times 200$ log-spectrogram of 1-second 48 kHz audio, output $16\times 12\times 512$.
+\end{itemize}
+
+\textbf{$L^{3}$-Net}: pool$_4$ features ($1\times 1\times 512$) from each branch are concatenated (1024-dim), passed through fc1 ($1024 \to 128$) and fc2 ($128\times 2$), with a softmax over 2 classes (\textbf{corresponds: yes/no?}).
+
+\textbf{AVE-Net}: each branch produces an L$_2$-normalised 128-dim embedding; the \textbf{Euclidean distance} between the two embeddings is the only feature passed to the classifier (fc3 + softmax). The network is forced to learn aligned audio-visual embeddings, which is what makes \textbf{cross-modal retrieval} possible.
+
+\begin{example}[Cross-modal/intra-modal retrieval, AudioSet-Instruments, average nDCG@30]
+Random chance: 0.407 across all settings. AVE-Net: \textbf{im-im 0.604, im-aud 0.561, aud-im 0.587, aud-aud 0.665}, beating $L^{3}$-Net (0.567 / 0.418 / 0.385 / 0.653), $L^{3}$-Net + CCA, VGG16-ImageNet (im-im 0.600), and VGG16-ImageNet + $L^{3}$-Audio CCA.
+\end{example}
+
+\subsection{Sound Localisation}
+
+A small modification of the AVC architecture allows pixel-level sound localisation. Instead of pooling the visual features to a single vector, the audio embedding is dot-producted with \emph{every spatial position} of the visual feature map:
+
+\begin{itemize}
+    \item Vision branch: convolutions output $14\times 14\times 128$.
+    \item Audio branch: pool$_4$ + fc1 + fc2 produce a single $128$-dim audio descriptor.
+    \item All pairwise scalar products give a $14\times 14\times 1$ \textbf{per-location correspondence map}.
+    \item A sigmoid converts each location into a correspondence score (\textbf{Where?}). Max-pooling the map gives a global ``does it correspond? Yes/No'' score.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={References}]
+\begin{itemize}[leftmargin=*]
+    \item R.\ Arandjelović, A.\ Zisserman. ``Look, Listen, and Learn''. \textit{ICCV 2017}.
+    \item R.\ Arandjelović, A.\ Zisserman. ``Objects that Sound''. \textit{ECCV 2018}.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Faces and Speech (Talking Heads)}
+
+Specialising audio-visual SSL to talking-head videos: \emph{use faces and voice to learn from each other}. Two proxy tasks:
+
+\begin{enumerate}
+    \item Predict audio-visual \textbf{correspondence};
+    \item Predict audio-visual \textbf{synchronisation} --- given a short window of mouth movements and an audio segment, decide whether they are aligned (\emph{positive pair}) or shifted (\emph{negative pair}).
+\end{enumerate}
+
+The resulting network supports several practical applications: \textbf{audio-to-video synchronisation}, \textbf{active-speaker detection}, \textbf{voice-over rejection}, and \textbf{visual features for lip reading}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+J.\ S.\ Chung, A.\ Zisserman. ``Out of time: automated lip sync in the wild''. \textit{Workshop on Multi-view Lip-reading, ACCV 2016}.
+\end{tcolorbox}
+
+\subsection{Audio-Visual Scene Analysis}
+
+Owens \& Efros (ECCV 2018): the visual and audio components of a video are modelled \textbf{jointly} with a \emph{fused multisensory representation}. The network is trained in a self-supervised way to predict whether the video frames and the audio are temporally aligned.
+
+The learned representation is then used for several downstream applications:
+\begin{itemize}
+    \item[(a)] \textbf{Sound-source localisation} (visualising where in a frame the sound originates);
+    \item[(b)] \textbf{Audio-visual action recognition} (e.g., ``cutting in kitchen'');
+    \item[(c)] \textbf{On/off-screen audio-source separation}: separating the spectrogram of sounds whose source is visible in the frame from sounds coming from off-screen.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+A.\ Owens, A.\ Efros. ``Audio-Visual Scene Analysis with Self-Supervised Multisensory Features''. \textit{ECCV 2018}.
+\end{tcolorbox}
+
+\subsection{Biometric Embeddings (Face/Voice Correspondence)}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{The Question}]
+\emph{How much can we infer from the voice about the face, and vice versa?}\\
+A famous illustration: in the film ``Die Hard'', John McLane (Bruce Willis) recognises Sgt.\ Al Powell at the end of the film, having only spoken to him by radio.
+\end{tcolorbox}
+
+Two SSL approaches train cross-modal embeddings using face images and voice recordings of the same identities:
+
+\begin{itemize}
+    \item \textbf{Cross-modal biometric matching} (Nagrani et al., CVPR 2018) --- with modality-specific encoders followed by modality-shared layers and a softmax over $N$-way matching.
+    \item \textbf{Learnable PINs} (Nagrani et al., ECCV 2018) --- learns a \textbf{joint embedding space} where corresponding face and voice points lie close together (Face A near Voice A; Face B near Voice B). A face subnetwork $f_\theta$ produces a 256-dim embedding from a face frame; a voice subnetwork $g_\phi$ produces a 256-dim embedding from a 3-second spectrogram. Pairs are selected by \emph{Curriculum Mining}, and a \textbf{contrastive loss} pulls positive pairs together and pushes negatives apart.
+\end{itemize}
+
+\textbf{Evaluation}:
+\begin{itemize}
+    \item \textbf{Cross-modal verification}: given a face input and a speech segment, decide if they belong to the same identity.
+    \item \textbf{Cross-modal retrieval}: given a query in one modality, retrieve all semantically matching templates in the other modality.
+    \item \textbf{One-shot learning} for TV-show character retrieval.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={References}]
+\begin{itemize}[leftmargin=*]
+    \item A.\ Nagrani, S.\ Albanie, A.\ Zisserman. ``Seeing Voices and Hearing Faces: Cross-modal biometric matching''. \textit{CVPR 2018}.
+    \item A.\ Nagrani, S.\ Albanie, A.\ Zisserman. ``Learnable PINs: Cross-Modal Embeddings for Person Identity''. \textit{ECCV 2018}.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Recap of Multimodal SSL}
+
+\begin{itemize}
+    \item Self-supervised learning from images/video alone enables learning without explicit supervision and is roughly \emph{on par with ImageNet supervised training}.
+    \item Self-supervised learning \textbf{from videos with sound} additionally enables intra- and cross-modal retrieval and learns to localise sounds; the proxy tasks (synchronisation, attention) are not just proxies --- they are directly applicable.
+    \item The same paradigm extends to other domains with paired signals: face/voice, infrared/visible, RGB/depth, etc.
+\end{itemize}
+
+
+\section{Comparing Pretext Tasks: Performance}
+
+A common evaluation protocol is to freeze the SSL-pretrained backbone (AlexNet) and train linear classifiers on the feature maps of each convolutional layer (ImageNet, Places). Higher numbers indicate more semantically informative features.
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Linear Classification on AlexNet Feature Maps}]
+\begin{center}
+\small
+\begin{tabular}{|l|l|c|c|c|c|c|}
+\hline
+Method & Type & conv1 & conv2 & conv3 & conv4 & conv5 \\
+\hline
+ImageNet labels (sup.) & --- & 19.3 & 36.3 & 44.2 & 48.3 & 50.5 \\
+Random (scratch) & --- & 11.6 & 17.1 & 16.9 & 16.3 & 14.1 \\
+\hline
+Colorful Colorisation & Generation & 12.5 & 24.5 & 30.4 & 31.5 & 30.3 \\
+BiGAN & Generation & 17.7 & 24.5 & 31.0 & 29.9 & 28.0 \\
+SplitBrain & Generation & 17.7 & 29.3 & 35.4 & 35.2 & 32.8 \\
+\hline
+ContextEncoder & Context & 14.1 & 20.7 & 21.0 & 19.8 & 15.5 \\
+ContextPrediction & Context & 16.2 & 23.3 & 30.2 & 31.7 & 29.6 \\
+Jigsaw & Context & \textbf{18.2} & 28.8 & 34.0 & 33.9 & 27.1 \\
+Learning2Count & Context & 18.0 & 30.6 & 34.3 & 32.5 & 25.7 \\
+DeepCluster & Context & 13.4 & \textbf{32.3} & \textbf{41.0} & \textbf{39.6} & \textbf{38.2} \\
+\hline
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+Several patterns emerge:
+\begin{itemize}
+    \item Context-based methods (especially DeepCluster) tend to dominate at deeper layers (conv3--conv5).
+    \item No SSL method matches the supervised ImageNet baseline at the deepest layer (50.5), but DeepCluster (38.2) gets closer than older methods.
+    \item The combination of clustering and self-supervised learning substantially closes the gap.
+\end{itemize}
+
+
+\section{Self-Supervised, Contrastive Methods}
+
+Contrastive learning brought SSL to a new level of performance. The methods covered here are: \textbf{SimCLR}, \textbf{MoCo}, \textbf{BYOL}, \textbf{Supervised Contrastive (SupCon)}, and \textbf{SimCLR+}.
+
+\subsection{SimCLR --- A Simple Framework for Contrastive Learning}
+
+\textbf{Idea}: SimCLR learns representations by \textbf{maximising agreement between differently augmented views of the same image} via a contrastive loss in a latent space.
+
+\textbf{Procedure}:
+\begin{enumerate}
+    \item Two augmentation operators $t \sim \mathcal{T}$ and $t' \sim \mathcal{T}$ are sampled from the same family $\mathcal{T}$ and applied to each input $x$, producing two correlated views $\tilde x_i, \tilde x_j$.
+    \item A base encoder $f(\cdot)$ produces representations $h_i = f(\tilde x_i)$, $h_j = f(\tilde x_j)$.
+    \item A projection head $g(\cdot)$ (an MLP) maps these to $z_i, z_j$ where the contrastive loss is computed.
+    \item After pretraining the projection head $g$ is \textbf{discarded}; only the encoder $f$ and its representation $h$ are used for downstream tasks. The paper shows $h$ is more discriminative than $z$ for transfer.
+\end{enumerate}
+
+\textbf{Loss (NT-Xent)}: from a mini-batch of $N$ examples we obtain $2N$ augmented views. For a positive pair $(i,j)$:
+\begin{equation}
+\ell_{i,j} = -\log \frac{\exp(\mathrm{sim}(z_i,z_j)/\tau)}{\sum_{k=1}^{2N} \mathbb{1}_{[k\neq i]} \exp(\mathrm{sim}(z_i,z_k)/\tau)}
+\end{equation}
+where $\mathrm{sim}(\cdot,\cdot)$ is cosine similarity and $\tau$ is a temperature. The other $2(N-1)$ views in the batch are treated as negatives. The final loss is the average over both directions of all positive pairs in the mini-batch.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Important Practical Note}]
+SimCLR requires a \textbf{large batch size} to provide enough negative samples. This is a key limitation.
+\end{tcolorbox}
+
+\subsubsection{Importance of Data Augmentation}
+
+A grid of pairwise compositions of augmentations (crop, cutout, colour distortion, Sobel, noise, blur, rotate) was studied:
+\begin{itemize}
+    \item \textbf{No single transformation} suffices to learn good representations, even though the model can almost perfectly identify positive pairs.
+    \item \textbf{Composing} augmentations makes the contrastive task harder, but the quality of the representation \emph{improves dramatically}. Crop + Colour is a particularly strong combination.
+\end{itemize}
+
+\subsubsection{SimCLR Results}
+
+\begin{example}[ImageNet linear evaluation]
+With ResNet-50 (1$\times$, 2$\times$, 4$\times$ width multipliers), SimCLR substantially outperforms previous SSL methods (CPCv2, CMC, MoCo, BigBiGAN, AMDIM, PIRL, Rotation, InstDisc, $\ldots$) and approaches the supervised ResNet-50 baseline.
+\end{example}
+
+\begin{example}[Transfer over 12 datasets, ResNet-50 ($4\times$)]
+Linear evaluation: SimCLR is statistically tied with supervised on 7 of 12 datasets, slightly worse on others.\\
+Fine-tuned: SimCLR significantly outperforms the supervised baseline on \textbf{5 of 12 datasets}; the supervised baseline wins on only 2 (Pets, Flowers); the remaining 5 are statistically tied.
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+T.\ Chen et al. ``A simple framework for contrastive learning of visual representations''. \textit{ICML 2020}.
+\end{tcolorbox}
+
+\subsection{MoCo --- Momentum Contrast}
+
+MoCo addresses SimCLR's main weakness (the dictionary of negatives is bounded by the mini-batch size) by decoupling the dictionary size from the batch size.
+
+\textbf{Idea}: train a visual encoder by matching an encoded \textbf{query} $q$ to a \textbf{dictionary of encoded keys} $\{k_0, k_1, k_2, \ldots\}$ using a contrastive loss. The dictionary keys are defined on-the-fly by a set of data samples.
+
+\textbf{Architecture}:
+\begin{itemize}
+    \item A \textbf{query encoder} $f_q$ with parameters $\theta_q$, updated by backpropagation.
+    \item A \textbf{key encoder} (\textbf{momentum encoder}) $f_k$ with parameters $\theta_k$, \textbf{not} updated by gradients but by a \textbf{momentum update}:
+    \begin{equation}
+        \theta_k \leftarrow m\,\theta_k + (1-m)\,\theta_q,
+    \end{equation}
+    with momentum coefficient $m \in [0,1)$.
+\end{itemize}
+
+\textbf{Dictionary as a queue}: keys are stored in a FIFO queue. Each mini-batch is enqueued and the oldest mini-batch dequeued, decoupling the dictionary size from the mini-batch size. Because $f_k$ evolves slowly (large $m$), keys produced in different mini-batches are encoded by encoders that are \emph{nearly} the same --- the dictionary is large but consistent.
+
+\textbf{Contrastive loss (InfoNCE)}:
+\begin{equation}
+    \mathcal{L}_q = -\log \frac{\exp(q \cdot k_+ / \tau)}{\sum_{i=0}^{K} \exp(q \cdot k_i / \tau)}
+\end{equation}
+This is the log loss of a $(K+1)$-way softmax classifier that tries to classify $q$ as $k_+$ (the positive key).
+
+\begin{remark}
+\textbf{Why a momentum encoder?} A queue makes the dictionary large but makes back-propagation through the keys intractable (the gradient should flow through every key in the queue). The momentum update sidesteps this: only $\theta_q$ is trained by gradients, while $\theta_k$ is a slow-moving average.
+\end{remark}
+
+\subsubsection{Comparison of Contrastive Mechanisms}
+
+\begin{itemize}
+    \item \textbf{(a) End-to-end}: query and key encoders are both updated by back-propagation; the dictionary is limited by mini-batch size.
+    \item \textbf{(b) Memory bank}: keys are sampled from a memory bank of past representations. Supports a larger dictionary but the keys come from very different past encoders, hence inconsistent. About 2.6\% worse than MoCo.
+    \item \textbf{(c) MoCo}: keys are encoded on-the-fly by a momentum-updated encoder and stored in a queue --- both large \emph{and} consistent.
+\end{itemize}
+
+\subsubsection{MoCo Results}
+
+\begin{example}[ImageNet linear classification, unsupervised pretraining on ImageNet-1M]
+With ResNet-50 (R50): 60.6\% accuracy. Larger backbones (RX50, R50w$2\times$, R50w$4\times$) give 63.9, 65.4, \textbf{68.6}\%. MoCo also outperforms its supervised pretraining counterpart on 7 detection/segmentation tasks (PASCAL VOC, COCO, $\ldots$), sometimes by large margins.
+\end{example}
+
+The main hypothesis is confirmed: \emph{good features can be learned by a large dictionary covering a rich set of negative samples, while the key encoder is kept as consistent as possible}. The gap between unsupervised and supervised representation learning has been largely closed in many vision tasks.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+K.\ He et al. ``Momentum contrast for unsupervised visual representation learning''. \textit{CVPR 2020}.
+\end{tcolorbox}
+
+\subsection{BYOL --- Bootstrap Your Own Latent}
+
+BYOL revisits and combines ideas from MoCo and SimCLR but \textbf{removes negative pairs entirely}.
+
+\textbf{Architecture}:
+\begin{itemize}
+    \item Two augmented views $v = t(x)$, $v' = t'(x)$ of the same image.
+    \item An \textbf{online network} $(f_\theta, g_\theta, q_\theta)$: representation $y_\theta$, projection $z_\theta$, prediction $q_\theta(z_\theta)$.
+    \item A \textbf{target network} $(f_\xi, g_\xi)$: representation $y_\xi'$, projection $z_\xi'$. Its parameters $\xi$ are an \textbf{exponential moving average} of the online parameters $\theta$ (similar in spirit to MoCo's momentum encoder).
+\end{itemize}
+
+\textbf{Loss}: BYOL is \textbf{not} contrastive --- it \emph{maximises similarity} between the prediction $q_\theta(z_\theta)$ and the (stop-gradient) target projection $\mathrm{sg}(z_\xi')$ via a \textbf{mean-squared-error}. Only the online parameters $\theta$ receive gradients; $\xi$ is updated by EMA.
+
+\textbf{Process overview}:
+\begin{enumerate}
+    \item Take an unlabelled image and generate two views (which should share the same label).
+    \item Pass the top view through the online network (with the predictor).
+    \item Pass the second view through a delayed replica (the target network, no predictor).
+    \item Compute the MSE between the two latents and train the online network in a supervised fashion.
+\end{enumerate}
+
+\textbf{Key ingredients}: image transformations, target network, additional predictor on the online network. \emph{Without the predictor, the representation collapses}.
+
+\textbf{Takeaways}:
+\begin{itemize}
+    \item BYOL does \textbf{not} use negative examples;
+    \item It is more resilient to transformation choice and batch size than contrastive methods (MoCo / SimCLR).
+    \item At inference time, only $f_\theta$ is kept; the rest is discarded.
+\end{itemize}
+
+\begin{example}[BYOL on ImageNet linear evaluation]
+With ResNet-50 (and the larger ResNet-200 ($4\times$)) BYOL achieves higher accuracy than state-of-the-art contrastive methods (SimCLR, MoCo, MoCov2, AMDIM, CMC, CPCv2-L, InfoMin) and approaches the supervised baseline --- without using negative pairs.
+\end{example}
+
+\begin{example}[BYOL transfer over 12 datasets]
+BYOL outperforms SimCLR on all 12 benchmarks and outperforms the Supervised-IN baseline on 7/12 (slightly worse on the remaining 5). The representation transfers well to small images (CIFAR), landscapes (SUN397, VOC2007) and textures (DTD).
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+J.-B.\ Grill et al. ``Bootstrap Your Own Latent: A New Approach to Self-Supervised Learning''. \textit{NeurIPS 2020}.
+\end{tcolorbox}
+
+\subsection{Supervised Contrastive Learning (SupCon)}
+
+\textbf{Idea}: extend the contrastive framework to leverage class labels when they \emph{are} available, merging the best of supervised and self-supervised contrastive learning.
+
+\begin{itemize}
+    \item In the \textbf{self-supervised contrastive loss}, the only positive for an anchor is an augmented copy of the same image; \emph{all} other batch images (regardless of class) are negatives.
+    \item In the \textbf{supervised contrastive loss}, \emph{all samples sharing the anchor's class} are positives; only the remaining batch elements are negatives. This produces an embedding space where same-class samples are more tightly clustered.
+\end{itemize}
+
+\textbf{Two-stage training}:
+\begin{itemize}
+    \item[(a)] \textbf{Supervised cross-entropy} (single stage): final 2048-D representation $\to$ 1000-D softmax with label ``Dog''.
+    \item[(b)] \textbf{Self-supervised contrastive} (two stages): Stage 1 contrastive 128-D head; Stage 2 freeze backbone, train classifier.
+    \item[(c)] \textbf{Supervised contrastive (SupCon)}: same two-stage pipeline as (b), but the contrastive loss in Stage 1 uses class labels to define positives.
+\end{itemize}
+
+\textbf{Two formulations of the supervised contrastive loss}:
+\begin{align}
+    \mathcal{L}^{sup}_{out} &= \sum_{i\in I} \mathcal{L}^{sup}_{out,i}
+    = \sum_{i\in I} \frac{-1}{|P(i)|} \sum_{p\in P(i)} \log \frac{\exp(z_i \cdot z_p/\tau)}{\sum_{a\in A(i)} \exp(z_i \cdot z_a/\tau)} \\
+    \mathcal{L}^{sup}_{in} &= \sum_{i\in I} -\log \left\{ \frac{1}{|P(i)|} \sum_{p\in P(i)} \frac{\exp(z_i \cdot z_p/\tau)}{\sum_{a\in A(i)} \exp(z_i \cdot z_a/\tau)} \right\}
+\end{align}
+where $P(i)$ is the set of positives (same-class samples) and $A(i)$ all other batch elements.
+
+\textbf{Three benefits} of these losses:
+\begin{enumerate}
+    \item Generalisation to an arbitrary number of positives;
+    \item Contrastive power increases with more negatives (large batch size);
+    \item Intrinsic ability to perform hard positive/negative mining.
+\end{enumerate}
+
+\textbf{Connection with classical losses}: triplet loss and N-pair loss are special cases of these formulations. The self-supervised contrastive loss is the degenerate case in which every image has a different label.
+
+\subsubsection{SupCon Results}
+
+\begin{example}[Top-1 classification accuracy]
+\begin{itemize}[leftmargin=*]
+    \item CIFAR-10: SimCLR 93.6, Cross-Entropy 95.0, Max-Margin 92.4, \textbf{SupCon 96.0}.
+    \item CIFAR-100: SimCLR 70.7, Cross-Entropy 75.3, Max-Margin 70.5, \textbf{SupCon 76.5}.
+    \item ImageNet: Cross-Entropy 78.2, Max-Margin 78.0, \textbf{SupCon 78.7} (ResNet-50).
+\end{itemize}
+On ResNet-200 with Stacked RandAugment, SupCon reaches \textbf{81.4\% top-1} (95.9\% top-5), a new SOTA at the time, beating cross-entropy by 0.5--1\%. SupCon outperforms cross-entropy with standard augmentations (MixUp, CutMix, AutoAugment, Stacked RandAugment) consistently across architectures (ResNet-50/101/200, ResNeXt-101).
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+P.\ Khosla et al. ``Supervised Contrastive Learning''. \textit{NeurIPS 2020}.
+\end{tcolorbox}
+
+\subsection{SimCLR+ (SimCLRv2) --- Big Self-Supervised Models for Semi-Supervised Learning}
+
+SimCLR+ is the first systematic attempt to exploit contrastive SSL for \textbf{semi-supervised learning}, where only a small fraction (e.g., 1\% or 10\%) of the training data is labelled. It is a three-step pipeline:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Pretrain, Fine-tune, Distill}]
+\begin{enumerate}
+    \item \textbf{Unsupervised pretraining} of a \textbf{task-agnostic Big CNN} on all unlabelled data, using SimCLR-style contrastive learning with a deeper projection head.
+    \item \textbf{Supervised fine-tuning} on the small labelled fraction.
+    \item \textbf{Distillation with unlabelled data}: a smaller \emph{task-specific} student is trained on unlabelled data using soft targets from the fine-tuned teacher.
+\end{enumerate}
+\end{tcolorbox}
+
+\textbf{Key empirical findings}:
+\begin{itemize}
+    \item \textbf{Bigger self-supervised models are more label-efficient}: their gain over smaller models is much larger when fine-tuning with very few labels (1\%) than with many (100\%).
+    \item ``\emph{The fewer the labels, the bigger the model}.''
+    \item Increasing model size by 10$\times$ reduces the labels needed to reach a given accuracy by roughly 10$\times$.
+    \item \textbf{Distillation to smaller task-specific models} is an effective way to avoid serving big models in production.
+    \item A \textbf{deeper projection head} $g(\cdot)$ improves not just linear-evaluation representation quality but also semi-supervised fine-tuning performance.
+\end{itemize}
+
+\textbf{Use of unlabelled data} occurs in two complementary ways:
+\begin{itemize}
+    \item \textbf{Task-agnostic} --- learning general visual representations via unsupervised pretraining.
+    \item \textbf{Task-specific} --- training a student on unlabelled data with imputed labels from the fine-tuned teacher (distillation).
+\end{itemize}
+
+\subsubsection{Task-Specific Distillation Loss}
+
+\textbf{Unlabelled case}:
+\begin{equation}
+    \mathcal{L}^{\text{distill}} = -\sum_{x_i \in \mathcal{D}} \left[ \sum_y P^{T}(y\mid x_i;\tau)\,\log P^{S}(y\mid x_i;\tau) \right]
+\end{equation}
+
+\textbf{Semi-supervised case (combined fine-tune + distill)}:
+\begin{equation}
+    \mathcal{L} = -(1-\alpha)\!\!\sum_{(x_i,y_i)\in\mathcal{D}^{L}}\!\!\big[\log P^{S}(y_i\mid x_i)\big]
+    - \alpha \sum_{x_i \in \mathcal{D}} \left[ \sum_y P^{T}(y\mid x_i;\tau) \log P^{S}(y\mid x_i;\tau) \right]
+\end{equation}
+The first term is the supervised cross-entropy on the labelled subset $\mathcal{D}^{L}$, the second is the distillation term on the entire dataset $\mathcal{D}$, weighted by $\alpha$.
+
+\subsubsection{Distillation with Unlabelled Data Improves All Model Sizes}
+
+Empirically (ImageNet, label fraction 10\%):
+\begin{itemize}
+    \item Label only: 12.3 (1\%) / 52.0 (10\%).
+    \item Label + distillation loss on labelled set: 23.6 / 66.2.
+    \item Label + distillation loss on labelled \emph{and} unlabelled sets: 69.0 / 75.1.
+    \item Distillation loss alone on labelled + unlabelled: 68.9 / 74.3.
+\end{itemize}
+Distillation on the labelled dataset alone is not sufficient; using unlabelled examples \emph{largely} improves distillation.
+
+\subsubsection{State-of-the-Art on Semi-Supervised ImageNet}
+
+\begin{example}[Semi-supervised ImageNet, label fractions 1\% / 10\%]
+SimCLRv2 distilled (ours):
+\begin{itemize}[leftmargin=*]
+    \item ResNet-50: top-1 73.9 / 77.5; top-5 91.5 / 93.4.
+    \item ResNet-50 ($2\times$ + SK): top-1 75.9 / 80.2; top-5 93.0 / 95.0.
+    \item ResNet-152 ($3\times$ + SK), self-distilled: top-1 \textbf{76.6} / \textbf{80.9}; top-5 \textbf{93.4} / \textbf{95.5}.
+\end{itemize}
+This greatly improves the previous SOTA on ImageNet with 1\% or 10\% labels, beating earlier task-specific methods (Pseudo-label, VAT+EntMin, Mean Teacher, UDA, FixMatch, MPL, $\ldots$) and task-agnostic methods (InstDisc, BigBiGAN, PIRL, CPCv2, SimCLR, BYOL).
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+T.\ Chen et al. ``Big Self-Supervised Models are Strong Semi-Supervised Learners''. \textit{NeurIPS 2020}.
+\end{tcolorbox}
+
+
+\section{Summary}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Take-Home Messages}]
+\begin{itemize}[leftmargin=*]
+    \item Self-supervised learning derives supervision from the data itself via a \textbf{pretext task}; the learned features are then transferred to \textbf{downstream tasks}.
+    \item Pretext tasks fall into four families: \textbf{generation-based} (autoencoder, GAN, colorisation, super-resolution, inpainting), \textbf{context-based spatial} (rotations, relative position, jigsaw, clustering), \textbf{context-based temporal} (frame-order verification/recognition, arrow of time), and \textbf{cross-modal} (audio-visual correspondence/synchronisation, face-voice).
+    \item The choice of pretext task and the depth of the network strongly influence transfer: \textbf{multi-task} SSL further closes the gap with supervised pretraining.
+    \item \textbf{Contrastive methods} (SimCLR, MoCo) and \textbf{non-contrastive methods} (BYOL) have largely closed the gap between unsupervised and supervised representation learning.
+    \item Adding labels back into a contrastive framework (\textbf{SupCon}) outperforms cross-entropy on multiple benchmarks.
+    \item In the \textbf{semi-supervised} regime, big self-supervised pretraining + supervised fine-tuning + distillation on unlabelled data (\textbf{SimCLRv2}) yields strong label-efficiency: bigger models help most when labels are scarce.
+\end{itemize}
+\end{tcolorbox}
+
+
+
+% ========================================
+\part{Semi-Supervised Learning, Pseudo-Labelling and Noisy Labels}
+% ========================================
+
+\section{From Supervised to Semi-Supervised Learning}
+
+\subsection{Supervised, Unsupervised, Semi-Supervised: A Quick Recap}
+
+\begin{itemize}
+    \item \textbf{Supervised Learning (SL)} learns from a fully labelled dataset and predicts outcomes for unseen data. Two main task families:
+    \begin{itemize}
+        \item \textbf{Classification} --- predict a discrete class.
+        \item \textbf{Regression} --- approximate a mapping $f$ from input variables $X$ to a continuous target $y$.
+    \end{itemize}
+    \item \textbf{Unsupervised Learning (UL)} works on a dataset \emph{without} target labels. The model finds structure in the data by extracting features and analysing them. Typical tasks:
+    \begin{itemize}
+        \item \textbf{Clustering} --- find structure or patterns in a collection of points.
+        \item \textbf{Associations} --- discover relationships between variables in large databases (e.g., people who buy a new home are likely to buy new furniture).
+    \end{itemize}
+    \item \textbf{Semi-Supervised Learning (SSL)} sits between the two extremes: it uses a \textbf{small labelled} dataset together with a \textbf{relatively larger unlabelled} dataset.
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Goal of Semi-Supervised Learning}]
+Learn a predictor that performs better on future test data than the predictor learned from the labelled training data alone, by exploiting the unlabelled data.
+\end{tcolorbox}
+
+\subsection{Why Semi-Supervised Learning Matters}
+
+\begin{itemize}
+    \item In many real-world applications, collecting large \emph{labelled} datasets is too expensive or simply infeasible.
+    \item Large volumes of \emph{unlabelled} data are typically available.
+    \item SSL fits this scenario: it can leverage labels where present and derive structure from the unlabelled data to solve the overall task better.
+\end{itemize}
+
+\textbf{Geometric intuition.} If a model is trained only on the labelled data, the resulting decision boundary may not follow the actual contours of the data distribution suggested by the unlabelled points. The objective of SSL is precisely to use the unlabelled data to produce a decision boundary that better reflects the data's underlying structure --- in the comparison of Oliver et al.\ (2018), Pseudo-Label, $\Pi$-model, Entropy Minimisation and VAT all bend the boundary to follow the data, while a purely supervised classifier remains a straight line.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+A.\ Oliver et al. ``Realistic evaluation of deep semi-supervised learning algorithms''. \texttt{arXiv:1804.09170}, 2018.
+\end{tcolorbox}
+
+
+\section{Pseudo-Labelling: A Naive Semi-Supervised Method}
+
+\subsection{The Idea (Lee, 2013)}
+
+\textbf{Pseudo-Labelling (PL)} is the simplest and most general SSL recipe. The network is trained in a supervised fashion using the labelled and unlabelled data \emph{simultaneously}:
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Pseudo-Labelling --- Three Steps}]
+\begin{enumerate}
+    \item Train the model on the labelled data only.
+    \item Use the trained model to predict labels for the unlabelled data.
+    \item Retrain the model with the pseudo-labelled and the labelled data together.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Pseudo-Label and Loss Function}
+
+For an unlabelled example, the \textbf{pseudo-label} is the class with the largest predicted probability:
+\begin{equation}
+    y'_i = \begin{cases} 1 & \text{if } i = \arg\max_{i'} f_{i'}(x) \\ 0 & \text{otherwise}\end{cases}
+\end{equation}
+i.e., the predictions are \emph{hard-thresholded} into one-hot pseudo-labels. These are then treated as if they were true labels.
+
+Because the number of labelled and unlabelled examples differs greatly, it is essential to balance their contribution to the loss:
+\begin{equation}
+    L = \frac{1}{n}\sum_{m=1}^{n}\sum_{i=1}^{C} L\!\left(y_i^m, f_i^m\right) + \alpha(t)\,\frac{1}{n'}\sum_{m=1}^{n'}\sum_{i=1}^{C} L\!\left(y_i'^{\,m}, f_i'^{\,m}\right),
+\end{equation}
+or, in plain words:
+\begin{equation*}
+    \text{Loss per Batch} = \text{Labeled Loss} + W\cdot \text{Unlabeled Loss}.
+\end{equation*}
+
+\subsection{The Weight Schedule $\alpha(t)$}
+
+The unsupervised weight $\alpha$ controls how much the unlabelled term contributes to the total loss; it is a function of training time (epochs) and is increased \emph{slowly}:
+\begin{equation}
+    \alpha(t) = \begin{cases} 0 & t < T_1 \\ \dfrac{t - T_1}{T_2 - T_1}\,\alpha_f & T_1 \leq t < T_2 \\ \alpha_f & T_2 \leq t \end{cases}
+\end{equation}
+
+\begin{itemize}
+    \item For the first $T_1$ epochs (e.g., 100) the weight is $0$ --- training relies on labels only.
+    \item Between $T_1$ and $T_2$ (e.g., 600) the weight \emph{linearly} increases up to $\alpha_f$ (e.g., 3), gradually incorporating unlabelled data.
+    \item After $T_2$ the weight saturates at $\alpha_f$. The pair $(T_2,\alpha_f)$ controls the rate of increase and the steady-state value.
+\end{itemize}
+
+\subsection{Implementation Outline}
+
+After pre-training on labelled data for 100 epochs, an alternation begins:
+
+\begin{enumerate}
+    \item Forward-pass on a batch of unlabelled data; predict pseudo-labels.
+    \item Compute the unlabelled loss using these pseudo-labels.
+    \item After 50 unlabelled batches, train one epoch on the labelled data.
+    \item Repeat until convergence.
+\end{enumerate}
+
+This alternation helps in two concrete ways:
+\begin{itemize}
+    \item It \textbf{reduces overfitting} on the small labelled training set.
+    \item It is faster: only \textbf{one} forward pass per batch on the unlabelled data is needed (instead of two as in the original paper formulation).
+\end{itemize}
+
+\subsection{Empirical Behaviour: MNIST Example}
+
+\textbf{Setup}: 1{,}000 labelled (class-balanced) + 59{,}000 unlabelled training images; 10{,}000 test images.
+
+\begin{example}[Baseline vs.\ Pseudo-Labelling on MNIST]
+\textbf{Supervised baseline} on the 1{,}000 labelled images:\\
+Epoch 290 -- Train Loss 0.00004 -- Test Acc \textbf{95.57\%} -- Test Loss 0.233.\\
+\textbf{Pseudo-labelling} (100 supervised + 170 SSL epochs):\\
+Epoch 168 -- $\alpha = 3.000$ -- Test Acc \textbf{98.46\%} -- Test Loss 0.075.\\
+The unlabelled data brings $\sim 3$\% absolute accuracy improvement.
+\end{example}
+
+The plot of test accuracy vs.\ epoch shows that as $\alpha$ ramps up linearly, test accuracy slowly increases and saturates --- evidence that the unlabelled term is being absorbed without destabilising training.
+
+\subsection{T-SNE Inspection of Pseudo-Labels}
+
+Visualising the network's features with t-SNE clarifies how PL operates:
+\begin{itemize}
+    \item Faint background colours show the \emph{true} clusters (computed from the full labelled set, only for visualisation).
+    \item Small \textbf{circles} are the 1{,}000 labelled points used during the supervised phase.
+    \item Small \textbf{stars} are pseudo-labels assigned by the model to unlabelled data at every epoch.
+\end{itemize}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Observations}]
+\begin{itemize}[leftmargin=*]
+    \item Most pseudo-labels are \emph{already correct} at epoch 0 (stars share the colour of their cluster) thanks to the high baseline accuracy.
+    \item As training progresses, the percentage of correct pseudo-labels grows --- reflected in the climbing test accuracy (e.g., 94.58\% at epoch 0 vs.\ 98.33\% at epoch 140 on the same 750 sampled points).
+    \item Points that move from a wrong to a correct cluster are precisely those near the boundary between two clusters.
+\end{itemize}
+\end{tcolorbox}
+
+
+\section{Why Pseudo-Labelling Works}
+
+PL is justified by two classical SSL assumptions:
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Two Key Assumptions}]
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Continuity (Smoothness) Assumption}: \emph{points close to each other are more likely to share a label}. Small input changes (rotation, shearing, $\ldots$) do not change the label.
+    \item \textbf{Cluster Assumption}: \emph{the data tend to form discrete clusters, and points in the same cluster are more likely to share a label} --- a special case of the smoothness assumption. Equivalently, the decision boundary lies in low-density regions between clusters (cf.\ maximum-margin classifiers in SVMs).
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Consequences for PL}:
+\begin{itemize}
+    \item The initial labelled data is important: it lets the model learn the underlying cluster structure.
+    \item Each pseudo-label is then assigned by exploiting that cluster structure; as training progresses, the structure itself is refined using the unlabelled data.
+    \item If the initial labelled data is too small or contains outliers, PL will likely assign incorrect labels.
+    \item Conversely, PL benefits from a classifier that already performs reasonably well on the labelled data alone --- garbage-in, garbage-out.
+\end{itemize}
+
+
+\section{When Pseudo-Labelling Fails}
+
+\subsection{Case 1: Initial Labelled Data Insufficient to Determine Clusters}
+
+Repeating the MNIST experiment with progressively fewer labels:
+
+\begin{itemize}
+    \item \textbf{10 labelled points} (1 per class): the model is no better than random ($\sim 11$\% accuracy). With one point per class, the underlying class structure cannot be learned.
+    \item \textbf{20 labelled points} (2 per class): some structure is captured ($\sim 43$\% test accuracy). PL assigns correct pseudo-labels mainly when there are two labelled points close-by.
+    \item \textbf{50 labelled points} (5 per class): performance improves substantially. Even so, points in the same true cluster but far from the labelled examples are systematically misclassified (e.g., a brown cluster gets mistakenly relabelled as ``4'' or ``7'' near its periphery).
+\end{itemize}
+
+\begin{remark}
+For all of these experiments the \emph{choice} of labelled points matters enormously: outliers can completely change the model and its pseudo-labels --- a typical small-data pathology. Both \textbf{quantity and quality} of initial labels matter.
+\end{remark}
+
+T-SNE itself is probabilistic and only gives an idea of the high-dimensional geometry; conclusions drawn from it should be treated as illustrative, not conclusive.
+
+\subsection{Case 2: Some Classes Are Missing from the Labelled Set}
+
+Setting: class ``7'' is absent from the labelled set, but present in the unlabelled set.
+
+\begin{itemize}
+    \item After 100 epochs on labelled data only: Test Acc 85.63\%, Test Loss 1.555.
+    \item After SSL training: Epoch 99, $\alpha = 2.5$, Test Acc \textbf{87.98\%}, Test Loss 2.98 --- a small improvement that quickly saturates.
+\end{itemize}
+
+The model cannot learn the cluster structure of class ``7'' because it has never seen any labelled instance of it. PL fundamentally cannot recognise classes not present in the training labels. (Zero-Shot Learning techniques attempt to overcome this, but PL by itself does not.)
+
+\subsection{Case 3: No Benefit from Increased Data}
+
+In some cases the model lacks the \emph{capacity} to exploit additional data. Conventional ML methods (logistic regression, SVMs) saturate quickly and gain little from more samples, while large deep networks almost always benefit from more data (Andrew Ng's classic \emph{scale drives deep-learning progress} curve).
+
+
+\section{Challenges with Semi-Supervised Learning}
+
+\subsection{Combining Unlabelled with Labelled Data}
+
+The core question: \emph{how to use unlabelled data alongside labelled data?}
+
+\begin{itemize}
+    \item Pseudo-Labelling uses a scheduled weight $\alpha(t)$ to slowly mix in the unlabelled loss. This implicitly assumes that model confidence increases over time and therefore that the unlabelled loss should grow linearly with $t$.
+    \item This need not be the case: predictions can be wrong, and many wrong unlabelled predictions cause PL to act like a \textbf{bad feedback loop}, deteriorating performance further (\textit{confirmation bias}, Arazo et al.\ 2019).
+    \item One mitigation: use \textbf{probability thresholds} to admit only confident pseudo-labels (analogous to logistic regression).
+    \item Other algorithms combine the two sources differently. For example, \textbf{MixMatch} (Berthelot et al.\ 2019) uses a 2-step process: first guess a label for unlabelled data, then perform Mixup augmentation between labelled and unlabelled samples.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={References}]
+\begin{itemize}[leftmargin=*]
+    \item E.\ Arazo et al. ``Pseudo-labeling and confirmation bias in deep semi-supervised learning''. \textit{IJCNN 2020}.
+    \item D.\ Berthelot et al. ``MixMatch: A holistic approach to semi-supervised learning''. \textit{NeurIPS 2019}.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Data Efficiency}
+
+A second challenge is to design SSL algorithms that work with very small amounts of labelled data. PL works best with $\sim 1{,}000$ labelled samples; performance drops when the labelled set is shrunk further (e.g., 50 points). On the classical \emph{two-moons} dataset, Oliver et al.\ (2018) show that:
+\begin{itemize}
+    \item \textbf{VAT} (Miyato et al.\ 2019) and \textbf{$\Pi$-model} (Laine \& Aila 2017) learn a near-perfect decision boundary with just 6 labelled points.
+    \item \textbf{Pseudo-Labelling} fails completely: it learns a \emph{linear} decision boundary instead. Reproducing the same model, PL needed 30--50 labelled points to recover the data structure.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={References}]
+\begin{itemize}[leftmargin=*]
+    \item T.\ Miyato et al. ``Virtual adversarial training: a regularization method for supervised and semi-supervised learning''. \textit{TPAMI 2019}.
+    \item L.\ Samuli, T.\ Aila. ``Temporal ensembling for semi-supervised learning''. \textit{ICLR 2017}.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Pseudo-Labelling: Conclusions}
+
+\begin{itemize}
+    \item PL is a simple heuristic, widely used in practice because of its \emph{simplicity and generality}.
+    \item Recent SSL algorithms have driven image-classification performance to surprising levels with very few labels: e.g., \textbf{Unsupervised Data Augmentation} (Xie et al.\ 2020) reaches \textbf{97.3\%} on CIFAR-10 with just 4{,}000 labels, while DenseNet (Huang et al.\ 2017) achieved 96.54\% on the \emph{full} CIFAR-10 in 2017.
+    \item ML and DS communities are increasingly moving towards approaches that need fewer labels (semi-supervised, zero/few-shot) or smaller datasets (transfer learning).
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={References}]
+\begin{itemize}[leftmargin=*]
+    \item Q.\ Xie et al. ``Unsupervised data augmentation for consistency training''. \textit{NeurIPS 2020}.
+    \item G.\ Huang et al. ``Densely connected convolutional networks''. \textit{CVPR 2017}.
+\end{itemize}
+\end{tcolorbox}
+
+
+\section{Ensembling Methods for Semi-Supervised Learning}
+
+\textbf{Self-ensembling} (Laine \& Aila, ICLR 2017) is a simple, efficient way to train DNNs in an SSL setting. The idea: form a \textbf{consensus prediction of the unknown labels} using the outputs of the network at \emph{different epochs}.
+
+\begin{itemize}
+    \item Training operates on a single network; predictions on different epochs effectively ensemble many sub-networks (because of dropout regularisation).
+    \item This ensemble is a better predictor than any single epoch's output.
+    \item These predictions can therefore serve as training targets for unlabelled inputs.
+    \item The method relies heavily on \textbf{dropout regularisation} and \textbf{versatile input augmentation}.
+\end{itemize}
+
+Two implementations are described: the \textbf{$\Pi$-model} and \textbf{temporal ensembling}.
+
+\subsection{The $\Pi$-Model}
+
+The $\Pi$-model encourages \textbf{consistent network output between two realisations} of the same input under \emph{different dropout conditions} and augmentations.
+
+\textbf{Procedure}:
+\begin{itemize}
+    \item Each input $x_i$ is evaluated twice, producing prediction vectors $z_i$ and $\widetilde{z}_i$. Differences arise from stochastic dropout, Gaussian noise, and random augmentations.
+    \item The loss has two components:
+    \begin{itemize}
+        \item \textbf{Cross-entropy} on the labelled inputs only.
+        \item \textbf{Mean-square difference} $\|z_i - \widetilde{z}_i\|^2$ on \emph{all} inputs.
+    \end{itemize}
+    \item The two terms are combined via a time-dependent weight $w(t)$.
+    \item Comparing entire output vectors --- not only argmax decisions --- asks for the \emph{dark knowledge} between the two evaluations to be close, a stronger requirement than ``same final classification''.
+\end{itemize}
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Algorithm 1: $\Pi$-Model}]
+\begin{verbatim}
+Require: x_i = training stimuli
+Require: L = indices of labelled inputs
+Require: y_i = labels for i in L
+Require: w(t) = unsupervised weight ramp-up function
+Require: f_theta(x) = stochastic NN with parameters theta
+Require: g(x) = stochastic input augmentation
+for t in [1, num_epochs]:
+    for each minibatch B:
+        z_{i in B}    <- f_theta(g(x_{i in B}))    # forward pass 1
+        ztilde_{i in B} <- f_theta(g(x_{i in B}))  # forward pass 2 (different dropout/aug)
+        loss <- - (1/|B|) * sum_{i in B cap L} log z_i[y_i]      # supervised
+                + w(t) * (1/(C|B|)) * sum_{i in B} ||z_i - ztilde_i||^2   # unsupervised
+        update theta using e.g. ADAM
+return theta
+\end{verbatim}
+\end{tcolorbox}
+
+\textbf{Important detail}: $w(t)$ ramps up from zero along a Gaussian curve during the first $\sim 80$ epochs. Initially the supervised term dominates; the unsupervised term grows in slowly. \emph{The slow ramp-up is critical}: otherwise the network can get stuck in a degenerate solution with no meaningful classification.
+
+\subsection{Temporal Ensembling}
+
+Analysing $\Pi$-model: the two evaluations could be split into (i) classifying the training set once without updating $\theta$, then (ii) training on the same inputs under different augmentations / dropout, using the previous predictions as targets for the unsupervised loss. Targets obtained from a single evaluation are noisy.
+
+\textbf{Temporal ensembling} alleviates this by aggregating predictions of multiple previous network evaluations into an ensemble prediction. After every epoch, the network outputs $z_i$ are accumulated:
+\begin{equation}
+    Z_i \leftarrow \alpha\,Z_i + (1 - \alpha)\,z_i,
+\end{equation}
+where $\alpha$ is a momentum coefficient that controls how far back into history the ensemble reaches. Because of dropout and stochastic augmentation, $Z$ is a weighted average of an ensemble of past networks $f$, with recent epochs weighted more heavily than distant ones.
+
+The training targets $\widetilde{z}_i$ are corrected for startup bias by dividing by $(1-\alpha^t)$:
+\begin{equation*}
+    \widetilde{z}_i = Z_i / (1-\alpha^t).
+\end{equation*}
+
+On the first epoch, $Z$ and $\widetilde{z}_i$ are zero, so $w(t)$ is also set to zero. As before, $w(t)$ ramps up via a Gaussian curve $\exp[-5(1-T)^2]$ in the first 80 epochs, with $T$ advancing linearly from 0 to 1.
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Algorithm 2: Temporal Ensembling}]
+\begin{verbatim}
+Require: x_i, L, y_i for i in L, alpha (ensembling momentum), w(t),
+         f_theta, g
+Z       <- 0_{N x C}             # ensemble predictions
+ztilde  <- 0_{N x C}             # target vectors
+for t in [1, num_epochs]:
+    for each minibatch B:
+        z_{i in B} <- f_theta(g(x_{i in B}, t))
+        loss <- - (1/|B|) sum_{i in B cap L} log z_i[y_i]
+                + w(t) * (1/(C|B|)) sum_{i in B} ||z_i - ztilde_i||^2
+        update theta using e.g. ADAM
+    Z      <- alpha * Z + (1 - alpha) * z
+    ztilde <- Z / (1 - alpha^t)
+return theta
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Tolerance to Incorrect Labels}
+
+A striking property of temporal ensembling is its \textbf{robustness to label noise}: on SVHN with progressively randomised labels (0\%, 20\%, 50\%, 80\%, 90\%):
+\begin{itemize}
+    \item Standard supervised training: accuracy collapses very quickly --- even 20\% of randomised labels is enough to degrade test accuracy substantially; with 50\% or more, accuracy drops to near-random.
+    \item Temporal ensembling: \emph{nearly perfect resistance} to disinformation when 50\% of labels are random; over 90\% accuracy retained when 80\% of labels are random.
+\end{itemize}
+
+\subsection{Results: $\Pi$-Model and Temporal Ensembling}
+
+\begin{example}[CIFAR-10, 4{,}000 / all (50{,}000) labels]
+Supervised-only with augmentation: $34.85 \pm 1.65$ / $6.05 \pm 0.15$.\\
+$\Pi$-model: $16.55 \pm 0.29$ / ---. \\
+$\Pi$-model with augmentation: $\mathbf{12.36 \pm 0.31}$ / $\mathbf{5.56 \pm 0.10}$.\\
+Temporal ensembling with augmentation: $\mathbf{12.16 \pm 0.24}$ / $5.60 \pm 0.10$.
+\end{example}
+
+\begin{example}[SVHN, 500 / 1000 / all (73{,}257) labels]
+Supervised-only with augmentation: $31.59 \pm 3.60$ / $19.30 \pm 3.89$ / $2.88 \pm 0.03$.\\
+$\Pi$-model with augmentation: $6.65 \pm 0.53$ / $4.82 \pm 0.17$ / $\mathbf{2.54 \pm 0.04}$.\\
+Temporal ensembling with augmentation: $\mathbf{5.12 \pm 0.13}$ / $\mathbf{4.42 \pm 0.16}$ / $2.74 \pm 0.06$.
+\end{example}
+
+\subsection{Conclusions on $\Pi$-Model vs.\ Temporal Ensembling}
+
+\begin{itemize}
+    \item Temporal ensembling has two advantages: training is faster (the network is evaluated only once per input per epoch) and targets $\widetilde{z}$ are less noisy.
+    \item At each training step, the \textbf{Exponential Moving Average} (EMA) prediction of every example in the mini-batch is updated; the EMA prediction is an ensemble of the model's current and earlier versions.
+    \item Using these EMA predictions as \textbf{teacher} targets improves results, but each target is updated only once per epoch --- information is incorporated slowly.
+    \item Drawbacks: temporal ensembling needs auxiliary storage (the matrix $Z$, possibly memory-mapped), plus a new hyperparameter $\alpha$.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+S.\ Laine, T.\ Aila. ``Temporal ensembling for semi-supervised learning''. \textit{ICLR 2017}.
+\end{tcolorbox}
+
+
+\section{Mean Teacher}
+
+\textbf{Mean Teacher} (Tarvainen \& Valpola, NIPS 2017) takes the temporal-ensembling intuition one step further: instead of averaging \emph{label predictions}, average the \emph{model weights}.
+
+\begin{itemize}
+    \item Two networks: a \textbf{student} (trained by gradient descent) and a \textbf{teacher} (whose weights are an EMA of the student's weights).
+    \item The teacher is the \emph{average of consecutive student models} --- hence the name.
+    \item Averaging model weights over training steps tends to produce a more accurate model than using the final weights directly.
+    \item Unlike temporal ensembling --- which shares weights and updates targets only once per epoch --- the teacher uses EMA weights of the student and can aggregate information \emph{after every step}.
+    \item Because the weight averages improve all layers (not just the output), the teacher has better intermediate representations.
+    \item Mean Teacher requires fewer labels than Temporal Ensembling: without changing the architecture, it reaches \textbf{4.35\%} error on SVHN with just \textbf{250 labels} --- outperforming Temporal Ensembling trained with 1{,}000 labels.
+\end{itemize}
+
+\subsection{Intuition: True Label, Teacher Label, Virtuous Cycle}
+
+\begin{itemize}
+    \item \textbf{Supervised case}: the true label \emph{pulls} the model's prediction toward itself. For a labelled image of a dog, the prediction simplex is moved towards the ``dog'' vertex.
+    \item \textbf{Unlabelled case}: there is no true label. We need \emph{two} predictions --- a student and a teacher --- so that the student can learn from the teacher.
+    \item Two non-exclusive ways to make this work:
+    \begin{enumerate}
+        \item \textbf{Make the task harder}: distort the student's input so its task is more challenging; force the student to predict the easier task's output (i.e., the undistorted input's prediction).
+        \item \textbf{Make the teacher better}: maintain an EMA of weights to create a stronger teacher (a \textit{mean} teacher); let the student learn the teacher's predictions.
+    \end{enumerate}
+    \item Student and teacher therefore improve each other in a \textbf{virtuous cycle}: better student $\Rightarrow$ better EMA $\Rightarrow$ better teacher $\Rightarrow$ better targets $\Rightarrow$ better student.
+\end{itemize}
+
+\subsection{Proposed Method}
+
+Conceptually:
+\begin{enumerate}
+    \item Take a supervised model with parameters $\theta$.
+    \item Make a copy of it with parameters $\theta'$ (the teacher).
+    \item At training step $t$, update the teacher weights as the EMA of the student weights:
+    \begin{equation}
+        \theta'_t = \alpha\,\theta'_{t-1} + (1-\alpha)\,\theta_t,
+    \end{equation}
+    where $\alpha$ is a smoothing-coefficient hyperparameter.
+\end{enumerate}
+
+The \textbf{consistency cost} $J$ is the expected distance between the student prediction (weights $\theta$, noise $\eta$) and the teacher prediction (weights $\theta'$, noise $\eta'$):
+\begin{equation}
+    J(\theta) = \mathbb{E}_{x,\,\eta',\,\eta}\!\left[\left\| f(x,\theta',\eta') - f(x,\theta,\eta) \right\|^2\right].
+\end{equation}
+Total loss = classification cost (on labelled data) + consistency cost (on all data).
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+A.\ Tarvainen, H.\ Valpola. ``Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results''. \textit{NIPS 2017}.
+\end{tcolorbox}
+
+
+\section{Dealing with Noisy Labels}
+
+\subsection{The Problem}
+
+Real-world datasets often contain mislabelled examples. \textbf{Standard regularisation} (data augmentation, weight decay, dropout, batch normalisation) helps but is not sufficient.
+
+\begin{example}[Convergence under symmetric 40\% noise (CIFAR-100, WideResNet-16-8)]
+Three regimes are compared: \emph{Noisy w/o.\ Reg.}, \emph{Noisy w.\ Reg.}, \emph{Clean w.\ Reg.}.
+\begin{itemize}[leftmargin=*]
+    \item Noisy w/o.\ Reg.\ overfits aggressively (training accuracy near 100\%, test accuracy below 25\%).
+    \item Adding regularisation to noisy data improves test accuracy somewhat (around 50\%) but a large \textbf{gap} to the Clean+Reg.\ model (around 75\%) remains.
+\end{itemize}
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+H.\ Song et al. ``Learning from noisy labels with deep neural networks: A survey''. \texttt{arXiv:2007.08199}, 2020.
+\end{tcolorbox}
+
+\subsection{Co-Teaching: Robust Training under Extremely Noisy Labels}
+
+\textbf{Co-teaching} (Han et al., NeurIPS 2018) trains \textbf{two} networks simultaneously and lets them \emph{teach each other} on every mini-batch:
+
+\begin{enumerate}
+    \item Each network forwards all data and selects a small subset of \emph{possibly clean} examples (those with the lowest loss).
+    \item The two networks \textbf{communicate} which examples should be used for training.
+    \item Each network back-propagates on the data selected by its \emph{peer} and updates itself.
+\end{enumerate}
+
+Because the two networks have different learning abilities (different decision boundaries / abilities to filter noise), they filter different types of error introduced by the noisy labels --- error flow through the system is reduced mutually.
+
+\subsubsection{Algorithm}
+
+\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title=\textbf{Algorithm 1: Co-Teaching}]
+\begin{verbatim}
+Input: w_f, w_g, learning rate eta, fixed tau, T_k, T_max, N_max
+for T = 1, 2, ..., T_max:
+    Shuffle training set D                  # noisy dataset
+    for N = 1, ..., N_max:
+        Fetch mini-batch \bar{D} from D
+        Obtain \bar{D}_f = argmin_{D' : |D'| >= R(T)|\bar{D}|} l(f, D')   # f selects small-loss
+        Obtain \bar{D}_g = argmin_{D' : |D'| >= R(T)|\bar{D}|} l(g, D')   # g selects small-loss
+        Update w_f <- w_f - eta * grad l(f, \bar{D}_g)   # update f using g's selection
+        Update w_g <- w_g - eta * grad l(g, \bar{D}_f)   # update g using f's selection
+    Update R(T) = 1 - min{ T/T_k * tau, tau }
+Output: w_f, w_g
+\end{verbatim}
+\end{tcolorbox}
+
+Two design questions and their answers:
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Q1: Why select small-loss instances with dynamic $R(T)$?}]
+When labels are correct, small-loss instances are more likely to be the cleanly-labelled ones. Training only on small-loss instances is therefore noise-resistant.\\
+The \textbf{memorisation effect} of DNNs helps: even on noisy data, networks learn the clean and easy patterns first, in the early epochs --- so loss values at the beginning of training filter out noisy instances. With more epochs, however, the networks eventually overfit to noisy labels.\\
+\textbf{Solution}: keep many instances early (large $R(T)$), then gradually \emph{decrease} the keep-rate so that, once the network risks memorising noise, only the most likely-clean small-loss instances remain.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Q2: Why two networks and cross-update parameters?}]
+A few wrong instances can deteriorate the whole model if a single network filters its own data.\\
+Different classifiers learn different decision boundaries and therefore filter different types of label noise.\\
+By \textbf{exchanging} the small-loss instances between $f$ and $g$, the networks adaptively correct each other's training error if the selection is not fully clean. The error from one network is not directly fed back to itself, so co-teaching can deal with heavier noise than self-evolving (single-network) approaches.\\
+The intuition is that of \emph{peer review}: it is hard to find your own errors due to personal bias, but a peer can spot them more easily.
+\end{tcolorbox}
+
+\subsubsection{Results on CIFAR-10}
+
+Comparing Co-teaching with Standard, Bootstrap, S-model, F-correction, Decoupling and MentorNet under three noise patterns:
+
+\begin{itemize}
+    \item \textbf{Pair-45\%}: Co-teaching maintains $\sim 70$\% test accuracy and rapidly raises label precision to $\sim 85\%$, while all other methods collapse below 55\%.
+    \item \textbf{Symmetry-50\%}: Co-teaching stays at $\sim 75$\% accuracy; competing methods drop and oscillate. Label precision climbs above 90\%.
+    \item \textbf{Symmetry-20\%}: Co-teaching is competitive with the best methods (around 80--85\%) and reaches the highest label precision ($\sim 95$\%).
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+B.\ Han et al. ``Co-teaching: Robust training of deep neural networks with extremely noisy labels''. \textit{NeurIPS 2018}.
+\end{tcolorbox}
+
+
+\section{Summary}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Take-Home Messages}]
+\begin{itemize}[leftmargin=*]
+    \item Semi-supervised learning sits between SL and UL and exploits both labelled and unlabelled data to learn a better predictor.
+    \item \textbf{Pseudo-Labelling} is the simplest SSL recipe: train on labels, predict pseudo-labels, retrain. A scheduled weight $\alpha(t)$ slowly mixes in the unlabelled loss.
+    \item PL relies on the \textbf{continuity} and \textbf{cluster} assumptions; it fails when initial labels are too few/biased, when classes are missing from the labelled set, or when the model lacks capacity to exploit extra data.
+    \item Confirmation bias and data efficiency are core SSL challenges; \textbf{thresholds} and methods such as \textbf{MixMatch} or \textbf{UDA} mitigate them.
+    \item \textbf{Self-ensembling} via the \textbf{$\Pi$-model} and \textbf{Temporal Ensembling} uses consistency between augmented/dropout-perturbed predictions and an EMA of past outputs as a regulariser. Temporal ensembling is also remarkably tolerant to noisy labels.
+    \item \textbf{Mean Teacher} averages \emph{weights} (not predictions), enabling per-step updates and stronger intermediate representations --- much more label-efficient than Temporal Ensembling.
+    \item For \textbf{noisy labels}, regularisation alone is insufficient. \textbf{Co-teaching} uses two networks that exchange small-loss (likely-clean) examples each mini-batch, exploiting the memorisation effect with a decreasing keep-rate $R(T)$ to handle even extreme noise levels.
+\end{itemize}
+\end{tcolorbox}
+
+
+
+% ========================================
+\part{Transfer Learning and Unsupervised Domain Adaptation}
+% ========================================
+
+\section{Motivation: Why Visual Models Break}
+
+\subsection{The ``Is There a Bird?'' Story}
+
+A classical xkcd comic draws the line between trivial and almost-impossible computer-vision problems: \emph{is the user in a national park?} is a quick GIS lookup; \emph{is there a bird in the photo?} used to require a research team and years of work. Modern CNNs can answer the second question well on \textbf{photos of birds}, regardless of species or scene context (real photos: \emph{flamingo, cardinal, robin, owl, $\ldots$}).
+
+The trouble starts when the visual style changes:
+\begin{itemize}
+    \item \textbf{BAM (Behance Artistic Media)} paintings of birds: networks trained on natural photos become unsure --- the silhouettes, colour palette and texture statistics differ.
+    \item \textbf{Pen-and-ink drawings} of the same birds: performance collapses --- the network has never seen this rendering style.
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Real-World Example: COVID-19 Lung Ultrasound}]
+Roy et al.\ (IEEE TMI 2020) train a CNN to predict COVID-19 markers on lung-ultrasound clips collected from several Italian hospitals (different sensors).
+\begin{itemize}[leftmargin=*]
+    \item Train and test on \emph{the same hospital}: $\geq 85\%$ accuracy.
+    \item Test on \emph{a different hospital}: drop of up to 20\%.
+    \item Annotated data from every hospital is rarely available --- a textbook motivation for transfer learning and domain adaptation.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Domain Shift}
+
+\begin{definition}[Domain Shift]
+\textbf{Visual appearance changes} between training and test data \textbf{degrade the performance of recognition systems}. The problem is well-known: a model that achieves $\sim 85\%$ on a CIFAR-10-style natural-image test set drops to $\sim 55\%$ on the same classes rendered as pencil sketches (Kulis, Saenko, Darrell, CVPR 2011).
+\end{definition}
+
+\subsection{Why Should We Care?}
+
+Domain shift hurts every system that operates outside its training distribution:
+
+\begin{itemize}
+    \item \textbf{Self-driving cars and drones} must work \emph{regardless} of:
+    \begin{itemize}
+        \item \textbf{Seasonal/time changes} (winter vs.\ summer, day vs.\ night).
+        \item \textbf{Illumination conditions} (Hwang et al.\ multispectral pedestrian detection benchmark).
+        \item \textbf{Different sensors / modalities} (RGB vs.\ thermal infrared).
+    \end{itemize}
+    \item \textbf{Costly or infeasible data collection}, e.g.\ rescue robots in earthquake-damaged buildings; the deployment environment is impossible to capture in advance.
+    \item \textbf{Synthetic data} (SYNTHIA, GTA-V) is cheap to render but suffers a sim-to-real gap.
+\end{itemize}
+
+\subsection{Domain Shift Is Ubiquitous}
+
+Common shift archetypes:
+\begin{itemize}
+    \item \textbf{Time \& environmental changes} (same scene at day/night).
+    \item \textbf{Different modalities} (RGB $\to$ thermal).
+    \item \textbf{Synthetic to real} images (game engines $\to$ real urban driving).
+    \item \textbf{CAD to real} (3D models of chairs $\to$ real photographs).
+\end{itemize}
+
+\subsection{Domain Shift and Dataset Bias}
+
+\textbf{Torralba \& Efros (CVPR 2011): ``Unbiased look at dataset bias''}. Many object-recognition datasets contain a strong, characteristic ``signature'' --- humans (and classifiers) can guess which dataset an image came from with surprising accuracy. PASCAL cars, SUN cars, Caltech-101 cars, ImageNet cars, and LabelMe cars look different in resolution, framing, colour and pose distribution. Models implicitly memorise these biases.
+
+\subsection{How Do We Solve It?}
+
+\textbf{Annotate target data?} A bottomless pit of effort:
+
+\begin{itemize}
+    \item \textbf{Data collection is costly}: ImageNet has $\sim 14$M hand-annotated images, only $\sim 1$M with bounding boxes, more than 20{,}000 categories (Deng et al., CVPR 2009).
+    \item \textbf{We cannot annotate everything}: every domain wants its own ImageNet (SpaceNet, MusicNet, Medical ImageNet, ShapeNet, EventNet, ActivityNet, $\ldots$).
+    \item \textbf{Sometimes data collection is impossible} (rescue scenarios after a disaster).
+\end{itemize}
+
+The way out is to \textbf{transfer knowledge} learned on data we already have.
+
+
+\section{Transfer Learning}
+
+\subsection{Traditional ML vs.\ Transfer Learning}
+
+In traditional machine learning, every task has its own \textbf{learning system} trained on its own data. In transfer learning, the system trained on \emph{source tasks} produces \textbf{knowledge} that is reused to learn the \emph{target task} more efficiently or with less data (Pan \& Yang, IEEE TKDE 2009).
+
+\subsection{Definitions}
+
+\begin{definition}[Domain]
+A \textbf{domain} $\mathcal{D}$ is a two-element tuple
+\begin{equation*}
+    \mathcal{D} = \{\mathcal{X},\, P(X)\}
+\end{equation*}
+consisting of an \textbf{image/feature space} $\mathcal{X}$ and the \textbf{marginal probability} $P(X)$ over data points $X \in \mathcal{X}$.
+\end{definition}
+
+\begin{definition}[Task]
+Given a specific domain $\mathcal{D} = \{\mathcal{X}, P(X)\}$, a \textbf{task} $\mathcal{T}$ has two components:
+\begin{equation*}
+    \mathcal{T} = \{\mathcal{Y},\, f(\cdot)\}
+\end{equation*}
+\begin{itemize}
+    \item A \textbf{label space} $\mathcal{Y}$.
+    \item An \textbf{objective predictive function} $f(\cdot)$, not directly observed but learnable from training pairs $\{x_i, y_i\}$ with $x_i \in \mathcal{X}$ and $y_i \in \mathcal{Y}$. Equivalently, $\mathcal{T} = \{\mathcal{Y},\, P(Y\mid X)\}$.
+\end{itemize}
+\end{definition}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Objective of Transfer Learning}]
+Given a source domain $\mathcal{D}_S$, a corresponding source task $\mathcal{T}_S$, a target domain $\mathcal{D}_T$ and a target task $\mathcal{T}_T$, the goal is to learn the target conditional probability $P(Y_T\mid X_T)$ in $\mathcal{D}_T$ using the information gained from $\mathcal{D}_S$ and $\mathcal{T}_S$, where $\mathcal{D}_S \neq \mathcal{D}_T$ \emph{or} $\mathcal{T}_S \neq \mathcal{T}_T$.
+\end{tcolorbox}
+
+Typical assumption: only a \emph{limited} number of labelled target samples is available --- much smaller than the source --- or only \emph{unlabelled} target samples.
+
+\subsection{Four Scenarios}
+
+Four ways for source and target to differ:
+
+\begin{enumerate}
+    \item $\mathcal{X}_S \neq \mathcal{X}_T$ --- the \textbf{feature spaces} differ (e.g., documents in two different languages).
+    \item $P(X_S) \neq P(X_T)$ --- the \textbf{marginal distributions} differ. \textbf{This is Domain Adaptation}.
+    \item $\mathcal{Y}_S \neq \mathcal{Y}_T$ --- the \textbf{label spaces} differ (e.g., source labels: African elephant, wall clock, green snake, Yorkshire terrier; target labels: chair, background, person, TV/monitor).
+    \item $P(Y_S\mid X_S) \neq P(Y_T\mid X_T)$ --- the \textbf{conditional distributions} differ (e.g., classes are unbalanced differently in the two corpora).
+\end{enumerate}
+
+A canonical \emph{different marginal} example: \textbf{MNIST} (handwritten digits, white-on-black, centred) vs.\ \textbf{SVHN} (Street View house numbers, colourful, cluttered).
+
+\subsection{The Three Key Aspects}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{What, When, How to Transfer}]
+\begin{itemize}[leftmargin=*]
+    \item \textbf{What to transfer?} Identify which part of the knowledge can be ported from source to target. Understand what is domain/task-specific and what is shared.
+    \item \textbf{When to transfer?} Performance on the target task should \emph{improve}, never degrade. Avoid \textbf{negative transfer}: source performance should also be preserved.
+    \item \textbf{How to transfer?} Identify algorithmic solutions for moving the knowledge across domains/tasks.
+\end{itemize}
+\end{tcolorbox}
+
+
+\section{Domain Adaptation}
+
+\subsection{Notation}
+
+\begin{itemize}
+    \item $\mathcal{X}$ --- input space; $\mathcal{Y}$ --- output space.
+    \item $X \in \mathcal{X}$ --- input variable (image); $Y \in \mathcal{Y}$ --- output variable (label).
+    \item $D = \{\mathcal{X},\, P(X)\}$ --- a \textbf{domain}.
+    \item $T = \{\mathcal{Y},\, P(Y\mid X)\}$ --- a \textbf{task}.
+\end{itemize}
+
+\subsection{The DA Problem}
+
+Source: $D^s = \{\mathcal{X}^s, P(X^s)\}$, $T^s = \{\mathcal{Y}^s, P(Y^s\mid X^s)\}$.\\
+Target: $D^t = \{\mathcal{X}^t, P(X^t)\}$, $T^t = \{\mathcal{Y}^t, P(Y^t\mid X^t)\}$.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\textbf{Domain Adaptation}]
+\begin{equation*}
+    D^s \neq D^t, \quad T^s = T^t.
+\end{equation*}
+That is, $\mathcal{X}^s \neq \mathcal{X}^t$ \emph{or} $P(X^s) \neq P(X^t)$, while $\mathcal{Y}^s = \mathcal{Y}^t$ (the same label space and the same conditional). The marginal input distributions differ, but the task is the same.
+\end{tcolorbox}
+
+\subsection{Unsupervised DA}
+
+Most practical setting: a \textbf{labelled source} domain (e.g., real images of \emph{dog/elephant/house}) and an \textbf{unlabelled target} domain (e.g., cartoons of the same classes).
+
+\begin{itemize}
+    \item $P(X^s) \neq P(X^t)$ --- marginal distributions differ.
+    \item $\mathcal{Y}^s = \mathcal{Y}^t$ --- shared label set.
+\end{itemize}
+
+\subsection{Covariate Shift Assumption}
+
+A canonical 1D illustration: training samples concentrate on the left of the input axis, test samples on the right. The \emph{true function} (red) is non-linear; a model fit on training samples (green linear regressor) extrapolates badly. The conditional $P(Y\mid X)$ is the same for train and test, but the marginal $P(X)$ has shifted --- exactly the assumption underlying most DA algorithms.
+
+
+\section{DA Scenarios}
+
+\subsection{Label-Space Variants}
+
+\begin{itemize}
+    \item \textbf{Closed Set DA}: $\mathcal{Y}^s = \mathcal{Y}^t$. Both source and target share \emph{exactly} the same set of classes (e.g., \{dog, elephant, house\} on both sides).
+    \item \textbf{Partial DA}: $\mathcal{Y}^t \subset \mathcal{Y}^s$. The target uses only a subset of the source classes.
+    \item \textbf{Open Set DA}: target contains \emph{additional} unknown classes not present in the source. Some source classes may also be missing from the target.
+\end{itemize}
+
+\subsection{Without Target Data: Domain Generalization}
+
+Sometimes target data is not available at training time at all. \textbf{Domain Generalization (DG)} addresses exactly this:
+
+\begin{itemize}
+    \item \textbf{Single-source DG}: train on one labelled source domain, generalise to an unseen target.
+    \item \textbf{Multi-source DG}: train on several labelled source domains, generalise to an unseen target. The intuition is that observing several sources teaches the model what is \emph{domain-invariant} vs.\ what is domain-specific.
+\end{itemize}
+
+
+\section{Benchmarks}
+
+\subsection{Office31}
+
+A small but historically important DA benchmark (Saenko et al., ECCV 2010; Gong et al., CVPR 2012): three domains (\textbf{Amazon}, \textbf{DSLR}, \textbf{Webcam}) with 31 office-object classes; later extended with \textbf{Caltech-256}.
+
+\subsection{Office-Home, VisDA, DomainNet}
+
+\textbf{DomainNet} (VisDA Challenge 2019) is the largest cross-domain classification benchmark: 6 domains (\emph{infograph, clipart, painting, real, quickdraw, sketch}), over 280K images across 12+ categories in the combined train/val/test splits; over 30K images and 18 categories for image segmentation.
+
+\subsection{Synthetic-to-Real Benchmarks}
+
+\textbf{VisDA-2018} also targets a \emph{synthetic source} $\to$ \emph{real target} setting: large gap in appearance, smaller gap in spatial layout. Used for cross-domain object detection and semantic segmentation (e.g., GTA-V $\to$ Cityscapes for driving scenes).
+
+
+\section{Deep Domain Adaptation: Three Families}
+
+Following Csurka's survey (arXiv:1702.05374, 2017), deep DA methods split into three categories:
+
+\begin{itemize}
+    \item \textbf{Discrepancy-based}: fine-tune the deep network with labelled or unlabelled target data to \emph{reduce a measured distance} between source and target feature distributions.
+    \item \textbf{Adversarial-based}: use a \emph{domain discriminator} to encourage \emph{domain confusion} via an adversarial objective.
+    \item \textbf{Reconstruction-based}: use data \emph{reconstruction} as an auxiliary task to enforce feature invariance.
+\end{itemize}
+
+\subsection{Discrepancy: Maximum Mean Discrepancy (MMD)}
+
+\textbf{MMD} measures the distance between the embeddings of two distributions in a Reproducing Kernel Hilbert Space (Gretton et al., NIPS 2007). For source samples $\{x^s_i\}_{i=1}^{n^s}$ and target samples $\{x^t_i\}_{i=1}^{n^t}$:
+\begin{equation}
+    \mathrm{MMD}^2 = \left\| \frac{1}{n^s}\sum_{i=1}^{n^s}\phi(x^s_i) - \frac{1}{n^t}\sum_{i=1}^{n^t}\phi(x^t_i) \right\|^2.
+\end{equation}
+
+\textbf{Idea}: in a deep network, the \emph{bottom} layers capture general patterns whereas the \emph{top} layers are tailored to the classification task and biased towards the source domain. Re-map the feature representations into a common embedding so this bias is removed; the re-mapping is induced by an MMD distance over a kernel function, applied at \emph{multiple} layers (typically the higher fully-connected layers).
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+A.\ Gretton et al. ``A kernel method for the two-sample problem''. \textit{NIPS 2007}.
+\end{tcolorbox}
+
+\subsection{Discrepancy: CORAL --- Correlation Alignment}
+
+\textbf{CORAL} (Sun et al., 2017) aligns the \textbf{second-order statistics} of source and target features. It \emph{recolours} the source covariance into the target covariance: starting from a strongly anisotropic source covariance and a different target covariance, two whitening + recolouring operations rotate and scale the source feature distribution until it matches the target's covariance shape. Intuitively, the source point cloud is reshaped from a tilted ellipsoid to one that lies in the same orientation as the target ellipsoid, so a classifier trained on the aligned features transfers better.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+B.\ Sun et al. ``Correlation alignment for unsupervised domain adaptation''. \textit{Domain Adaptation in Computer Vision Applications}, 2017.
+\end{tcolorbox}
+
+\subsection{CNNs and Universal Representations}
+
+A core empirical observation behind deep DA: \textbf{CNN features generalise much better than hand-crafted features}. Donahue et al.\ (ICML 2014) showed that DeCAF$_6$ activations cluster the same Office31 categories far more cleanly than SURF features --- the same images that lie close in feature space across domains belong to the same semantic class.
+
+
+\section{Adversarial Domain Adaptation}
+
+\subsection{The Domain-Classification Game}
+
+Consider two image collections: real photos vs.\ cartoons, both showing dogs, elephants and houses. A \textbf{linear classifier in pixel space} can easily separate the \emph{real} from the \emph{cartoon} images. If the same separation persists in feature space, the network has not learned a domain-invariant representation.
+
+\textbf{Goal}: produce a feature space in which a domain classifier \emph{cannot} tell source and target apart --- effectively, the two coloured point clouds become indistinguishable.
+
+\subsection{DANN: Domain-Adversarial Training of Neural Networks}
+
+\textbf{DANN} (Ganin et al., JMLR 2016) plugs a \textbf{domain classifier} into a standard CNN and trains it adversarially.
+
+\textbf{Architecture}:
+\begin{itemize}
+    \item A \textbf{feature extractor} $G_f(\cdot;\theta_f)$ produces features $\mathbf{f} = G_f(x)$.
+    \item A \textbf{label predictor} $G_y(\cdot;\theta_y)$ outputs the class label $y$ with classification loss $L_y$.
+    \item A \textbf{domain classifier} $G_d(\cdot;\theta_d)$ predicts the binary domain label $d \in \{\text{source},\text{target}\}$ with loss $L_d$.
+\end{itemize}
+
+The \textbf{key trick} is the \textbf{Gradient Reversal Layer} (GRL) inserted between $G_f$ and $G_d$:
+\begin{itemize}
+    \item During the \textbf{forward pass}, the GRL is the identity.
+    \item During the \textbf{backward pass}, it multiplies the gradient by $-\lambda$.
+\end{itemize}
+Therefore $\theta_y$ is updated to \emph{minimise} the label loss; $\theta_d$ is updated to \emph{minimise} the domain loss; and $\theta_f$ is updated to \emph{minimise} the label loss \emph{and maximise} the domain loss. The feature extractor is pushed to produce features that are simultaneously \textbf{discriminative for the class label} and \textbf{indistinguishable across domains}.
+
+\begin{example}[MNIST $\to$ MNIST-M, top feature-extractor layer]
+Without adaptation, source (red) and target (blue) features form clearly separate clusters. After domain-adversarial training, the two distributions overlap, and class clusters survive --- the network has built a domain-invariant feature space.
+\end{example}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+Y.\ Ganin et al. ``Domain-adversarial training of neural networks''. \textit{JMLR}, 17(1):2096--2030, 2016.
+\end{tcolorbox}
+
+\subsection{ADDA --- Adversarial Discriminative Domain Adaptation}
+
+\textbf{ADDA} (Tzeng et al., CVPR 2017) decouples the source and target encoders.
+
+Three-stage pipeline:
+
+\begin{enumerate}
+    \item \textbf{Pre-training}: train a \textbf{source CNN} + classifier on labelled source images with cross-entropy.
+    \item \textbf{Adversarial adaptation}: \emph{freeze} the source CNN; train a \textbf{target CNN} (initialised from the source) so that a \textbf{discriminator} cannot tell apart features extracted from source and target images.
+    \item \textbf{Testing}: feed target images to the trained target CNN and reuse the source classifier (which works because target features have been pushed to look like source features).
+\end{enumerate}
+
+The pictorial summary: in feature space, the \textbf{target encoder} pulls target features (blue) towards the cluster of source features (red), driven by the gradient of the \textbf{domain discriminator}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+E.\ Tzeng, J.\ Hoffman, K.\ Saenko, T.\ Darrell. ``Adversarial discriminative domain adaptation''. \textit{CVPR 2017}.
+\end{tcolorbox}
+
+\subsection{GANs as a Building Block}
+
+Adversarial DA borrows the \textbf{GAN} machinery: a \textbf{generator} $G$ tries to produce samples that fool a \textbf{discriminator} $D$, while $D$ tries to distinguish real from fake. The minimax objective is
+\begin{equation}
+    \min_G \max_D \, V(D,G) = \mathbb{E}_{x\sim p_{\text{data}}(x)}[\log D(x)] + \mathbb{E}_{z\sim p_z(z)}[\log(1 - D(G(z)))].
+\end{equation}
+In adversarial DA, the same recipe is reused with a \emph{domain} discriminator instead of a real/fake one.
+
+\subsection{DIFA: Domain Invariant Feature Augmentation}
+
+\textbf{DIFA} (Volpi, Morerio, Murino, Sangineto. CVPR 2018) extends ADDA with \textbf{feature augmentation}.
+
+Three-step pipeline:
+\begin{enumerate}
+    \item \textbf{Step 0}: train a deep classifier $E_S, C$ on the source domain with cross-entropy loss.
+    \item \textbf{Step 1}: \emph{adversarially} train a \textbf{sampler} $S$ to learn the source feature distribution. With the source encoder $E_S$ frozen, $S$ takes noise $z \sim \Pi_{[-1,1]}$ and conditioning labels and is trained against a discriminator $D_1$ to produce features indistinguishable from $E_S$'s outputs --- effectively an \emph{augmented feature space}.
+    \item \textbf{Step 2}: \emph{adversarially} train a new \textbf{shared encoder} $E_I$ to match source and target distributions. $S$ is now frozen and used to generate source-like features; the discriminator $D_2$ pushes the target encoder to produce features that lie in the same distribution.
+\end{enumerate}
+
+DIFA improves ADDA by:
+\begin{enumerate}
+    \item Sampling source features to perform \textbf{augmentation};
+    \item Making the encoder \textbf{domain-invariant} by anchoring it to the source distribution.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+R.\ Volpi, P.\ Morerio, V.\ Murino. ``Adversarial Feature Augmentation for Unsupervised Domain Adaptation''. \textit{CVPR 2018}.
+\end{tcolorbox}
+
+\subsection{Generalising ADDA-Style Methods}
+
+ADDA-style frameworks share a common skeleton (Tzeng et al., 2017):
+
+\begin{itemize}
+    \item Source input $\to$ \textbf{source mapping} $\to$ source discriminator.
+    \item Target input $\to$ \textbf{target mapping} $\to$ target discriminator.
+    \item A shared \textbf{classifier} reads features from the target mapping at test time.
+\end{itemize}
+
+Three design questions individuate concrete methods:
+\begin{enumerate}
+    \item \textbf{Generative or discriminative model?} (Are features generated from noise, or only adversarially aligned?)
+    \item \textbf{Weights tied or untied?} (Source and target encoders share parameters? or are they separate?)
+    \item \textbf{Which adversarial objective?} (Standard GAN, gradient reversal, Wasserstein, $\ldots$)
+\end{enumerate}
+
+These three choices recover most of the methods in the deep-DA state of the art (Long et al.\ ICML 2015, Ghifary et al.\ ECCV 2016, Ganin et al.\ JMLR 2016, Tzeng et al.\ CVPR 2017, Rozantsev et al.\ TPAMI 2019, Bousmalis et al.\ NIPS 2016 / CVPR 2017, Volpi et al.\ CVPR 2018, Carlucci et al.\ CVPR 2018, $\ldots$).
+
+
+\section{Summary}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Take-Home Messages}]
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Domain shift} --- visual appearance differences between training and test data --- causes systematic accuracy drops in real-world deployments (sketches vs.\ photos, day vs.\ night, sensor changes, hospital-to-hospital, sim-to-real).
+    \item Annotating \emph{every} target domain is impossible: there will never be ``the ImageNet of $X$'' for every $X$. Hence the need for \textbf{transfer learning}.
+    \item A \textbf{domain} is $\{\mathcal{X}, P(X)\}$ and a \textbf{task} is $\{\mathcal{Y}, P(Y\mid X)\}$. Transfer learning learns $P(Y_T\mid X_T)$ in the target by reusing knowledge from a source domain/task.
+    \item The four scenarios cover different feature spaces, different marginals (\textbf{DA}), different label spaces and different conditionals.
+    \item \textbf{Domain Adaptation}: $D^s \neq D^t$ but $T^s = T^t$. The \emph{unsupervised} setting (labelled source + unlabelled target) is the most studied.
+    \item DA scenarios further split by label-space relations (\textbf{closed/partial/open set}) and by data availability (\textbf{single}- and \textbf{multi-source domain generalization} when no target data is accessible).
+    \item Deep DA methods cluster into three families: \textbf{discrepancy-based} (MMD, CORAL), \textbf{adversarial-based} (DANN with gradient reversal, ADDA, DIFA), \textbf{reconstruction-based} (autoencoder-style auxiliary tasks).
+    \item The adversarial route reduces DA to a domain-classification game: align source and target so that no domain classifier can tell them apart, while preserving class discriminativeness.
+\end{itemize}
+\end{tcolorbox}
+
+
 \end{document}
 
 

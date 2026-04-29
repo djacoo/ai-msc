@@ -2018,4 +2018,697 @@ For the LDA classifier on the Default data, AUC $= \mathbf{0.95}$ — excellent 
 \end{itemize}
 \end{tcolorbox}
 
+
+% ========================================
+\part{Tree-Based Methods}
+% ========================================
+
+\section{Introduction to Tree-Based Methods}
+
+\subsection{Overview}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Tree-Based Methods}]
+Tree-based methods are a family of techniques for \textbf{regression} and \textbf{classification} that work by \textbf{stratifying} or \textbf{segmenting} the predictor space into a number of \textbf{simple regions}. The set of splitting rules used to produce the regions can be summarised in a \textbf{tree}, hence the name decision tree.
+\end{tcolorbox}
+
+The core mechanics are:
+\begin{itemize}
+    \item \textbf{Splitting rules}: a sequence of binary conditions on the predictors that recursively partition the input space.
+    \item \textbf{Prediction for a new observation}: locate the region the observation falls into and return a \textbf{representative value} for that region (the mean of training responses for regression, the most frequent class for classification).
+    \item \textbf{Tree representation}: the splitting rules can be drawn as a tree, making the model easy to visualise.
+\end{itemize}
+
+Decision trees are:
+\begin{itemize}
+    \item \textbf{Simple} and \textbf{useful for interpretation}.
+    \item Usually \textbf{not competitive} with other state-of-the-art methods in terms of prediction accuracy.
+    \item Improvable by \textbf{combining many trees}: bagging, random forest, boosting.
+    \item Subject to a fundamental \textbf{trade-off between prediction accuracy and interpretation}: a single tree is highly interpretable; ensembles of trees are far more accurate but lose interpretability.
+\end{itemize}
+
+\subsection{Basic Terminology}
+
+A decision tree is composed of:
+\begin{itemize}
+    \item \textbf{Terminal nodes} (or \textbf{leaves}): the regions $R_1, \ldots, R_J$ into which the predictor space is partitioned. Each terminal node carries a representative value.
+    \item \textbf{Internal nodes}: the split points; each is labelled with the \textbf{splitting condition} (e.g., \textit{Years} $< 4.5$).
+    \item \textbf{Root}: the top of the tree, where the recursion starts.
+\end{itemize}
+
+\textit{Example (Hitters dataset, predicting log Salary from Years and Hits).} The tree has two internal nodes (\textit{Years} $< 4.5$ and \textit{Hits} $< 117.5$) and three terminal nodes corresponding to three regions:
+\[
+    R_1 = \{X \mid \textit{Years} < 4.5\}, \quad R_2 = \{X \mid \textit{Years} \geq 4.5,\, \textit{Hits} < 117.5\}, \quad R_3 = \{X \mid \textit{Years} \geq 4.5,\, \textit{Hits} \geq 117.5\}
+\]
+The predictions $5.11$, $6.00$, $6.74$ are the mean log salary in each region. Interpretation: \textit{Years} is the most important factor for salary; \textit{Hits} plays a minor role for less experienced players but becomes important for more experienced ones. The tree is an extremely \textbf{compact representation}, easier to interpret than a regression model.
+
+
+% ========================================
+\section{Regression Trees}
+% ========================================
+
+\subsection{Tree-Building Process}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Goal of Regression Trees}]
+Divide the predictor space (with predictors $X_1, X_2, \ldots, X_p$) into $J$ \textbf{non-overlapping regions} $R_1, R_2, \ldots, R_J$. For every observation that falls into a region $R_j$, make the \textbf{same prediction}: the \textbf{mean of the response values} of all training observations in $R_j$.
+\end{tcolorbox}
+
+In principle the regions could be of any shape, but \textbf{boxes} (high-dimensional rectangles) are used to keep interpretation simple. The objective is to find boxes $\{R_1, \ldots, R_J\}$ that minimise the \textbf{residual sum of squares}:
+\[
+    \mathrm{RSS} = \sum_{j=1}^{J} \sum_{i \in R_j} (y_i - \hat{y}_{R_j})^2
+\]
+where $\hat{y}_{R_j}$ is the mean response of the training observations within the $j$-th box.
+
+\subsection{Recursive Binary Splitting}
+
+It is computationally \textbf{infeasible} to consider every possible partition of the feature space into $J$ boxes. Trees are therefore built with a \textbf{top-down, greedy} approach known as \textbf{recursive binary splitting}:
+\begin{itemize}
+    \item \textbf{Top-down}: start from a single region (the whole space) and perform splits.
+    \item \textbf{Binary}: each split produces exactly two regions.
+    \item \textbf{Greedy}: each split optimises the current step only — no look-ahead.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Recursive Binary Splitting Step}]
+Select the predictor $X_j$ and the cutoff value $s$ such that the RSS for the two regions
+\[
+    R_1(j, s) = \{X \mid X_j < s\}, \qquad R_2(j, s) = \{X \mid X_j \geq s\}
+\]
+is minimised:
+\[
+    \mathrm{RSS}(j, s) = \sum_{i:\, x_i \in R_1(j, s)} (y_i - \hat{y}_{R_1(j, s)})^2 + \sum_{i:\, x_i \in R_2(j, s)} (y_i - \hat{y}_{R_2(j, s)})^2
+\]
+The pair $(j^*, s^*)$ that minimises $\mathrm{RSS}(j, s)$ is selected. Finding $(j^*, s^*)$ is fast when $p$ is not too large.
+\end{tcolorbox}
+
+After the first split, the procedure is \textbf{repeated} on one of the two resulting regions, then on the next, and so on. It continues until a \textbf{stopping criterion} is met (for example, no region contains more than $O$ observations).
+
+\subsection{Predictions}
+
+To compute the response for a test observation:
+\begin{enumerate}
+    \item Determine the region (terminal node) to which the test observation belongs by following the splits from the root.
+    \item Return the \textbf{mean of the training observations} for that region.
+\end{enumerate}
+
+\subsection{Pruning the Decision Tree}
+
+The recursive binary splitting procedure may \textbf{overfit} the training data, producing a tree with too many terminal nodes that captures noise rather than signal. There is a \textbf{trade-off between variance} (interpretability) \textbf{and bias}.
+
+A natural idea is to design a stricter \textbf{stopping criterion} (e.g., split only if the RSS reduction is high). However, this can perform poorly because of the greedy nature of the procedure: a split that reduces RSS only by a small amount now may lead to subsequent splits that yield much larger reductions later.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Pruning Strategy}]
+Build a very large tree $T_0$ first, then \textbf{prune it back} to obtain a smaller subtree $T \subset T_0$ with better generalisation.
+\end{tcolorbox}
+
+\subsection{Cost-Complexity (Weakest Link) Pruning}
+
+\textbf{Cost-complexity pruning}, also called \textbf{weakest link pruning}, is the standard pruning strategy. Consider a sequence of trees indexed by a non-negative tuning parameter $\alpha \geq 0$. For each value of $\alpha$ there is a subtree $T \subset T_0$ that minimises:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Cost-Complexity Criterion}]
+\[
+    \sum_{m=1}^{|T|} \sum_{i:\, x_i \in R_m} (y_i - \hat{y}_{R_m})^2 + \alpha |T|
+\]
+where $|T|$ is the \textbf{number of terminal nodes} of the tree $T$.
+\end{tcolorbox}
+
+Properties:
+\begin{itemize}
+    \item As $\alpha$ increases, the procedure generates a \textbf{nested sequence of trees} $T_0 \supset T_1 \supset \cdots \supset T_m$, where $T_m$ contains only the root.
+    \item Each tree in the sequence is a subtree of $T_0$ obtained by \textbf{collapsing internal nodes}.
+    \item The best tree in the sequence is selected via \textbf{cross-validation}.
+\end{itemize}
+
+\subsection{Regression Tree Procedure}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Full Algorithm for Regression Trees}]
+\begin{enumerate}
+    \item Use \textbf{recursive binary splitting} to build a large tree on the training data, with a stopping criterion on the number of observations on terminal nodes (usually small).
+    \item Apply \textbf{cost-complexity pruning} to obtain a sequence of subtrees as a function of $\alpha$.
+    \item Use \textbf{$K$-fold cross-validation} to choose $\alpha$. For each fold $k = 1, \ldots, K$:
+    \begin{enumerate}
+        \item Repeat steps 1 and 2 on all data except the $k$-th fold.
+        \item Evaluate the mean squared prediction error on the $k$-th fold as a function of $\alpha$.
+    \end{enumerate}
+    \item \textbf{Average} the results across folds for each $\alpha$ and pick the $\alpha^*$ that minimises the average error.
+    \item Return the subtree from step 2 corresponding to $\alpha^*$.
+\end{enumerate}
+\end{tcolorbox}
+
+\textit{Example (Hitters dataset).} Randomly divide the data into $132$ training and $131$ test observations. Build a large regression tree on the training data, prune via cost-complexity to obtain a series of subtrees indexed by $\alpha$, then perform $6$-fold cross-validation to determine $\alpha^*$ that minimises the cross-validated MSE. The training MSE keeps decreasing with tree size; the cross-validation and test MSE curves are U-shaped, indicating an optimal intermediate size.
+
+
+% ========================================
+\section{Classification Trees}
+% ========================================
+
+\subsection{From Regression to Classification}
+
+A \textbf{classification tree} predicts a \textbf{qualitative} response. The structure is the same as a regression tree, but:
+\begin{itemize}
+    \item The \textbf{prediction} for a region is the \textbf{most commonly occurring class} among the training observations in that region.
+    \item Recursive binary splitting is still used, but \textbf{RSS cannot be the splitting criterion} (the response is qualitative, not quantitative).
+\end{itemize}
+
+A natural alternative is the \textbf{classification error rate}:
+\[
+    E = 1 - \max_k (\hat{p}_{mk})
+\]
+where $\hat{p}_{mk}$ is the proportion of training observations in region $m$ that belong to class $k$. However, classification error is not sensitive enough for tree-growing — small differences in class composition do not change $E$. Two more sensitive criteria are used instead.
+
+\subsection{Gini Index and Entropy}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Gini Index}]
+\[
+    G = \sum_{k=1}^{K} \hat{p}_{mk} (1 - \hat{p}_{mk})
+\]
+where $K$ is the total number of classes.
+\end{tcolorbox}
+
+\begin{itemize}
+    \item $G$ is \textbf{small} if all $\hat{p}_{mk}$ are close to $0$ or $1$.
+    \item $G$ measures \textbf{node purity}: it is close to zero when a node contains predominantly observations from a single class.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Entropy}]
+\[
+    D = -\sum_{k=1}^{K} \hat{p}_{mk} \log \hat{p}_{mk}
+\]
+\end{tcolorbox}
+
+The Gini index $G$ and entropy $D$ are usually \textbf{numerically very similar} and both behave smoothly. As a function of $p$ (for two classes, $p$ being the proportion of one class), entropy and Gini are concave curves peaking at $p = 0.5$, while the misclassification error is piecewise linear with a sharp peak. The smoothness of $G$ and $D$ is what makes them better for splitting decisions.
+
+\textit{Example (Heart dataset).} Binary outcome \textbf{HD} (Yes/No, presence of heart disease) for $303$ patients with chest pain, with $13$ predictors including \textit{Age}, \textit{Sex}, \textit{Chol}. The pruned tree, selected by cross-validation, has $6$ terminal nodes and uses splits on \textit{Thal}, \textit{Ca}, \textit{MaxHR}, \textit{ChestPain}, etc.
+
+\subsection{Linear Models vs.\ Tree-Based Approaches}
+
+The decision boundaries differ qualitatively:
+\begin{itemize}
+    \item \textbf{Linear models}: produce \textbf{linear} (oblique) decision boundaries.
+    \item \textbf{Tree-based methods}: produce \textbf{axis-aligned, piecewise-constant} decision boundaries.
+\end{itemize}
+When the true boundary is linear, linear models perform better; when the true boundary is highly non-linear and axis-aligned, trees do better.
+
+\subsection{Benefits and Drawbacks of Tree-Based Methods}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Pros and Cons}]
+\textbf{Pros:}
+\begin{itemize}
+    \item Trees are very \textbf{easy to explain} to non-technical audiences.
+    \item Trees are very \textbf{easy to interpret} visually.
+    \item Great tool to \textbf{support decisions}.
+    \item Can directly \textbf{handle qualitative predictors} without dummy encoding.
+\end{itemize}
+\textbf{Cons:}
+\begin{itemize}
+    \item \textbf{Not competitive} in prediction accuracy with state-of-the-art methods.
+\end{itemize}
+\end{tcolorbox}
+
+Predictive accuracy can be significantly increased by \textbf{aggregating many decision trees} via bagging, random forests, and boosting.
+
+
+% ========================================
+\section{Bootstrapping and Bagging}
+% ========================================
+
+\subsection{The Bootstrap Concept}
+
+The \textbf{bootstrap} is a widely applicable statistical tool used to \textbf{estimate the uncertainty} of an estimator (or, more generally, of a statistical learning method).
+
+\textit{Financial example.} Two assets with expected returns $X$ and $Y$. The expected return on an investment of fraction $\alpha$ in $X$ and $1-\alpha$ in $Y$ is $\alpha X + (1-\alpha) Y$, with variance $\mathrm{Var}(\alpha X + (1 - \alpha) Y)$. The variance-minimising weight is:
+\[
+    \hat{\alpha}^* = \frac{\hat{\sigma}_Y^2 - \hat{\sigma}_{XY}}{\hat{\sigma}_X^2 + \hat{\sigma}_Y^2 - 2\hat{\sigma}_{XY}}
+\]
+We want to know the \textbf{standard error} of $\hat{\alpha}$.
+
+\subsection{Estimating $\mathrm{Var}(\hat{\alpha})$}
+
+Two approaches:
+\begin{itemize}
+    \item \textbf{Synthetic resampling (population available)}: generate $1000$ independent synthetic data sets, estimate $\hat{\alpha}_r$ on each, and compute the standard deviation across the $1000$ estimates. On the financial example: $SE(\hat{\alpha}) = 0.086$.
+    \item \textbf{Bootstrap (only one data set available)}: sample $1000$ data sets \textbf{with replacement} from the single original data set, estimate $\hat{\alpha}$ on each, and compute the standard deviation. On the same example: $SE(\hat{\alpha}) = 0.087$ — \textbf{very similar} to the synthetic estimate.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bootstrap Procedure}]
+Given an original data set $Z$ with $n$ observations, repeat $B$ times:
+\begin{enumerate}
+    \item Draw a bootstrap sample $Z^{*b}$ of size $n$ \textbf{with replacement} from $Z$.
+    \item Compute the estimate $\hat{\alpha}^{*b}$ on $Z^{*b}$.
+\end{enumerate}
+The empirical distribution of $\{\hat{\alpha}^{*1}, \ldots, \hat{\alpha}^{*B}\}$ approximates the sampling distribution of $\hat{\alpha}$.
+\end{tcolorbox}
+
+\subsection{Bagging}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Bootstrap Aggregation (Bagging)}]
+\textbf{Bagging} is a general-purpose procedure for \textbf{reducing the variance} of a statistical learning method. It is frequently used with decision trees.
+\end{tcolorbox}
+
+The intuition: given $n$ independent observations $Z_1, \ldots, Z_n$, each with variance $\sigma^2$, the variance of their mean $\overline{Z}$ is $\sigma^2 / n$. \textbf{Averaging reduces variance}. Applying this idea to learning:
+\begin{enumerate}
+    \item Generate $B$ different bootstrapped training sets.
+    \item Train a model on each bootstrap sample, obtaining $\hat{f}^{*1}, \ldots, \hat{f}^{*B}$.
+    \item Average the predictions:
+    \[
+        \hat{f}_{\mathrm{bag}}(x) = \frac{1}{B} \sum_{b=1}^{B} \hat{f}^{*b}(x)
+    \]
+\end{enumerate}
+
+\subsection{Bagging for Decision Trees}
+
+\textbf{Regression trees}:
+\begin{itemize}
+    \item Train $B$ \textbf{deep trees} via recursive binary splitting, with stopping criteria tuned to grow deep trees and \textbf{no pruning}. The result is trees with \textbf{high variance but low bias}.
+    \item For a new point $x$, compute the prediction from each tree and \textbf{average} the results.
+\end{itemize}
+\textbf{Classification trees}:
+\begin{itemize}
+    \item Train $B$ deep classification trees without pruning.
+    \item For a new point $x$, compute the predicted class for each of the $B$ trees and return the \textbf{most frequent class} (majority voting).
+\end{itemize}
+
+\subsection{Out-Of-Bag (OOB) Error Estimation}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{OOB Error}]
+On average, each bagged tree is built using about \textbf{two-thirds} of the training observations. The remaining \textbf{one-third} not used to fit a given tree are called the \textbf{out-of-bag (OOB) observations} for that tree.
+\end{tcolorbox}
+
+To estimate the test error of a bagged model:
+\begin{itemize}
+    \item For the $i$-th observation, predict its response using each of the trees for which it was OOB. This yields approximately $B/3$ predictions.
+    \item \textbf{Average} (regression) or take a majority vote (classification) of those predictions.
+    \item Compute the resulting error across all observations.
+\end{itemize}
+For large $B$, the OOB error is essentially the \textbf{leave-one-out cross-validation error} for bagging — obtained without performing CV explicitly.
+
+\subsection{Variable Importance}
+
+Bagging improves accuracy at the cost of \textbf{interpretability} (no single tree to inspect). A summary of predictor relevance can still be produced via a \textbf{variable importance measure}: for each predictor, record the total amount by which the RSS (regression) or the Gini index (classification) decreases due to splits on that predictor, averaged over all $B$ trees. The values are usually expressed relative to the maximum.
+
+\textit{Example (Heart dataset).} Variable importance ranks \textit{Thal}, \textit{Ca}, \textit{ChestPain}, and \textit{Oldpeak} as the most relevant predictors.
+
+
+% ========================================
+\section{Random Forest and Boosting}
+% ========================================
+
+\subsection{Random Forest}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Random Forest}]
+A random forest improves on bagged trees by \textbf{de-correlating} the trees. Like bagging, it builds many decision trees on bootstrapped training samples — but with a key change at each split.
+\end{tcolorbox}
+
+\textbf{Key difference from bagging}: when building each tree (during recursive binary splitting), \textbf{each split is restricted to a random sample of $m$ predictors} chosen out of the $p$ available. A \textbf{fresh sample} of $m$ predictors is drawn at every split. Typically:
+\[
+    m = \sqrt{p}
+\]
+(e.g., $m = 4$ out of $13$ for the Heart dataset). $m$ should be smaller when there is a large number of \textbf{correlated predictors}.
+
+Why de-correlate? Bagged trees built from a dataset with one or two very strong predictors will all use those predictors at the top split, producing trees that look similar and whose predictions are highly correlated. Averaging correlated quantities reduces variance much less than averaging uncorrelated ones. Restricting the split candidates forces some trees to use other predictors, making the trees less correlated and the average more effective.
+
+\textit{Example (gene expression data).} High-dimensional dataset with $4{,}718$ gene expression measurements on $349$ patients, each labelled with one of $15$ classes (normal or one of $14$ cancer types). Selected the $500$ genes with largest variance, split into training and test, and applied random forest with three values of $m$ ($m = p$, $m = p/2$, $m = \sqrt{p}$). Smaller $m$ values yield lower test classification error.
+
+\subsection{Boosting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Boosting}]
+Boosting is another approach for improving decision trees, applicable to many statistical learning methods. Unlike bagging and random forest, boosting \textbf{does not use bootstrapping}: each tree is fit on a \textbf{modified version of the original data set}, and trees are grown \textbf{sequentially}, each using information from the previous trees.
+\end{tcolorbox}
+
+\subsection{Boosting Algorithm for Regression Trees}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Boosting for Regression Trees}]
+\begin{enumerate}
+    \item Set $\hat{f}(x) = 0$ and $r_i = y_i$ for all $i$ in the training set.
+    \item For $b = 1, 2, \ldots, B$:
+    \begin{enumerate}
+        \item Fit a tree $\hat{f}^b$ with $d$ splits ($d + 1$ terminal nodes) to the training data $(X, r)$.
+        \item Update $\hat{f}$ by adding a shrunken version of the new tree:
+        \[
+            \hat{f}(x) \leftarrow \hat{f}(x) + \lambda \hat{f}^b(x)
+        \]
+        \item Update the residuals:
+        \[
+            r_i \leftarrow r_i - \lambda \hat{f}^b(x_i)
+        \]
+    \end{enumerate}
+    \item Output the boosted model:
+    \[
+        \hat{f}(x) = \sum_{b=1}^{B} \lambda \hat{f}^b(x)
+    \]
+\end{enumerate}
+\end{tcolorbox}
+
+The model is fit to the \textbf{residuals} of the previous step, so each new tree focuses on what the current model misses.
+
+\subsection{Tuning Parameters for Boosting}
+
+\begin{enumerate}
+    \item \textbf{Number of trees $B$}: large $B$ can result in \textbf{overfitting}, although the overfitting is usually slow. Use \textbf{cross-validation} to select $B$.
+    \item \textbf{Shrinkage parameter $\lambda$}: controls the \textbf{speed of learning}. Typical values are around $0.01$ or $0.001$. $\lambda$ is related to $B$: \textbf{small $\lambda$ requires large $B$}.
+    \item \textbf{Number of splits $d$}: number of splits in each tree, also called the \textbf{interaction depth}. Often $d = 1$ works well — each tree is a \textbf{stump} (single split), giving an \textbf{additive model}. More generally, $d$ controls the \textbf{interaction order} of the boosted model: $d$ splits can interact at most $d$ variables.
+\end{enumerate}
+
+\textit{Example (gene expression).} Boosting with $\lambda = 0.01$ and depth $1$ or $2$ outperforms random forest ($m = \sqrt{p}$) on test classification error for large enough $B$.
+
+\subsection{Boosting for Classification: AdaBoost}
+
+Boosting for classification is similar but more involved. A classic example is \textbf{AdaBoost} (AdaBoost.M1, Freund and Schapire, 1997 — a.k.a.\ Discrete AdaBoost). Modern state-of-the-art tree boosting methods (\textbf{XGBoost} and other \textbf{gradient boosting} systems) are based on the same principles, fitting a regularised additive model and using a second-order approximation in the optimisation step.
+
+\paragraph{AdaBoost setup.} Two-class problem $Y \in \{-1, +1\}$, predictors $X$, classifier $G(x)$. The error rate is:
+\[
+    \overline{\mathrm{err}} = \frac{1}{N} \sum_{i=1}^{N} I(y_i \neq G(x_i))
+\]
+A \textbf{weak classifier} is one whose error rate is only \textbf{slightly better than random guessing}. Boosting sequentially applies a weak classifier to repeatedly modified versions of the data, producing a series of weak classifiers $G_m(x)$, $m = 1, \ldots, M$. The final prediction is a \textbf{weighted majority vote}:
+\[
+    G(x) = \mathrm{sign}\!\left( \sum_{m=1}^{M} \alpha_m G_m(x) \right)
+\]
+The weights $\omega_1, \ldots, \omega_N$ on the training observations $(x_i, y_i)$ are updated to give \textbf{more importance to observations that are difficult to classify}.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{AdaBoost.M1 Algorithm}]
+\begin{enumerate}
+    \item \textbf{Initialise} observation weights $\omega_i = \tfrac{1}{N}$, $i = 1, \ldots, N$.
+    \item For $m = 1, 2, \ldots, M$:
+    \begin{enumerate}
+        \item Fit a classifier $G_m(x)$ to the training data using weights $\omega_i$.
+        \item Compute the weighted error:
+        \[
+            \mathrm{err}_m = \frac{\sum_{i=1}^{N} \omega_i I(y_i \neq G_m(x_i))}{\sum_{i=1}^{N} \omega_i}
+        \]
+        \item Compute $\alpha_m = \log\!\left(\dfrac{1 - \mathrm{err}_m}{\mathrm{err}_m}\right)$.
+        \item Update the weights:
+        \[
+            \omega_i \leftarrow \omega_i \exp\bigl[ -\alpha_m I(y_i \neq G_m(x_i)) \bigr], \quad i = 1, \ldots, N.
+        \]
+    \end{enumerate}
+    \item Output:
+    \[
+        G(x) = \mathrm{sign}\!\left( \sum_{m=1}^{M} \alpha_m G_m(x) \right)
+    \]
+\end{enumerate}
+\end{tcolorbox}
+
+\textit{Example (simulated data, sum of $10$ standard Gaussians).} The weak classifier is a \textbf{stump} with $45\%$ test error. AdaBoost drives the test error far below that of a $244$-node tree as the number of boosting iterations grows, illustrating how aggregating weak learners can outperform a single complex model.
+
+\subsection{Summary}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Tree-Based Methods: Key Takeaways}]
+\begin{itemize}
+    \item Decision trees are \textbf{simple} and \textbf{interpretable} models for both regression and classification.
+    \item Single trees are usually \textbf{not competitive} with other methods in terms of prediction accuracy.
+    \item \textbf{Bagging}, \textbf{random forest}, and \textbf{boosting} significantly improve prediction accuracy by growing several trees and combining their predictions.
+    \item \textbf{Random forest} and \textbf{boosting} are among the \textbf{state-of-the-art} approaches for supervised learning.
+    \item There is always a fundamental \textbf{trade-off between interpretability and prediction accuracy}.
+\end{itemize}
+\end{tcolorbox}
+
+
+% ========================================
+\part{Unsupervised Learning}
+% ========================================
+
+\section{Introduction to Unsupervised Learning}
+
+\subsection{Refresher: Supervised, Unsupervised, Reinforcement Learning}
+
+The three main learning paradigms differ in what data is available:
+\begin{itemize}
+    \item \textbf{Supervised learning}: $y = f(x)$ — given pairs $(x, y)$, learn $f(\cdot)$ [function approximation].
+    \item \textbf{Unsupervised learning}: $f(x)$ — given only $x$, learn $f(\cdot)$ as a \textbf{compact representation} of $x$ [clustering, dimension reduction].
+    \item \textbf{Reinforcement learning}: $y = f(x),\, z$ — given $(x, z)$, learn $f(\cdot)$ that generates $y$, where $x$ is the state and $z$ is the reward signal.
+\end{itemize}
+
+\subsection{Challenges of Unsupervised Learning}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Why Unsupervised is Hard}]
+\begin{itemize}
+    \item Usually \textbf{more challenging} than supervised learning: it is \textbf{more subjective}, with goals that are not clearly defined.
+    \item \textbf{Difficult to assess results}: there is no universally accepted mechanism to perform cross-validation.
+    \item Main issue: we do \textbf{not} have the labels $\Rightarrow$ we do \textbf{not have the ground truth}.
+\end{itemize}
+\end{tcolorbox}
+
+Despite the difficulties, unsupervised learning has many important applications:
+\begin{itemize}
+    \item Find \textbf{similarities in genes} or in \textbf{breast cancer samples} (or both) to better understand the disease.
+    \item Find \textbf{similarities in users} of online shopping or on-demand platforms for targeted advertisement.
+    \item Find \textbf{similar behaviours in malware samples} to devise appropriate countermeasures.
+\end{itemize}
+
+
+% ========================================
+\section{Principal Component Analysis (Revised)}
+% ========================================
+
+\subsection{Overview}
+
+\textbf{Principal Component Analysis (PCA)} can:
+\begin{itemize}
+    \item \textbf{Summarise} a set of highly correlated variables with a smaller number of \textbf{representative} variables.
+    \item Identify \textbf{principal component directions} that \textbf{maximise the variability} of the data in feature space.
+    \item Equivalently, find directions that are \textbf{as close as possible to the data}.
+\end{itemize}
+PCA is an \textbf{unsupervised approach} (no associated responses) and is very useful for \textbf{data visualisation}, particularly in high-dimensional spaces.
+
+\subsection{First Principal Component}
+
+Given a set of features $\{X_1, X_2, \ldots, X_p\}$, the \textbf{first principal component} $Z_1$ is the \textbf{normalised linear combination} of the features that has the \textbf{largest variance}:
+\[
+    Z_1 = \phi_{11} X_1 + \phi_{21} X_2 + \cdots + \phi_{p1} X_p, \qquad \text{with} \quad \sum_{j=1}^{p} \phi_{j1}^2 = 1
+\]
+The vector $\phi_1 = (\phi_{11}, \phi_{21}, \ldots, \phi_{p1})^T$ is called the \textbf{loading vector}. The constraint $\sum_j \phi_{j1}^2 = 1$ is needed because, otherwise, one could trivially increase the variance by scaling up the loadings.
+
+\subsection{Computing the First Principal Component}
+
+Let $\mathbf{X}$ be the data matrix with $n$ rows (observations) and $p$ columns (features). PCA cares only about variance, so the \textbf{mean of each column is set to zero} (centring). The objective is to find a linear combination of the centred features that maximises the variance of the resulting \textbf{principal component scores}:
+\[
+    z_{i1} = \phi_{11} x_{i1} + \phi_{21} x_{i2} + \cdots + \phi_{p1} x_{ip}, \qquad \sum_{j=1}^{p} \phi_{j1}^2 = 1
+\]
+Since each $X_j$ has zero mean, so does $Z_1$, hence $\mathrm{Var}(Z_1) = \tfrac{1}{n}\sum_{i=1}^{n} z_{i1}^2$. The optimisation problem is therefore:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{First PC Optimisation Problem}]
+\[
+    \max_{\phi_{11}, \phi_{21}, \ldots, \phi_{p1}} \frac{1}{n} \sum_{i=1}^{n} \bigl( \phi_{11} x_{i1} + \phi_{21} x_{i2} + \cdots + \phi_{p1} x_{ip} \bigr)^2 \quad \text{subject to} \quad \sum_{j=1}^{p} \phi_{j1}^2 = 1
+\]
+\end{tcolorbox}
+
+\subsection{Further Principal Components}
+
+The \textbf{second principal component} $Z_2$ is the linear combination of $X_1, \ldots, X_p$ that has \textbf{maximal variance} and is \textbf{uncorrelated} with $Z_1$:
+\[
+    z_{i2} = \phi_{12} x_{i1} + \phi_{22} x_{i2} + \cdots + \phi_{p2} x_{ip}, \qquad \sum_{j=1}^{p} \phi_{j2}^2 = 1
+\]
+Constraining $Z_2$ to be uncorrelated with $Z_1$ is equivalent to constraining the direction $\phi_2$ to be \textbf{orthogonal} to $\phi_1$, and so on for higher components.
+
+The problem is solved via the \textbf{Singular Value Decomposition (SVD)} of $\mathbf{X}$. The principal component directions $\phi_1, \phi_2, \ldots, \phi_K$ are the ordered \textbf{eigenvectors} of $\mathbf{X}^T \mathbf{X}$, while the variances of the components are the corresponding \textbf{eigenvalues}. The maximum number of components is $K = \min\{n - 1, p\}$.
+
+\subsection{Example: USA Arrest Dataset}
+
+\textbf{USA arrest data}: for each of the $50$ U.S.\ states, the number of arrests per $100{,}000$ residents in three categories — \textit{Assault}, \textit{Murder}, \textit{Rape} — plus a fourth feature \textit{UrbanPop} (percentage of population in urban areas). So $n = 50$ score vectors and $p = 4$ loading vectors. PCA is performed after \textbf{data standardisation} (zero mean, unit standard deviation). The first two principal components separate states by overall crime rate (PC1) and by the urban/rape vs.\ murder/assault contrast (PC2).
+
+\subsection{PCA as the Closest Linear Surface}
+
+There are two equivalent interpretations:
+\begin{itemize}
+    \item \textbf{Maximum variance}: the loading vectors are the directions in feature space along which the data \textbf{vary the most}.
+    \item \textbf{Closest linear surface}: low-dimensional linear surfaces (lines, planes, $\ldots$) that are \textbf{closest to the observations} in average squared Euclidean distance.
+\end{itemize}
+Specifically, the \textbf{first principal component} is the line in $p$-dimensional space that is closest to the $n$ observations, i.e., the single dimension that \textbf{best approximates} all observations. The first $M$ principal components and their score vectors yield the best $M$-dimensional approximation of each observation:
+\[
+    x_{ij} \approx \sum_{m=1}^{M} z_{im} \phi_{jm}
+\]
+
+\subsection{Proportion of Variance Explained (PVE)}
+
+The strength of a component is summarised by the \textbf{Proportion of Variance Explained (PVE)} by that component. Assuming the data are centred, the \textbf{total variance} is:
+\[
+    \sum_{j=1}^{p} \mathrm{Var}(X_j) = \sum_{j=1}^{p} \frac{1}{n} \sum_{i=1}^{n} x_{ij}^2
+\]
+The \textbf{variance explained} by the $m$-th principal component is:
+\[
+    \mathrm{Var}(Z_m) = \frac{1}{n} \sum_{i=1}^{n} z_{im}^2
+\]
+When $M = \min\{n-1, p\}$ all variance is captured:
+\[
+    \sum_{j=1}^{p} \mathrm{Var}(X_j) = \sum_{m=1}^{M} \mathrm{Var}(Z_m)
+\]
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{PVE Formula}]
+\[
+    \mathrm{PVE}_m = \frac{\sum_{i=1}^{n} z_{im}^2}{\sum_{j=1}^{p} \sum_{i=1}^{n} x_{ij}^2}
+\]
+\end{tcolorbox}
+
+\subsection{How Many Components to Use?}
+
+There is \textbf{no simple answer}: PCA is unsupervised, so cross-validation is not directly applicable (no response variable, no test error to minimise). Cross-validation can be used only when PCA is followed by a supervised task (e.g., principal component regression). In purely unsupervised settings the most common heuristic is the \textbf{scree plot}: plot the PVE (or cumulative PVE) against the component index and \textbf{look for an elbow}, i.e., the component after which additional components contribute marginally to the explained variance.
+
+\subsection{Scaling the Variables}
+
+When variables are in \textbf{different units} it is \textbf{important to scale} them to have unit standard deviation before applying PCA. Otherwise, variables with larger numerical range will dominate the variance and bias the principal directions. Standardisation removes this artefact and makes the loading vectors comparable across features.
+
+
+% ========================================
+\section{Clustering Methods: K-means Clustering}
+% ========================================
+
+\subsection{What is Clustering?}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Clustering}]
+A broad set of techniques for finding \textbf{subgroups} (also called \textbf{clusters}) in a data set. The goal is to \textbf{partition} the data into groups so that observations within each group are \textbf{similar to each other} and \textbf{different} from observations in other groups.
+\end{tcolorbox}
+
+The key point is to specify what is meant by \textbf{similar} and \textbf{different}: similarity (or dissimilarity) is often a \textbf{domain-specific} concept based on knowledge of the data.
+
+\textbf{PCA vs.\ Clustering}:
+\begin{itemize}
+    \item \textbf{PCA} looks for a \textbf{low-dimensional representation} of the observations that explains a large fraction of the variance.
+    \item \textbf{Clustering} looks for \textbf{homogeneous subgroups} among the observations.
+\end{itemize}
+
+\textit{Example (market segmentation).} Given a large number of measurements (median household income, occupation, distance from urban areas, $\ldots$) for many people, identify subgroups of people who may be more receptive to a particular form of advertising or interested in a given product. Market segmentation $\Rightarrow$ clustering people in the data set.
+
+\subsection{Two Main Clustering Methods}
+
+\begin{itemize}
+    \item \textbf{K-means clustering}: partition observations into a \textbf{predefined number of clusters} $K$.
+    \item \textbf{Hierarchical clustering}: build a \textbf{tree-like representation} of the observations, called a \textbf{dendrogram}, that allows visualisation of clusterings for \textbf{every possible number of clusters} $1, \ldots, n$.
+\end{itemize}
+
+\subsection{K-means: Setup}
+
+Let $C_1, \ldots, C_K$ denote a partition of the indices of the observations. If observation $i$ belongs to cluster $k$, then $i \in C_k$. The partition must satisfy:
+\begin{itemize}
+    \item \textbf{Cover}: each observation belongs to at least one cluster:
+    \[
+        \bigcup_{k=1}^{K} C_k = \{1, 2, \ldots, n\}
+    \]
+    \item \textbf{Non-overlapping}: no observation belongs to more than one cluster:
+    \[
+        \forall k, k' \mid k \neq k', \quad C_k \cap C_{k'} = \emptyset
+    \]
+\end{itemize}
+
+\subsection{Within-Cluster Variation and Objective}
+
+The \textbf{within-cluster variation} $\mathrm{WCV}(C_k)$ measures how much the observations belonging to cluster $C_k$ differ from each other. K-means seeks the partition that minimises the total within-cluster variation:
+\[
+    \arg\min_{C_1, \ldots, C_K} \left\{ \sum_{k=1}^{K} \mathrm{WCV}(C_k) \right\}
+\]
+The form of $\mathrm{WCV}$ depends on the application. A popular choice is the \textbf{squared Euclidean distance}:
+\[
+    \mathrm{WCV}(C_k) = \frac{1}{|C_k|} \sum_{i, i' \in C_k} \sum_{j=1}^{p} (x_{ij} - x_{i'j})^2
+\]
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{K-means Objective}]
+\[
+    \arg\min_{C_1, \ldots, C_K} \left\{ \sum_{k=1}^{K} \frac{1}{|C_k|} \sum_{i, i' \in C_k} \sum_{j=1}^{p} (x_{ij} - x_{i'j})^2 \right\}
+\]
+\end{tcolorbox}
+
+\subsection{K-means Algorithm}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{K-means Algorithm}]
+\begin{enumerate}
+    \item Randomly assign a number from $1, \ldots, K$ to each observation. This is the \textbf{initial cluster assignment}.
+    \item \textbf{Iterate} until convergence (i.e., the cluster assignment does not change):
+    \begin{enumerate}
+        \item For each cluster, compute the \textbf{cluster centroid}: the vector of $p$ feature means for the observations in the $k$-th cluster.
+        \item \textbf{Assign each observation to the closest centroid}, using Euclidean distance.
+    \end{enumerate}
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Properties of the K-means Algorithm}
+
+The algorithm is \textbf{guaranteed to decrease the objective at each step}. The key identity is:
+\[
+    \frac{1}{|C_k|} \sum_{i, i' \in C_k} \sum_{j=1}^{p} (x_{ij} - x_{i'j})^2 = 2 \sum_{i \in C_k} \sum_{j=1}^{p} (x_{ij} - \bar{x}_{kj})^2
+\]
+where $\bar{x}_{kj} = \tfrac{1}{|C_k|} \sum_{i \in C_k} x_{ij}$ is the mean of feature $j$ in cluster $C_k$. This shows that minimising pairwise squared distances within a cluster is equivalent to minimising squared distances to the centroid — which is exactly what step 2.b of the algorithm does.
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Local Optima}]
+The algorithm is \textbf{not guaranteed to find the global optimum}. Different random initialisations can lead to different solutions with different values of the objective. In practice, K-means is run multiple times with different initialisations and the solution with the lowest objective value is kept.
+\end{tcolorbox}
+
+
+% ========================================
+\section{Hierarchical Clustering}
+% ========================================
+
+\subsection{Overview}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Hierarchical Clustering}]
+Hierarchical clustering builds and maintains a \textbf{hierarchy of clusters}. The most common variant is \textbf{bottom-up} or \textbf{agglomerative} clustering: a \textbf{dendrogram} is built from the leaves (the individual observations) upwards, combining clusters until a single cluster (the trunk) is reached.
+\end{tcolorbox}
+
+\subsection{Hierarchical Clustering Algorithm}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Agglomerative Hierarchical Clustering}]
+\begin{enumerate}
+    \item Start with \textbf{each point in its own cluster}.
+    \item Identify the \textbf{closest couple of clusters} and \textbf{merge them}.
+    \item Repeat from step 2 until all points are in a single cluster.
+\end{enumerate}
+\end{tcolorbox}
+
+The result is a \textbf{dendrogram}: a tree where leaves are observations and the height of each merge represents the dissimilarity between the two merged clusters. \textbf{Cutting the dendrogram horizontally} at a chosen height yields a clustering: the higher the cut, the fewer clusters obtained.
+
+\textit{Example.} For 45 observations in two dimensions belonging to three classes (unknown to the algorithm), a dendrogram cut at height $9$ produces $2$ clusters; a cut at height $5$ produces $3$ clusters that closely match the true classes.
+
+\subsection{Types of Linkage}
+
+The notion of \textbf{distance between clusters} (rather than between individual points) is encoded by the \textbf{linkage}. The four main types are:
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+Linkage & Description \\
+\hline
+\textbf{Complete}  & \textbf{Maximal} inter-cluster dissimilarity. Compute all pairwise dissimilarities \\
+                   & between observations in cluster $A$ and cluster $B$, record the \textbf{largest}. \\
+\textbf{Single}    & \textbf{Minimal} inter-cluster dissimilarity. Compute all pairwise dissimilarities \\
+                   & between observations in $A$ and $B$, record the \textbf{smallest}. \\
+\textbf{Average}   & \textbf{Mean} inter-cluster dissimilarity. Compute all pairwise dissimilarities \\
+                   & between observations in $A$ and $B$, record the \textbf{average}. \\
+\textbf{Centroid}  & Dissimilarity between the \textbf{centroid} of $A$ (a mean vector of length $p$) \\
+                   & and the \textbf{centroid} of $B$. Centroid linkage can produce undesirable \textbf{inversions}. \\
+\hline
+\end{tabular}
+\end{center}
+
+Linkage choice affects the shape of the dendrogram: \textbf{single linkage} tends to produce long, chained clusters; \textbf{complete} and \textbf{average} linkage produce more balanced, compact clusters and are usually preferred in practice.
+
+\subsection{Choice of Dissimilarity Measure}
+
+The dissimilarity measure has a strong impact on the result:
+\begin{itemize}
+    \item \textbf{Euclidean distance}: the typical default.
+    \item \textbf{Correlation-based distance}: two observations are considered similar if they are highly correlated, regardless of magnitude. Useful when the \textbf{shape} of the profile matters more than absolute values (e.g., gene expression patterns over time).
+\end{itemize}
+
+\subsection{Practical Issues}
+
+Several practical decisions affect the outcome of clustering:
+\begin{itemize}
+    \item \textbf{Scaling of variables}: should observations be \textbf{standardised} before clustering? Variables in larger units would otherwise dominate the dissimilarity.
+    \item For hierarchical clustering: which \textbf{dissimilarity measure} and which \textbf{type of linkage} to use?
+    \item How many clusters should be chosen?
+    \item Which \textbf{features} should drive the clustering?
+\end{itemize}
+There is no universally correct answer — choices are guided by domain knowledge and validated by inspection of the results.
+
+\subsection{Example: Breast Cancer Microarray Study}
+
+Sorlie et al.\ (PNAS 2003) repeatedly observed breast tumour subtypes in independent gene-expression datasets. About \textbf{8000 genes} were measured for \textbf{88 breast cancer patients}; clustering used \textbf{average linkage} with a \textbf{correlation metric} on the \textbf{500 intrinsic genes} (those with the smallest within-patient/between-patient variation ratio). Each woman was measured before and after chemotherapy. Clustering revealed several tumour subtypes (Luminal A, Luminal B, ERBB2, Basal, Normal-Breast-like) that turned out to be associated with different survival probabilities ($p < 0.01$ in the Norway/Stanford data set), demonstrating that unsupervised clustering can reveal clinically relevant structure.
+
+\subsection{Conclusions}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Unsupervised Learning: Key Takeaways}]
+\begin{itemize}
+    \item Unsupervised learning is important for understanding the \textbf{variation} and \textbf{structure} of an unlabelled dataset.
+    \item It can be a useful step \textbf{before} performing supervised learning.
+    \item It is intrinsically \textbf{more difficult} than supervised learning: no ground truth (labels) and no single objective (no test prediction accuracy to minimise).
+    \item It is a challenging and \textbf{active field of research}, with many recently developed tools: self-organising maps, spectral clustering, affinity propagation, and so on.
+\end{itemize}
+\end{tcolorbox}
+
 \end{document}

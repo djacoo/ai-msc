@@ -2173,10 +2173,6 @@ The methods can be positioned along two dimensions:
     \item Dyna shows that \textbf{planning and learning are complementary} and can be seamlessly integrated in a single agent architecture.
 \end{itemize}
 
-\end{document}
-    \item \textbf{Low bias, high variance}: each return is an unbiased sample of $v_\pi(s)$, but individual returns are noisy.
-\end{itemize}
-
 \begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Monte Carlo in the GPI Schema}]
 Monte Carlo methods are still instances of \textbf{Generalized Policy Iteration} (GPI): they alternate between \textbf{prediction} (evaluating $v_\pi$ or $q_\pi$ from sampled returns) and \textbf{improvement} (acting greedily with respect to the current value estimates). The key difference is that \textit{no model is needed at any point}.
 \end{tcolorbox}
@@ -2937,5 +2933,372 @@ TD learning is the backbone of most practical RL algorithms, including DQN (Deep
     \item \textbf{Function approximation}: scaling TD algorithms to large/continuous state spaces using linear features or neural networks (DQN, Actor-Critic).
 \end{itemize}
 \end{tcolorbox}
+
+
+%=============================================================
+\part{On-Policy Prediction with Approximation}
+%=============================================================
+
+This part opens the \textbf{second part of the course}, which addresses the question: \textbf{how can we extend tabular RL methods to apply them to problems with arbitrarily large state spaces?} For instance, the number of possible camera images already exceeds the number of atoms in the universe, so almost all states the agent encounters have never been seen before. The only way forward is \textbf{generalization} from previously encountered (similar) states, accepting that optimal policies must be replaced by good \emph{approximate} solutions.
+
+The strategy is to combine \textbf{RL with function approximation} (a tool from supervised learning). However, the RL setting introduces \textbf{new issues} that supervised learning normally does not face, such as \textbf{nonstationarity} of the target, \textbf{bootstrapping}, and \textbf{delayed targets}.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Goal of this Lecture}]
+Substitute \textbf{tabular representations} of the state-value function $v_\pi$ with \textbf{function approximations} $\hat{v}(s, \mathbf{w}) \approx v_\pi(s)$, where $\mathbf{w} \in \mathbb{R}^d$ is a vector of parameters. Approximated values $v_\pi$ are estimated from \textbf{on-policy} data, i.e., from experience generated using the known policy $\pi$.
+\end{tcolorbox}
+
+The function $\hat{v}$ may take many forms:
+\begin{itemize}
+    \item a \textbf{linear function} in features of the state, with $\mathbf{w}$ a vector of feature weights;
+    \item a \textbf{multilayer artificial neural network}, with $\mathbf{w}$ the vector of connection weights;
+    \item a \textbf{decision tree}, with $\mathbf{w}$ the split points and leaf values.
+\end{itemize}
+By adjusting the weights, several functions can be implemented.
+
+Typically the number of weights is much smaller than the number of states, i.e., $d \ll |\mathcal{S}|$. Therefore \textbf{changing one weight changes the estimated value of many states}: this is the source of \textbf{generalization}. Generalization makes reinforcement learning \textbf{more powerful} but also more \textbf{difficult to manage and understand}. Extending RL to function approximation also makes it applicable to \textbf{partially observable problems}, where the full state is not available.
+
+%-------------------------------------------------------------
+\section{Value-Function Approximation}
+%-------------------------------------------------------------
+
+\subsection{Updates as Input-Output Examples}
+
+All prediction methods seen so far are based on \textbf{updates} of an estimated value function. Each update can be interpreted as an \textbf{example} of the desired input-output behavior of the value function:
+\[
+    s \;\longrightarrow\; \boxed{v_\pi} \;\longrightarrow\; v_\pi(s)
+\]
+
+Different families produce different update targets:
+\begin{itemize}
+    \item \textbf{MC update}: $S_t \mapsto G_t$, where the target is the observed return.
+    \item \textbf{TD update}: $S_t \mapsto R_{t+1} + \gamma\, \hat{v}(S_{t+1}, \mathbf{w}_t)$, where the target is bootstrapped.
+    \item \textbf{DP update}: $s \mapsto \mathbb{E}_\pi\!\left[R_{t+1} + \gamma\, \hat{v}(S_{t+1}, \mathbf{w}_t) \mid S_t = s\right]$.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Tabular vs Function-Approximation Updates}]
+\begin{itemize}
+    \item \textbf{Tabular representation}: the table entry for the estimated value of state $s$ is shifted a fraction of the way towards the target $u$. \emph{Estimated values of other states are unchanged.}
+    \item \textbf{Function approximation}: arbitrarily complex parameter updates are available. \emph{Updating at state $s$ can change value estimates of other states} (generalization).
+\end{itemize}
+\end{tcolorbox}
+
+Since each update has the form ``input state $\to$ desired output target'', \textbf{supervised learning} can be used to compute the weights $\mathbf{w}$ via function approximation methods.
+
+\subsection{Why Not Any Supervised Learner?}
+
+\textbf{Not all function approximation methods are equally well suited for RL.} In RL, learning must be performed \textbf{online}, while the agent interacts with the environment. We need learning methods that:
+\begin{itemize}
+    \item learn efficiently from \textbf{incrementally acquired data};
+    \item handle \textbf{nonstationary target functions}.
+\end{itemize}
+
+A typical example: in \textbf{Generalized Policy Iteration (GPI)} we seek to learn $q_\pi$ as $\pi$ itself changes. Methods that cannot deal with such nonstationarity are less suitable for RL.
+
+%-------------------------------------------------------------
+\section{The Prediction Objective}
+%-------------------------------------------------------------
+
+\subsection{Mean Squared Value Error}
+
+\textbf{Which objective do we use to evaluate the approximated function?} In the tabular case a continuous measure of prediction quality was \textbf{not necessary} because:
+\begin{itemize}
+    \item the learned value function could become equal to the true one;
+    \item updates affect only single states.
+\end{itemize}
+
+With function approximation these two assumptions are not guaranteed. We must therefore decide \textbf{which states we care most about} by defining a \textbf{state distribution} $\mu(s) \geq 0$, $\sum_s \mu(s) = 1$.
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Mean Squared Value Error}]
+\[
+    \overline{\mathrm{VE}}(\mathbf{w}) \;\doteq\; \sum_{s \in \mathcal{S}} \mu(s)\, \bigl[v_\pi(s) - \hat{v}(s, \mathbf{w})\bigr]^2
+\]
+The square root of $\overline{\mathrm{VE}}$ provides a \textbf{measure} of how much the approximate values differ from the true values.
+\end{tcolorbox}
+
+\subsection{The On-Policy Distribution}
+
+Often $\mu(s)$ is set to the \textbf{fraction of time spent in state $s$}, the so-called \textbf{on-policy distribution}.
+
+In \textbf{episodic tasks}, let $h(s)$ be the probability that an episode starts in state $s$. Then the number of time steps spent, on average, in state $s$ in a single episode is
+\[
+    \eta(s) \;=\; h(s) + \sum_{\bar{s}} \eta(\bar{s}) \sum_{a} \pi(a \mid \bar{s})\, p(s \mid \bar{s}, a), \quad \text{for all } s \in \mathcal{S}
+\]
+and the on-policy distribution is the normalization
+\[
+    \mu(s) \;=\; \frac{\eta(s)}{\sum_{s'} \eta(s')}, \quad \text{for all } s \in \mathcal{S}.
+\]
+
+In \textbf{continuing tasks} the on-policy distribution is the \textbf{stationary distribution} under $\pi$. In \textbf{episodic tasks} it also depends on the state initial probability. The formal analysis of the continuing and episodic cases must be \textbf{treated separately} with value function approximation.
+
+\subsection{Global vs Local Optima}
+
+The goal of $\overline{\mathrm{VE}}$ is to find a \textbf{global optimum}, namely a weight vector $\mathbf{w}^*$ such that
+\[
+    \overline{\mathrm{VE}}(\mathbf{w}^*) \;\leq\; \overline{\mathrm{VE}}(\mathbf{w}) \quad \text{for all possible } \mathbf{w}.
+\]
+
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!80!black, title={Local vs Global Optima}]
+A global optimum is \textbf{possible} for \textbf{simple function approximators} (e.g., linear models), and \textbf{rarely} for \textbf{complex approximators} (e.g., ANNs and decision trees) in which learning usually converges to \textbf{local optima}, i.e., a $\mathbf{w}^*$ such that
+\[
+    \overline{\mathrm{VE}}(\mathbf{w}^*) \;\leq\; \overline{\mathrm{VE}}(\mathbf{w}) \quad \text{for all } \mathbf{w} \text{ in some neighborhood of } \mathbf{w}^*.
+\]
+This is the best that can be done and is usually enough, although in many cases there are \textbf{no guarantees of convergence to the optimum}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={In Summary}]
+So far we have described:
+\begin{itemize}
+    \item a \textbf{framework} for combining RL methods for value prediction with function approximation methods (using RL updates as training examples);
+    \item a $\overline{\mathrm{VE}}$ \textbf{performance measure} that these methods may aspire to minimize.
+\end{itemize}
+In the rest of the lecture we consider function approximation methods based on \textbf{gradient-descent} since they are particularly promising and reveal key theoretical properties.
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Stochastic-Gradient and Semi-Gradient Methods}
+%-------------------------------------------------------------
+
+\subsection{Stochastic Gradient Descent (SGD)}
+
+\textbf{Stochastic Gradient Descent (SGD)} is a class of learning methods for function approximation in value prediction. It is among the most widely used of all function approximation methods and is well suited to \textbf{online RL}.
+
+Let:
+\begin{itemize}
+    \item $\mathbf{w} \doteq (w_1, w_2, \ldots, w_d)^\top$ a weight vector;
+    \item $\hat{v}(s, \mathbf{w})$ a \textbf{differentiable} function of $\mathbf{w}$ for all states $s$.
+\end{itemize}
+At each time step $t = 0, 1, 2, 3, \ldots$ we observe a new example $S_t \mapsto v_\pi(S_t)$ and update $\mathbf{w}_t$. States $S_t$ can be \textbf{randomly selected} or they can be \textbf{successive states} of an interaction with the environment.
+
+The values $v_\pi(S_t)$ are \textbf{unknown}, but even if we could observe their true values, learning the approximate function would still be difficult: the approximator has \textbf{limited ``resolution''}, there is no $\mathbf{w}$ that gets all the states exactly correct.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Goal and Strategy of SGD}]
+\textbf{Goal of SGD:} minimize the error on the observed examples.
+
+\textbf{Strategy of SGD:} adjust $\mathbf{w}$ after each example by a small amount in the direction that would most reduce the error on that example:
+\begin{align*}
+    \mathbf{w}_{t+1} \;&\doteq\; \mathbf{w}_t - \tfrac{1}{2}\alpha \nabla\!\bigl[v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}_t)\bigr]^2 \\
+                       &= \mathbf{w}_t + \alpha \bigl[v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}_t)\bigr] \nabla \hat{v}(S_t, \mathbf{w}_t),
+\end{align*}
+where $\alpha > 0$ and $\nabla f(\mathbf{w}) \doteq \bigl(\tfrac{\partial f(\mathbf{w})}{\partial w_1}, \tfrac{\partial f(\mathbf{w})}{\partial w_2}, \ldots, \tfrac{\partial f(\mathbf{w})}{\partial w_d}\bigr)^\top$ is the gradient of $f$.
+\end{tcolorbox}
+
+The \textbf{negative gradient} of the example's squared error is the direction in which the error falls most rapidly. SGD is called \emph{stochastic} when the update is done on only a single sample. Over many examples, making small steps, the effect is to minimize $\overline{\mathrm{VE}}$.
+
+\textbf{Why only ``small'' steps?} If we completely corrected each example in one step then we would \textbf{not balance the error} (which cannot be completely removed) on all samples. Convergence results on SGD assume that $\alpha$ \textbf{decreases over time} according to standard stochastic-approximation conditions
+\[
+    \sum_t \alpha_t = \infty, \qquad \sum_t \alpha_t^2 < \infty.
+\]
+
+\subsection{Approximate Targets and Unbiasedness}
+
+In practice the target output observed at time $t$, $U_t \in \mathbb{R}$, is \textbf{not the true value} $v_\pi(S_t)$, but some \textbf{random approximation} of it (e.g., a noisy corrupted value of $v_\pi(S_t)$ or a bootstrapping target). We perform an \textbf{approximate update} using $U_t$:
+\[
+    \boxed{\;\mathbf{w}_{t+1} \;\doteq\; \mathbf{w}_t + \alpha \bigl[U_t - \hat{v}(S_t, \mathbf{w}_t)\bigr] \nabla \hat{v}(S_t, \mathbf{w}_t)\;}
+\]
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Convergence Condition}]
+If $U_t$ is an \textbf{unbiased estimate} of the value, i.e.,
+\[
+    \mathbb{E}[U_t \mid S_t = s] \;=\; v_\pi(S_t),
+\]
+then $\mathbf{w}_t$ is guaranteed to converge to a local optimum.
+\end{tcolorbox}
+
+\subsection{Gradient Monte Carlo}
+
+The \textbf{Monte Carlo target} $U_t \doteq G_t$ is an unbiased estimate of $v_\pi(S_t)$, hence the SGD version of MC state-value prediction \textbf{converges}.
+
+\begin{algorithm}[H]
+\caption{Gradient Monte Carlo Algorithm for Estimating $\hat{v} \approx v_\pi$}
+\begin{algorithmic}
+\STATE \textbf{Input:} the policy $\pi$ to be evaluated
+\STATE \textbf{Input:} a differentiable function $\hat{v} : \mathcal{S} \times \mathbb{R}^d \to \mathbb{R}$
+\STATE \textbf{Algorithm parameter:} step size $\alpha > 0$
+\STATE Initialize value-function weights $\mathbf{w} \in \mathbb{R}^d$ arbitrarily (e.g., $\mathbf{w} = \mathbf{0}$)
+\FOR{each episode}
+    \STATE Generate an episode $S_0, A_0, R_1, S_1, A_1, \ldots, R_T, S_T$ using $\pi$
+    \FOR{each step of episode, $t = 0, 1, \ldots, T-1$}
+        \STATE $\mathbf{w} \leftarrow \mathbf{w} + \alpha \bigl[G_t - \hat{v}(S_t, \mathbf{w})\bigr] \nabla \hat{v}(S_t, \mathbf{w})$
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+Notice: MC provides a \textbf{non-bootstrapping estimate} of $v_\pi(S_t)$.
+
+\subsection{Semi-Gradient Methods}
+
+If a \textbf{bootstrapping estimate} of $v_\pi(S_t)$ is used as the target $U_t$ (e.g., in TD and DP), then \textbf{convergence is not guaranteed}. The reason is that the convergence proof requires the target to be \textbf{independent of $\mathbf{w}_t$}, which is not the case when $U_t$ depends on the current weights through $\hat{v}(S_{t+1}, \mathbf{w}_t)$.
+
+Methods working in this condition are called \textbf{semi-gradient (bootstrapping) methods}: they take only \emph{part} of the gradient into account (the gradient of $\hat{v}(S_t, \mathbf{w}_t)$, not of the target).
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Advantages of Semi-Gradient Methods}]
+They do not converge as robustly as full gradient methods, but they \textbf{converge reliably in important cases} (e.g., the linear case). Their advantages are:
+\begin{itemize}
+    \item they enable \textbf{faster learning};
+    \item they enable \textbf{continual and online learning}, without waiting for the end of the episode.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{algorithm}[H]
+\caption{Semi-gradient TD(0) for estimating $\hat{v} \approx v_\pi$}
+\begin{algorithmic}
+\STATE \textbf{Input:} the policy $\pi$ to be evaluated
+\STATE \textbf{Input:} a differentiable function $\hat{v} : \mathcal{S}^+ \times \mathbb{R}^d \to \mathbb{R}$ such that $\hat{v}(\text{terminal}, \cdot) = 0$
+\STATE \textbf{Algorithm parameter:} step size $\alpha > 0$
+\STATE Initialize value-function weights $\mathbf{w} \in \mathbb{R}^d$ arbitrarily (e.g., $\mathbf{w} = \mathbf{0}$)
+\FOR{each episode}
+    \STATE Initialize $S$
+    \REPEAT
+        \STATE Choose $A \sim \pi(\cdot \mid S)$
+        \STATE Take action $A$, observe $R$, $S'$
+        \STATE $\mathbf{w} \leftarrow \mathbf{w} + \alpha \bigl[R + \gamma\, \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})\bigr] \nabla \hat{v}(S, \mathbf{w})$
+        \STATE $S \leftarrow S'$
+    \UNTIL{$S$ is terminal}
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Example: State Aggregation on the 1000-State Random Walk}
+
+\textbf{State aggregation} is a simple generalizing function approximation:
+\begin{itemize}
+    \item states are \textbf{grouped together} with one estimated value (constant) per group;
+    \item each component of $\mathbf{w}$ is the estimation for a group of states;
+    \item the gradient $\nabla \hat{v}(S_t, \mathbf{w}_t)$ is $1$ for the components of the group of $S_t$ and $0$ for the other components.
+\end{itemize}
+
+Consider a \textbf{1000-state version of the random walk task}: states are arranged on a line with two terminal states; transitions go left or right; the reward is $0$ everywhere except $+1$ on reaching the right terminal state. Function approximation by state aggregation using the \textbf{gradient MC algorithm} with $100\,000$ episodes, $\alpha = 2 \times 10^{-5}$, and $10$ groups produces a piecewise-constant approximation $\hat{v}$ that closely matches the true value $v_\pi$ across the state space, with the on-policy distribution $\mu$ peaked in the middle of the chain.
+
+%-------------------------------------------------------------
+\section{Linear Value Function Approximation}
+%-------------------------------------------------------------
+
+\subsection{Linear Methods}
+
+We approximate $\hat{v}(\cdot, \mathbf{w})$ with a \textbf{linear function} of the weight vector $\mathbf{w}$. For each state $s$ there is a real-valued \textbf{feature vector}
+\[
+    \mathbf{x}(s) \;\doteq\; \bigl(x_1(s), x_2(s), \ldots, x_d(s)\bigr)^\top
+\]
+with the same number of components (\textbf{features}) as $\mathbf{w}$, i.e., $d$. The value of each feature is a function of the state, $x_i : \mathcal{S} \to \mathbb{R}$.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Linear State-Value Approximation}]
+Linear-method approximations of the state-value function implement the \textbf{inner product} between $\mathbf{w}$ and $\mathbf{x}(s)$:
+\[
+    \hat{v}(s, \mathbf{w}) \;\doteq\; \mathbf{w}^\top \mathbf{x}(s) \;\doteq\; \sum_{i=1}^{d} w_i\, x_i(s).
+\]
+The approximate value-function is said to be \textbf{linear in the weights}.
+\end{tcolorbox}
+
+\subsection{SGD with Linear Functions}
+
+It is natural to use SGD updates with linear function approximations. The gradient of the approximate value function w.r.t.\ $\mathbf{w}$ in this case is
+\[
+    \nabla \hat{v}(s, \mathbf{w}) \;=\; \mathbf{x}(s).
+\]
+Hence, the \textbf{SGD update} becomes
+\[
+    \boxed{\;\mathbf{w}_{t+1} \;\doteq\; \mathbf{w}_t + \alpha \bigl[U_t - \hat{v}(S_t, \mathbf{w}_t)\bigr] \mathbf{x}(S_t)\;}
+\]
+
+The simple form is good for \textbf{mathematical analysis} (e.g., convergence) and there is \textbf{only one optimum}, so \emph{local optimum = global optimum}.
+
+\subsection{Convergence Results in the Linear Case}
+
+\begin{itemize}
+    \item The \textbf{Gradient Monte Carlo} algorithm \textbf{converges} to the global optimum of $\overline{\mathrm{VE}}$ under linear function approximation.
+    \item The \textbf{semi-gradient TD(0)} algorithm also \textbf{converges} under linear function approximation. This result requires a separate theorem: the weight vector converges to a point \textbf{near the local optimum} (the \emph{TD fixed point}).
+\end{itemize}
+
+The update at each time $t$ for linear semi-gradient TD(0) is
+\begin{align*}
+    \mathbf{w}_{t+1} \;&\doteq\; \mathbf{w}_t + \alpha \bigl(R_{t+1} + \gamma\, \mathbf{w}_t^\top \mathbf{x}_{t+1} - \mathbf{w}_t^\top \mathbf{x}_t\bigr) \mathbf{x}_t \\
+                       &= \mathbf{w}_t + \alpha \bigl(R_{t+1}\, \mathbf{x}_t - \mathbf{x}_t\, (\mathbf{x}_t - \gamma\, \mathbf{x}_{t+1})^\top \mathbf{w}_t\bigr).
+\end{align*}
+
+At steady state the expected next weight vector is
+\[
+    \mathbb{E}[\mathbf{w}_{t+1} \mid \mathbf{w}_t] \;=\; \mathbf{w}_t + \alpha (\mathbf{b} - \mathbf{A}\mathbf{w}_t),
+\]
+with
+\[
+    \mathbf{b} \;\doteq\; \mathbb{E}[R_{t+1}\, \mathbf{x}_t] \;\in\; \mathbb{R}^d, \qquad
+    \mathbf{A} \;\doteq\; \mathbb{E}\!\left[\mathbf{x}_t\, (\mathbf{x}_t - \gamma\, \mathbf{x}_{t+1})^\top\right] \;\in\; \mathbb{R}^d \times \mathbb{R}^d.
+\]
+
+\subsection{TD Fixed Point and Error Bound}
+
+The \textbf{TD fixed point} for linear semi-gradient TD(0) is computed as
+\[
+    \mathbf{b} - \mathbf{A}\mathbf{w}_{\mathrm{TD}} = \mathbf{0} \;\Rightarrow\; \mathbf{b} = \mathbf{A}\mathbf{w}_{\mathrm{TD}} \;\Rightarrow\; \mathbf{w}_{\mathrm{TD}} \doteq \mathbf{A}^{-1}\mathbf{b}.
+\]
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Bound on the TD Fixed-Point Error}]
+At the TD fixed point it has been proved (in the continuing case) that the $\overline{\mathrm{VE}}$ is within a \textbf{bounded expansion} of the lowest possible error:
+\[
+    \overline{\mathrm{VE}}(\mathbf{w}_{\mathrm{TD}}) \;\leq\; \frac{1}{1 - \gamma}\, \min_{\mathbf{w}} \overline{\mathrm{VE}}(\mathbf{w}).
+\]
+The asymptotic error of the TD method is no more than $\frac{1}{1 - \gamma}$ times the smallest possible error, i.e., the error reached in the limit by the Monte Carlo method.
+\end{tcolorbox}
+
+Since $\gamma$ is usually close to $1$, the bound represents a \textbf{substantial potential loss}, but in practice TD methods have \textbf{reduced variance} and are \textbf{faster than MC methods}.
+
+%-------------------------------------------------------------
+\section{Feature Construction for Linear Methods (Hints)}
+%-------------------------------------------------------------
+
+\textbf{Advantages of linear approximation:}
+\begin{itemize}
+    \item \textbf{convergence guarantees};
+    \item \textbf{data efficiency};
+    \item \textbf{computational efficiency}.
+\end{itemize}
+
+These advantages \textbf{depend a lot on how the states are represented} in terms of \textbf{features}. Choosing appropriate features requires \textbf{prior domain knowledge}.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Choosing Features}]
+Features should correspond to the \textbf{aspects of the state space along which generalization may be appropriate}.
+\begin{itemize}
+    \item E.g., states of geometric objects: features for each possible shape, color, size, etc.
+    \item E.g., states of a mobile robot: features for location, remaining battery, etc.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!80!black, title={Limitation of Linear Approximation}]
+Linear approximation \textbf{cannot consider interactions between features}.
+
+E.g., in the \textbf{pole-balancing task}, a high angular velocity can be either good or bad depending on the angle. A linear value function cannot represent this if the angle and the angular velocity are coded as separate features.
+\end{tcolorbox}
+
+There exist \textbf{several ways to construct meaningful features} (e.g., polynomials, Fourier basis, etc.). This is beyond the scope of the course (see Sec.\ 9.5 of the Sutton and Barto book for details).
+
+%-------------------------------------------------------------
+\section{Nonlinear Value Function Approximation (Hints)}
+%-------------------------------------------------------------
+
+There exist several \textbf{non-linear methods for approximating the value function}, such as:
+\begin{itemize}
+    \item \textbf{Artificial Neural Networks (ANNs)};
+    \item \textbf{Memory-based (nonparametric) functions};
+    \item \textbf{Kernel-based functions}.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Artificial Neural Networks}]
+ANNs have recently become the most popular approximation functions:
+\begin{itemize}
+    \item they are \textbf{universal function approximators};
+    \item in \textbf{deep architectures} they can generate \textbf{hierarchical representations of features} automatically (vs hand-crafted features);
+    \item they typically learn by \textbf{stochastic gradient} methods;
+    \item they can learn value functions (see \textbf{Deep Q-Networks} in next slides).
+\end{itemize}
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section*{References}
+%-------------------------------------------------------------
+
+\begin{itemize}
+    \item R.\ S.\ Sutton, A.\ G.\ Barto. \emph{Reinforcement Learning: An Introduction}. Second edition. Chapter 9.
+\end{itemize}
 
 \end{document}
