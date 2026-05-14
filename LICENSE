@@ -1,33 +1,27 @@
-MIT License
+Copyright (c) 2025-2026 Jacopo Parretti
 
-Copyright (c) 2025 Jacopo Parretti
+This repository contains material under several different licenses:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Personal notes (LaTeX sources and compiled PDFs under any `notes/`
+   directory, plus `books/BIBLIOGRAPHY.md`)
+   --> licensed under Creative Commons Attribution-ShareAlike 4.0
+       International (CC BY-SA 4.0).
+   See LICENSE-NOTES for the full license text, or
+   https://creativecommons.org/licenses/by-sa/4.0/
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. Source code authored by the repository owner (everything under any
+   `labs/`, `assignments/`, or `exams/` directory written by Jacopo
+   Parretti — including `.py`, `.ipynb`, `.sh`, etc.)
+   --> licensed under the MIT License.
+   See LICENSE-CODE for the full license text.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. Lecture slides, syllabi, course handouts, third-party readings, and
+   reference textbooks (everything under any `slides/`, `resources/`,
+   or `books/` directory excluding `BIBLIOGRAPHY.md`)
+   --> remain the intellectual property of their respective authors,
+       publishers, and the University of Verona.
+   They are mirrored here for personal study only and are not relicensed.
 
----
-
-## Additional Notice
-
-The lecture slides and course materials contained in this repository are
-intellectual property of their respective professors and the University of Verona.
-These materials are shared here for educational purposes only and should be
-used in accordance with academic integrity policies.
-
-Personal notes (LaTeX source files and compiled PDFs) are the original work
-of Jacopo Parretti and are licensed under the MIT License as stated above.
+4. Vendored third-party code (e.g. the `spinningup` git submodule)
+   --> retains its upstream license. Refer to the LICENSE file inside
+       each submodule.

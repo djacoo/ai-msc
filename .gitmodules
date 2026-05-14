@@ -1,0 +1,3 @@
+[submodule "year-1/semester-2/reinforcement-learning/labs/l12-spinningup-sac/rl-lab-main/spinningup/spinningup"]
+	path = year-1/semester-2/reinforcement-learning/labs/l12-spinningup-sac/rl-lab-main/spinningup/spinningup
+	url = https://github.com/openai/spinningup.git

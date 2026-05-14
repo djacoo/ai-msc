@@ -1,0 +1,49 @@
+name: build-notes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/notes/**/*.tex'
+      - 'Makefile'
+      - '.github/workflows/build-notes.yml'
+  pull_request:
+    paths:
+      - '**/notes/**/*.tex'
+      - 'Makefile'
+      - '.github/workflows/build-notes.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: false
+
+      - name: Set up TeX Live
+        uses: teatimeguest/setup-texlive-action@v3
+        with:
+          packages: >-
+            scheme-medium
+            latexmk
+            collection-fontsrecommended
+            collection-latexextra
+            collection-mathscience
+
+      - name: List notes
+        run: make list
+
+      - name: Build all notes
+        run: make notes
+
+      - name: Upload PDFs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notes-pdfs
+          path: '**/notes/**/*.pdf'
+          if-no-files-found: warn
+          retention-days: 14

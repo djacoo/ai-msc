@@ -1,0 +1,266 @@
+\documentclass[11pt,a4paper]{article}
+
+% ========================================
+% PACKAGES
+% ========================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}  % Better font support for larger sizes
+\usepackage[english]{babel}  % Change to your language
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathematics
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[most]{tcolorbox}
+
+% Lists and formatting
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% Code listings (if needed)
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================================
+% THEOREM ENVIRONMENTS
+% ========================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{observation}{Observation}
+
+% ========================================
+% CUSTOM COMMANDS
+% ========================================
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% ========================================
+% TABLE OF CONTENTS DEPTH
+% ========================================
+\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+
+% ========================================
+% HEADER AND FOOTER
+% ========================================
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{PL \& RL}
+\cfoot{\thepage}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+% ========================================
+% DOCUMENT INFORMATION
+% ========================================
+\title{\textbf{Planning \& Reinforcement Learning - Part 2}\\
+\large Artificial Intelligence}
+\author{Jacopo Parretti}
+\date{I Semester 2025-2026}
+
+% ========================================
+% DOCUMENT
+% ========================================
+\begin{document}
+
+% Custom title page
+\begin{titlepage}
+    \begin{center}
+        \vspace*{2cm}
+
+        % University/Course info at top
+        {\large\textsc{Artificial Intelligence}}
+
+        \vspace{0.4cm}
+        \textcolor{blue!60!black}{\rule{0.5\textwidth}{1pt}}
+
+        \vspace{2.5cm}
+
+        % Main title with modern spacing
+        {\fontsize{36}{44}\selectfont\bfseries Planning \&\\[0.5cm] Reinforcement Learning\\[0.5cm] Part 2}
+
+        \vspace{1.5cm}
+
+        % Subtitle with clean design
+        \begin{tcolorbox}[
+            colback=blue!3!white,
+            colframe=blue!40!black,
+            width=0.6\textwidth,
+            arc=1mm,
+            boxrule=0.8pt,
+            left=15pt,
+            right=15pt,
+            top=10pt,
+            bottom=10pt
+        ]
+            \centering
+            {\large\textit{Lecture Notes}}\\[0.3cm]
+            \textcolor{gray}{Master's Program in Artificial Intelligence}
+        \end{tcolorbox}
+
+        \vfill
+
+        % Clean course details
+        \begin{tcolorbox}[
+            enhanced,
+            colback=white,
+            colframe=gray!30,
+            width=0.5\textwidth,
+            arc=0mm,
+            boxrule=0.5pt,
+            left=20pt,
+            right=20pt,
+            top=12pt,
+            bottom=12pt,
+            shadow={2mm}{-2mm}{0mm}{black!10}
+        ]
+            \centering
+            {\small\textcolor{gray!70}{\textbf{ACADEMIC YEAR}}}\\[0.4cm]
+            {\Large 2025--2026}
+        \end{tcolorbox}
+
+        \vspace{2cm}
+
+        % Author
+        {\LARGE\textsc{Jacopo Parretti}}
+
+        \vspace{1.5cm}
+
+    \end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+\iffalse % WIP draft — un-comment when finished
+
+\part{}
+
+\section{}
+
+State-Transition Systems
+
+We want to model a complex environment - we need simplifying assumtions
+classical planning:
+- finite, static workd with just one actor
+- no concurrent actions, no explicit time
+- determinism, no uncertainty
+
+sequence of states and actions <s_0, a_1, s_1, a_2, ...>
+
+most real world environment violate these assumption but classical planning could be a useful approximation
+
+State transition systems: \Epsilon = < S, A, \gamma, cost >
+S and A, finite set of states and actions
+
+plan: a sequence of actions \pi = <a_1, a_2, ..., a_n>
+
+empty plan <>
+concatenation of plans \pi \circ \pi' 
+
+\gamma(s_0, \pi) = s_n means that after executing \pi starting from s_0 we end up in s_n 
+
+run-plan(\Epsilon, \pi) 
+while True do
+    \dots
+
+
+given a transition system, a planning problem is P = (\Epsilon, s_0, S_g) 
+from s_0 to one of the states in S_g 
+
+solution for P:
+- a plan \pi such that \gamma(s_0, \pi) \in S_g 
+- \pi is minimal if no subsequence of \pi is a solution
+- pi is shortest if no solution pi', where |pi'| < |pi| 
+- pi is optimal if cost(pi) = min{cost(pi') | pi' is a solution for P}
+
+
+Representing a transition system \Epsilon 
+
+(small)
+if S and A are small enough ---> state/action unique name ---> for each s, a, \dots
+
+(large)
+cannot represent all states explicitly 
+
+
+the more we are specific to the representation, the more we can reason 
+high effectiveness: can use whatever works best for specific domain
+low generality tho 
+
+domain independent:
+
+
+\dots
+
+
+State-varaible representations 
+
+example of robots, containers, locs 
+
+r1 is a robot, but actually r1 is a symbol 
+we consider it a robot tho 
+
+symbols for objects/actions should interpret correctly the environment
+ 
+
+rigid properties: properties of the states that don't change over time 
+
+varying properties (fluents): represented with a state variable; a term to which we can assign a value
+
+states s are functions that assigns values to state variables
+one state is an assingment 
+can be also a set of ground positive literals (= is a used as a predicate symbol)
+
+
+action template/schema: a parametrized set of actions 
+
+
+actions: \A = set of action templates
+assign each param a value in its range
+
+\fi % end WIP draft
+
+
+
+
+
+
+
+
+\end{document}
