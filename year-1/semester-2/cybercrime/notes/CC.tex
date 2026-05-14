@@ -1,53 +1,96 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper,openany]{report}
 
-% ========================================
-% PACKAGES
-% ========================================
+% ============================================================
+%  ENCODING, LANGUAGE, GEOMETRY
+% ============================================================
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[english]{babel}
+\usepackage{csquotes}
 \usepackage[margin=2.5cm]{geometry}
+\usepackage{microtype}
 
-% Mathematics
+% ============================================================
+%  MATHEMATICS
+% ============================================================
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{mathtools}
 
-% Graphics and colors
+% ============================================================
+%  GRAPHICS, COLOURS, FLOATS
+% ============================================================
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc}
 \usepackage[most]{tcolorbox}
 
-% Lists and formatting
+% ============================================================
+%  LISTS, TABLES, TYPOGRAPHY
+% ============================================================
 \usepackage{enumitem}
+\setlist{itemsep=2pt,parsep=2pt,topsep=4pt}
 \usepackage{parskip}
-\usepackage{fancyhdr}
+\usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{array}
 
-% Code listings
+% ============================================================
+%  HEADER/FOOTER
+% ============================================================
+\usepackage{fancyhdr}
+\setlength{\headheight}{26pt}
+\addtolength{\topmargin}{-12pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\nouppercase{\leftmark}}
+\rhead{\textsc{Cybercrime}}
+\cfoot{\thepage}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{}
+
+% ============================================================
+%  CHAPTER / PART TITLE STYLING
+% ============================================================
+\usepackage[explicit]{titlesec}
+\titleformat{\part}[display]
+  {\normalfont\Huge\bfseries\centering}
+  {\MakeUppercase{\partname}~\thepart}{20pt}{\Huge #1}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}
+  {\filright\Large\MakeUppercase{\chaptertitlename}~\thechapter}
+  {12pt}{\Huge\filright #1}
+\titlespacing*{\chapter}{0pt}{-20pt}{30pt}
+
+% ============================================================
+%  CODE LISTINGS
+% ============================================================
 \usepackage{listings}
 
-% Hyperlinks
+% ============================================================
+%  HYPERLINKS
+% ============================================================
 \usepackage{hyperref}
 \hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    urlcolor=blue,
-    citecolor=blue
+    colorlinks  = true,
+    linkcolor   = black!70!blue,
+    urlcolor    = blue!70!black,
+    citecolor   = blue!70!black,
+    pdftitle    = {Cybercrime},
+    pdfauthor   = {Jacopo Parretti}
 }
 
-% ========================================
-% THEOREM ENVIRONMENTS
-% ========================================
+% ============================================================
+%  THEOREM-LIKE ENVIRONMENTS
+% ============================================================
 \theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
-\newtheorem{example}{Example}[section]
-\newtheorem{exercise}{Exercise}[section]
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{example}{Example}[chapter]
+\newtheorem{exercise}{Exercise}[chapter]
 
 \theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[section]
+\newtheorem{theorem}{Theorem}[chapter]
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corollary}
@@ -56,42 +99,97 @@
 \newtheorem*{remark}{Remark}
 \newtheorem*{observation}{Observation}
 
-% ========================================
-% TABLE OF CONTENTS DEPTH
-% ========================================
+% ============================================================
+%  SEMANTIC CALLOUT BOXES
+% ============================================================
+% Key takeaway / insight (yellow--orange, no title)
+\newtcolorbox{keypoint}{
+    colback=yellow!5!white, colframe=orange!80!black,
+    boxrule=0.6pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt
+}
+% Tabulated data panel (yellow--orange, with title)
+\newtcolorbox{datapanel}[1]{
+    colback=yellow!5!white, colframe=orange!80!black,
+    title={#1}, fonttitle=\bfseries,
+    boxrule=0.6pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt
+}
+% Reference / source citation (blue, with title)
+\newtcolorbox{sourcebox}[1]{
+    colback=blue!5!white, colframe=blue!60!black,
+    title={#1}, fonttitle=\bfseries,
+    boxrule=0.6pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt
+}
+% Practical/action implication (red, no title)
+\newtcolorbox{actionbox}{
+    colback=red!5!white, colframe=red!60!black,
+    boxrule=0.6pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt
+}
+% Sidebar with title (red, framework/practical implication)
+\newtcolorbox{actionboxT}[1]{
+    colback=red!5!white, colframe=red!60!black,
+    title={#1}, fonttitle=\bfseries,
+    boxrule=0.6pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt
+}
+% Neutral sidebar (gray, with title)
+\newtcolorbox{sidebox}[1]{
+    colback=gray!5!white, colframe=gray!60!black,
+    title={#1}, fonttitle=\bfseries,
+    boxrule=0.6pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt
+}
+
+% ============================================================
+%  LECTURE DIVIDER (intra-chapter, unnumbered, visible in ToC)
+% ============================================================
+\newcommand{\lecturepart}[1]{%
+    \par\vspace{1.2em}%
+    \noindent\hrulefill\par
+    \vspace{0.2em}%
+    {\noindent\large\bfseries\itshape #1\par}%
+    \vspace{0.2em}%
+    \noindent\hrulefill\par
+    \addcontentsline{toc}{section}{#1}%
+    \vspace{0.8em}%
+}
+
+% ============================================================
+%  TABLE OF CONTENTS DEPTH
+% ============================================================
 \setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
 
-% ========================================
-% HEADER AND FOOTER
-% ========================================
-\setlength{\headheight}{14pt}
-\pagestyle{fancy}
-\fancyhf{}
-\lhead{\leftmark}
-\rhead{CC}
-\cfoot{\thepage}
-\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
-
-% ========================================
-% DOCUMENT INFORMATION
-% ========================================
-\title{\textbf{Cybercrime}\\
-\large Artificial Intelligence}
+% ============================================================
+%  DOCUMENT METADATA
+% ============================================================
+\title{%
+    \vspace*{1cm}
+    {\Huge\bfseries Cybercrime}\\[0.6em]
+    {\Large\itshape Lecture Notes \& Course Readings}\\[0.4em]
+    {\large M.Sc.\ in Artificial Intelligence}
+}
 \author{Jacopo Parretti}
-\date{II Semester 2025-2026}
+\date{Spring Semester 2025--2026}
 
-% ========================================
-% DOCUMENT
-% ========================================
+% ============================================================
+%  DOCUMENT
+% ============================================================
 \begin{document}
 
 \maketitle
+\thispagestyle{empty}
+\cleardoublepage
+
+\pagenumbering{roman}
 \tableofcontents
-\newpage
+\cleardoublepage
+\pagenumbering{arabic}
 
 
 % ========================================
-\part{Crime in the Digital Society}
+\part{Foundations of Cybercrime}
+% ========================================
+
+% ========================================
+\chapter{Crime in the Digital Society}
 % ========================================
 
 \section{Digitalisation: Definition and Short History}
@@ -129,10 +227,6 @@ This case study illustrates how IoT consumer devices --- specifically smart toys
 \subsection{The Cayla Doll}
 
 The Cayla doll was an internet-connected toy capable of recording and transmitting children's voice data. In 2017, Germany banned the device over fears that hackers could exploit it to target children. The case raises a fundamental question that recurs throughout the course: \textit{unfounded fears or documented reality?}
-
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
-Justin Huggler, ``Germany bans internet-connected dolls over fears hackers could target children'', \textit{The Telegraph}, 17 February 2017.
-\end{tcolorbox}
 
 \subsection{CloudPets}
 
@@ -190,13 +284,13 @@ Digital technologies also reshape the instruments of social control:
     \item \textbf{Algorithmic risk assessment}: Police forces increasingly use algorithmic tools to assess threat levels and predict criminal behaviour. A 2016 ProPublica investigation (``Machine Bias'') documented that the COMPAS recidivism prediction software used across US courts exhibited systematic racial bias, falsely flagging Black defendants as future criminals at nearly twice the rate of white defendants.
 \end{itemize}
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black]
+\begin{keypoint}
 A recurring tension throughout the course: the same digital tools that enable crime also constitute the primary instruments of crime detection and social control. This duality --- and its legal, ethical, and criminological implications --- is the central analytical lens of the course.
-\end{tcolorbox}
+\end{keypoint}
 
 
 % ========================================
-\part{Examples of Criminological Studies}
+\chapter{Examples of Criminological Studies}
 % ========================================
 
 \section{Confessions of a Migrant Smuggler}
@@ -339,7 +433,7 @@ In addition, the verification scheme has not been well implemented in some cases
 
 
 % ========================================
-\part{Cybercrime Typologies: Cyber-Dependent Crimes}
+\chapter{Cybercrime Typologies: Cyber-Dependent Crimes}
 % ========================================
 
 \section{Categories of Cybercrime}
@@ -439,7 +533,7 @@ AI introduces new dimensions to cyber-dependent crime:
 
 
 % ========================================
-\part{Cybercrime Typologies: Cyber-enabled Crimes}
+\chapter{Cybercrime Typologies: Cyber-enabled Crimes}
 % ========================================
 
 \section{Introduction and Definition}
@@ -604,9 +698,9 @@ In March 2023, Italian police arrested eight individuals for serious fraud, mone
 
 In March 2022, Jordan DeMay, a 17-year-old American high school football player from Michigan, was contacted via an Instagram account (``dani.robertts'') that appeared to belong to a young woman. The account had in fact been hacked and sold to a 22-year-old Nigerian man, who used it to coerce young men into sending explicit images of themselves, then threatened to distribute the images unless money was paid. DeMay died by suicide within hours of being targeted. The suspects, Samuel and Samson Ogoshi, were subsequently extradited to the United States and charged in federal court. The case became a landmark in debates about the criminal liability for sextortion-induced suicide and the cross-jurisdictional challenges of prosecuting online sexual coercion.
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black]
+\begin{keypoint}
 The DeMay case exemplifies the link between IBA and assisted cyber suicide: sextortion does not merely constitute a financial or reputational harm, but in the most severe cases constitutes a precipitating cause of death. It also illustrates how the perpetration of sextortion does not require the offender to possess any intimate images in advance --- the scheme is engineered to create them.
-\end{tcolorbox}
+\end{keypoint}
 
 \subsection{Online Sexual Crimes Against Children: The Love Zone}
 
@@ -615,7 +709,7 @@ The Love Zone (TLZ) was one of the largest pedophile online communities in the w
 
 
 % ========================================
-\part{Cybercrime Typologies: Cyber-assisted Crimes}
+\chapter{Cybercrime Typologies: Cyber-assisted Crimes}
 % ========================================
 
 \section{Definition}
@@ -654,9 +748,9 @@ The classic illustrative example of a crime script is graffiti tag writing. Each
 
 \begin{center}
 \begin{tabular}{lll}
-\hline
+\toprule
 \textbf{Scene/Function} & \textbf{Script Action} & \textbf{Situational Control} \\
-\hline
+\midrule
 Preparation & Buy spray-can; find a good setting & Sales regulation; city paint-out program \\
 Entry & Enter setting & Access control; entry/exit screening \\
 Pre-condition & Loiter & Surveillance \\
@@ -667,7 +761,7 @@ Doing & Spray graffiti & Graffiti-resistant paint \\
 Post-condition & Get away quietly & Moisture-activated alarm \\
 Exit & Leave setting & Entry/exit screening \\
 Doing (later) & ``Getting up'' & Rapid cleaning \\
-\hline
+\bottomrule
 \end{tabular}
 \end{center}
 
@@ -787,20 +881,17 @@ Digital technologies are used to facilitate the sale of a wide range of illegal 
     \item \textbf{Pharmaceuticals}: online markets, including end-to-end encrypted messaging platforms such as Telegram, are used to distribute both controlled and uncontrolled substances. A documented case involved an underground abortion pill market growing on Telegram as US states restricted access to abortion care, illustrating how legal and political context shapes the demand side of illicit online markets.
 \end{itemize}
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black]
+\begin{keypoint}
 Across all three case studies, a common pattern emerges: the criminal activity itself (trafficking, violence, physical delivery of goods) is not digital, but the internet provides the infrastructure for communication, recruitment, advertising, payment, and logistics. This is the operational core of cyber-assisted crime. Law enforcement responses must therefore target not only the physical crime but also the digital layers that enable it --- and doing so raises complex questions about privacy, jurisdiction, and the proportionality of surveillance.
-\end{tcolorbox}
+\end{keypoint}
 
 
 
 % ========================================
-\part{AI, ML, and Measuring Cybercrime}
+\chapter{AI, ML, and Measuring Cybercrime}
 % ========================================
 
-% --------------------------------------------------
-\section*{Lecture A --- AI and ML and Cybercrime}
-\addcontentsline{toc}{section}{Lecture A --- AI and ML and Cybercrime}
-% --------------------------------------------------
+\lecturepart{Lecture A --- AI and ML and Cybercrime}
 
 \section{Human--Machine Interaction and Crime}
 
@@ -918,10 +1009,7 @@ Their core argument: it is not possible to understand the nature of crimes carri
 The cyborg-crime concept bridges the previous three categories (with/against/through AI) and points towards a broader theoretical reconceptualisation of criminal agency in the digital age. It challenges criminology to develop frameworks capable of assigning responsibility, assessing harm, and designing interventions in contexts where the boundary between human and machine agency is systematically blurred.
 
 
-% --------------------------------------------------
-\section*{Lecture B --- Measuring Cybercrime: Data Sources and Challenges}
-\addcontentsline{toc}{section}{Lecture B --- Measuring Cybercrime: Data Sources and Challenges}
-% --------------------------------------------------
+\lecturepart{Lecture B --- Measuring Cybercrime: Data Sources and Challenges}
 
 \section{Overview: Crime Data Sources}
 
@@ -1050,9 +1138,9 @@ A growing body of self-report surveys incorporates cybercrime measures. Three ke
 
 \begin{center}
 \begin{tabular}{llllll}
-\hline
+\toprule
 \textbf{Name} & \textbf{Acronym} & \textbf{Country} & \textbf{Frequency} & \textbf{Round} & \textbf{Sample} \\
-\hline
+\midrule
 Offending, Crime & OCJS & UK & Annual, & 2006 & 5,354 respondents \\
 and Justice Survey & & & 2003--2006 & & aged 10--29 \\
 Youth Delinquency & YDS & Netherlands & Quinquennial & 2015 & 1,471 respondents \\
@@ -1061,7 +1149,7 @@ International & ISRD4 & Cross- & 1991/91, & 2021/22 & Varies by country \\
 Self-Report & & national & 2006/08, & & (aged 13--17) \\
 Delinquency Study & & & 2012/19, & & \\
  & & & 2021/22 & & \\
-\hline
+\bottomrule
 \end{tabular}
 \end{center}
 
@@ -1077,18 +1165,805 @@ Delinquency Study & & & 2012/19, & & \\
     \item \textbf{Online harassment}: OCJS --- ``sent email message to someone in order to harass, scare or threaten them''; YDS --- ``threatened someone through text messages, e-mails or in chat boxes''.
 \end{itemize}
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black]
+\begin{keypoint}
 A recurring observation across all three measurement instruments: the dark figure of cybercrime is almost certainly larger than for traditional crime. Victims do not recognise they have been victimised; reporting rates are extremely low; official categories do not map onto cybercrime; and offenders who commit cybercrime often do not perceive their behaviour as criminal. Measuring the true extent of cybercrime remains one of the most significant methodological challenges in contemporary criminology.
-\end{tcolorbox}
+\end{keypoint}
 
 
 % ========================================
-\part{Repeat Violent Victimisation (BJS, 2005--2014)}
+\chapter{Patterns of Online Repeat Victimisation (Correia, 2020)}
+\label{chap:correia}
 % ========================================
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
+\begin{sourcebox}{Reference}
+Sara Giro Correia, \textit{Patterns of online repeat victimisation and implications for crime prevention}, 2020 APWG Symposium on Electronic Crime Research (eCrime), IEEE. HRC School of Law, Swansea University. Data source: crime reports made by individuals to Action Fraud (AF) within three Welsh police forces (Dyfed/Powys, Gwent, South Wales), reference period 1 October 2014 -- 30 September 2016, $n = 10{,}001$.
+\end{sourcebox}
+
+\section{Introduction and Context}
+
+\subsection{Scope of Fraud and Computer Misuse}
+
+Fraud and Computer Misuse (F\&CM) became part of yearly crime estimates produced by the UK Office for National Statistics (ONS) only in 2015, on the basis of the Crime Survey for England and Wales (CSEW). Recent estimates (year ending March 2020) reported approximately \textbf{4.6 million} incidents of fraud and \textbf{876{,}000} incidents of computer misuse, raising the overall crime estimate from about 5.7 million (without F\&CM) to \textbf{10.2 million} estimated crimes. Only a small fraction of these crimes is reported to police: about \textbf{8\%} of frauds and \textbf{2\%} of computer misuse incidents.
+
+Despite low reporting rates, the absolute volume of recorded F\&CM has grown considerably, in part because of the rollout of \textbf{Action Fraud (AF)} as the National Reporting Centre. Following its national rollout in 2013, the volume of recorded frauds increased by over \textbf{160\%} between 2011 and 2013. Victim support services have been decentralised, with competitive bidding for providers funded through the Police and Crime Commissioners (PCCs).
+
+\subsection{Attrition and the `Four Ps' Policing Strategy}
+
+There is considerable \textit{attrition} within the criminal justice system: a small share of AF calls are recorded as crimes (`crimed'), fewer are reviewed for investigation, and fewer still reach courts. Most F\&CM victims therefore receive no meaningful CJS response. The UK \textit{Code of Practice for Victims of Crime} requires that vulnerable and repeat victims be identified and offered adequate support, but research on F\&CM repeat victims is limited and definitions of vulnerability are inconsistent across agencies.
+
+\begin{sidebox}{The `Four Ps' approach}
+F\&CM policing strategy in the UK has four strands, originally drawn from counter-terrorism policing:
+\begin{itemize}
+    \item \textbf{Pursue} --- investigate crimes to enable prosecution.
+    \item \textbf{Prevent} --- prevent people from engaging in F\&CM (awareness of consequences, diversion of talented individuals into legal/ethical hacking).
+    \item \textbf{Protect} --- increase protection for those at risk of (further) victimisation.
+    \item \textbf{Prepare} --- improve resilience to reduce the impact of F\&CM in the future.
+\end{itemize}
+The paper's contribution falls within the \textbf{Protect} strand: targeting those already victimised to prevent re-victimisation.
+\end{sidebox}
+
+\section{Defining and Measuring Repeat Victimisation}
+
+\subsection{Terminology}
+
+Several terms describe the experience of being a crime victim more than once: \textit{revictimisation}, \textit{multiple victimisation}, \textit{repeat victimisation}, \textit{multi-victimisation}, \textit{repetitive victimisation}, \textit{recidivist victimisation}.
+
+\begin{definition}[Repeat victim (CSEW)]
+Someone who was the victim of \textbf{the same crime type more than once} in the previous 12 months (\textit{within crime type victim}).
+\end{definition}
+
+\begin{definition}[Multiple victim (CSEW)]
+Someone who experienced \textbf{more than one crime in the previous 12 months, regardless of crime type} (\textit{across crime type victim}).
+\end{definition}
+
+\begin{definition}[Repeat victim (this study)]
+Because the analysis is restricted to F\&CM, a \textbf{repeat victim} is any individual who reported, within the reference period, more than one fraud, more than one computer misuse incident, or a mix of fraud and computer misuse.
+\end{definition}
+
+\subsection{Incidence, Prevalence and Crime Concentration}
+
+The extent of repeat victimisation can be gauged from CSEW-derived rates:
+
+\begin{itemize}
+    \item \textbf{Incidence Rate (IR)}: estimated average number of incidents per 1{,}000 respondents.
+    \item \textbf{Prevalence Rate (PR)}: estimated percentage of respondents who were victimised (counts victims, not incidents).
+    \item \textbf{Crime Concentration (CC)}: ratio $\text{IR} / \text{PR}$ --- average number of victimisations per victim.
+\end{itemize}
+
+For most crime types, repeat and multiple victimisation imply $\text{IR} > \text{PR}$ and therefore $\text{CC} > 1$.
+
+\begin{datapanel}{Table I --- IR, PR, CC (CSEW, year ending September 2019)}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Crime Category} & \textbf{IR} & \textbf{PR} & \textbf{CC} \\
+\midrule
+Theft from the person          & 0.88  & 0.84 & 1.05 \\
+Robbery                        & 0.32  & 0.30 & 1.07 \\
+Other theft of personal property & 1.44 & 1.32 & 1.09 \\
+Fraud                          & 8.08  & 6.94 & 1.17 \\
+Computer Misuse (CM)           & 2.14  & 1.82 & 1.18 \\
+Fraud \& CM                    & 10.23 & 8.48 & 1.21 \\
+Violence                       & 2.74  & 1.76 & 1.55 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+The concentration of F\&CM is lower than for violent crime but \textbf{higher than for comparable acquisitive offences} (theft from the person, theft of personal property), motivating an empirical study of RV with respect to F\&CM.
+
+\section{Patterns of Repeat Victimisation in Prior Research}
+
+The author summarises four insights from earlier RV literature, used to generate the study's hypotheses.
+
+\subsection{A Small Share of Victims Carries Most of the Crime}
+
+Early work showed that as much as \textbf{14\%} of the population were repeat victims and accounted for \textbf{70.9\%} of all incidents recorded on the British Crime Survey. The average number of crimes experienced by the top 10\% most victimised households rose from \textbf{57\% in 1994} to \textbf{72\% in 2012}, despite the overall drop in crime since the mid-1990s. Reducing RV can therefore prevent a large proportion of all offences from being committed.
+
+\subsection{RV Does Not Happen by Chance}
+
+Failed attempts to fit the distribution of RV to variations of the Poisson model indicate that RV is non-random and is associated with specific demographic characteristics. The characteristics that distinguish repeat from one-time victims tend to be the same as those that distinguish victims from non-victims (e.g., females being significantly more likely to be both one-time and repeat victims of domestic abuse).
+
+\subsection{The `Flag' versus `Boost' Conceptualisation of Vulnerability}
+
+\begin{itemize}
+    \item \textbf{Flag account}: previous victimisation \emph{indicates} pre-existing vulnerability factors that made the person a victim in the first place.
+    \item \textbf{Boost account}: being victimised \emph{itself} increases vulnerability to further victimisation.
+\end{itemize}
+
+In the RV literature `vulnerability' is often equated with a higher probability of victimisation. Identifying victims as `vulnerable' on the basis of demographic characteristics alone is divisive and yields too many false positives to be useful in practice. Identifying \textbf{repeat victims} is a narrower and more precise indicator of relative vulnerability.
+
+\subsection{Hot Spots, Hot Dots and Near-Repeats}
+
+A key finding from environmental criminology is that high-crime areas (`hot spots') are typically distinguished not by more individuals being victimised, but by \textbf{more victims being repeatedly victimised} (`hot dots'). This has motivated `near-repeat' research, which predicts where crime will occur next on the basis of where it has previously occurred.
+
+\textit{Limitation for F\&CM}: the spatial element underpinning near-repeats is largely irrelevant for crimes with a strong online component. Even when offline elements are involved (e.g., cold-calling combined with online banking takeover), the physical environment plays only a marginal role in victim selection. Therefore RV is likely a more useful concentration metric than near-repeats for F\&CM.
+
+\subsection{Time-Course}
+
+Across burglary, property crime, racial attacks, domestic violence, and computer misoffences, RV has been shown to occur \textbf{relatively soon after the first victimisation}: the risk of RV is highest immediately after victimisation.
+
+\section{Method}
+
+\subsection{Sample}
+
+The data are crime reports made to Action Fraud by victims within four Welsh police forces (Dyfed/Powys, Gwent, North Wales, South Wales) between \textbf{1 October 2014 and 30 September 2016}. After de-duplication ($n = 147$ duplicates removed), the analytic sample was $n = 17{,}049$. Of these, $n = 11{,}844$ pertained to individual victims (rather than businesses or other corporate entities), divided into eight three-month periods (four quarters per year).
+
+For the RV analysis, only reports from \textbf{three of the four forces} (Dyfed/Powys, Gwent, South Wales) were used: $n = 10{,}001$. North Wales was excluded because of high missingness in linkage variables, which skewed the linkage results.
+
+\subsection{Collection, Linkage and Anonymisation}
+
+Reports were collated from the monthly extracts uploaded by the National Fraud Intelligence Bureau (NFIB) onto the police's NicheRMS system and extracted by the Southern Wales Regional Organised Crime Unit (SW-ROCU). Data were processed under strict access controls within secure police premises; \textbf{de-duplicative data linkage was applied before anonymisation}, which is what made repeat-victim identification possible.
+
+The reports were linked using a combination of \textbf{deterministic and probabilistic} record linkage, implemented with the R package \texttt{RecordLinkage}. Linkage quality was tested using \textbf{precision} and \textbf{recall (sensitivity)} on a clerical review of 100 pairs of matches; both were estimated at 100\%. The procedure was tuned to minimise false positives and may therefore have produced false negatives (missed matches).
+
+\subsection{Limitations of Action Fraud Data}
+
+\begin{itemize}
+    \item \textbf{Under-reporting of F\&CM} (only 8\% of fraud and 2\% of CM are reported to police).
+    \item \textbf{Home Office Counting Rules (HOCR)} affect how RV is measured: in some categories, several incidents over time count as one crime (e.g., advance-fee fraud where the victim sends money to the fraudster repeatedly), while in others (e.g., hacking) each compromised account counts as a separate crime.
+    \item \textbf{Left and right censoring}: the two-year window means earlier or later events that would constitute repeats may fall outside the observation period.
+    \item \textbf{External events}: an Action Fraud institutional crisis between Q4 of 2014--2015 and Q1 of 2015--2016 sharply reduced the volume of recorded reports.
+\end{itemize}
+
+\section{Results}
+
+\subsection{Extent of Repeat Victimisation}
+
+Of the $n = 10{,}001$ incidents reported by individual victims in the three Welsh forces, linkage identified \textbf{350 individual repeat victims}, who reported \textbf{787 crimes} between them. Therefore, around \textbf{8\% of crimes} reported by individual victims (and recorded) were attributable to repeat victims.
+
+\begin{datapanel}{Table II --- Reports by Crime Group}
+$F$ = number of fraud reports; $CM$ = number of computer misuse reports; $I\%$ = share of incidents; $V\%$ = share of victims.
+\begin{center}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{reports} & \textbf{F} & \textbf{I\%(F)} & \textbf{V\%(F)} & \textbf{CM} & \textbf{I\%(CM)} & \textbf{V\%(CM)} \\
+\midrule
+1 & 8527 & 92.72 & 96.53 & 687 & 85.45 & 93.99 \\
+2 & 533  & 5.80  & 3.02  & 59  & 7.34  & 4.04 \\
+3 & 88   & 0.96  & 0.33  & 20  & 2.49  & 0.91 \\
+4 & 23   & 0.25  & 0.07  & 9   & 1.12  & 0.31 \\
+5 & 5    & 0.05  & 0.01  & 20  & 2.49  & 0.55 \\
+6 & 21   & 0.23  & 0.04  & 9   & 1.12  & 0.21 \\
+\midrule
+total ($n>1$) & 670 & 7.29 & 3.47 & 117 & 14.56 & 6.02 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+\begin{itemize}
+    \item Approximately \textbf{3\% of fraud victims} reported \textbf{7\% of recorded frauds}.
+    \item Approximately \textbf{6\% of CM victims} reported \textbf{15\% of CM crimes}.
+    \item The difference between fraud and CM is statistically significant ($\chi^2(1) = 52.86$, $p < 0.01$); the odds of a CM victim being a repeat victim are \textbf{2.17} times those of a fraud victim (small-to-medium effect).
+\end{itemize}
+
+This difference is plausibly driven by HOCR rather than by a genuinely higher rate of RV for CM.
+
+\paragraph{Differences across Welsh forces.} A statistically significant difference exists in the proportion of repeat versus one-time reports across the three forces ($\chi^2(2) = 16.26$, $p < 0.01$), but the effect size is negligible (Cramér's V $= 0.04$).
+
+\begin{datapanel}{Table III --- Reports by Force and Victim Type}
+\begin{center}
+\begin{tabular}{llcc}
+\toprule
+\textbf{Force} & \textbf{Victim Type} & \textbf{N} & \textbf{St. Residuals} \\
+\midrule
+Dyfed/Powys & Once   & 2210 & $-3.60^{**}$ \\
+            & Repeat & 234  & $3.60^{**}$ \\
+Gwent       & Once   & 2200 & $-0.57$ \\
+            & Repeat & 195  & $0.57$ \\
+South Wales & Once   & 4804 & $3.58^{**}$ \\
+            & Repeat & 358  & $-3.58^{**}$ \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize $^{**}$ statistically significant at $p < 0.01$.}
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+The standardised residuals show that reports in \textbf{Dyfed/Powys} are significantly more likely to come from repeat victims, while those in \textbf{South Wales} are significantly more likely to come from one-time victims.
+
+\subsection{Repeat Victim Characteristics}
+
+\subsubsection*{Gender}
+
+More incidents were reported by male repeat victims than by female repeat victims. The difference is statistically significant ($\chi^2(1) = 14.05$, $p < 0.01$) but the effect size is negligible (Cramér's V $= 0.03$). The odds of an incident being reported by a male repeat victim are only \textbf{1.33} times those of an incident reported by a female victim.
+
+\subsubsection*{Ethnicity}
+
+No significant difference was found between one-time and repeat victims in terms of ethnicity ($\chi^2(1) = 0.067$, $p > 0.5$). This result is constrained by \textbf{34\% missing values} for ethnicity and by the need to collapse to a binary White vs.\ Black and Minority Ethnic (BME) classification (small numbers in non-White categories).
+
+\subsubsection*{Age (the largest effect)}
+
+Repeat victims are typically \textbf{older} than one-time victims:
+
+\begin{itemize}
+    \item Repeat victims: median age \textbf{57}, mean age \textbf{53.6}.
+    \item One-time victims: median age \textbf{50}, mean age \textbf{49.93}.
+    \item Wilcoxon rank-sum test: $W = 3{,}197{,}004$, $p < 0.001$.
+\end{itemize}
+
+The author notes that linkage may have introduced a bias towards older victims, but date of birth (DOB) was a key linkage variable, and proxy reports on behalf of older victims (by family/friends) would, if anything, increase missingness/inaccuracy of DOB for older victims. The findings are therefore taken as indicative of \textbf{a real overlap between RV and older age}.
+
+\begin{sourcebox}{A broader view of vulnerability}
+The negative impacts of F\&CM on older victims (wellbeing, family relationships, indirect financial loss) may be associated with factors beyond the crime itself, such as social isolation or economic disadvantage. \textbf{Vulnerability should be conceptualised more broadly than the increased likelihood of (re-)victimisation alone.}
+\end{sourcebox}
+
+\subsubsection*{Proxy reports}
+
+It had been hypothesised that reports made by a proxy on behalf of the victim would be associated with greater vulnerability and therefore with RV. The data show the \textbf{opposite}:
+
+\begin{itemize}
+    \item \textbf{11\%} of one-time victims were flagged as having a proxy report.
+    \item \textbf{6\%} of repeat victims had a proxy report.
+    \item Difference: $\chi^2(1) = 13.58$, $p < 0.01$, Cramér's V $= 0.04$ (negligible).
+\end{itemize}
+
+This is consistent with proxy reports being associated with broader vulnerability factors that are not captured by RV measures alone.
+
+\subsection{Time-Course of Repeat Victimisation}
+
+The time-course analysis is limited to consecutive reports within 12 months ($n = 406$), excluding the small minority of cases ($n = 31$) with a time difference greater than 366 days.
+
+\subsubsection*{Inter-report time}
+
+The distribution of the time elapsed between consecutive incidents is concentrated at the lower end of the scale, with the appearance of an \textbf{exponential decrease}:
+
+\begin{itemize}
+    \item \textbf{15.5\%} of all linked (repeat) incidents were reported \textbf{on the same day} ($n = 122$).
+    \item Including same-day reports: mean inter-report difference $= 83$ days, median $= 12$ days.
+    \item Excluding same-day reports: mean $= 115$ days, median $= 40$ days.
+    \item Mean difference between first and last report by an individual repeat victim $= 137$ days, median $= 49$ days (excluding same-day).
+\end{itemize}
+
+\begin{actionboxT}{Crime prevention implication}
+Interventions aimed at protecting victims from re-victimisation should ideally take place \textbf{within two weeks to one month of the first report}.
+\end{actionboxT}
+
+The exponential pattern holds across the quarters of the two-year period, although dispersion grows in year two. This is consistent with \textbf{left-censoring} (earlier in the window, fewer prior events can be observed) and with the AF crisis between Q4 (2014--2015) and Q1 (2015--2016) that depressed the volume of recorded reports.
+
+\begin{datapanel}{Table IV --- Time difference between consecutive reports, per quarter}
+\begin{center}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Year} & \textbf{Quarter} & \textbf{n} & \textbf{Mean (diff)} & \textbf{Median (diff)} & \textbf{Max (diff)} \\
+\midrule
+2014--2015 & Q1 & 43 & 4.02   & 0    & 45 \\
+           & Q2 & 73 & 12.16  & 2    & 136 \\
+           & Q3 & 85 & 34.48  & 7    & 208 \\
+           & Q4 & 46 & 43.43  & 5    & 306 \\
+2015--2016 & Q1 & 23 & 134.22 & 122  & 338 \\
+           & Q2 & 45 & 142.71 & 97   & 363 \\
+           & Q3 & 36 & 81.61  & 25.5 & 357 \\
+           & Q4 & 55 & 67.33  & 30   & 338 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+\subsubsection*{Number of repeats}
+
+A Kruskal--Wallis rank-sum test confirms a significant overall difference in mean inter-report time across groups defined by the number of reports made ($\chi^2(5) = 1369.8$, $p < 0.01$). Pairwise comparisons (\texttt{pairwise.wilcox.test}) indicate that only the group with $n_\text{reports} = 5$ has a mean significantly different from the groups with 2--4 reports ($p < 0.05$). Combined with the high dispersion of the data, this suggests that \textbf{the number of repeat reports has little practical impact on the time-course of RV}.
+
+\begin{datapanel}{Table V --- Time difference grouped by number of reports made}
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+$n_\text{reports}$ & \textbf{Mean (diff)} & \textbf{Median (diff)} & \textbf{n} \\
+\midrule
+2 & 93 days & 35 days & 296 \\
+3 & 77 days & 45 days & 72 \\
+4 & 79 days & 83 days & 24 \\
+5 & 17 days & 28 days & 20 \\
+6 & 39 days & 28 days & 25 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+\subsection{Crime Categories and Sequences}
+
+\subsubsection*{Differences in RV across crime categories}
+
+Differences in the extent of RV across crime categories are statistically significant ($\chi^2(1) = 52.86$, $p < 0.01$, Cramér's V $= 0.11$, small effect). Standardised residuals indicate that:
+
+\begin{itemize}
+    \item \textbf{Advance-fee fraud} and \textbf{Hacking}: more likely to be reported by \textbf{repeat} victims.
+    \item \textbf{Consumer fraud} and \textbf{Other fraud}: more likely to be reported by \textbf{one-time} victims.
+\end{itemize}
+
+\begin{datapanel}{Table VI --- Repeat vs one-time reports by crime category}
+\begin{center}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Crime Category} & \textbf{Victim Type} & \textbf{N} & \textbf{Prop} & \textbf{St. Residuals} \\
+\midrule
+Advance-fee fraud      & Once   & 190 & 0.21 & $-2.95^{**}$ \\
+                       & Repeat & 7   & 0.25 & $2.95^{**}$ \\
+Card and Banking fraud & Once   & 445 & 0.05 & $2.43$ \\
+                       & Repeat & 23  & 0.03 & $-2.43$ \\
+Consumer fraud         & Once   & 427 & 0.46 & $2.85^{**}$ \\
+                       & Repeat & 9   & 0.41 & $-2.85^{**}$ \\
+Hacking                & Once   & 439 & 0.05 & $-9.76^{**}$ \\
+                       & Repeat & 102 & 0.13 & $9.76^{**}$ \\
+Investment fraud       & Once   & 174 & 0.02 & $-1.76$ \\
+                       & Repeat & 22  & 0.03 & $1.76$ \\
+Malware, virus, (D)DoS & Once   & 248 & 0.03 & $1.32$ \\
+                       & Repeat & 15  & 0.02 & $-1.32$ \\
+Other fraud            & Once   & 148 & 0.16 & $4.19^{**}$ \\
+                       & Repeat & 0   & 0.10 & $-4.19^{**}$ \\
+Services fraud         & Once   & 242 & 0.03 & $-0.07$ \\
+                       & Repeat & 21  & 0.03 & $0.07$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize $^{**}$ residual statistically significant at $p < 0.01$.}
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+\subsubsection*{Sequence of crimes (change matrix)}
+
+To reduce small-cell problems, several categories were combined: Malware/Virus/(D)DoS was merged with Hacking; Other and Services fraud were collapsed into Computer Misuse (CM); Card and Banking fraud was combined with Investment fraud.
+
+\begin{datapanel}{Table VII --- Change matrix of consecutive reports (count, row \%, st.\ residuals)}
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{From\textbackslash To} & \textbf{Adv.-fee} & \textbf{Card,Bank \& Inv.} & \textbf{Consumer} & \textbf{Hacking} & \textbf{Other} \\
+\midrule
+Advance-fee   & 66 & 7 & 23 & 3 & 13 \\
+              & 58.93\% & 6.25\% & 20.54\% & 2.68\% & 11.61\% \\
+              & $7.54^{**}$ & $0.13$ & $-2.9^{**}$ & $-3.8^{**}$ & $-0.9$ \\
+\midrule
+Card, Bank \& Inv. & 8 & 9 & 2 & 1 & 4 \\
+              & 33.33\% & 37.50\% & 8.33\% & 4.17\% & 16.67\% \\
+              & $0.93$ & $6.34^{**}$ & $-2.32$ & $-1.59$ & $0.23$ \\
+\midrule
+Consumer      & 21 & 6 & 125 & 15 & 12 \\
+              & 11.73\% & 3.35\% & 69.83\% & 8.38\% & 6.70\% \\
+              & $-3.36^{**}$ & $-1.42$ & $7.13^{**}$ & $-3$ & $-2.83^{**}$ \\
+\midrule
+CM            & 3 & 1 & 6 & 57 & 2 \\
+              & 4.35\% & 1.45\% & 8.70\% & 82.61\% & 2.90\% \\
+              & $-3.33^{**}$ & $-1.53$ & $-3.89^{**}$ & $12.73^{**}$ & $-2.58$ \\
+\midrule
+Other         & 7 & 3 & 7 & 2 & 34 \\
+              & 13.21\% & 5.66\% & 13.21\% & 3.77\% & 64.15\% \\
+              & $-1.61$ & $-0.09$ & $-2.87^{**}$ & $-2.43$ & $9.3^{**}$ \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize $^{**}$ residual statistically significant at $p < 0.01$.}
+\end{tabular}
+\end{center}
+\end{datapanel}
+
+The values along the main diagonal are large, and a chi-squared test confirms a significant pattern in consecutive-crime combinations ($\chi^2(16) = 511.20$, $p < 0.01$, Cramér's V $= 0.54$).
+
+\begin{actionbox}
+\textbf{Key result.} A repeat F\&CM crime is significantly more likely to be \textbf{of the same general type} as the crime that preceded it.
+\end{actionbox}
+
+\section{Discussion and Implications for Crime Prevention}
+
+\subsection{Headline Findings}
+
+\begin{itemize}
+    \item Roughly \textbf{4\% of victims report 8\% of crimes}; considered separately, \textbf{3\% of fraud victims report 7\% of recorded frauds} and \textbf{6\% of CM victims report 15\% of CM crimes}. The fraud--CM gap is plausibly an artefact of HOCR.
+    \item Categories with elevated RV: \textbf{advance-fee fraud} and \textbf{hacking}. This is especially striking for advance-fee fraud, since HOCR favour recording multiple fraudster-driven payments as a single crime --- in spite of which RV is still observed.
+    \item A statistically significant force-level difference is driven by \textbf{Dyfed/Powys}, which has a higher proportion of repeat victims and an older typical victim profile (mean age 55, median 57 in Dyfed/Powys vs.\ 50 and 48 in Gwent and South Wales).
+\end{itemize}
+
+\subsection{Counting Rules and the Direction of Bias}
+
+Recording practices may simultaneously \textbf{over-estimate} RV for CM and \textbf{under-estimate} it for fraud:
+
+\begin{itemize}
+    \item \textbf{CM (e.g., hacking)}: each compromised account/device is recorded as a separate crime, even if the incidents happen on the same day.
+    \item \textbf{Fraud (e.g., romance / advance-fee)}: the modus operandi often involves building trust, escalating intimacy and repeatedly requesting money. Multiple incidents are commonly recorded together as one crime.
+\end{itemize}
+
+Even when victims report multiple crimes on the same day, there is still an opportunity to identify them as repeat victims and direct support accordingly.
+
+\subsection{Profile of the Repeat F\&CM Victim}
+
+The analysis suggests \textbf{male} and \textbf{older} victims are at higher risk of repeat F\&CM victimisation, while ethnicity and proxy reports show no significant association (within the limits of the data). This profile is different from typical repeat victims of violent crime and domestic violence, but is in line with the general F\&CM victim profile, supporting the view that \textit{the characteristics distinguishing repeat from one-time victims tend to mirror those distinguishing victims from non-victims}.
+
+\subsection{Time-Course and the Two-Week--One-Month Window}
+
+In line with prior research on burglary, racial attacks, domestic violence and computer misuse, repeat F\&CM victimisation occurs relatively soon after first victimisation. Crime-prevention activity is therefore most effective \textbf{within two weeks to one month} of the first report. The scope for intervention is, however, reduced by the \textbf{15.5\%} of repeats recorded on the same day as the preceding incident.
+
+\subsection{The Limits of an RV Lens}
+
+\begin{itemize}
+    \item RV measurement is shaped by definitions and recording practices; both can over- or under-estimate the phenomenon.
+    \item RV is a \textbf{narrower concept than vulnerability}. Whether a victim is re-victimised says little about their support needs or their ability to recover from victimisation.
+    \item A framework of F\&CM vulnerability is needed that goes beyond risk of re-victimisation and accounts for victims' wider needs.
+\end{itemize}
+
+\section{Conclusion}
+
+Repeat victimisation is a complex phenomenon affected by under-reporting, recording rules and methodological constraints in linkage. Even so, this analysis demonstrates that identifying and analysing patterns of RV in reported crime produces insights of \textbf{theoretical} interest and of \textbf{practical} value to the planning and targeting of crime-prevention activities.
+
+\begin{itemize}
+    \item Identifying RV could direct limited resources towards areas where demand for crime prevention and victim support is greatest, both \textit{across} forces and \textit{within} forces (towards crime types where re-victimisation is most common and victims most vulnerable).
+    \item In a context where only \textbf{15\%} of recorded crimes were `actioned' in any way (reviewed by NFIB and, where applicable, referred to a police force or partner agency for response), focusing on prevention and protecting victims from re-victimisation is possibly the most effective crime-reduction strategy available.
+    \item Identifying and responding to repeat victims of F\&CM may also provide a clear and meaningful measure of law-enforcement performance.
+\end{itemize}
+
+\section{Summary}
+
+\begin{itemize}
+    \item In a two-year sample of $n = 10{,}001$ AF reports from three Welsh forces, \textbf{350 repeat victims} ($\approx 4\%$) accounted for \textbf{787 crimes} ($\approx 8\%$ of recorded individual-victim crimes).
+    \item Approximately 3\% of fraud victims reported 7\% of frauds; approximately 6\% of CM victims reported 15\% of CM crimes; CM victims have $\approx 2.17\times$ the odds of being repeat victims, plausibly an HOCR artefact.
+    \item \textbf{Older age} is the strongest correlate of repeat F\&CM victimisation; gender shows a small but significant male skew; ethnicity shows no significant association; proxy reports are \textit{inversely} associated with RV.
+    \item The inter-report time distribution is approximately exponential (median 12 days including same-day reports, 40 days excluding); \textbf{15.5\%} of repeats occur on the same day; intervention is most effective within \textbf{two weeks to one month} of the first report.
+    \item \textbf{Advance-fee fraud} and \textbf{hacking} show elevated RV; consumer and other fraud are more typical of one-time victims.
+    \item Repeat F\&CM crimes are significantly more likely to be of the \textbf{same general type} as the preceding crime ($\chi^2(16) = 511.20$, $p < 0.01$, Cramér's V $= 0.54$).
+    \item RV is a useful but \textbf{narrower} concept than vulnerability; an F\&CM-specific vulnerability framework is needed to address victims' wider needs.
+\end{itemize}
+
+
+% ========================================
+\part{Profiling, Victimisation, and Prevention}
+% ========================================
+
+% ========================================
+\chapter{Profiling Cybercriminals}
+% ========================================
+
+\section{Who Are Cybercriminals? Findings from the Scientific Literature}
+
+\subsection{From Stereotypes to Research Questions}
+
+Popular depictions of cybercriminals revolve around a narrow stereotype: ``nerds''---bright but socially inept individuals with very high IQs and advanced technical knowledge, predominantly male, usually teenagers, never violent, and all neatly fitting one profile. Rogers (2011) argues that this image does not survive empirical scrutiny: cybercriminals exhibit \textbf{no unique characteristics} that would mark them off as a distinct, homogeneous population.
+
+Once the stereotype is set aside, different studies on the profile of cybercriminals address different research questions, including:
+\begin{itemize}
+    \item What is the profile of the \textit{international} cybercriminal?
+    \item Are cybercriminals intellectually superior to traditional criminals?
+    \item What are their motives?
+\end{itemize}
+
+\subsection{A Framework for Analysis: The Research Process}
+
+Profiling studies follow a general empirical-research workflow that frames the studies discussed below:
+\[
+\text{Choose Topic} \rightarrow \text{Focus Research Question} \rightarrow \text{Design Study} \rightarrow \text{Collect Data} \rightarrow \text{Analyse Data} \rightarrow \text{Interpret Data} \rightarrow \text{Inform Others}.
+\]
+
+\subsection{Profiling International Cyber Offenders in the US (Hadzhidimova \& Payne, 2019)}
+
+Hadzhidimova and Payne (2019) focus on the characteristics of \textbf{international} cyber offenders prosecuted in the United States.
+
+\paragraph{Methodology.} Data drawn from U.S.\ Department of Justice press releases between January 2009 and December 2017; sample of \textbf{225 offenders} who were citizens of a country other than the US; statistical analysis.
+
+\paragraph{Findings.}
+\begin{itemize}
+    \item Average age: \textbf{34.78 years}; \textbf{94\%} male.
+    \item Nationality: mainly \textbf{China (26.7\%)}, \textbf{Romania (11.6\%)}, \textbf{Russia (7.1\%)}.
+    \item Group offending: more than two-thirds (\textbf{68.4\%}) of offenders worked in groups.
+    \item Most committed offence types: \textbf{cyber fraud} and \textbf{hacking}.
+    \item Sentencing: prison sentences predominate; sentence length is significantly higher for African citizens.
+\end{itemize}
+
+\subsection{Cybercriminals' Motives and Drives}
+
+\paragraph{Taylor (1999) --- six drives.} Addiction, curiosity, boredom, power, recognition, politics.
+
+\paragraph{Rogers (2006).} Divides cybercriminals (both cyber-dependent and cyber-enabled) into \textbf{eight groups}, integrating criminological typology with motivational analysis.
+
+\paragraph{Brewster (2015) --- hackers' motivations.} Groups hackers' motives into the following categories:
+\begin{itemize}
+    \item Political; ideological; commercial; emotional; informative and promotional; financial; personal; exploitation.
+\end{itemize}
+
+\subsection{Intellectual Capabilities: Cybercriminals vs.\ Traditional Criminals vs.\ Non-Criminals (Schiks, 2022)}
+
+\paragraph{Research question.} Do cybercriminals have higher intellectual capabilities than traditional criminals or the general population? The study focuses on \textbf{cyber-dependent} criminals.
+
+\paragraph{Methodology.} Data from Statistics Netherlands; comparison of \textbf{CITO test} scores across three matched groups of \textbf{143 individuals} each: cybercriminals, traditional criminals, non-criminals.
+
+\paragraph{Results.}
+\begin{itemize}
+    \item Cybercriminals score \textbf{significantly higher} on the CITO test than traditional criminals.
+    \item Cybercriminals score \textbf{significantly lower} on the CITO test than non-criminals.
+\end{itemize}
+
+\begin{keypoint}
+The finding nuances the ``intellectually superior'' stereotype: cybercriminals outperform other offenders cognitively, but do not exceed the non-criminal baseline.
+\end{keypoint}
+
+\subsection{Cybercriminals and Traditional Criminals over the Life Course (Krananberg, 2018)}
+
+Krananberg (2018) analyses \textbf{cyber-offending over the life course}, focusing on cyber-dependent crimes. The study examines the extent to which life circumstances in both private and professional life---household composition, employment, education---are differentially related to whether an individual commits cybercrime or traditional crime.
+
+\paragraph{Methodology.} Analysis of longitudinal police data and population registration data of all suspects of cybercrime and traditional crime in the Netherlands, 2000--2012.
+
+\paragraph{Household composition effects (similar across cyber- and traditional offending).}
+\begin{itemize}
+    \item \textbf{Cohabiting} makes an individual \textbf{less likely} to commit cybercrime than when they live alone.
+    \item Compared to living alone, \textbf{single-parenthood} \textbf{increases} the likelihood of committing both cybercrime and traditional crime. Interpretation: having a partner in the household acts as a \textbf{source of informal social control}.
+\end{itemize}
+
+\paragraph{Employment and education.} \textbf{Not} statistically significantly related to cyber-offending, whereas they reduce the likelihood of traditional offending. The protective effect of work and study against crime does not extend to cybercrime.
+
+\subsection{The Hybrid Criminal (Hayward \& Maas, 2021)}
+
+The figure of the \textbf{hybrid criminal} emerges from the interaction between human being and machine. Hayward and Maas (2021) propose three categories that re-frame the AI--crime relationship:
+\begin{itemize}
+    \item Crimes \textbf{with} artificial intelligence (AI as tool);
+    \item Crimes \textbf{against} AI (AI as target);
+    \item Crimes \textbf{by} AI (AI as autonomous agent).
+\end{itemize}
+
+\section{Methodological Issues}
+
+Bada and Nurse (2021) provide a meta-analysis of the existing literature on cybercriminal profiling and identify the following methodological shortcomings, which explain why robust studies on the profile of cybercriminals are still lacking:
+
+\begin{enumerate}
+    \item \textbf{No common definitions}: profiles are sometimes drawn through a general lens rather than referring to specific types of cybercriminals.
+    \item \textbf{No standard approach} to studying criminal behaviour online: research focuses mainly on individual cases of cybercriminals rather than systematic comparison.
+    \item \textbf{Limited research on personality traits} associated with online criminal behaviour.
+    \item \textbf{No data, or great difficulty in accessing data}: a structural obstacle to large-scale empirical work.
+    \item \textbf{Limited focus} (mainly on hackers); overall, perpetrators of \textbf{cyber-assisted crimes} are not studied.
+\end{enumerate}
+
+
+% ========================================
+\chapter{Cyber-Criminal Associations and Cyber-Organised Criminals}
+% ========================================
+
+\section{Cyber-Criminal Associations}
+
+\subsection{Cooperation Patterns Among Cybercriminals}
+
+Compared to traditional crime, links between perpetrators of \textbf{cyber-dependent crimes} are \textbf{less likely} to result in the exchange of criminal information and in crimes committed in association. The classical criminological intuition that offenders cluster into stable groups holds only weakly online.
+
+Nevertheless, \textbf{subcultural social ties} do exist between hackers, who treat one another as ``colleagues'' even in the absence of formal criminal associations. Three recurring examples of online criminal subcultures are:
+\begin{enumerate}
+    \item the modern \textbf{hacker} subculture;
+    \item the \textbf{prostitution client} subculture;
+    \item the \textbf{extremist group} subculture.
+\end{enumerate}
+
+When cybercriminal associations do form, they remain comparatively uncommon and arise in four ways (the first two being predominant):
+\begin{enumerate}
+    \item Exclusively \textbf{offline} social contacts.
+    \item Offline social contacts \textbf{plus} an online forum used for recruitment.
+    \item \textbf{Online forums combined with offline} social contacts for recruitment.
+    \item Exclusively \textbf{online} forums.
+\end{enumerate}
+
+\subsection{Focus on the Violent Extremist Subculture (Gaudette, Scrivens \& Venkatesh, 2022)}
+
+Gaudette, Scrivens and Venkatesh (2022), \textit{The Role of the Internet in Facilitating Violent Extremism: Insights from Former Right-Wing Extremists}, address two research questions:
+\begin{enumerate}
+    \item What is the link between the Internet and violent extremism?
+    \item What are the interactions between the on- and offline worlds of violent extremists?
+\end{enumerate}
+
+\paragraph{Methodology.}
+\begin{enumerate}
+    \item Interview guide developed in consultation with stakeholders.
+    \item Recruitment of \textbf{former right-wing extremists} as study participants.
+\end{enumerate}
+
+\paragraph{Key results.}
+\begin{itemize}
+    \item \textbf{Exposure}: about \textbf{one third} had their first contact with extreme violence (EV) as a result of accessing radical right-wing content online; individuals encountered in the \textbf{offline} world also played a key role; \textbf{white-power music} was the most popular form of online content; a recurring driver was the wish ``to be part of something''.
+    \item \textbf{Immersion}: the Internet \textbf{facilitates the process of radicalisation} by immersing participants in extreme right-wing content and a network of like-minded individuals; \textbf{seasoned members} play a key role.
+    \item \textbf{Interactions between on- and offline worlds} occur across three dimensions:
+    \begin{itemize}
+        \item \textit{Activities}: forums, chatrooms and social media sites are used to advertise events held in the offline world; digital platforms support recruitment and contacts at the local level.
+        \item \textit{Identity}: online personas reinforce and project offline group identity.
+        \item \textit{Security and surveillance}: members manage operational security across both environments.
+    \end{itemize}
+\end{itemize}
+
+\section{Cyber-Organised Crime}
+
+\subsection{Moral Panic or Reality?}
+
+A central debate is whether cyber-organised crime is a documented phenomenon or a case of \textbf{moral panic}. The following observations frame the discussion:
+\begin{itemize}
+    \item Public and policy narratives often assume a \textbf{convergence between organised crime (OC) and cybercrime} without strong empirical evidence.
+    \item Many cybercrime acts require a high degree of \textbf{organisation and specialisation}, so the level of involvement of OC groups in cybercrime is likely to be substantial.
+    \item \textbf{McGuire (2012)}, based on a large sample of cases, found that \textbf{up to 80\%} of cybercrime could be the result of organised activity.
+    \item This does \textbf{not} imply that the groups involved resemble traditional, hierarchical OC structures, or that they commit \textbf{exclusively} digital crime.
+    \item \textbf{Wall (2015)} describes cyber-organised crime as having a \textbf{``flat'' structure} and being better characterised as an \textbf{``assembly''} rather than an organisation --- a \textit{dis-organised} model.
+\end{itemize}
+
+\subsection{McGuire's Classification}
+
+McGuire proposes a classification of criminal groups that engage in cyber organised crime, structured by the share of online versus offline activity.
+
+\begin{itemize}
+    \item \textbf{Type I --- Largely online activities}
+    \begin{itemize}
+        \item \textbf{Swarms} (e.g.\ ``hacktivist'' groups): loose, decentralised collectives mobilised around shared causes.
+        \item \textbf{Hubs} (e.g.\ ``scareware'' operations): more coordinated, centred on a core that organises distributed activity.
+    \end{itemize}
+    \item \textbf{Type II --- Both online and offline activities}
+    \begin{itemize}
+        \item \textbf{Clustered hybrids} (e.g.\ ``carding'' forums and skimmers): tightly grouped operations combining online forums with offline action.
+        \item \textbf{Extended hybrids} (e.g.\ phone theft and online trading): wider networks bridging multiple physical and digital nodes.
+    \end{itemize}
+    \item \textbf{Type III} (extension to McGuire's original two types): groups perpetrating activities that are \textbf{predominantly offline} but increasingly intersect with or are mediated through digital environments.
+\end{itemize}
+
+\subsection{Further Studies: Traditional OC Online (Wang, Su \& Wang, 2021)}
+
+A complementary research question is: \textit{how do traditional OC groups run their offline business on the Internet?} Wang, Su and Wang (2021), \textit{Organized Crime in Cyberspace: How Traditional Organized Criminal Groups Exploit the Online Peer-to-Peer Lending Market in China} (\textit{British Journal of Criminology}, 61, 303--324), examine this question through the case of traditional Chinese OC groups exploiting online \textbf{peer-to-peer (P2P) lending} platforms --- an empirical illustration of McGuire's Type II/III dynamics: offline criminal structures projecting their business model onto a digital marketplace.
+
+
+% ========================================
+\chapter{Profiling Cyber-Victims}
+% ========================================
+
+\section{What Is Victimology?}
+
+\begin{definition}[Victimology]
+The \textbf{scientific study of crime victims}. The term was first used in 1947 by B.\ Mendelsohn. As a subfield of criminology, victimology studies the \textbf{causes/etiology} of victimisation, its \textbf{consequences}, and how criminal justice systems and other actors \textbf{deal with victims}.
+\end{definition}
+
+The orientation of the field has shifted over time:
+\begin{itemize}
+    \item \textbf{Initial focus} on the \textbf{role of the victim}: notions of victim precipitation, facilitation, and provocation.
+    \item \textbf{1960s --- more sympathetic view} of crime victims, driven by the victims' rights movements.
+    \item Contributions of the victims' rights movements established victims as bearers of procedural and substantive rights.
+    \item \textbf{Victimology today} integrates etiology, consequences, criminal-justice response and victim support.
+\end{itemize}
+
+\section{From Victimology to Cyber-Victimology}
+
+\subsection{Unique Traits of Cyber-Victimisation}
+
+Cybercrime victimisation has features that distinguish it from offline victimisation:
+\begin{itemize}
+    \item It \textbf{defies the logic of physical proximity}: offender and victim need not share a physical space.
+    \item \textbf{Automation} makes it possible to victimise several persons with the same act, generating large numbers of victims at low marginal cost.
+\end{itemize}
+
+The ``human'' element and harm of cybercrime was recognised only in \textbf{2001}, by the \textbf{Council of Europe Convention on Cybercrime}.
+
+\subsection{Typology of Cyber-Victimisation (Jaishankar, 2012/2013)}
+
+Jaishankar (2012, 2013) proposes the following classification of cybercrimes by target:
+\begin{enumerate}
+    \item Cybervictimisation of \textbf{governments};
+    \item Cybervictimisation of \textbf{corporations};
+    \item Cybervictimisation of \textbf{individuals} (interpersonal cybervictimisation);
+    \item \textbf{Victimless crimes}.
+\end{enumerate}
+
+\section{Measuring Cybercrime through the Victims' Lens}
+
+\subsection{Victimisation Surveys and Cybercrime (Reep-van den Bergh \& Junger, 2018)}
+
+Reep-van den Bergh and Junger (2018), \textit{Victims of cybercrime in Europe: a review of victim surveys} (\textit{Crime Science}, 7:5), address the question: \textit{what about cybercrime victimisation surveys?}
+
+\paragraph{Objective.} Map existing cyber-victimisation surveys in Europe and provide estimates of \textbf{annual prevalence rates} (number of victims per population) for \textbf{six cybercrimes}.
+
+\paragraph{Methodology.} Definition of inclusion criteria for surveys; search in databases and on the Internet, in the grey literature, and through contacts with national statistical offices.
+
+\paragraph{Results.}
+\begin{itemize}
+    \item \textbf{9 surveys} identified.
+    \item Different annual prevalence rates depending on the crime: e.g.\ \textbf{1--3\%} for online shopping fraud; \textbf{3\%} of the population is a victim of cyberbullying.
+\end{itemize}
+
+\section{Explaining Cybercrime Victimisation}
+
+Four theoretical perspectives are used to explain why some individuals become cyber-victims.
+
+\subsection{Lifestyle Theory (Hindelang et al., 1978)}
+
+Certain behaviours related to \textbf{work, school and leisure} expose individuals to risky (crime-prone) situations: \textit{certain behaviours elevate one's odds of being victimised}.
+
+\subsection{Routine Activity Theory (RAT) (Cohen \& Felson, 1979)}
+
+\begin{definition}[Routine Activity Theory]
+Victimisation results from the convergence in time and space of three elements:
+\begin{enumerate}
+    \item a \textbf{motivated offender};
+    \item a \textbf{suitable target/victim};
+    \item the \textbf{absence of capable guardianship} (humans or objects that can prevent crime from occurring).
+\end{enumerate}
+RAT \textit{describes} victimisation.
+\end{definition}
+
+Although Lifestyle Theory and RAT are conceptually distinct, they lead to similar hypotheses and are often combined into the \textbf{Lifestyle Routine Activity Theory (LRAT)}.
+
+\subsection{Cyberlifestyle-Routine Activity Theory (Reyns et al., 2011)}
+
+Reyns et al.\ (2011) revisited LRAT to adapt it to cybercrime, producing the \textbf{cyberlifestyle-routine activity theory}, which re-interprets RAT's convergence requirement for the digital environment:
+\begin{itemize}
+    \item \textbf{Convergence in place}: offender and victim are often physically separate, yet they come together in the same \textit{virtual} space, via computer networks.
+    \item \textbf{Convergence in time}: offender and victim may not interact in real time, yet they intersect in time (e.g.\ the offender sends an email that the victim reads some time later).
+\end{itemize}
+
+\subsection{General Theory of Crime (Gottfredson \& Hirschi, 1990; Schreck, 1999)}
+
+The key factor in causing crime and deviance is \textbf{low self-control}: the inability of an individual to exercise personal restraint in the face of tempting immediate and easy gratification, both in the short and long term. The theory was developed for \textit{offending} and was \textbf{adapted to victimisation by Schreck in 1999}.
+
+\subsection{Actor-Network Theory (van der Wagen \& Pieters, 2018)}
+
+Actor-Network Theory (ANT) is invoked to account for emerging forms of \textbf{high-tech cybercrime} (such as ransomware, botnets and virtual theft) in which the offender targets a \textbf{hybrid victim} --- a composite of \textbf{human, technical and virtual} entities.
+
+\section{Who Are Cyber-Victims? Findings from the Scientific Literature}
+
+\subsection{Many Studies, Many Research Questions and Methods}
+
+Different studies ask different research questions and use different methods to investigate cyber-victims (e.g.\ individuals vs.\ business victimisation; focus on different cybercrime types such as cyberbullying or identity theft; focus groups vs.\ surveys/interviews). Overall, the amount of research remains \textbf{limited} and findings are sometimes \textbf{conflicting}.
+
+\subsection{A Routine-Activities Analysis (Junger et al., 2017)}
+
+\paragraph{Aim.} Investigate the relationship between users' \textbf{routine activities} and \textbf{socio-economic characteristics} and three forms of cybercrime victimisation: \textbf{online shopping fraud}, \textbf{online banking fraud}, and \textbf{DDoS}.
+
+\paragraph{Methodology.} Data from Eurobarometer (sample of \textbf{17{,}811 European citizens}); logistic regression.
+
+\paragraph{Results.}
+\begin{enumerate}
+    \item Findings generally \textbf{support RAT}.
+    \item Socio-economic variables (gender, age, economic factors) are \textbf{almost completely irrelevant}: the lecture summarises this finding as the \textbf{normalisation of cyber-victimisation} --- under universal connectivity, exposure ceases to be a function of socio-demographic profile.
+\end{enumerate}
+
+\section{Focusing on Repeat Cyber-Victimisation}
+
+\subsection{Definition and Supertargets}
+
+\begin{definition}[Repeat victimisation]
+Experiencing more than one victimisation. Pease (2018) states: \textit{``People, places, products or services, vehicle, household, business, or systems (including virtual networks) are, once victimized, more likely to be victimized again. Further victimization by the same type of crime is most likely.''}
+\end{definition}
+
+\begin{definition}[Supertargets]
+The \textbf{1--2\%} of potential targets that experience around \textbf{half} of crime.
+\end{definition}
+
+\subsection{Predicting Crime: Space--Time Clustering of Residential Burglaries (UK)}
+
+Many studies show that \textbf{previous victimisation} is a risk indicator. A line of work in the United Kingdom investigates residential burglaries to address the question: \textit{do residential burglaries cluster in time and space?}
+
+\paragraph{Theoretical basis.}
+\begin{itemize}
+    \item \textbf{Optimal foraging theory}: animals optimise foraging strategies to maximise benefits while minimising risks and search time --- the same logic is applied to offenders selecting targets.
+    \item \textbf{Transmissibility} (from epidemiology): closeness in space and time of epidemics/diseases. \textit{Does this also apply to home burglary?}
+\end{itemize}
+
+\paragraph{Methodology.}
+\begin{itemize}
+    \item Georeferenced data on burglaries in \textbf{Merseyside (6 years)}.
+    \item Statistical tests to verify whether space--time clustering was a random event or not.
+    \item For each street, calculation of the space--time distance between break-ins.
+\end{itemize}
+
+\paragraph{Results.}
+\begin{itemize}
+    \item \textbf{Time of repeat victimisation} (Johnson, Bowers \& Hirschfield, 1997): the distribution of weeks between events is sharply right-skewed --- repeats concentrate in the \textbf{first weeks} after the initial event and decay over the following year.
+    \item \textbf{``Neighbourhood'' effect}: in the 1-week window, the number of burglaries peaks at the victimised house and decays with the number of doors apart; the 2-week window shows a flatter but still elevated profile near the original target.
+    \item \textbf{``Side of the road'' effect}: houses on the \textbf{same side} of the road as the victimised house experience more subsequent burglaries than those on the opposite side, controlling for house-number distance.
+    \item \textbf{Area at risk}: houses within \textbf{400~m} of a victimised home are at increased risk for \textbf{up to one month} after the first burglary.
+    \item \textbf{Prospective hotspot prediction}: predicts \textbf{62\%} of robberies that occur in the following \textbf{2 days} and \textbf{64\%} of those that occur in the following \textbf{7 days}.
+\end{itemize}
+
+\begin{keypoint}
+Burglary in a home is \textbf{``transmissible''}, like a disease: the immediate neighbourhood of a victimised home is at elevated risk for a bounded time window. This transmissibility logic underpins predictive policing tools that target proximate locations within short post-event windows.
+\end{keypoint}
+
+\subsection{Connection to the BJS and Correia Studies}
+
+The repeat-victimisation logic developed in the burglary literature feeds directly into the two readings discussed elsewhere in these notes: the BJS \textit{Repeat Violent Victimization, 2005--14} (Chapter~\ref{chap:bjs}) on the offline side, and Correia (2020) \textit{Patterns of Online Repeat Victimisation} (Chapter~\ref{chap:correia}) on the online side.
+
+\section{From Cyber-Victimisation to Prevention: Your Human Firewall}
+
+The lecture closes on a prevention frame: cybersecurity ultimately depends on the user. The recommended viewing/discussion item is the TED talk \textit{Your Human Firewall --- The Answer to the Cyber Security Problem} by Rob May (TEDxWoking), \url{https://www.youtube.com/watch?v=BpdcVfq2dB8}, which argues that the most effective layer of defence against cyber-victimisation is the \textbf{human} layer --- security-aware behaviour by individual users.
+
+
+% ========================================
+\chapter{Repeat Violent Victimisation (BJS, 2005--2014)}
+\label{chap:bjs}
+% ========================================
+
+\begin{sourcebox}{Reference}
 Bureau of Justice Statistics, \textit{Repeat Violent Victimization, 2005--14}, Summary, NCJ 250567, August 2017. Data source: National Crime Victimization Survey (NCVS), 2005--2014.
-\end{tcolorbox}
+\end{sourcebox}
 
 \section{Overview and Definitions}
 
@@ -1122,9 +1997,9 @@ A central finding is that repeat victims, although a minority, account for a dis
     \item The concentration was even more pronounced at the upper end of the distribution: the \textbf{5\%} of victims who experienced six or more violent victimisations accounted for \textbf{27\%} of total violent victimisations in 2014.
 \end{itemize}
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black]
+\begin{keypoint}
 Methodological implication: a small subset of highly victimised individuals contributes a very large share of overall crime counts. Crime prevention strategies that target this subset can, in principle, achieve substantial reductions in total victimisation.
-\end{tcolorbox}
+\end{keypoint}
 
 \section{Crime Prevalence Rates: Long-Term Trends}
 
@@ -1204,432 +2079,418 @@ A greater percentage of rape or sexual assault victims experienced two or more v
 \end{itemize}
 
 
+
 % ========================================
-\part{Patterns of Online Repeat Victimisation (Correia, 2020)}
+\chapter{Responding to Cybercrime: Prevention Strategies}
 % ========================================
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={Reference}]
-Sara Giro Correia, \textit{Patterns of online repeat victimisation and implications for crime prevention}, 2020 APWG Symposium on Electronic Crime Research (eCrime), IEEE. HRC School of Law, Swansea University. Data source: crime reports made by individuals to Action Fraud (AF) within three Welsh police forces (Dyfed/Powys, Gwent, South Wales), reference period 1 October 2014 -- 30 September 2016, $n = 10{,}001$.
-\end{tcolorbox}
+\section{Approaches to Crime Prevention: Primary, Secondary and Tertiary}
 
-\section{Introduction and Context}
+\subsection{What Is Crime Prevention?}
 
-\subsection{Scope of Fraud and Computer Misuse}
-
-Fraud and Computer Misuse (F\&CM) became part of yearly crime estimates produced by the UK Office for National Statistics (ONS) only in 2015, on the basis of the Crime Survey for England and Wales (CSEW). Recent estimates (year ending March 2020) reported approximately \textbf{4.6 million} incidents of fraud and \textbf{876{,}000} incidents of computer misuse, raising the overall crime estimate from about 5.7 million (without F\&CM) to \textbf{10.2 million} estimated crimes. Only a small fraction of these crimes is reported to police: about \textbf{8\%} of frauds and \textbf{2\%} of computer misuse incidents.
-
-Despite low reporting rates, the absolute volume of recorded F\&CM has grown considerably, in part because of the rollout of \textbf{Action Fraud (AF)} as the National Reporting Centre. Following its national rollout in 2013, the volume of recorded frauds increased by over \textbf{160\%} between 2011 and 2013. Victim support services have been decentralised, with competitive bidding for providers funded through the Police and Crime Commissioners (PCCs).
-
-\subsection{Attrition and the `Four Ps' Policing Strategy}
-
-There is considerable \textit{attrition} within the criminal justice system: a small share of AF calls are recorded as crimes (`crimed'), fewer are reviewed for investigation, and fewer still reach courts. Most F\&CM victims therefore receive no meaningful CJS response. The UK \textit{Code of Practice for Victims of Crime} requires that vulnerable and repeat victims be identified and offered adequate support, but research on F\&CM repeat victims is limited and definitions of vulnerability are inconsistent across agencies.
-
-\begin{tcolorbox}[colback=gray!5!white,colframe=gray!60!black,title={The `Four Ps' approach}]
-F\&CM policing strategy in the UK has four strands, originally drawn from counter-terrorism policing:
-\begin{itemize}
-    \item \textbf{Pursue} --- investigate crimes to enable prosecution.
-    \item \textbf{Prevent} --- prevent people from engaging in F\&CM (awareness of consequences, diversion of talented individuals into legal/ethical hacking).
-    \item \textbf{Protect} --- increase protection for those at risk of (further) victimisation.
-    \item \textbf{Prepare} --- improve resilience to reduce the impact of F\&CM in the future.
-\end{itemize}
-The paper's contribution falls within the \textbf{Protect} strand: targeting those already victimised to prevent re-victimisation.
-\end{tcolorbox}
-
-\section{Defining and Measuring Repeat Victimisation}
-
-\subsection{Terminology}
-
-Several terms describe the experience of being a crime victim more than once: \textit{revictimisation}, \textit{multiple victimisation}, \textit{repeat victimisation}, \textit{multi-victimisation}, \textit{repetitive victimisation}, \textit{recidivist victimisation}.
-
-\begin{definition}[Repeat victim (CSEW)]
-Someone who was the victim of \textbf{the same crime type more than once} in the previous 12 months (\textit{within crime type victim}).
+\begin{definition}[Crime prevention (United Nations, 2002)]
+Strategies and measures that seek to reduce the risk of crimes occurring, and their potential harmful effects on individuals and society (including fear of crime), by intervening to influence their multiple causes.
 \end{definition}
 
-\begin{definition}[Multiple victim (CSEW)]
-Someone who experienced \textbf{more than one crime in the previous 12 months, regardless of crime type} (\textit{across crime type victim}).
+In operational terms, crime prevention covers \textbf{any activity} by an individual or group (public or private) which attempts to \textbf{eliminate crime prior to it occurring or before any additional activity results}.
+
+The dominant categorisation adopts a \textbf{public-health approach}: focus on preventing ill-health by encouraging healthy lifestyles rather than waiting for illness --- that is, \textit{investing funds early to save costs later}. By analogy, crime prevention is articulated into three levels:
+
+\subsection{The Three Levels}
+
+\paragraph{Primary prevention (universal).} The most universal form of crime prevention, largely undiscriminating and targeting \textbf{society as a whole}. Intended to target and \textbf{prevent criminal behaviour before it occurs}. Interventions either \textbf{reduce crime opportunities} or \textbf{enhance social factors} that reduce an individual's likelihood of becoming involved in crime. In what follows, primary prevention is analysed through \textbf{Situational Crime Prevention} and \textbf{Universal Communication Strategies}.
+
+\paragraph{Secondary prevention (at-risk groups).} Targets population groups who have \textbf{not yet engaged} in criminal behaviour \textbf{but are at risk} of doing so (e.g.\ kids showing signs of deviant/criminal behaviour). Focus on people with increased proclivity for crime, \textbf{before they graduate into more serious offending}. Analysed through \textbf{Educational Workshops}, \textbf{Mentoring Programs}, and \textbf{Targeted Warnings and Cautions}.
+
+\paragraph{Tertiary prevention (known offenders).} Targets individuals \textbf{after} they have become involved in crime. Focus on activities aimed at preventing those who have already engaged in criminal activity from \textbf{future reoffending}. Individuals are formally referred to programming by the criminal justice system following a criminal conviction. Analysed through \textbf{Positive Diversions} and \textbf{Restorative Justice Practices}.
+
+\section{Primary Cyber-Crime Prevention}
+
+\subsection{Situational Crime Prevention (SCP)}
+
+\begin{definition}[Situational Crime Prevention (Clarke)]
+SCP \textit{``comprises \textbf{opportunity-reducing measures} (1) directed at highly specific forms of crime, (2) involving the management/design/manipulation of the immediate environment in as specific and permanent way as possible, (3) so as to \textbf{increase the effort and risk} of crime and \textbf{reduce the rewards} as perceived by a wide range of offenders.''}
 \end{definition}
 
-\begin{definition}[Repeat victim (this study)]
-Because the analysis is restricted to F\&CM, a \textbf{repeat victim} is any individual who reported, within the reference period, more than one fraud, more than one computer misuse incident, or a mix of fraud and computer misuse.
+\paragraph{Theoretical foundation.} The key assumption is that many offenders are \textbf{rational} and weigh the costs and benefits of offending. SCP builds on three theoretical strands:
+\begin{itemize}
+    \item the \textbf{rational choice} offender approach;
+    \item \textbf{routine activities theory};
+    \item \textbf{crime pattern theory}.
+\end{itemize}
+
+\paragraph{The 25 SCP techniques.} Clarke and colleagues organise SCP interventions in a 5\,$\times$\,5 matrix along five mechanisms:
+\begin{enumerate}
+    \item \textbf{Increase the effort} (e.g.\ target harden, control access to facilities, screen exits, deflect offenders, control tools/weapons);
+    \item \textbf{Increase the risks} (e.g.\ extend guardianship, assist natural surveillance, reduce anonymity, utilise place managers, strengthen formal surveillance);
+    \item \textbf{Reduce the rewards} (e.g.\ conceal targets, remove targets, identify property, disrupt markets, deny benefits);
+    \item \textbf{Reduce provocations} (e.g.\ reduce frustrations and stress, avoid disputes, reduce emotional arousal, neutralise peer pressure, discourage imitation);
+    \item \textbf{Remove the excuses} (e.g.\ set rules, post instructions, alert conscience, assist compliance, control drugs and alcohol).
+\end{enumerate}
+
+\subsection{Are SCP Measures Effective in Preventing Cybercrime?}
+
+The lecture focuses on five SCP measures translated to the cyber domain:
+\begin{enumerate}
+    \item \textbf{Antivirus software}: an effective strategy.
+    \item \textbf{Warning messages}: see the factsheet \textit{What works in situational cybercrime prevention?}
+    \item \textbf{Primary Crime Prevention Apps}: many typologies of apps but no rigorous evaluation; see the article \textit{Primary Crime Prevention Apps: A Typology and Scoping Review}.
+    \item \textbf{Internet vigilantism}: civilian users acting as informal guardians online.
+\end{enumerate}
+
+\subsection{Universal Communication Strategies}
+
+Mass-media messages (broadcast on TV or other audio/video channels) that aim to \textbf{deter people from committing crimes}. Two key primary mechanisms:
+\begin{enumerate}
+    \item \textbf{Changing perceptions of the risks} of offending.
+    \item \textbf{Promoting positive behaviours and values}.
+\end{enumerate}
+A special additional category is the \textbf{appeal to third parties to intervene}.
+
+\paragraph{Application to cybercrime.} Very little has been done to tackle cybercrime through universal communication strategies, with few exceptions. The flagship example is \textbf{Cyberchoices} (UK National Crime Agency), \url{https://nationalcrimeagency.gov.uk/what-we-do/crime-threats/cyber-crime/cyberchoices}.
+
+\section{Secondary Cyber-Crime Prevention}
+
+\subsection{Educational Workshops}
+
+Bring together groups of (potential) offenders in \textbf{single or multiple sessions} to educate them about the nature of crime and reinforce prosocial values and behaviours. Features:
+\begin{itemize}
+    \item Deployed within school curricula, or selectively target \textbf{at-risk adolescents}.
+    \item Combine \textbf{didactic and interactive} elements.
+    \item Rely on \textbf{social-cognitive theories of learning}.
+    \item Mainly aimed at \textbf{youth in primary or secondary schools} to affect \textbf{early-onset offending}.
+\end{itemize}
+
+\paragraph{Applied to cybercrime.} Minimal empirical research to date.
+\begin{itemize}
+    \item \textbf{i-SAFE program} (\url{https://isafeventures.com/}). The 2006 evaluation reported: \textit{``positive and significant changes in knowledge between the treatment and comparison groups, both on average and over time. For the most part, there were no significant changes in behavior between the treatment and comparison groups.''}
+    \item Arizona Attorney General's \textbf{Social Networking Safety Promotion and Cyberbullying Prevention (SNSPCP)}.
+    \item \textbf{Media Heroes}.
+\end{itemize}
+
+\begin{keypoint}
+A recurring pattern: education programs reliably move \textbf{knowledge}, but the effect on actual \textbf{behaviour} is often null or weak.
+\end{keypoint}
+
+\subsection{Mentoring}
+
+\begin{definition}[Mentoring]
+``Commitment of time and specific efforts by a \textbf{more experienced} person to the development of a mutually beneficial, supportive and nurturing relationship with a \textbf{less experienced} person.''
 \end{definition}
 
-\subsection{Incidence, Prevalence and Crime Concentration}
+Mentoring offers a \textbf{corrective experience and intervention} for at-risk youth who have experienced poor relations with parents or other caregivers. The theoretical underpinnings emphasise the importance of \textbf{positive and supportive interpersonal relationships} that offer guidance to children and adolescents throughout their development.
 
-The extent of repeat victimisation can be gauged from CSEW-derived rates:
+\paragraph{Targets.} Young people who either exhibit a history of delinquent behaviour or characteristics assessed as at-risk for juvenile delinquency (individual and environmental risk factors).
 
+\paragraph{Applied to cybercrime.} So far \textbf{no evaluation research} examining the utility of mentoring specifically for cybercrime; lessons must be drawn from studies on offline crimes.
+
+\subsection{Targeted Warnings and Police Cautions}
+
+Used by police to warn potential offenders with the aim of \textbf{deterring them from future offending}. Take the form of stand-alone warnings, cautions, reprimands, and instructions to ``cease and desist'', which may be delivered by law enforcement officers in person or through letters.
+
+\paragraph{Applied to cybercrime.}
 \begin{itemize}
-    \item \textbf{Incidence Rate (IR)}: estimated average number of incidents per 1{,}000 respondents.
-    \item \textbf{Prevalence Rate (PR)}: estimated percentage of respondents who were victimised (counts victims, not incidents).
-    \item \textbf{Crime Concentration (CC)}: ratio $\text{IR} / \text{PR}$ --- average number of victimisations per victim.
+    \item UK investigation into \textbf{Blackshades};
+    \item \textbf{LizardStresser} booter service;
+    \item International law-enforcement operations.
+\end{itemize}
+All aimed at people \textbf{already involved} in cybercrime or at least on the periphery.
+
+\section{Tertiary Cyber-Crime Prevention}
+
+\subsection{Positive Diversions}
+
+Redirect individuals towards \textbf{prosocial behaviours and peer influences}; focus on \textbf{rehabilitation}. Usually targeted at young people and first-time offenders. Take a variety of forms, including art, sports, and outdoors programs.
+
+\paragraph{Theoretical underpinnings.}
+\begin{itemize}
+    \item Imposing traditional criminal justice sanctions on young people has \textbf{little effect on reoffending}.
+    \item Positive diversions lean on \textbf{social-bond theories of crime}.
 \end{itemize}
 
-For most crime types, repeat and multiple victimisation imply $\text{IR} > \text{PR}$ and therefore $\text{CC} > 1$.
+\paragraph{Operational notes.} May serve as a \textbf{substitute} for criminal sanctions or court proceedings, or accompany them. Widely deployed in response to various low-severity crimes. Effectiveness shows \textbf{mixed findings}.
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table I --- IR, PR, CC (CSEW, year ending September 2019)}]
-\begin{center}
-\begin{tabular}{lccc}
-\hline
-\textbf{Crime Category} & \textbf{IR} & \textbf{PR} & \textbf{CC} \\
-\hline
-Theft from the person          & 0.88  & 0.84 & 1.05 \\
-Robbery                        & 0.32  & 0.30 & 1.07 \\
-Other theft of personal property & 1.44 & 1.32 & 1.09 \\
-Fraud                          & 8.08  & 6.94 & 1.17 \\
-Computer Misuse (CM)           & 2.14  & 1.82 & 1.18 \\
-Fraud \& CM                    & 10.23 & 8.48 & 1.21 \\
-Violence                       & 2.74  & 1.76 & 1.55 \\
-\hline
-\end{tabular}
-\end{center}
-\end{tcolorbox}
-
-The concentration of F\&CM is lower than for violent crime but \textbf{higher than for comparable acquisitive offences} (theft from the person, theft of personal property), motivating an empirical study of RV with respect to F\&CM.
-
-\section{Patterns of Repeat Victimisation in Prior Research}
-
-The author summarises four insights from earlier RV literature, used to generate the study's hypotheses.
-
-\subsection{A Small Share of Victims Carries Most of the Crime}
-
-Early work showed that as much as \textbf{14\%} of the population were repeat victims and accounted for \textbf{70.9\%} of all incidents recorded on the British Crime Survey. The average number of crimes experienced by the top 10\% most victimised households rose from \textbf{57\% in 1994} to \textbf{72\% in 2012}, despite the overall drop in crime since the mid-1990s. Reducing RV can therefore prevent a large proportion of all offences from being committed.
-
-\subsection{RV Does Not Happen by Chance}
-
-Failed attempts to fit the distribution of RV to variations of the Poisson model indicate that RV is non-random and is associated with specific demographic characteristics. The characteristics that distinguish repeat from one-time victims tend to be the same as those that distinguish victims from non-victims (e.g., females being significantly more likely to be both one-time and repeat victims of domestic abuse).
-
-\subsection{The `Flag' versus `Boost' Conceptualisation of Vulnerability}
-
+\paragraph{Applied to cybercrime.}
 \begin{itemize}
-    \item \textbf{Flag account}: previous victimisation \emph{indicates} pre-existing vulnerability factors that made the person a victim in the first place.
-    \item \textbf{Boost account}: being victimised \emph{itself} increases vulnerability to further victimisation.
+    \item No empirical evaluation of positive-diversion programming for preventing cybercrime so far.
+    \item It is plausible that one could \textbf{redirect the skills used for cybercrime into prosocial avenues} (e.g.\ cybersecurity).
+    \item A special category transforms criminal into noncriminal behaviour: e.g.\ a young person engaging in graffiti diverted into a program encouraging legal ``urban art''. By analogy, graffiti artists and cybercriminals share a \textbf{sense of identity}, \textbf{pleasure from crime}, and \textbf{status culture}.
 \end{itemize}
 
-In the RV literature `vulnerability' is often equated with a higher probability of victimisation. Identifying victims as `vulnerable' on the basis of demographic characteristics alone is divisive and yields too many false positives to be useful in practice. Identifying \textbf{repeat victims} is a narrower and more precise indicator of relative vulnerability.
+\subsection{Restorative Justice}
 
-\subsection{Hot Spots, Hot Dots and Near-Repeats}
+\begin{definition}[Restorative Justice]
+A \textbf{voluntary, community-based} response to criminal behaviour that attempts to bring together the \textbf{victim}, the \textbf{offender}, and the \textbf{community} in an effort to address the harm caused by the criminal behaviour.
+\end{definition}
 
-A key finding from environmental criminology is that high-crime areas (`hot spots') are typically distinguished not by more individuals being victimised, but by \textbf{more victims being repeatedly victimised} (`hot dots'). This has motivated `near-repeat' research, which predicts where crime will occur next on the basis of where it has previously occurred.
+\paragraph{Theoretical link.} Strongly linked to \textbf{Braithwaite's theory of re-integrative shaming}.
 
-\textit{Limitation for F\&CM}: the spatial element underpinning near-repeats is largely irrelevant for crimes with a strong online component. Even when offline elements are involved (e.g., cold-calling combined with online banking takeover), the physical environment plays only a marginal role in victim selection. Therefore RV is likely a more useful concentration metric than near-repeats for F\&CM.
+\paragraph{Process.} Can occur \textbf{prior to, instead of, during, or after} the formal criminal process. Tends to take the form of \textbf{single meetings} of varying duration, chaired by a \textbf{mediator}, producing an \textbf{agreement} between the parties.
 
-\subsection{Time-Course}
-
-Across burglary, property crime, racial attacks, domestic violence, and computer misoffences, RV has been shown to occur \textbf{relatively soon after the first victimisation}: the risk of RV is highest immediately after victimisation.
-
-\section{Method}
-
-\subsection{Sample}
-
-The data are crime reports made to Action Fraud by victims within four Welsh police forces (Dyfed/Powys, Gwent, North Wales, South Wales) between \textbf{1 October 2014 and 30 September 2016}. After de-duplication ($n = 147$ duplicates removed), the analytic sample was $n = 17{,}049$. Of these, $n = 11{,}844$ pertained to individual victims (rather than businesses or other corporate entities), divided into eight three-month periods (four quarters per year).
-
-For the RV analysis, only reports from \textbf{three of the four forces} (Dyfed/Powys, Gwent, South Wales) were used: $n = 10{,}001$. North Wales was excluded because of high missingness in linkage variables, which skewed the linkage results.
-
-\subsection{Collection, Linkage and Anonymisation}
-
-Reports were collated from the monthly extracts uploaded by the National Fraud Intelligence Bureau (NFIB) onto the police's NicheRMS system and extracted by the Southern Wales Regional Organised Crime Unit (SW-ROCU). Data were processed under strict access controls within secure police premises; \textbf{de-duplicative data linkage was applied before anonymisation}, which is what made repeat-victim identification possible.
-
-The reports were linked using a combination of \textbf{deterministic and probabilistic} record linkage, implemented with the R package \texttt{RecordLinkage}. Linkage quality was tested using \textbf{precision} and \textbf{recall (sensitivity)} on a clerical review of 100 pairs of matches; both were estimated at 100\%. The procedure was tuned to minimise false positives and may therefore have produced false negatives (missed matches).
-
-\subsection{Limitations of Action Fraud Data}
-
+\paragraph{Applied to cybercrime.}
 \begin{itemize}
-    \item \textbf{Under-reporting of F\&CM} (only 8\% of fraud and 2\% of CM are reported to police).
-    \item \textbf{Home Office Counting Rules (HOCR)} affect how RV is measured: in some categories, several incidents over time count as one crime (e.g., advance-fee fraud where the victim sends money to the fraudster repeatedly), while in others (e.g., hacking) each compromised account counts as a separate crime.
-    \item \textbf{Left and right censoring}: the two-year window means earlier or later events that would constitute repeats may fall outside the observation period.
-    \item \textbf{External events}: an Action Fraud institutional crisis between Q4 of 2014--2015 and Q1 of 2015--2016 sharply reduced the volume of recorded reports.
+    \item \textbf{No studies to date} specifically on restorative justice's application to cybercrime.
+    \item Wealth of evidence in the offline context, with mixed findings.
+    \item Application to cybercrime could help \textbf{convey a message of the harmfulness} arising from such crimes; some cybercrime victims have expressed interest.
+    \item Case study: \textbf{online hate speech} (Finland) --- \url{https://yle.fi/aihe/artikkeli/2019/11/06/face-to-face-with-a-man-who-wished-an-asylum-seeker-would-kill-my-family-the}.
 \end{itemize}
 
-\section{Results}
 
-\subsection{Extent of Repeat Victimisation}
+% ========================================
+\chapter{What Works in Situational Cybercrime Prevention (NSCR Factsheet, 2021)}
+\label{chap:scp-factsheet}
+% ========================================
 
-Of the $n = 10{,}001$ incidents reported by individual victims in the three Welsh forces, linkage identified \textbf{350 individual repeat victims}, who reported \textbf{787 crimes} between them. Therefore, around \textbf{8\% of crimes} reported by individual victims (and recorded) were attributable to repeat victims.
+\begin{sourcebox}{Reference}
+Asier Moneva and Jim Schiks, \textit{What Works in Situational Cybercrime Prevention?} NSCR (Nederlands Studiecentrum Criminaliteit en Rechtshandhaving) Factsheet, June 2021.
+\end{sourcebox}
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table II --- Reports by Crime Group}]
-$F$ = number of fraud reports; $CM$ = number of computer misuse reports; $I\%$ = share of incidents; $V\%$ = share of victims.
-\begin{center}
-\begin{tabular}{ccccccc}
-\hline
-\textbf{reports} & \textbf{F} & \textbf{I\%(F)} & \textbf{V\%(F)} & \textbf{CM} & \textbf{I\%(CM)} & \textbf{V\%(CM)} \\
-\hline
-1 & 8527 & 92.72 & 96.53 & 687 & 85.45 & 93.99 \\
-2 & 533  & 5.80  & 3.02  & 59  & 7.34  & 4.04 \\
-3 & 88   & 0.96  & 0.33  & 20  & 2.49  & 0.91 \\
-4 & 23   & 0.25  & 0.07  & 9   & 1.12  & 0.31 \\
-5 & 5    & 0.05  & 0.01  & 20  & 2.49  & 0.55 \\
-6 & 21   & 0.23  & 0.04  & 9   & 1.12  & 0.21 \\
-\hline
-total ($n>1$) & 670 & 7.29 & 3.47 & 117 & 14.56 & 6.02 \\
-\hline
-\end{tabular}
-\end{center}
-\end{tcolorbox}
+\section{Motivation and Scope}
 
+For decades, \textbf{Situational Crime Prevention (SCP)} techniques have proven effective in reducing various forms of crime across many contexts, with substantial experimental support. Cybercrime researchers have sought to \textbf{extend SCP to cyberspace}. Despite the wide variety of SCP techniques, criminologists have so far applied only a few to cybercrime, evaluating:
 \begin{itemize}
-    \item Approximately \textbf{3\% of fraud victims} reported \textbf{7\% of recorded frauds}.
-    \item Approximately \textbf{6\% of CM victims} reported \textbf{15\% of CM crimes}.
-    \item The difference between fraud and CM is statistically significant ($\chi^2(1) = 52.86$, $p < 0.01$); the odds of a CM victim being a repeat victim are \textbf{2.17} times those of a fraud victim (small-to-medium effect).
+    \item the effectiveness of \textbf{antivirus software} in detecting malware;
+    \item the ability of \textbf{monitoring software} to detect anomalous patterns of activity among employees;
+    \item --- especially --- the effect of \textbf{warning banners} on cybercriminal behaviour.
 \end{itemize}
 
-This difference is plausibly driven by HOCR rather than by a genuinely higher rate of RV for CM.
+\section{Situational Crime Prevention: Recap}
 
-\paragraph{Differences across Welsh forces.} A statistically significant difference exists in the proportion of repeat versus one-time reports across the three forces ($\chi^2(2) = 16.26$, $p < 0.01$), but the effect size is negligible (Cramér's V $= 0.04$).
+SCP consists of a set of \textbf{25 techniques} that reduce specific forms of crime through five mechanisms:
+\begin{enumerate}
+    \item increase the \textbf{effort} required to commit a crime;
+    \item increase the \textbf{risk} of detection;
+    \item reduce the potential \textbf{rewards} of crime;
+    \item reduce \textbf{provocations} to potential offenders;
+    \item eliminate \textbf{excuses} for non-compliance.
+\end{enumerate}
 
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table III --- Reports by Force and Victim Type}]
-\begin{center}
-\begin{tabular}{llcc}
-\hline
-\textbf{Force} & \textbf{Victim Type} & \textbf{N} & \textbf{St. Residuals} \\
-\hline
-Dyfed/Powys & Once   & 2210 & $-3.60^{**}$ \\
-            & Repeat & 234  & $3.60^{**}$ \\
-Gwent       & Once   & 2200 & $-0.57$ \\
-            & Repeat & 195  & $0.57$ \\
-South Wales & Once   & 4804 & $3.58^{**}$ \\
-            & Repeat & 358  & $-3.58^{**}$ \\
-\hline
-\multicolumn{4}{l}{\footnotesize $^{**}$ statistically significant at $p < 0.01$.}
-\end{tabular}
-\end{center}
-\end{tcolorbox}
+These techniques operate \textbf{immediately before the crime occurs}, when all previous crime controls (personal and social) have failed. If situational prevention also fails, only formal crime controls (police, criminal justice system) can be invoked --- they are costly and sometimes conflict with people's rights, so it is best to avoid them when possible.
 
-The standardised residuals show that reports in \textbf{Dyfed/Powys} are significantly more likely to come from repeat victims, while those in \textbf{South Wales} are significantly more likely to come from one-time victims.
+\section{Methodology of the Overview}
 
-\subsection{Repeat Victim Characteristics}
+The factsheet focuses on \textbf{research with high validity}: studies that measure cybercrime \textbf{before and after} an intervention in experimental and \textbf{comparable control} conditions --- i.e.\ studies scoring \textbf{three or more} on the \textbf{Maryland Scientific Methods Scale}.
 
-\subsubsection*{Gender}
+\begin{keypoint}
+The only studies that meet this criterion are \textbf{experiments with warning banners}. All other SCP techniques applied to cybercrime have not yet been evaluated with comparable rigour.
+\end{keypoint}
 
-More incidents were reported by male repeat victims than by female repeat victims. The difference is statistically significant ($\chi^2(1) = 14.05$, $p < 0.01$) but the effect size is negligible (Cramér's V $= 0.03$). The odds of an incident being reported by a male repeat victim are only \textbf{1.33} times those of an incident reported by a female victim.
+\section{Experiments with Online Warning Banners}
 
-\subsubsection*{Ethnicity}
+\begin{definition}[Online warning banner]
+A small text frame, usually displayed to users when they try to access a system or a website. Banners work like traditional signs: placed in easily visible places to persuade the reader with a clear, short message. Criminologists use them to \textbf{increase the perceived risk} for cyber-offenders or to \textbf{remove any excuse} for non-compliance.
+\end{definition}
 
-No significant difference was found between one-time and repeat victims in terms of ethnicity ($\chi^2(1) = 0.067$, $p > 0.5$). This result is constrained by \textbf{34\% missing values} for ethnicity and by the need to collapse to a binary White vs.\ Black and Minority Ethnic (BME) classification (small numbers in non-White categories).
+\paragraph{Experimental design.} To measure the effect of banners on human behaviour, researchers use \textbf{honeypots}: digital decoys designed to be attacked that collect data on the attack and the behaviour of the offender. Once cyber-offenders fall into the trap, they are randomly assigned to groups exposed to different stimuli --- a banner with a text (e.g.\ ``you are being watched'' or ``this is illegal''), a neutral banner (e.g.\ ``the site is loading''), or no banner at all. This allows comparison of the effect of different stimuli on similar groups of offenders to identify which one works best.
 
-\subsubsection*{Age (the largest effect)}
+\section{Do Banners Work?}
 
-Repeat victims are typically \textbf{older} than one-time victims:
-
+Experiments with warning banners have mainly targeted three behaviours:
 \begin{itemize}
-    \item Repeat victims: median age \textbf{57}, mean age \textbf{53.6}.
-    \item One-time victims: median age \textbf{50}, mean age \textbf{49.93}.
-    \item Wilcoxon rank-sum test: $W = 3{,}197{,}004$, $p < 0.001$.
+    \item \textbf{Deterring hackers from trespassing} into systems;
+    \item Deterring users from consuming \textbf{barely-legal pornography};
+    \item Deterring \textbf{DDoS attacks}.
 \end{itemize}
 
-The author notes that linkage may have introduced a bias towards older victims, but date of birth (DOB) was a key linkage variable, and proxy reports on behalf of older victims (by family/friends) would, if anything, increase missingness/inaccuracy of DOB for older victims. The findings are therefore taken as indicative of \textbf{a real overlap between RV and older age}.
+\subsection{Hacking / Trespassing}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title={A broader view of vulnerability}]
-The negative impacts of F\&CM on older victims (wellbeing, family relationships, indirect financial loss) may be associated with factors beyond the crime itself, such as social isolation or economic disadvantage. \textbf{Vulnerability should be conceptualised more broadly than the increased likelihood of (re-)victimisation alone.}
-\end{tcolorbox}
-
-\subsubsection*{Proxy reports}
-
-It had been hypothesised that reports made by a proxy on behalf of the victim would be associated with greater vulnerability and therefore with RV. The data show the \textbf{opposite}:
+For hacking, experiments measured the effect of banners on four outcomes: number of trespassing events, number of repeated trespassing events, duration of the trespassing, and volume of commands entered into the system.
 
 \begin{itemize}
-    \item \textbf{11\%} of one-time victims were flagged as having a proxy report.
-    \item \textbf{6\%} of repeat victims had a proxy report.
-    \item Difference: $\chi^2(1) = 13.58$, $p < 0.01$, Cramér's V $= 0.04$ (negligible).
+    \item \textbf{Mixed effect} on the number of trespassing and repeated trespassing events and on the number of commands entered: some banners reduced these behaviours, others had no effect.
+    \item Banners appear to \textbf{significantly reduce the duration of the trespassing} --- the time spent by the offender inside the system.
 \end{itemize}
 
-This is consistent with proxy reports being associated with broader vulnerability factors that are not captured by RV measures alone.
+\subsection{Barely-Legal Pornography}
 
-\subsection{Time-Course of Repeat Victimisation}
+The single experiment on this topic found that banners displaying a deterrent message \textbf{halved the volume of accesses} to the website hosting barely-legal content.
 
-The time-course analysis is limited to consecutive reports within 12 months ($n = 406$), excluding the small minority of cases ($n = 31$) with a time difference greater than 366 days.
+\subsection{DDoS Attacks}
 
-\subsubsection*{Inter-report time}
-
-The distribution of the time elapsed between consecutive incidents is concentrated at the lower end of the scale, with the appearance of an \textbf{exponential decrease}:
-
-\begin{itemize}
-    \item \textbf{15.5\%} of all linked (repeat) incidents were reported \textbf{on the same day} ($n = 122$).
-    \item Including same-day reports: mean inter-report difference $= 83$ days, median $= 12$ days.
-    \item Excluding same-day reports: mean $= 115$ days, median $= 40$ days.
-    \item Mean difference between first and last report by an individual repeat victim $= 137$ days, median $= 49$ days (excluding same-day).
-\end{itemize}
-
-\begin{tcolorbox}[colback=red!5!white,colframe=red!60!black,title={Crime prevention implication}]
-Interventions aimed at protecting victims from re-victimisation should ideally take place \textbf{within two weeks to one month of the first report}.
-\end{tcolorbox}
-
-The exponential pattern holds across the quarters of the two-year period, although dispersion grows in year two. This is consistent with \textbf{left-censoring} (earlier in the window, fewer prior events can be observed) and with the AF crisis between Q4 (2014--2015) and Q1 (2015--2016) that depressed the volume of recorded reports.
-
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table IV --- Time difference between consecutive reports, per quarter}]
-\begin{center}
-\begin{tabular}{llcccc}
-\hline
-\textbf{Year} & \textbf{Quarter} & \textbf{n} & \textbf{Mean (diff)} & \textbf{Median (diff)} & \textbf{Max (diff)} \\
-\hline
-2014--2015 & Q1 & 43 & 4.02   & 0    & 45 \\
-           & Q2 & 73 & 12.16  & 2    & 136 \\
-           & Q3 & 85 & 34.48  & 7    & 208 \\
-           & Q4 & 46 & 43.43  & 5    & 306 \\
-2015--2016 & Q1 & 23 & 134.22 & 122  & 338 \\
-           & Q2 & 45 & 142.71 & 97   & 363 \\
-           & Q3 & 36 & 81.61  & 25.5 & 357 \\
-           & Q4 & 55 & 67.33  & 30   & 338 \\
-\hline
-\end{tabular}
-\end{center}
-\end{tcolorbox}
-
-\subsubsection*{Number of repeats}
-
-A Kruskal--Wallis rank-sum test confirms a significant overall difference in mean inter-report time across groups defined by the number of reports made ($\chi^2(5) = 1369.8$, $p < 0.01$). Pairwise comparisons (\texttt{pairwise.wilcox.test}) indicate that only the group with $n_\text{reports} = 5$ has a mean significantly different from the groups with 2--4 reports ($p < 0.05$). Combined with the high dispersion of the data, this suggests that \textbf{the number of repeat reports has little practical impact on the time-course of RV}.
-
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table V --- Time difference grouped by number of reports made}]
-\begin{center}
-\begin{tabular}{cccc}
-\hline
-$n_\text{reports}$ & \textbf{Mean (diff)} & \textbf{Median (diff)} & \textbf{n} \\
-\hline
-2 & 93 days & 35 days & 296 \\
-3 & 77 days & 45 days & 72 \\
-4 & 79 days & 83 days & 24 \\
-5 & 17 days & 28 days & 20 \\
-6 & 39 days & 28 days & 25 \\
-\hline
-\end{tabular}
-\end{center}
-\end{tcolorbox}
-
-\subsection{Crime Categories and Sequences}
-
-\subsubsection*{Differences in RV across crime categories}
-
-Differences in the extent of RV across crime categories are statistically significant ($\chi^2(1) = 52.86$, $p < 0.01$, Cramér's V $= 0.11$, small effect). Standardised residuals indicate that:
-
-\begin{itemize}
-    \item \textbf{Advance-fee fraud} and \textbf{Hacking}: more likely to be reported by \textbf{repeat} victims.
-    \item \textbf{Consumer fraud} and \textbf{Other fraud}: more likely to be reported by \textbf{one-time} victims.
-\end{itemize}
-
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table VI --- Repeat vs one-time reports by crime category}]
-\begin{center}
-\begin{tabular}{llccc}
-\hline
-\textbf{Crime Category} & \textbf{Victim Type} & \textbf{N} & \textbf{Prop} & \textbf{St. Residuals} \\
-\hline
-Advance-fee fraud      & Once   & 190 & 0.21 & $-2.95^{**}$ \\
-                       & Repeat & 7   & 0.25 & $2.95^{**}$ \\
-Card and Banking fraud & Once   & 445 & 0.05 & $2.43$ \\
-                       & Repeat & 23  & 0.03 & $-2.43$ \\
-Consumer fraud         & Once   & 427 & 0.46 & $2.85^{**}$ \\
-                       & Repeat & 9   & 0.41 & $-2.85^{**}$ \\
-Hacking                & Once   & 439 & 0.05 & $-9.76^{**}$ \\
-                       & Repeat & 102 & 0.13 & $9.76^{**}$ \\
-Investment fraud       & Once   & 174 & 0.02 & $-1.76$ \\
-                       & Repeat & 22  & 0.03 & $1.76$ \\
-Malware, virus, (D)DoS & Once   & 248 & 0.03 & $1.32$ \\
-                       & Repeat & 15  & 0.02 & $-1.32$ \\
-Other fraud            & Once   & 148 & 0.16 & $4.19^{**}$ \\
-                       & Repeat & 0   & 0.10 & $-4.19^{**}$ \\
-Services fraud         & Once   & 242 & 0.03 & $-0.07$ \\
-                       & Repeat & 21  & 0.03 & $0.07$ \\
-\hline
-\multicolumn{5}{l}{\footnotesize $^{**}$ residual statistically significant at $p < 0.01$.}
-\end{tabular}
-\end{center}
-\end{tcolorbox}
-
-\subsubsection*{Sequence of crimes (change matrix)}
-
-To reduce small-cell problems, several categories were combined: Malware/Virus/(D)DoS was merged with Hacking; Other and Services fraud were collapsed into Computer Misuse (CM); Card and Banking fraud was combined with Investment fraud.
-
-\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title={Table VII --- Change matrix of consecutive reports (count, row \%, st.\ residuals)}]
-\begin{center}
-\begin{tabular}{lccccc}
-\hline
-\textbf{From\textbackslash To} & \textbf{Adv.-fee} & \textbf{Card,Bank \& Inv.} & \textbf{Consumer} & \textbf{Hacking} & \textbf{Other} \\
-\hline
-Advance-fee   & 66 & 7 & 23 & 3 & 13 \\
-              & 58.93\% & 6.25\% & 20.54\% & 2.68\% & 11.61\% \\
-              & $7.54^{**}$ & $0.13$ & $-2.9^{**}$ & $-3.8^{**}$ & $-0.9$ \\
-\hline
-Card, Bank \& Inv. & 8 & 9 & 2 & 1 & 4 \\
-              & 33.33\% & 37.50\% & 8.33\% & 4.17\% & 16.67\% \\
-              & $0.93$ & $6.34^{**}$ & $-2.32$ & $-1.59$ & $0.23$ \\
-\hline
-Consumer      & 21 & 6 & 125 & 15 & 12 \\
-              & 11.73\% & 3.35\% & 69.83\% & 8.38\% & 6.70\% \\
-              & $-3.36^{**}$ & $-1.42$ & $7.13^{**}$ & $-3$ & $-2.83^{**}$ \\
-\hline
-CM            & 3 & 1 & 6 & 57 & 2 \\
-              & 4.35\% & 1.45\% & 8.70\% & 82.61\% & 2.90\% \\
-              & $-3.33^{**}$ & $-1.53$ & $-3.89^{**}$ & $12.73^{**}$ & $-2.58$ \\
-\hline
-Other         & 7 & 3 & 7 & 2 & 34 \\
-              & 13.21\% & 5.66\% & 13.21\% & 3.77\% & 64.15\% \\
-              & $-1.61$ & $-0.09$ & $-2.87^{**}$ & $-2.43$ & $9.3^{**}$ \\
-\hline
-\multicolumn{6}{l}{\footnotesize $^{**}$ residual statistically significant at $p < 0.01$.}
-\end{tabular}
-\end{center}
-\end{tcolorbox}
-
-The values along the main diagonal are large, and a chi-squared test confirms a significant pattern in consecutive-crime combinations ($\chi^2(16) = 511.20$, $p < 0.01$, Cramér's V $= 0.54$).
-
-\begin{tcolorbox}[colback=red!5!white,colframe=red!60!black]
-\textbf{Key result.} A repeat F\&CM crime is significantly more likely to be \textbf{of the same general type} as the crime that preceded it.
-\end{tcolorbox}
-
-\section{Discussion and Implications for Crime Prevention}
-
-\subsection{Headline Findings}
-
-\begin{itemize}
-    \item Roughly \textbf{4\% of victims report 8\% of crimes}; considered separately, \textbf{3\% of fraud victims report 7\% of recorded frauds} and \textbf{6\% of CM victims report 15\% of CM crimes}. The fraud--CM gap is plausibly an artefact of HOCR.
-    \item Categories with elevated RV: \textbf{advance-fee fraud} and \textbf{hacking}. This is especially striking for advance-fee fraud, since HOCR favour recording multiple fraudster-driven payments as a single crime --- in spite of which RV is still observed.
-    \item A statistically significant force-level difference is driven by \textbf{Dyfed/Powys}, which has a higher proportion of repeat victims and an older typical victim profile (mean age 55, median 57 in Dyfed/Powys vs.\ 50 and 48 in Gwent and South Wales).
-\end{itemize}
-
-\subsection{Counting Rules and the Direction of Bias}
-
-Recording practices may simultaneously \textbf{over-estimate} RV for CM and \textbf{under-estimate} it for fraud:
-
-\begin{itemize}
-    \item \textbf{CM (e.g., hacking)}: each compromised account/device is recorded as a separate crime, even if the incidents happen on the same day.
-    \item \textbf{Fraud (e.g., romance / advance-fee)}: the modus operandi often involves building trust, escalating intimacy and repeatedly requesting money. Multiple incidents are commonly recorded together as one crime.
-\end{itemize}
-
-Even when victims report multiple crimes on the same day, there is still an opportunity to identify them as repeat victims and direct support accordingly.
-
-\subsection{Profile of the Repeat F\&CM Victim}
-
-The analysis suggests \textbf{male} and \textbf{older} victims are at higher risk of repeat F\&CM victimisation, while ethnicity and proxy reports show no significant association (within the limits of the data). This profile is different from typical repeat victims of violent crime and domestic violence, but is in line with the general F\&CM victim profile, supporting the view that \textit{the characteristics distinguishing repeat from one-time victims tend to mirror those distinguishing victims from non-victims}.
-
-\subsection{Time-Course and the Two-Week--One-Month Window}
-
-In line with prior research on burglary, racial attacks, domestic violence and computer misuse, repeat F\&CM victimisation occurs relatively soon after first victimisation. Crime-prevention activity is therefore most effective \textbf{within two weeks to one month} of the first report. The scope for intervention is, however, reduced by the \textbf{15.5\%} of repeats recorded on the same day as the preceding incident.
-
-\subsection{The Limits of an RV Lens}
-
-\begin{itemize}
-    \item RV measurement is shaped by definitions and recording practices; both can over- or under-estimate the phenomenon.
-    \item RV is a \textbf{narrower concept than vulnerability}. Whether a victim is re-victimised says little about their support needs or their ability to recover from victimisation.
-    \item A framework of F\&CM vulnerability is needed that goes beyond risk of re-victimisation and accounts for victims' wider needs.
-\end{itemize}
+When banners were used to divert young people from carrying out DDoS attacks, researchers observed a change in the \textbf{increasing trend of attacks to a flat trend}.
 
 \section{Conclusion}
 
-Repeat victimisation is a complex phenomenon affected by under-reporting, recording rules and methodological constraints in linkage. Even so, this analysis demonstrates that identifying and analysing patterns of RV in reported crime produces insights of \textbf{theoretical} interest and of \textbf{practical} value to the planning and targeting of crime-prevention activities.
+Despite the growing interest in tackling cybercrime, experimental research on the effect of SCP techniques on deflecting cyber-offenders \textbf{is still in its infancy}. High-validity research has so far evaluated only a few techniques. With limited exceptions, criminologists have concentrated on \textbf{increasing the perceived risk} of detection and \textbf{removing excuses} for non-compliance --- especially through warning banners --- to deter hackers from breaking into a system.
 
+It is not yet clear whether banners are always an effective tool for reducing cybercrime, but experiments show \textbf{promising results in specific contexts}. The factsheet calls for \textbf{more research} both on banners and on the other situational techniques that remain unexamined.
+
+\paragraph{SCP categories already explored with warning banners.} \textit{Increase the risks} and \textit{remove the excuses}. The other three mechanisms --- \textit{increase the effort}, \textit{reduce the rewards}, and \textit{reduce provocations} --- remain largely unexplored in the cybercrime context with rigorous experimental designs.
+
+
+% ========================================
+\chapter{Primary Crime Prevention Apps: A Typology and Scoping Review (Wood, Ross \& Johns, 2021)}
+\label{chap:pcp-apps}
+% ========================================
+
+\begin{sourcebox}{Reference}
+Mark A.\ Wood, Stuart Ross and Diana Johns, \textit{Primary Crime Prevention Apps: A Typology and Scoping Review}, \textit{Trauma, Violence, \& Abuse}, 2021. SAGE. DOI: 10.1177/1524838020985560.
+\end{sourcebox}
+
+\section{Motivation and Aims}
+
+Over the last decade, an array of smartphone apps has been designed to prevent crime, violence, and abuse. Their evidence base has not been analysed systematically. The article frames this as part of the \textbf{``apppification'' of crime prevention} --- the creation of apps designed to prevent crime through a variety of measures, including crime reporting, personal safety, rehabilitation and reintegration.
+
+The review has three aims:
+\begin{enumerate}
+    \item Establish the \textbf{extent, range, and nature} of research into smartphone apps with a primary crime-prevention function.
+    \item Locate \textbf{gaps} in the primary crime-prevention app literature.
+    \item Develop a \textbf{typology} of primary crime-prevention apps.
+\end{enumerate}
+
+\section{Theoretical Frame}
+
+\subsection{Brantingham \& Faust (1976) --- Tripartite Model}
+
+The review adopts Brantingham and Faust's tripartite model, which distinguishes \textbf{primary}, \textbf{secondary}, and \textbf{tertiary} crime prevention. Primary crime prevention apps \textit{``seek to modify or abate the social or environmental conditions that give rise to crime, or allow potential victims to manage their exposure to risky environments or circumstances.''} Secondary and tertiary apps (those that modify offender behaviour or treat conditions accompanying offending) are excluded from this review.
+
+\subsection{Wall (2007) --- Three Levels of Smartphone Involvement}
+
+Drawing on Wall's (2007) distinction between cyber-enabled and cyber-dependent crime, the authors distinguish three relations between a crime-prevention technique and smartphone technology:
 \begin{itemize}
-    \item Identifying RV could direct limited resources towards areas where demand for crime prevention and victim support is greatest, both \textit{across} forces and \textit{within} forces (towards crime types where re-victimisation is most common and victims most vulnerable).
-    \item In a context where only \textbf{15\%} of recorded crimes were `actioned' in any way (reviewed by NFIB and, where applicable, referred to a police force or partner agency for response), focusing on prevention and protecting victims from re-victimisation is possibly the most effective crime-reduction strategy available.
-    \item Identifying and responding to repeat victims of F\&CM may also provide a clear and meaningful measure of law-enforcement performance.
+    \item \textbf{Smartphone-enabled}: the technique can use smartphones but does not require them, and is not enhanced by being incorporated into one.
+    \item \textbf{Smartphone-enhanced}: smartphones improve the speed, range, or effectiveness of the technique.
+    \item \textbf{Smartphone-dependent}: the technique depends on mobile affordances and cannot exist without the device.
 \end{itemize}
 
-\section{Summary}
+\subsection{Mobile Affordances}
 
+The reviewed apps draw on two affordances of smartphones:
 \begin{itemize}
-    \item In a two-year sample of $n = 10{,}001$ AF reports from three Welsh forces, \textbf{350 repeat victims} ($\approx 4\%$) accounted for \textbf{787 crimes} ($\approx 8\%$ of recorded individual-victim crimes).
-    \item Approximately 3\% of fraud victims reported 7\% of frauds; approximately 6\% of CM victims reported 15\% of CM crimes; CM victims have $\approx 2.17\times$ the odds of being repeat victims, plausibly an HOCR artefact.
-    \item \textbf{Older age} is the strongest correlate of repeat F\&CM victimisation; gender shows a small but significant male skew; ethnicity shows no significant association; proxy reports are \textit{inversely} associated with RV.
-    \item The inter-report time distribution is approximately exponential (median 12 days including same-day reports, 40 days excluding); \textbf{15.5\%} of repeats occur on the same day; intervention is most effective within \textbf{two weeks to one month} of the first report.
-    \item \textbf{Advance-fee fraud} and \textbf{hacking} show elevated RV; consumer and other fraud are more typical of one-time victims.
-    \item Repeat F\&CM crimes are significantly more likely to be of the \textbf{same general type} as the preceding crime ($\chi^2(16) = 511.20$, $p < 0.01$, Cramér's V $= 0.54$).
-    \item RV is a useful but \textbf{narrower} concept than vulnerability; an F\&CM-specific vulnerability framework is needed to address victims' wider needs.
+    \item \textbf{Perpetual contact} (Mascheroni \& Vincent, 2016): the ability to communicate with others anywhere and anytime --- underpins personal safety and crime-alert apps.
+    \item \textbf{Geo-tracking}: real-time locational information and crime-avoidance messaging sensitive to an individual's movements.
+\end{itemize}
+
+\section{Method}
+
+\paragraph{Methodology.} Scoping review following the \textbf{PRISMA} guidelines. Articles identified via three databases (\textbf{Web of Science}, \textbf{EBSCOhost}, \textbf{Google Scholar}), supplemented by snowballing. Search terms combined ``app(s)/smartphone application'' with terms such as ``access to justice'', ``crime'', ``crime prevention'', ``violence prevention'', ``rape prevention'', ``justice'', ``personal safety''.
+
+\paragraph{Inclusion criteria.} (1) published \textbf{2008--2020}, (2) examined or detailed smartphone applications designed \textbf{explicitly for primary crime prevention}, (3) written in \textbf{English}. Inclusion criteria were deliberately broad to also capture engineering and computer-science \textit{software proposals} (the design phase), not only evaluations.
+
+\paragraph{Sample.}
+\begin{itemize}
+    \item Initially sampled: \textbf{151 papers}.
+    \item Excluded: 31 (not smartphone-based, etc.); 2 (not designed for crime prevention); 57 (secondary/tertiary apps).
+    \item Final corpus: \textbf{61 academic works} (34 peer-reviewed articles, 17 conference papers, 7 book chapters, 3 university research briefings).
+\end{itemize}
+
+\paragraph{Study-design breakdown.} Experimental ($n=3$), quantitative cross-sectional ($n=12$), qualitative ($n=9$), mixed method ($n=2$), software proposals ($n=22$), conceptual analyses ($n=12$), scoping reviews ($n=1$).
+
+\paragraph{Analysis.} Inductive--deductive thematic analysis, coded by the three authors plus a research assistant. Articles were assessed along: \textit{app features}, \textit{study design}, \textit{crime-prevention efficacy}, \textit{advantages and disadvantages}.
+
+\paragraph{Limitations acknowledged.} (1) Few studies systematically evaluate apps' preventive efficacy --- most describe design or critique unintended consequences. (2) The review excluded general social-media apps (Facebook, WhatsApp) sometimes repurposed for crime prevention.
+
+\section{A Typology of Primary Crime Prevention Apps}
+
+The review identifies \textbf{six types} of apps targeting potential victims and addressing criminogenic conditions in the physical and social environment.
+
+\subsection{Self-Tracking Personal Safety Apps ($n = 24$)}
+
+Aim to promote personal safety, primarily by reducing the user's risk of being victim of a violent crime. Mechanisms:
+\begin{enumerate}
+    \item enabling friends or family members to \textbf{track the user's location};
+    \item sending an \textbf{alert} to a friend, family member or law-enforcement agency in situations where the user feels in danger;
+    \item automatically sending an alert to family members after a set amount of time \textbf{if the user does not personally deactivate} it.
+\end{enumerate}
+Majority of literature ($n = 14$) concerns apps designed specifically for \textbf{women's safety}. Effectiveness mostly unassessed; one effective ($n = 1$), one ineffective ($n = 1$) in formal evaluations.
+
+\paragraph{Advantages.} May increase users' feelings of safety in public space; may collect data on factors contributing to fear of crime; ``passive'' alerts can prompt alarms without requiring intentional action from the user.
+
+\paragraph{Disadvantages.}
+\begin{itemize}
+    \item May reinforce \textbf{victim-blaming} attitudes by focusing on victims rather than offenders' behaviour.
+    \item Apps may become redundant in light of existing smartphone affordances.
+    \item Often fail to address the broader social and institutional context of violence against women, focusing only on individual factors.
+    \item May be unfeasible and a safety-risk for individuals with disabled phone-sharing partners --- can be used to facilitate \textbf{stalking}.
+\end{itemize}
+
+\subsection{Child-Tracking Apps ($n = 3$)}
+
+Apps designed to promote child safety through \textbf{geo-tracking of other individuals} (children and family members). Example: \textit{Life360}.
+
+\paragraph{Concerns.}
+\begin{itemize}
+    \item May create a situation of over-proximity in which parents mistake control for care.
+    \item May create rather than relieve parents' anxieties.
+    \item May infringe on children's rights to privacy.
+    \item May amplify harmful power dynamics in intimate relationships and be used to facilitate stalking.
+\end{itemize}
+
+\subsection{Crime-Mapping / Alert Apps ($n = 17$)}
+
+Apps that promote personal safety through \textbf{crowdmapping crime} and providing users with alert services and information on ``safer'' routes and locations in real time.
+
+\begin{definition}[Crowdmapping (Quaintance, 2011)]
+The aggregation of crowd-generated inputs such as text messages and social-media feeds with geographic data to provide real-time, interactive information on events.
+\end{definition}
+
+Examples:
+\begin{itemize}
+    \item \textit{WikiCrimes} --- platform harnessing collective intelligence and anonymous mass collaboration for citizen crime prevention.
+    \item \textit{Walksafe} --- campus safety app evaluated against Pennsylvania State University's emergency notification system.
+    \item \textit{StreetSafe}, \textit{Hollaback!} --- targeted at women to combat street harassment and sexual assault.
+    \item \textit{Sex Offender Tracker} --- mapped specific crime types; criticised for relying on unreliable and outdated official registries.
+\end{itemize}
+
+\paragraph{Disadvantages.}
+\begin{itemize}
+    \item Often rely on subjective and racially-coded perceptions of what constitutes ``suspicious'' behaviour, leading to profiling of racial and socio-economic groups.
+    \item May fuel \textbf{vigilantism}.
+    \item Crime-mapping apps may draw on official databases that are historic, unreliable, or out-of-date.
+    \item Striking case: \textit{SketchFactor} and \textit{GhettoTracker} (renamed \textit{Good Part of Town}) were quickly labelled racist and classist; both were taken down within days.
+\end{itemize}
+
+\subsection{Decision Aid Apps ($n = 7$)}
+
+Focus on preventing \textbf{intimate partner violence (IPV)} through personalised information and decision aids that assist individuals in making decisions based on high-quality evidence. Example: \textit{MyPlan Safety Decision App} (and trials such as \textit{Thrive}, \textit{weWomen}, \textit{ourCircle}). Notable feature: app-based interventions can be disguisable, addressing privacy concerns raised by survivors.
+
+\subsection{Crime Reporting Apps ($n = 14$)}
+
+Allow users to easily report various forms of crime. Unlike crime-mapping apps, reporting apps do \textbf{not} provide access to user-submitted data on reported events. Examples: \textit{Crime Stoppers}, New Orleans' \textit{Tip Submit}, \textit{Project Jagriti} (crowdsourced child abuse reporting), \textit{Project Spear} (human trafficking), \textit{iWitnessed} (guided-recall to improve witness accounts).
+
+\paragraph{Open issue.} Such apps must comply with data-protection legislation (e.g.\ EU GDPR); Charitou et al.\ (2018) showed via \textit{TRILLION} that security-by-design can reconcile compliance with operational efficacy.
+
+\subsection{Education Apps ($n = 4$)}
+
+Provide users with \textbf{uniform, generic} educational material about recognising specific forms of crime. Unlike decision-aid apps, they do not deliver individually tailored messages or plans. Examples:
+\begin{itemize}
+    \item \textit{SAP\_MobAPP} --- primary-school children, teaches recognition of sexually-abusive behaviour/situations.
+    \item \textit{Thrive} --- aimed at mothers who have experienced IPV.
+    \item Mendel \& Sharapov's (2020) content analysis of 63 ``anti-trafficking apps'' found that \textbf{75\%} had fewer than 100 downloads, \textbf{17\%} had non-functional features, and many spread \textbf{misinformation} about human trafficking.
+\end{itemize}
+
+\begin{keypoint}
+Pfaller (2017) / \v{Z}i\v{z}ek's concept of \textbf{interpassivity} is invoked: rather than educating users about people trafficking, such apps may produce \textit{different forms of ignorance about it} --- ``ignorance facilitates an interpassivity where it is believed that the apps are acting in an individual or organization's place.''
+\end{keypoint}
+
+\section{Discussion}
+
+The crime-prevention landscape is shifting: where prevention used to be a mediated, top-down process (police, government, councils), users now choose from a marketplace of mobile apps. Some are developed by traditional crime-prevention providers, others by specialist app developers or individual entrepreneurs. Consumers need informed advice on \textbf{what they need} and \textbf{how to use it}.
+
+\paragraph{Two key gaps.}
+\begin{enumerate}
+    \item \textbf{Large gaps in product documentation and evidence} for many apps currently available. App stores' technical and content reviews are limited; inaccurate or low-quality content is common.
+    \item \textbf{Near-absence of systematic evaluations} of app outcomes --- especially for ``personal safety'' apps. No studies to date have rigorously examined the efficacy of women's personal safety apps, crime-mapping apps, child abuse prevention apps, or generic personal safety apps in meeting their primary aim: \textit{reducing victimisation from crime}.
+\end{enumerate}
+
+\paragraph{Limited interdisciplinarity.} Only seven articles in the review were published in criminology journals or books; crime prevention app development is substantially driven by software-engineering considerations with limited dialogue between computational and criminological knowledge.
+
+\paragraph{Critical social-science perspective.} Social scientists have predominantly concerned themselves with the \textbf{unintended consequences} of these apps:
+\begin{itemize}
+    \item Apps like \textit{Circle of 6} aim to \textit{``limit or alter the behaviour of potential victims''} rather than perpetrators.
+    \item Crime prevention apps have been read as \textbf{responsibilisation} strategies, transferring risk management to individuals (Comack \& Peter, 2005; Gray, 2009; Mowlabocus, 2018).
+    \item ``Responsibilisation has been \textit{transcoded} into the language and logic of the smartphone'' (Manovich, 2001).
+\end{itemize}
+
+\section{Implications for Practice, Policy and Research}
+
+The article's headline implications:
+\begin{itemize}
+    \item To date, \textbf{no studies} have evaluated the efficacy of child-abuse prevention apps, crime-tracking/mapping apps, or crime-reporting apps. \textit{Recent enthusiasm over these forms of victim-facing app-based crime prevention interventions is not supported by adequate research or evaluation evidence}.
+    \item Numerous studies highlight the need for \textbf{evaluative research} that considers potential \textbf{unintended consequences} of such apps (e.g.\ increasing users' fear of crime or victim-blaming sentiments).
+    \item Few software proposals ground their designs in \textbf{crime-prevention theory} or evidence: greater dialogue needed between computational and criminological knowledge.
+    \item In the absence of systematic effectiveness reviews, users need advice on choosing an app appropriate to their needs and a realistic appraisal of the \textbf{likely benefits and risks} (including privacy and data-security risks) of using them.
+    \item Crime-prevention agencies should carry out \textbf{systematic user reviews} of apps and provide ``\textbf{curated}'' apps that offer useful prevention assistance without compromising users' safety or security.
 \end{itemize}
 
 \end{document}
