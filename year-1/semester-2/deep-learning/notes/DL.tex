@@ -3915,6 +3915,1353 @@ These three choices recover most of the methods in the deep-DA state of the art 
 \end{tcolorbox}
 
 
+% ========================================
+\part{Generative Models}
+% ========================================
+
+\section{From Supervised to Generative Learning}
+
+\subsection{Supervised vs.\ Unsupervised}
+
+Recall the two basic regimes:
+
+\begin{itemize}
+    \item \textbf{Supervised learning}. Data $(\mathbf{x}, y)$, goal: learn $f: \mathbf{x} \mapsto y$. Examples: classification, regression, detection, segmentation, captioning.
+    \item \textbf{Unsupervised learning}. Data $\mathbf{x}$ only (no labels), goal: discover underlying \emph{hidden structure}. Examples: clustering, dimensionality reduction, feature learning, \textbf{density estimation}.
+\end{itemize}
+
+Within unsupervised deep learning, two broad families:
+\begin{itemize}
+    \item \textbf{Non-probabilistic models}: autoencoders.
+    \item \textbf{Probabilistic generative models}: VAEs, GANs, diffusion models.
+\end{itemize}
+
+\subsection{What is a Generative Model?}
+
+A \textbf{generative model} takes unlabelled training samples drawn from some distribution $p_{\text{data}}(\mathbf{x})$ and learns a model $p_{\text{model}}(\mathbf{x})$ that represents that distribution. Three things this enables:
+\begin{itemize}
+    \item \textbf{Density estimation} --- evaluate how likely a sample is under the data distribution.
+    \item \textbf{Representation learning} --- learn embeddings useful for downstream tasks.
+    \item \textbf{Sampling} --- generate new data points (with the same or related distribution).
+\end{itemize}
+
+\begin{definition}[Discriminative vs.\ generative]
+Given a training set $\mathbf{X}$ with labels $Y$:
+\begin{itemize}
+    \item \textbf{Discriminative models} learn the conditional $p(Y \mid \mathbf{X})$ --- they draw a boundary.
+    \item \textbf{Generative models} learn the joint or marginal $p(\mathbf{X})$ (or $p(\mathbf{X}, Y)$) --- they model where the data \emph{lives}.
+\end{itemize}
+\end{definition}
+
+Deep generative models are essentially \textbf{distribution transformers}: they map a simple prior distribution $p(\mathbf{z})$ (typically Gaussian) through a neural network $G$ onto a complex target distribution $p(\mathbf{x})$.
+\[
+    \mathbf{z} \sim \mathcal{N}(0, I) \;\xrightarrow{\;G\;}\; \mathbf{x} \sim p_{\text{model}}(\mathbf{x})
+\]
+
+\subsection{Why Generative Models?}
+
+\begin{itemize}
+    \item \textbf{Realistic samples}: artwork, super-resolution, colorization, in-painting.
+    \item \textbf{Simulation and planning}: reinforcement learning environments, sim-to-real (e.g., GTA5 $\to$ Cityscapes).
+    \item \textbf{Data augmentation} for downstream tasks.
+    \item \textbf{Latent representations}: interpretable and useful for editing, retrieval, transfer.
+\end{itemize}
+
+
+\section{Autoencoders}
+
+\subsection{Architecture}
+
+An \textbf{autoencoder} (Bourlard \& Kamp, 1988) is an unsupervised approach for learning a lower-dimensional feature representation from unlabelled data. It is composed of two networks:
+\begin{itemize}
+    \item \textbf{Encoder} $f$: maps the input $\mathbf{x}$ to a latent code $\mathbf{h} = f(\mathbf{x})$, usually with $\dim(\mathbf{h}) < \dim(\mathbf{x})$.
+    \item \textbf{Decoder} $g$: produces a reconstruction $\hat{\mathbf{x}} = g(\mathbf{h})$ with a (typically mirrored) architecture.
+\end{itemize}
+
+The system is trained end-to-end to minimise the \textbf{reconstruction loss}, usually $L_2$:
+\[
+    L(\mathbf{x}, \hat{\mathbf{x}}) = \|\mathbf{x} - \hat{\mathbf{x}}\|_2^2 = \sum_i (x_i - \hat{x}_i)^2.
+\]
+
+The bottleneck $\mathbf{h}$ is forced to capture the meaningful factors of variation in $\mathbf{x}$ --- there is no explicit supervision, but the reconstruction objective provides \emph{implicit} supervision.
+
+\subsection{Implementation Variants}
+
+\begin{itemize}
+    \item \textbf{Originally}: linear layer + sigmoid non-linearity.
+    \item \textbf{Later}: deep fully-connected networks.
+    \item \textbf{Much later}: convolutional encoders/decoders with ReLU, suited for images.
+\end{itemize}
+
+\begin{remark}
+A linear autoencoder with an $L_2$ loss and no non-linearities recovers \textbf{PCA}: the optimal encoder spans the top principal components of the data. Non-linear autoencoders generalise PCA to non-linear manifolds.
+\end{remark}
+
+\subsection{Convolutional Autoencoders}
+
+For image data, replace fully-connected layers with convolutional blocks in the encoder and \emph{deconvolutional} (transposed convolution) blocks in the decoder. This preserves spatial structure and dramatically reduces parameter count.
+
+\subsection{Dimensionality of the Latent Space}
+
+The bottleneck dimension is the central hyperparameter:
+\begin{itemize}
+    \item \textbf{Too small}: reconstructions become blurred (autoencoding compresses too aggressively).
+    \item \textbf{Larger latent}: better reconstructions, but risk of trivial identity mapping if capacity is unconstrained.
+\end{itemize}
+
+\subsection{Regularized Autoencoders}
+
+When the latent dimension equals or exceeds the input dimension, the model is \textbf{overcomplete} and could trivially copy the input. \textbf{Regularised autoencoders} avoid this by adding a penalty that encourages a useful structure on $\mathbf{h}$.
+
+\paragraph{Sparse autoencoder.} Apply an $L_1$ penalty on the code:
+\[
+    L(\mathbf{x}, g(f(\mathbf{x}))) + \lambda \|\mathbf{h}\|_1
+\]
+Forces most code activations to be zero $\Rightarrow$ sparse, disentangled features.
+
+\paragraph{Contractive autoencoder.} Penalise the Jacobian of the encoder, forcing the latent code to be locally invariant to input perturbations:
+\[
+    L(\mathbf{x}, g(f(\mathbf{x}))) + \lambda \sum_i \|\nabla_{\mathbf{x}} h_i\|^2
+\]
+
+\subsection{Denoising Autoencoders (DAE)}
+
+Another way to force the autoencoder to learn useful features is to corrupt the input with random noise $\mathbf{w}$ and ask the network to recover the \emph{clean} version (Vincent et al., 2008):
+\[
+    \text{minimise } L\bigl(\mathbf{x},\, g(f(\mathbf{x} + \mathbf{w}))\bigr).
+\]
+\begin{itemize}
+    \item Architecture is unchanged --- only the training data differs.
+    \item The latent code must capture structure that is robust to input corruption.
+    \item Useful for image denoising, watermark removal, and as a strong pretraining task for deep networks.
+\end{itemize}
+
+\subsection{Autoencoders as Pretraining}
+
+After training, the decoder is \emph{thrown away} and the encoder is reused to initialise a supervised model. A classifier head is attached on top of $\mathbf{h}$ and fine-tuned (possibly jointly with the encoder) on a small labelled dataset.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Transfer pipeline}]
+\begin{enumerate}
+    \item Train autoencoder on \emph{large unlabelled} dataset.
+    \item Discard decoder, keep encoder.
+    \item Add classifier on top of features $\mathbf{h}$.
+    \item Fine-tune end-to-end on \emph{small labelled} dataset for the target task.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Applications}
+
+\begin{itemize}
+    \item \textbf{Image denoising / restoration}: DAE-style training.
+    \item \textbf{Image colorization}: input grayscale, output color.
+    \item \textbf{Watermark removal}, super-resolution, in-painting.
+    \item \textbf{Anomaly detection}: a normal-data autoencoder fails to reconstruct out-of-distribution inputs; high reconstruction error flags anomalies.
+    \item \textbf{Transfer learning} (above).
+\end{itemize}
+
+\subsection{Autoencoder Summary}
+
+\begin{itemize}
+    \item Dimensionality reduction based on deep networks.
+    \item Very flexible: works for images, text, time series, graphs, $\ldots$
+    \item Active research threads: denoising AEs, sparse AEs, variational AEs.
+\end{itemize}
+
+A plain autoencoder is \emph{not} a generative model: sampling a random point in latent space does not necessarily decode to a plausible $\mathbf{x}$, because the encoder may map data to an arbitrary, disconnected region of the latent space.
+
+
+\section{Variational Autoencoders (VAE)}
+
+\subsection{Motivation}
+
+Plain autoencoders learn a deterministic mapping $\mathbf{x} \mapsto \mathbf{z}$. A \textbf{VAE} (Kingma \& Welling, 2014) instead encodes each input as a \emph{distribution} over the latent space:
+\[
+    \text{AE: } \mathbf{x} \to \mathbf{z} = e(\mathbf{x}) \to \hat{\mathbf{x}} = d(\mathbf{z})
+\]
+\[
+    \text{VAE: } \mathbf{x} \to q(\mathbf{z}\mid\mathbf{x}) \to \mathbf{z} \sim q(\mathbf{z}\mid\mathbf{x}) \to \hat{\mathbf{x}} = d(\mathbf{z})
+\]
+The distributions are chosen to be \textbf{normal}: the encoder learns the \emph{mean} $\boldsymbol{\mu}_{\mathbf{z}\mid\mathbf{x}}$ and \emph{covariance} $\boldsymbol{\Sigma}_{\mathbf{z}\mid\mathbf{x}}$. Sampling from this distribution and decoding gives a probabilistic generative model: we can now draw new $\mathbf{z}$ from the prior $p(\mathbf{z})$ and decode to obtain a new $\hat{\mathbf{x}}$.
+
+\subsection{Probabilistic Setup}
+
+Assume the data is generated from unobserved latent variables $\mathbf{z}$:
+\[
+    p_\theta(\mathbf{x}) = \int p_\theta(\mathbf{z})\, p_\theta(\mathbf{x}\mid\mathbf{z})\, d\mathbf{z}
+\]
+\begin{itemize}
+    \item \textbf{Prior} $p_\theta(\mathbf{z})$: simple, typically $\mathcal{N}(\mathbf{0}, I)$.
+    \item \textbf{Conditional} $p_\theta(\mathbf{x}\mid\mathbf{z})$: complex, parametrised by a \textbf{neural network} (decoder).
+\end{itemize}
+The goal is to estimate $\theta$ by \textbf{maximum likelihood}.
+
+\subsection{Intractability}
+
+Two quantities we would like, both \textbf{intractable}:
+\begin{itemize}
+    \item \textbf{Likelihood} $p_\theta(\mathbf{x}) = \int p_\theta(\mathbf{z}) p_\theta(\mathbf{x}\mid\mathbf{z})\, d\mathbf{z}$ --- integrating over all latents is infeasible for high-dimensional $\mathbf{z}$.
+    \item \textbf{Posterior} $p_\theta(\mathbf{z}\mid\mathbf{x}) = p_\theta(\mathbf{x}\mid\mathbf{z}) p_\theta(\mathbf{z}) / p_\theta(\mathbf{x})$ --- depends on the intractable marginal $p_\theta(\mathbf{x})$.
+\end{itemize}
+
+\subsection{Solution: Approximate Posterior + ELBO}
+
+Introduce a second neural network --- the \textbf{encoder} $q_\phi(\mathbf{z}\mid\mathbf{x})$ --- that \emph{approximates} the true posterior $p_\theta(\mathbf{z}\mid\mathbf{x})$. With this approximation, one can derive a tractable lower bound on the data log-likelihood, the \textbf{Evidence Lower Bound (ELBO)}:
+\[
+    \mathcal{L}(\theta, \phi; \mathbf{x}) = \underbrace{\mathbb{E}_{q_\phi(\mathbf{z}\mid\mathbf{x})}[\log p_\theta(\mathbf{x}\mid\mathbf{z})]}_{\text{reconstruction}} - \underbrace{\mathrm{KL}\bigl(q_\phi(\mathbf{z}\mid\mathbf{x}) \,\|\, p(\mathbf{z})\bigr)}_{\text{regulariser}}
+\]
+\begin{itemize}
+    \item \textbf{Reconstruction term}: forces the decoder to put high probability on the true $\mathbf{x}$ given samples from $q_\phi$.
+    \item \textbf{Regulariser}: KL divergence between approximate posterior and prior. Forces $q_\phi(\mathbf{z}\mid\mathbf{x})$ to stay close to the prior $p(\mathbf{z})$, which is essential for sampling: if posteriors collapse to isolated points, the latent space has ``holes'' and random $\mathbf{z}$ decode to garbage.
+\end{itemize}
+
+\begin{remark}
+Since both networks output distributions, the VAE is intrinsically \textbf{probabilistic}: encoder and decoder both produce a mean and a covariance, not a single point.
+\end{remark}
+
+\subsection{Training and Sampling}
+
+\paragraph{Training.} Maximise the ELBO with stochastic gradient ascent. The expectation under $q_\phi$ is estimated by sampling $\mathbf{z}$ from the encoder; gradients flow through the sampling step via the \textbf{reparametrisation trick} ($\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}$, $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, I)$).
+
+\paragraph{Sampling.} Once trained, generation is straightforward:
+\begin{enumerate}
+    \item Sample $\mathbf{z} \sim p(\mathbf{z}) = \mathcal{N}(\mathbf{0}, I)$.
+    \item Pass $\mathbf{z}$ through the decoder $p_\theta(\mathbf{x}\mid\mathbf{z})$ to obtain a generated $\hat{\mathbf{x}}$.
+\end{enumerate}
+
+\subsection{Latent Space Properties}
+
+\paragraph{Diagonal Gaussian prior.} The prior on $\mathbf{z}$ is typically a diagonal Gaussian: each latent dimension is independent. This simplification makes training tractable and tends to encourage \textbf{disentanglement} --- each latent coordinate captures a separate factor of variation.
+
+\paragraph{Interpretability.} In practice, different dimensions of $\mathbf{z}$ end up encoding interpretable factors. In the classic VAE faces experiment (Kingma \& Welling, 2014), varying $z_1$ changes the head pose while varying $z_2$ changes the degree of smile.
+
+\subsection{Conditional VAE (CVAE)}
+
+If labels (or any side information $y$) are available, condition both the encoder and the decoder on $y$: replace $p_\theta(\mathbf{x}\mid\mathbf{z})$ with $p_\theta(\mathbf{x}\mid\mathbf{z}, y)$ and $q_\phi(\mathbf{z}\mid\mathbf{x})$ with $q_\phi(\mathbf{z}\mid\mathbf{x}, y)$. The derivation is otherwise unchanged. CVAEs enable controlled generation: progression along attributes such as gender, age, hair colour, expression, or eyewear.
+
+\subsection{VAE Summary}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={VAE: pros and cons}]
+\textbf{Pros.}
+\begin{itemize}
+    \item Principled probabilistic framework for generative modelling.
+    \item Yields a tractable approximate posterior $q_\phi(\mathbf{z}\mid\mathbf{x})$ that is a useful feature representation.
+    \item Stable training compared to GANs.
+\end{itemize}
+\textbf{Cons.}
+\begin{itemize}
+    \item Only maximises a \emph{lower bound} on the likelihood --- not the likelihood itself.
+    \item Samples tend to be \textbf{blurrier} and of lower visual quality than GANs (a consequence of the Gaussian likelihood and KL regulariser).
+\end{itemize}
+\textbf{Modern extensions.} VQ-VAE (vector-quantised latents), VAEs combined with transformer decoders.
+\end{tcolorbox}
+
+
+\section{Generative Adversarial Networks (GANs)}
+
+\subsection{Idea}
+
+Introduced by Goodfellow et al.\ (NIPS 2014). Unlike VAEs, GANs \textbf{do not} use an explicit density function. They focus purely on the \emph{ability to sample}:
+
+\textit{How do we sample from a complex high-dimensional training distribution?}
+
+\paragraph{Trick.} Sample from a simple distribution (random noise) and train a neural network --- the \textbf{generator} --- to transform that noise into samples from the desired distribution (e.g., human faces, handwritten digits).
+
+\subsection{Two-Player Game}
+
+A GAN consists of two networks trained \textbf{adversarially}:
+\begin{itemize}
+    \item \textbf{Generator} $G$: maps noise $\mathbf{z} \sim p(\mathbf{z})$ to $G(\mathbf{z})$, attempting to fool the discriminator.
+    \item \textbf{Discriminator} $D$: receives both real samples $\mathbf{x} \sim p_{\text{data}}$ and fake samples $G(\mathbf{z})$, outputs the probability that the input is \emph{real}.
+\end{itemize}
+
+The generator improves by trying to produce samples the discriminator misclassifies as real; the discriminator improves by becoming better at telling real from fake. The game is the deep-learning analogue of a forger versus a detective.
+
+\subsection{Objective Function}
+
+The generator and discriminator are trained jointly with a \textbf{minimax} objective:
+\[
+    \min_{\theta_g} \max_{\theta_d} \;\Bigl[
+        \mathbb{E}_{\mathbf{x} \sim p_{\text{data}}}[\log D_{\theta_d}(\mathbf{x})]
+        + \mathbb{E}_{\mathbf{z} \sim p(\mathbf{z})}[\log(1 - D_{\theta_d}(G_{\theta_g}(\mathbf{z})))]
+    \Bigr]
+\]
+\begin{itemize}
+    \item $D$ wants $D(\mathbf{x}) \approx 1$ on real data and $D(G(\mathbf{z})) \approx 0$ on fakes --- so $D$ \textbf{maximises} the objective.
+    \item $G$ wants $D(G(\mathbf{z})) \approx 1$ --- so $G$ \textbf{minimises} the objective.
+\end{itemize}
+
+\subsection{Training Algorithm}
+
+The minimax problem is solved by \textbf{alternating gradient updates}:
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={GAN training loop}]
+Repeat:
+\begin{enumerate}
+    \item \textbf{Gradient ascent on discriminator}:
+    \[
+        \max_{\theta_d} \;\mathbb{E}_{\mathbf{x} \sim p_{\text{data}}}[\log D_{\theta_d}(\mathbf{x})] + \mathbb{E}_{\mathbf{z}}[\log(1 - D_{\theta_d}(G_{\theta_g}(\mathbf{z})))]
+    \]
+    \item \textbf{Gradient descent on generator}:
+    \[
+        \min_{\theta_g} \;\mathbb{E}_{\mathbf{z}}[\log(1 - D_{\theta_d}(G_{\theta_g}(\mathbf{z})))]
+    \]
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Vanishing-Gradient Problem and the Non-Saturating Loss}
+
+The original generator loss $\log(1 - D(G(\mathbf{z})))$ has poor gradient behaviour:
+\begin{itemize}
+    \item When samples are clearly fake ($D(G(\mathbf{z})) \approx 0$), the curve is \textbf{flat}: the gradient is tiny, and $G$ learns slowly precisely when it needs to improve most.
+    \item When samples are already good ($D(G(\mathbf{z})) \approx 1$), the gradient is \textbf{large} --- but those samples don't need much updating.
+\end{itemize}
+The generator learns more from good samples than from bad ones --- an ironic and unhelpful inversion.
+
+\paragraph{Fix.} Replace ``minimise $\log(1 - D(G(\mathbf{z})))$'' with ``\emph{maximise} $\log D(G(\mathbf{z}))$'':
+\[
+    \max_{\theta_g} \;\mathbb{E}_{\mathbf{z}}[\log D_{\theta_d}(G_{\theta_g}(\mathbf{z}))]
+\]
+Same fixed point, but the gradient is now large precisely in the region where samples are bad. This is the standard ``non-saturating'' GAN loss.
+
+\subsection{Issues with GAN Training}
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!60!black, title={Common GAN pathologies}]
+\begin{itemize}
+    \item \textbf{Hard to train}. Early in training, gradients are tiny; later, learning concentrates on already-good samples. The imbalance makes training slow or unstable.
+    \item \textbf{Oscillation / divergence}. Parameters can oscillate; generator loss does not correlate with sample quality.
+    \item \textbf{Hyperparameter sensitivity}. Behaviour very sensitive to learning rates, batch size, architecture.
+    \item \textbf{Mode collapse}. Generator produces only a small subset of the data distribution.
+\end{itemize}
+\end{tcolorbox}
+
+A large literature improves stability, mostly by changing the \textbf{loss function}: LSGAN, WGAN, WGAN-GP, DRAGAN, EBGAN, BEGAN, $\ldots$
+
+\subsection{DCGAN}
+
+Radford et al.\ (ICLR 2016) introduced \textbf{Deep Convolutional GAN}, the first GAN to reliably scale to large-resolution image generation.
+
+\paragraph{Generator.} Upsampling network with \textbf{fractionally strided convolutions} from a $\mathbf{z}$ vector of dimension $\sim 100$ to a full image.
+
+\paragraph{Discriminator.} Convolutional classifier.
+
+\begin{tcolorbox}[colback=yellow!5!white, colframe=orange!80!black, title={DCGAN architecture guidelines}]
+\begin{itemize}
+    \item Replace pooling with \textbf{strided convolutions} (discriminator) and \textbf{fractional-strided convolutions} (generator).
+    \item Use \textbf{batch normalisation} in both networks.
+    \item Remove fully-connected hidden layers for deeper architectures.
+    \item Generator: ReLU everywhere except the output (Tanh).
+    \item Discriminator: LeakyReLU everywhere (sparse gradients from plain ReLU hurt training).
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Latent-Space Arithmetic}
+
+Once a GAN has learned a smooth, meaningful latent space, semantic concepts emerge as \textbf{linear directions}.
+
+\begin{example}[Vector arithmetic on faces (DCGAN)]
+\[
+    \mathbf{z}_3 = \mathbf{z}_2 - \mathbf{z}_1 + \mathbf{z}_4
+\]
+where $\mathbf{z}_1 \to$ man, $\mathbf{z}_2 \to$ man with glasses, $\mathbf{z}_4 \to$ woman. Then $G(\mathbf{z}_3)$ produces \emph{a woman with glasses}. Analogous arithmetic works for ``smiling man = smiling woman $-$ neutral woman $+$ neutral man''.
+\end{example}
+
+The GAN implicitly learns high-level concepts (gender, glasses, expression, hair) and organises them as linear directions, enabling \textbf{latent-space editing} of generated content.
+
+\subsection{Modern GANs: Highlights}
+
+\begin{itemize}
+    \item \textbf{LSGAN, WGAN, WGAN-GP} (2017). Stability via least-squares and Wasserstein objectives.
+    \item \textbf{Progressive GAN} (Karras 2018). Progressively grow resolution; first photorealistic faces.
+    \item \textbf{CycleGAN} (Zhu 2017). Unpaired image-to-image translation (horse $\leftrightarrow$ zebra, apple $\leftrightarrow$ orange, summer $\leftrightarrow$ winter Yosemite).
+    \item \textbf{pix2pix} (Isola 2017). Paired translation: sketch $\to$ photo, map $\to$ aerial.
+    \item \textbf{Text $\to$ Image Synthesis} (Reed et al.\ 2017). Generate images from captions.
+    \item \textbf{BigGAN} (Brock et al.\ 2019). Large-scale, high-fidelity natural-image synthesis.
+\end{itemize}
+
+
+\section{Evaluating Generative Models}
+
+\subsection{Why Evaluation is Hard}
+
+Evaluating generative models is genuinely difficult:
+\begin{itemize}
+    \item Showing pictures (user study) is not enough --- especially for ``easy'' datasets like MNIST, CIFAR, faces.
+    \item Likelihoods of high-dimensional samples cannot be computed directly; distributions cannot be directly compared.
+    \item Many improvements claim \emph{stability} or \emph{ease of training}, which are difficult to quantify.
+\end{itemize}
+
+Two surrogate metrics dominate the literature.
+
+\subsection{Inception Score (IS)}
+
+A good generator should produce a \emph{variety} of \emph{recognisable} object classes. Pass generated images through a pretrained \textbf{Inception v3} classifier:
+\begin{itemize}
+    \item For \emph{recognisability}, each image's predicted class distribution should be \textbf{low-entropy} (confident on one class).
+    \item For \emph{diversity}, the marginal class distribution across many samples should be \textbf{uniform} (covers all classes).
+\end{itemize}
+
+\paragraph{Problems.} A model that simply memorises the training set (\textbf{overfits}) or outputs a single canonical image per class (\textbf{mode dropping}) can still score well.
+
+\subsection{Fréchet Inception Distance (FID)}
+
+\textbf{FID} addresses some IS limitations by directly comparing the \emph{statistics} of real and generated images in Inception feature space.
+
+\paragraph{Algorithm.}
+\begin{enumerate}
+    \item Extract features from the \texttt{pool3} layer of Inception v3 for both real and generated images.
+    \item Fit a multivariate Gaussian to each set of features.
+    \item Compute the Fréchet distance (a.k.a.\ Wasserstein-2 distance) between the two Gaussians:
+    \[
+        \mathrm{FID} = \|\boldsymbol{\mu}_r - \boldsymbol{\mu}_g\|^2 + \mathrm{Tr}\!\left(\boldsymbol{\Sigma}_r + \boldsymbol{\Sigma}_g - 2(\boldsymbol{\Sigma}_r \boldsymbol{\Sigma}_g)^{1/2}\right)
+    \]
+    where $(\boldsymbol{\mu}_r, \boldsymbol{\Sigma}_r)$ and $(\boldsymbol{\mu}_g, \boldsymbol{\Sigma}_g)$ are the means and covariances of real and generated features.
+\end{enumerate}
+
+\paragraph{Pros.} Lower FID $\Rightarrow$ generated images are more similar to real ones in content and diversity.
+
+\paragraph{Cons.} Cannot detect overfitting (memorising the training set yields excellent FID).
+
+
+\section{GANs vs.\ VAEs}
+
+GANs and VAEs are two complementary approaches:
+\begin{itemize}
+    \item \textbf{GANs} provide a \emph{sampling mechanism}. The adversarial loss progressively makes samples indistinguishable from real data, but the model does not explicitly represent any density.
+    \item \textbf{VAEs} learn an \emph{explicit (approximate) probability distribution} over the data. The distribution can be used to sample new data and to assess the probability of new data points.
+\end{itemize}
+
+\subsection{Properties of Generative Models}
+
+A short checklist of desirable properties:
+\begin{itemize}
+    \item \textbf{High-quality sampling}. Samples indistinguishable from training data.
+    \item \textbf{Coverage}. Samples represent the entire training distribution, not just a subset.
+    \item \textbf{Well-behaved latent space}. Every $\mathbf{z}$ corresponds to a plausible $\mathbf{x}$; smooth changes in $\mathbf{z}$ produce smooth changes in $\mathbf{x}$.
+    \item \textbf{Interpretable latent space}. Each dimension of $\mathbf{z}$ corresponds to an interpretable factor.
+    \item \textbf{Efficient likelihood computation}. For probabilistic models, evaluate $p(\mathbf{x})$ efficiently and accurately.
+\end{itemize}
+
+\subsection{Comparison Table}
+
+\begin{center}
+\begin{tabular}{lcc}
+    \hline
+    \textbf{Property} & \textbf{GANs} & \textbf{VAEs} \\
+    \hline
+    Efficient sampling          & \checkmark & \checkmark \\
+    High-quality samples        & \checkmark & $\times$ (blurry) \\
+    Coverage                    & $\times$ (mode collapse) & ? \\
+    Well-behaved latent space   & \checkmark & \checkmark \\
+    Interpretable latent space  & ? & ? \\
+    Efficient likelihood        & n/a (no density) & $\times$ (only ELBO) \\
+    \hline
+\end{tabular}
+\end{center}
+
+
+\section{Summary}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Take-Home Messages}]
+\begin{itemize}[leftmargin=*]
+    \item Generative models learn $p_{\text{model}}(\mathbf{x})$ from unlabelled data, enabling density estimation, representation learning, and sampling.
+    \item Deep generative models are \textbf{distribution transformers}: they push a simple prior (Gaussian noise) through a neural network onto a complex target distribution.
+    \item \textbf{Autoencoders} are non-probabilistic; they learn a deterministic latent code by reconstruction. Variants: sparse, contractive, denoising, convolutional. Not generative on their own, but a strong pretraining tool.
+    \item \textbf{VAEs} are probabilistic autoencoders: the encoder outputs a distribution $q_\phi(\mathbf{z}\mid\mathbf{x})$; training maximises the ELBO (reconstruction $-$ KL to prior). Stable to train but samples are blurry.
+    \item \textbf{GANs} sidestep the density and train a generator/discriminator pair in a minimax game. Produce sharp samples but are hard to train (vanishing gradients, mode collapse, hyperparameter sensitivity). DCGAN, WGAN, Progressive GAN, CycleGAN, BigGAN, $\ldots$
+    \item \textbf{Latent-space arithmetic} (DCGAN) reveals that GANs implicitly organise semantic concepts as linear directions, enabling generative editing.
+    \item Evaluation is hard: \textbf{Inception Score} (recognisability + diversity) and \textbf{FID} (Fréchet distance in Inception features) are standard but imperfect --- both can be fooled by memorisation.
+    \item GANs vs.\ VAEs is a quality/coverage trade-off: GANs produce sharper samples but suffer mode collapse; VAEs cover the distribution but produce blurry samples. \textbf{Diffusion models} (covered elsewhere) combine many of the strengths of both.
+\end{itemize}
+\end{tcolorbox}
+
+
+% ========================================
+\part{Introduction to Multimodal Learning}
+% ========================================
+
+\section{What is Multimodality?}
+
+\subsection{Origin of the Term}
+
+The word \textbf{multimodality} originates in mathematics, where it refers to a probability distribution with multiple modes (peaks). In machine learning, the term has taken on a broader meaning tied to how information is acquired and expressed.
+
+\subsection{Modality}
+
+A \textbf{modality} refers to the way in which something is expressed or perceived. Modalities range from \textbf{raw} (close to the sensor) to \textbf{abstract} (far from the sensor):
+\[
+    \text{Raw} \;\longleftarrow\; \underbrace{\text{Speech signal, Image}}_{\text{close to sensor}} \;\longrightarrow\; \underbrace{\text{Language, Detected objects}}_{\text{intermediate}} \;\longrightarrow\; \underbrace{\text{Sentiment, Object categories}}_{\text{abstract}}
+\]
+
+For humans, modalities correspond to the sensory channels: \textbf{vision, hearing, touch, taste, smell}.
+
+\subsection{Multimodality: A Working Definition}
+
+Two definitions are typically given:
+\begin{itemize}
+    \item \emph{Dictionary}: ``with multiple modalities''.
+    \item \emph{Research-oriented} (Morency, CMU): \textbf{Multimodal is the science of heterogeneous and interconnected data.}
+\end{itemize}
+
+\paragraph{Heterogeneous} --- Different modalities exhibit \emph{diverse qualities, structures and representations}. A spectrum runs from very \textbf{homogeneous} (e.g.\ images from two cameras) through intermediate (text in two languages) to very \textbf{heterogeneous} (language + vision).
+
+\paragraph{Interconnected} --- Modalities are typically related and share complementary information. Their interactions can be characterised at two levels:
+\begin{itemize}
+    \item \textbf{Statistical}: \emph{association} (correlation, co-occurrence) and \emph{dependency} (e.g.\ temporal contingency).
+    \item \textbf{Semantic}: \emph{correspondence} (grounding --- the word ``car'' linked to a region in an image) and \emph{relationship} (knowledge-base-style links, e.g.\ ``dad'').
+\end{itemize}
+
+\subsection{Multimodal is Multidisciplinary}
+
+Multimodal learning sits at the intersection of: psychology, medicine, language processing, computer vision, robotics, machine learning, multimedia, speech analysis.
+
+\subsection{Common Modalities}
+
+\begin{itemize}
+    \item \textbf{Natural language}: spoken, written.
+    \item \textbf{Visual}: images, video, RGB, infrared (thermal), depth.
+    \item \textbf{Audio}: voice, sound, music.
+    \item \textbf{Biological signals}: EEG, ECG, GSR (galvanic skin response).
+    \item \textbf{Haptics}: touch.
+    \item \textbf{Motion capture}.
+\end{itemize}
+
+A finer-grained taxonomy for behavioural data uses the \textbf{LVTAPM} mnemonic: \textbf{L}anguage (lexicon, syntax, pragmatics), \textbf{V}isual (gestures, body language, eye contact, facial expressions), \textbf{T}ouch (haptics, motion), \textbf{A}coustic (prosody, vocal expressions), \textbf{P}hysiological (skin conductance, ECG), \textbf{M}obile (GPS, accelerometer, light sensors).
+
+
+\section{Multimodal Machine Learning}
+
+\subsection{Definition}
+
+\textbf{Multimodal ML} takes multiple input modalities --- e.g.\ language (``I really like this tutorial''), vision (a video of the speaker), and acoustics (a waveform) --- and produces a feature vector or a prediction $\hat{y}$. All learning regimes apply: \emph{unsupervised, self-supervised, supervised, reinforcement}.
+
+\subsection{A Historical Timeline}
+
+\begin{itemize}
+    \item \textbf{1970s--1980s}: Audio-visual speech recognition.
+    \item \textbf{Late 1980s--1990s}: Content-based video retrieval.
+    \item \textbf{1990s--2000s}: Affect and emotion recognition.
+    \item \textbf{2000s--2010s}: Video event recognition (TrecVid), multimodal sentiment analysis.
+    \item \textbf{$\sim$2015}: Image captioning revisited $\Rightarrow$ \textbf{birth of ``Language \& Vision''} research.
+    \item \textbf{2016+}: Visual question answering, video QA, referring expressions.
+    \item \textbf{2017}: Multimodal dialogue.
+    \item \textbf{2018+}: Large-scale video retrieval (YouTube8M), language + vision + navigation, self-driving.
+\end{itemize}
+
+\subsection{Application Examples}
+
+\paragraph{Audio-visual speech recognition.} Speech recognisers based on \emph{audio cues only} are sensitive to noise. Combining audio with \emph{visual} cues (face tracking, mouth localisation) gives more robust ``audio-visual speech recognition''.
+
+\paragraph{Affective computing.} Systems that \emph{recognise, interpret, process, and simulate} human emotions and internal states. Emotions are key for decision making.
+
+\paragraph{Human--human--robot interaction analysis.} \textbf{Social Signal Processing} (Social AI) integrates social-psychology concepts into AI: automatic detection, interpretation and synthesis of \emph{social signals} carried by non-verbal behavioural cues.
+
+\paragraph{Event / behaviour understanding.} Action recognition, event segmentation, video summarisation --- typically combining skeleton, depth, RGB and accelerometer modalities.
+
+\paragraph{Content understanding.} The ability of computers to ingest, relate and process information across modalities (text, speech, images, sensor data) and perform tasks using it.
+
+\paragraph{Multimedia information retrieval.} Image and video captioning, visual question answering, cross-modal retrieval.
+
+
+\section{The Five Multimodal Challenges}
+
+Following Baltrusaitis, Ahuja and Morency (TPAMI 2019), multimodal ML research can be organised around five technical challenges: \textbf{Representation, Alignment, Translation, Fusion, Co-learning}. A sixth meta-task --- \textbf{Generation} --- is increasingly distinguished by Liang, Zadeh \& Morency (2023).
+
+\subsection{Challenge 1: Representation}
+
+How to represent and summarise multimodal data so that the \emph{complementarity} and \emph{redundancy} of multiple modalities is exploited.
+
+\paragraph{Joint representations.} All modalities are projected to a \emph{single shared space}:
+\[
+    \mathbf{x}_m = f(\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_n).
+\]
+Useful when modalities are tightly coupled and a single model can ingest all of them.
+
+\paragraph{Coordinated representations.} Each modality keeps its own representation $f(\mathbf{x}_1)$, $g(\mathbf{x}_2)$, $\ldots$ but the spaces are \emph{coordinated} by a constraint (typically a similarity, e.g.\ cosine distance):
+\[
+    f(\mathbf{x}_1) \;\sim\; g(\mathbf{x}_2).
+\]
+More appropriate when modalities are fundamentally very different (e.g.\ image vs.\ text), where a forced joint space tends to wash out modality-specific structure.
+
+\subsubsection{Coordination via Contrastive Learning}
+
+Coordinated spaces are most often learned with a \textbf{contrastive loss}: pull \emph{positive pairs} (corresponding instances across modalities) together, push \emph{negative pairs} apart.
+
+\paragraph{Simple contrastive (triplet-style) loss.}
+\[
+    \max\bigl\{\,0,\; \alpha + \mathrm{sim}(\mathbf{z}_A,\, \mathbf{z}_B^+) - \mathrm{sim}(\mathbf{z}_A,\, \mathbf{z}_B^-)\,\bigr\}
+\]
+The similarity is typically cosine. Paired data $\{\triangle, \bigcirc\}$ (e.g.\ images and their captions) supply positives; unrelated cross-modal samples supply negatives.
+
+\subsubsection{CLIP --- Contrastive Language-Image Pre-training}
+
+CLIP (Radford et al.\ 2021) is the flagship example of cross-modal coordination via contrastive learning. Two encoders, $f_L$ for language and $f_V$ for vision, produce embeddings $\mathbf{z}_L, \mathbf{z}_V$ coordinated by the \textbf{InfoNCE} (Noise Contrastive Estimation) loss:
+\[
+    \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N} \log \frac{\mathrm{sim}(\mathbf{z}_A^i, \mathbf{z}_B^i)}{\sum_{j=1}^{N} \mathrm{sim}(\mathbf{z}_A^i, \mathbf{z}_B^j)}
+\]
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Key properties of CLIP}]
+\begin{itemize}
+    \item $f_L$ and $f_V$ are strong encoders for any language-vision task.
+    \item $\mathbf{z}_L$ and $\mathbf{z}_V$ live in \emph{coordinated but not identical} spaces --- not a single joint embedding.
+    \item \textbf{Zero-shot} capability: classify images using natural-language label prompts at inference time, no fine-tuning required.
+    \item Strong \textbf{generalisability}: applied far beyond natural images, including medical imaging (X-ray, CT, MRI, ultrasound, histology, dermatology, ECG) for classification, segmentation, detection, retrieval, VQA, report generation.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Challenge 2: Alignment}
+
+\textbf{Alignment} = finding relationships and correspondences between sub-components of instances from two or more modalities.
+
+\paragraph{Example tasks.}
+\begin{itemize}
+    \item Given an image and a caption, find the image regions corresponding to each word/phrase.
+    \item Given a movie, align it to its script or to book chapters.
+\end{itemize}
+
+\subsubsection{Explicit vs.\ Implicit Alignment}
+
+\paragraph{Explicit alignment.} Alignment is the \emph{task itself}. Find correspondence between elements of different modalities, typically via a loss function. Classical method: \textbf{dynamic time warping} (e.g.\ aligning speech signal to transcript, or unaligned video to reference audio).
+
+\paragraph{Implicit alignment.} Alignment used as an \emph{intermediate} (often latent) step inside a larger task. Modern method: \textbf{attention mechanisms} (self-attention, transformers). Example tasks: image/video captioning, VQA, cross-modal retrieval.
+
+\subsubsection{Why Attention is so Useful for Multimodal Data}
+
+\begin{itemize}
+    \item Assigns \textbf{different weights} to different parts of the input $\Rightarrow$ focuses on the relevant parts of each modality.
+    \item Effective for sequences of \textbf{varying lengths} (text length $\neq$ audio duration $\neq$ number of objects in an image).
+    \item Helps \textbf{align modalities with different structures and temporal granularities} --- learns which parts of one modality correspond to which parts of another.
+    \item SOTA encoders --- \textbf{BERT} (text), \textbf{ViT} (images), \textbf{CLIP} (vision-language) --- all rely on attention to integrate information.
+\end{itemize}
+
+\subsubsection{Semantic Alignment: Grounding}
+
+\textbf{Grounding} = establishing correspondences between modalities so that information in one modality becomes \emph{meaningful in the context of another}.
+
+\paragraph{Visual grounding.} Linking specific regions or objects in an image/video to corresponding textual descriptions (``A \emph{woman} reading a \emph{newspaper}'' $\to$ two bounding boxes).
+
+\paragraph{Text grounding.} Linking words or phrases in text to corresponding elements in other modalities (images, audio, video). E.g.\ VQA in text-rich images, where the model outputs both an answer and the bounding box that justifies it.
+
+\paragraph{Referring Expression Segmentation (RES).} Generate a segmentation mask for the object described by a natural-language expression (``the kid in red'', ``everyone except the kid in white''). A grounding $\to$ segmentation generalisation.
+
+\subsection{Challenge 3: Translation}
+
+How to map data from \emph{one modality to another}: given an entity in modality $A$, generate the same entity in modality $B$.
+
+\paragraph{Examples.} Image $\to$ caption, text $\to$ image, speech $\to$ text, sketch $\to$ photo.
+
+\subsubsection{Two Families}
+
+\paragraph{Example-based models.} Use a \emph{dictionary} of paired examples and retrieve the closest one (image captioning by retrieval, media retrieval).
+
+\paragraph{Generative models.} Construct a model that \emph{produces} the target modality. Classical pipeline: encoder-decoder --- encode the source into a vector, decode it into the target. Examples: text $\leftrightarrow$ image, sound synthesis, video description generation.
+
+\subsubsection{Translation Examples}
+
+\paragraph{CycleGAN.} Unpaired image-to-image translation using cycle-consistent adversarial networks (Zhu et al., 2017). Monet $\leftrightarrow$ photo, zebra $\leftrightarrow$ horse, summer $\leftrightarrow$ winter. \emph{Adversarial loss} forces translated images to be indistinguishable from real images in the target domain.
+
+\paragraph{Image $\to$ avatar.} Cross-modal latent space alignment using a parametric set of facial attributes to render avatars (De Guevara et al., ICCV 2023).
+
+\paragraph{DALL-E.} Text-to-image. Two key components:
+\begin{itemize}
+    \item \textbf{Discrete VAE (dVAE)}: encoder maps images to discrete latent codes; decoder reconstructs the image from those codes.
+    \item \textbf{Autoregressive transformer (GPT-style)}: generates one element at a time, conditioning each subsequent element on the previous ones. Maps text tokens $\to$ image tokens.
+\end{itemize}
+
+\paragraph{DALL-E 2.} Replaces the autoregressive image-token generator with a \textbf{diffusion model} conditioned on \textbf{CLIP image embeddings}, which at inference time are generated from CLIP \emph{text} embeddings by a learned prior.
+
+\paragraph{Stable Diffusion.} Latent-space diffusion for text-to-image, image-to-image with text guidance, text-guided image editing (``swap sunflowers with roses'', ``add fireworks to the sky'').
+
+\begin{tcolorbox}[colback=yellow!5!white, colframe=orange!80!black, title={Stable Diffusion components (recap)}]
+\begin{itemize}
+    \item \textbf{Forward diffusion}: gradually adds Gaussian noise to an image over many steps until it is pure noise.
+    \item \textbf{Reverse diffusion}: a \textbf{U-Net} predicts and subtracts the noise step-by-step.
+    \item \textbf{(CLIP) text encoder}: encodes the prompt; embedding conditions the U-Net.
+    \item \textbf{Latent space}: diffusion runs in a low-dimensional latent space (VAE-encoded image), not in pixel space --- huge cost savings.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Challenge 4: Fusion}
+
+How to \emph{join} two or more modalities to perform a prediction.
+
+\subsubsection{Early vs.\ Late Fusion}
+
+\paragraph{Early fusion.} Combine modalities at the \emph{feature level} and train a \emph{single model} on the concatenated/joined low-level features.
+\begin{itemize}
+    \item[+] Single model $\Rightarrow$ simpler training pipeline.
+    \item[+] Exploits correlations and interactions between low-level features.
+\end{itemize}
+
+\paragraph{Late fusion.} Train one model per modality, then combine their \emph{decisions} (averaging, voting, weighted combination).
+\begin{itemize}
+    \item[+] Each modality can use a specialised model tailored to it.
+    \item[+] More flexible; easy to handle missing modalities at inference.
+\end{itemize}
+
+\subsubsection{Classical Fusion Approaches}
+
+\paragraph{Multiple Kernel Learning (MKL).} Kernel SVMs extended to use a different kernel per modality. Kernels act as similarity functions; different kernels allow better fusion of heterogeneous data.
+
+\paragraph{Graphical models.} Coupled and factorial Hidden Markov Models, dynamic Bayesian networks, multi-stream HMMs, conditional random fields. Generative (joint $p(X,Y)$) or discriminative (conditional $p(Y\mid X)$).
+
+\subsubsection{Neural Fusion}
+
+For temporal multimodal data: RNNs / LSTMs; image captioning with a CNN visual encoder + LSTM language decoder; modern: transformer-based fusion.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Neural fusion: pros and cons}]
+\textbf{Pros.}
+\begin{itemize}
+    \item Can learn from huge amounts of data.
+    \item End-to-end training of representation + fusion components.
+    \item Outperforms non-NN approaches on most tasks.
+\end{itemize}
+\textbf{Cons.}
+\begin{itemize}
+    \item \textbf{Lack of interpretability}: hard to tell which modality / feature drove a prediction.
+    \item Need large multimodal training datasets.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Challenge 5: Co-learning}
+
+\textbf{Co-learning} = transfer knowledge \emph{between} modalities. Use knowledge learned from one modality to help a model that operates on another.
+
+\paragraph{When it matters.}
+\begin{itemize}
+    \item One modality has \emph{limited resources}: scarce annotations, noisy input, unreliable labels.
+    \item The \emph{helper modality} is often available \textbf{only at training time}, not at test time.
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{ll}
+    \hline
+    \textbf{Co-learning objective} & \textbf{Purpose} \\
+    \hline
+    Presence of modality        & Handle missing modalities at train or test time \\
+    Data parallelism            & Strongly / weakly / shared-modality paired data \\
+    Noisy modality              & Robustness to noisy data and labels \\
+    Modality annotations        & Annotated, partially, or unannotated modalities \\
+    Domain adaptation           & Different domain at train vs.\ test time \\
+    Interpretability \& fairness & Unbiased and explainable predictions \\
+    \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Co-learning via Representation}
+
+Transfer information from a \emph{secondary modality} to a \emph{primary modality} by \textbf{sharing representation spaces}. Crucially, do not confuse \emph{multimodal co-learning} with \emph{unimodal learning}:
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Co-learning vs.\ unimodal}]
+\begin{itemize}
+    \item \textbf{Train}: multimodal data + multimodal model.
+    \item \textbf{Test}: only the primary modality available; the secondary modality slot is filled with zeros / dropped.
+    \item Empirically: multimodal co-learning $>$ language-only training, even when only language is available at test time.
+\end{itemize}
+\end{tcolorbox}
+
+\paragraph{Example: cross-modal autoencoder for diagnosis} (Radhakrishnan et al., Nature Communications 2023). ECG and MRI are encoded into a shared latent space at training. At inference, ECG alone (cheap, available) is mapped through its encoder to the shared latent, from which MRI-derived phenotypes can be predicted --- effectively translating one modality into another.
+
+\subsection{Challenge 6: Generation}
+
+Generation generalises translation. Liang, Zadeh \& Morency (2023) distinguish three sub-tasks based on the relation between input and output information content:
+
+\begin{center}
+\begin{tabular}{lll}
+    \hline
+    \textbf{Sub-task} & \textbf{Info content} & \textbf{Examples} \\
+    \hline
+    \textbf{Summarisation} & Reduction ($>$)  & Text from video, video summary from text \\
+    \textbf{Translation}   & Maintenance ($=$) & Image $\to$ caption, text $\to$ image \\
+    \textbf{Creation}      & Expansion ($<$)   & Image+text $\to$ audio+text+video \\
+    \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Summarisation}
+
+\begin{definition}[Summarisation]
+The process of obtaining $X_{\text{sum}} = f(D)$ with $\mathrm{length}(X_{\text{sum}}) \leq \mathrm{length}(D)$, where $D$ is the input data and $f$ the summarisation function.
+\end{definition}
+
+\paragraph{Multimodal summarisation.} The input $D$ comprises several partially disjoint sets of modality information $\{M_1, M_2, \ldots, M_n\}$ with $n \geq 2$ and non-empty shared latent information between at least one pair. If the output $X_{\text{sum}}$ itself spans $\geq 2$ modalities, the summary is \emph{multimodal}; otherwise unimodal.
+
+In practice, complementary modalities are used to \emph{enhance the feature representation of the primary modality}, while the summary is generated in a single (often text) modality. Example: language-guided video summarisation.
+
+\paragraph{Datasets.} Text + image; video-based news articles (text + video); audio + transcript.
+
+\subsubsection{Creation}
+
+Simultaneously generates \emph{multiple} modalities while maintaining coherence within and across them. Examples: language generation (captioning), high-resolution speech and sound generation, photorealistic image generation (text-to-image, speech-to-image). Modern multimodal LLMs (LLaVA, Mistral, ImageBind) combine text and images to caption, answer questions about visual content, or create new images from text.
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!60!black, title={Creation: four hard requirements}]
+\begin{enumerate}
+    \item \textbf{Conditional}: preserve semantically meaningful mappings from the seed to the generated modalities.
+    \item \textbf{Synchronised}: semantically coherent across modalities.
+    \item \textbf{Stochastic}: capture many possible futures given a state.
+    \item \textbf{Autoregressive}: support long-range generation.
+\end{enumerate}
+\textbf{Hardest part}: \emph{evaluation}. User studies are the ideal --- but are slow, costly, and subjective. Serious ethical issues with deepfakes, fake news, hate speech, lip-syncing.
+\end{tcolorbox}
+
+
+\section{Learning and Optimization Process}
+
+\subsection{Generalisation Across Modalities and Tasks}
+
+Real-world platforms --- phones, smart devices, self-driving cars, healthcare systems, robots --- integrate many sensors beyond the prototypical text/video/audio triad. Generalising across \emph{paired} and \emph{unpaired} modality inputs (each task uses only a subset of all modalities) is still an open challenge.
+
+\subsection{Balanced and Efficient Training}
+
+Multimodal networks are prone to \textbf{overfitting} due to their large capacity, and different modalities \emph{overfit and generalise at different rates}. Training all branches with a single optimisation strategy is sub-optimal.
+
+\paragraph{OGR (Overfitting-to-Generalisation Ratio)} (Wang et al., CVPR 2020). Measure the gap between training and validation loss \emph{per modality} and use it to decide how much to train each branch.
+
+\subsection{Performance--Robustness--Complexity Trade-offs}
+
+(MultiBench, Liang et al., NeurIPS 2021.)
+\begin{itemize}
+    \item \textbf{Performance}: prediction accuracy.
+    \item \textbf{Robustness}: generalisation, resilience to noise/corruption/adversarial inputs, fault tolerance.
+    \item \textbf{Complexity}: model size, inference time, scalability.
+\end{itemize}
+There is a structural trade-off: high-performance multimodal architectures often score worse on robustness.
+
+
+\section{Modality Biases}
+
+\subsection{Unimodal Biases and Modality Collapse}
+
+A multimodal model can degenerate into a \emph{unimodal} model. Classic VQA failure: a model is asked ``what colour is the banana?'' and answers \emph{yellow} regardless of the image, because $\sim 80\%$ of bananas in the training set are yellow. The image branch is effectively ignored.
+
+\paragraph{Solutions} (Liang, Zadeh \& Morency, 2023):
+\begin{itemize}
+    \item \textbf{Balancing modalities}: curate datasets with adversarial / counterfactual examples (e.g.\ VQA v2 by Goyal et al., CVPR 2017).
+    \item \textbf{Balancing training}: training regularisers (e.g.\ RUBi) that prevent the model from relying on a single modality.
+\end{itemize}
+
+\subsection{Fairness and Social Biases}
+
+\paragraph{Sources.}
+\begin{itemize}
+    \item \textbf{Bias in historical data}: training data carries unfair or discriminatory patterns.
+    \item \textbf{Lack of representation}: insufficient data for some groups $\Rightarrow$ inaccurate predictions and unfair treatment.
+\end{itemize}
+
+\paragraph{Image captioning example} (Hendricks et al., ECCV 2018, ``Women also Snowboard''):
+\begin{itemize}
+    \item \emph{Right for the wrong reasons}: a baseline captioning model labels images of women near laptops as ``a man sitting at a desk''.
+    \item \emph{Right for the right reasons}: a debiased model attends to the actual person before predicting gender.
+\end{itemize}
+Spurious correlations link \textbf{gender} to objects (kitchen, snowboard, tennis racquet) and to \textbf{actions}.
+
+\subsection{Cross-modal Interactions Can Worsen Biases}
+
+(Srinivasan \& Bisk, NAACL 2022, ``Worst of Both Worlds''.) In VL-BERT, the language-only mask-filling task predicts gendered objects (purse, briefcase) with a small bias; \emph{adding visual information makes the model more confident in reinforcing the stereotype}, not less. Cross-modal interactions can therefore \textbf{compound}, not mitigate, social biases.
+
+
+\section{Summary}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Take-Home Messages}]
+\begin{itemize}[leftmargin=*]
+    \item A \textbf{modality} is a way information is expressed or perceived; \textbf{multimodal learning} is the science of \emph{heterogeneous and interconnected} data.
+    \item Modalities differ in their qualities and structure (homogeneous $\to$ heterogeneous) and interact statistically (association, dependency) and semantically (correspondence, relationship).
+    \item Multimodal ML organises around five (or six) technical challenges: \textbf{Representation, Alignment, Translation, Fusion, Co-learning, (Generation)}.
+    \item \textbf{Representations}: \emph{joint} (single shared space) vs.\ \emph{coordinated} (separate spaces linked by a constraint). \textbf{CLIP} is the canonical contrastive coordinated example (InfoNCE loss, image + text encoders, zero-shot transfer).
+    \item \textbf{Alignment}: explicit (DTW) or implicit (attention, transformers). Underlies grounding, referring-expression segmentation, captioning.
+    \item \textbf{Translation}: example-based vs.\ generative; CycleGAN, DALL-E, DALL-E 2, Stable Diffusion.
+    \item \textbf{Fusion}: early (feature level) vs.\ late (decision level); classical MKL/graphical models vs.\ neural; neural fusion wins on performance but loses on interpretability.
+    \item \textbf{Co-learning}: transfer between modalities, especially when secondary modality is only available at training time. Important for medical, low-resource, noisy settings.
+    \item \textbf{Generation} decomposes into \emph{summarisation} (info $\downarrow$), \emph{translation} (info $=$), and \emph{creation} (info $\uparrow$); the hardest open problem is \emph{evaluation}.
+    \item \textbf{Open issues}: generalising across modality subsets, balanced training (OGR), the performance--robustness--complexity trade-off, modality collapse, fairness and the compounding of social biases across modalities.
+\end{itemize}
+\end{tcolorbox}
+
+
+% ========================================
+\part{Multimodal Foundation Models, LLMs and VLMs}
+% ========================================
+
+\section{Multimodal Foundation Models (MFM)}
+
+\subsection{Definition}
+
+A \textbf{Multimodal Foundation Model (MFM)} is a large-scale model capable of processing multiple types of inputs, where each \emph{modality} is a specific data type:
+\begin{itemize}
+    \item Text, Images, Audio, Video, $\ldots$
+\end{itemize}
+
+A canonical application is \textbf{Visual Question Answering (VQA)}: given an input image and a natural-language question about it, the model produces a natural-language answer. Other applications: text-image retrieval, image generation, multimodal chat (e.g.\ explaining a meme).
+
+\subsection{Two Common Approaches}
+
+Restricting to vision-language MFMs, there are two main architectural recipes.
+
+\paragraph{A. Unified Embedding Decoder.} Inputs from different modalities (image, text) are mapped into a \textbf{shared embedding} space; a single decoder (typically a language-style LLM) generates the output (answer, caption, $\ldots$) from this unified representation.
+\begin{itemize}
+    \item Single decoder model --- often an unmodified LLM such as GPT-2.
+    \item Images are converted into tokens (vectors) of the \emph{same embedding size} as text tokens.
+    \item Image and text tokens are concatenated and processed together.
+    \item Examples: LLaVA, MiniGPT-4, Qwen-VL.
+\end{itemize}
+
+\paragraph{B. Cross-Modality Attention.} The model uses a \textbf{cross-attention} mechanism to integrate information \emph{inside the attention layer}: one modality (text) directly attends to features from another modality (image) during processing.
+\begin{itemize}
+    \item Text queries the image embeddings, attending to the visual regions relevant to it.
+    \item Lets the LLM reason about language conditioned on visual content.
+    \item Examples: Llama 3.2-V, Aria, NVLM-X.
+\end{itemize}
+
+\subsection{Self-Attention vs.\ Cross-Attention}
+
+Both share the same formula:
+\[
+    \mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V
+\]
+The difference is in \emph{where $Q, K, V$ come from}.
+\begin{itemize}
+    \item \textbf{Self-attention}: $Q, K, V$ all from the same modality $\Rightarrow$ captures relations \emph{within} a modality (text-to-text, image-to-image).
+    \item \textbf{Cross-attention}: $Q$ from one modality (e.g.\ text), $K, V$ from another (e.g.\ image) $\Rightarrow$ fuses information \emph{across} modalities.
+\end{itemize}
+
+\subsection{Vision-Language MFM Building Blocks}
+
+Three main components:
+\begin{enumerate}
+    \item \textbf{Image Encoder}: produces patch embeddings.
+    \item \textbf{Text Tokenizer + Embedding Layer}: produces token embeddings.
+    \item \textbf{GPT-like LLM}: processes the joint sequence of embeddings.
+\end{enumerate}
+
+\subsubsection{Image Encoder}
+
+\begin{itemize}
+    \item Split image into \textbf{smaller patches}; flatten and project to \emph{patch embeddings}.
+    \item Pass patch embeddings through a pre-trained \textbf{Vision Transformer (ViT)}.
+    \item Output: a set of patch embeddings capturing local + global context.
+\end{itemize}
+
+\paragraph{Projection layer.} Patch embeddings cannot be fed directly to the LLM:
+\begin{itemize}
+    \item Their dimension may not match the LLM embedding size (e.g.\ 768 vs.\ 4096).
+    \item They live in a space the LLM was \emph{not} trained to interpret.
+\end{itemize}
+A \textbf{linear projection} reshapes them to the LLM embedding dimension and aligns them with the LLM language-based representation.
+
+\subsubsection{LLM Input Text Format}
+
+LLMs cannot process raw text (categorical, incompatible with NN math). Text must be turned into continuous vectors --- an \emph{embedding}. Two sequential steps:
+\begin{enumerate}
+    \item \textbf{Tokenizer}: splits text into tokens, converts each to an integer ID.
+    \item \textbf{Embedding Layer}: maps each ID to a learned high-dimensional vector.
+\end{enumerate}
+
+\paragraph{Tokenizer.} Many splitting strategies: Word Tokenization, Byte-Pair Encoding (Sennrich et al., 2015). Word tokenizer splits by spaces, treats punctuation as a separate token, then maps each string to an integer using a \textbf{vocabulary} (dictionary built once from the training corpus by tokenising, sorting, and de-duplicating).
+
+\paragraph{Token Embedding Layer.} A \emph{lookup} mechanism mapping integer IDs to high-dimensional vectors.
+\begin{itemize}
+    \item Implemented as a matrix of shape (\texttt{num\_embeddings}, \texttt{embedding\_dim}).
+    \item Given an integer index, return the corresponding row.
+    \item Weights are \textbf{learnable}: initialised randomly, updated via backprop like other parameters.
+\end{itemize}
+
+
+\section{Large Language Models (LLMs)}
+
+\subsection{Definition}
+
+A \textbf{Large Language Model (LLM)} is a deep-learning model designed to understand, generate and work with human language:
+\begin{itemize}
+    \item Performs a wide variety of tasks (chat, summarisation, translation, code generation, $\ldots$).
+    \item Based on the \textbf{Transformer} architecture.
+    \item Trained on \emph{vast} text corpora.
+    \item Initially designed for text only.
+\end{itemize}
+
+\subsection{Architecture Overview}
+
+\begin{itemize}
+    \item Stack of multiple \textbf{Transformer blocks}.
+    \item Each block uses \textbf{Masked Self-Attention (MSA)}: a variant of self-attention that models relationships between tokens \emph{without leaking future information}.
+\end{itemize}
+
+\subsection{Autoregressive Modelling}
+
+LLMs are \textbf{autoregressive}: they feed their previous outputs back as input. Each new token is chosen conditioned on the preceding sequence.
+\[
+    \text{``This''} \to \text{``This is''} \to \text{``This is an''} \to \text{``This is an example''}
+\]
+
+\subsection{Two Training Phases}
+
+\begin{enumerate}
+    \item \textbf{LLM Pre-training}: produces an initial \emph{base / foundation} model with broad language understanding. After this phase the model can only \emph{complete} text.
+    \item \textbf{Instruction Fine-tuning}: adapts the base model to specific applications (summarisation, translation, QA, $\ldots$). The model now \emph{understands} instructions, not just completes.
+\end{enumerate}
+
+\subsection{Training Task: Next-Token Prediction (NTP)}
+
+The pretraining task is \textbf{Next-Token Prediction}: predict the upcoming token given the preceding ones.
+\begin{itemize}
+    \item Builds a foundational understanding of how words and phrases fit together.
+    \item A form of \textbf{self-supervised learning}: the labels (next tokens) are already in the data --- no annotation needed.
+\end{itemize}
+
+\paragraph{Training data format.} Input-target pairs are built with a \textbf{sliding window}: input is the window, target is the input shifted one position to the right. All tokens past the target are masked.
+
+\subsection{Masked Self-Attention (MSA)}
+
+\paragraph{Why mask?} Standard self-attention lets each token attend to all others. For \emph{sentence translation} or \emph{sentiment analysis} that's fine; for \textbf{next-token prediction} it leaks future information --- during training the model would have access to the very tokens it must predict.
+
+\paragraph{Mask.} Use a \textbf{lower-triangular binary mask} on the attention matrix: each token attends only to itself and previously-seen tokens.
+
+\paragraph{Implementation.} Recall $\mathrm{Softmax}(x_i) = e^{x_i} / \sum_j e^{x_j}$. \emph{Zero} cannot be used as a masking value because $e^0 = 1$ still contributes to the denominator. Use \textbf{$-\infty$}: $e^{-\infty} = 0$, and the masked positions are ignored exactly.
+
+\subsection{Positional Encoding}
+
+Self-attention measures token similarity, not order: it has no built-in notion of position. Without additional positional awareness, the same word in different contexts gets the same vector after tokenisation $\Rightarrow$ the model loses any sense of sequence.
+
+\paragraph{Absolute Positional Embeddings.} A \textbf{learnable matrix} of size (\texttt{max\_sequence\_len}, \texttt{embedding\_dim}) that is \textbf{added} (not concatenated) to the token embeddings before the Transformer blocks. \texttt{max\_sequence\_len} (e.g.\ 1024, 2048) is the maximum input length the LLM can handle.
+
+\subsection{Output Layer}
+
+\begin{itemize}
+    \item The last Transformer block outputs an embedding for every token, but \emph{only the last token's embedding} is retained for next-token prediction --- it has integrated all preceding context via masked attention.
+    \item The Output Layer projects this embedding to a vector of dimension equal to the \textbf{vocabulary size} (e.g.\ 50257 for GPT-2).
+    \item \textbf{Softmax} converts logits to a probability distribution over the vocabulary.
+    \item \textbf{Argmax} selects the highest-probability ID, which is looked up in the vocabulary to produce the next word.
+\end{itemize}
+
+\subsection{Training Objective}
+
+LLM training aims to make the model assign the highest probability to the correct next token given the preceding context. The likelihood of the corpus $\mathcal{U}$ is:
+\[
+    \mathcal{L}(\mathcal{U}) = \sum_{i=1}^{N} \log P(u_i \mid u_{i-k}, \ldots, u_{i-1}, \Theta)
+\]
+Since standard optimisers \emph{minimise}, the training loss is the \textbf{negative log-likelihood}:
+\[
+    \mathcal{L}(\mathcal{U}) = -\sum_{i=1}^{N} \log P(u_i \mid u_{i-k}, \ldots, u_{i-1}, \Theta)
+\]
+Minimising the negative log-likelihood is equivalent to maximising the log-likelihood.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Different LLMs, same recipe}]
+Each LLM component carries learnable weights $\Theta$. Different LLMs differ in:
+\begin{itemize}
+    \item Number of Transformer blocks.
+    \item Embedding size.
+    \item Sub-components inside each block.
+\end{itemize}
+The training objective is essentially identical: next-token prediction with negative log-likelihood.
+\end{tcolorbox}
+
+
+\section{GPT: Generative Pretrained Transformer}
+
+\subsection{History}
+
+GPT is a type of LLM introduced by OpenAI in 2018.
+
+\begin{center}
+\begin{tabular}{lll}
+    \hline
+    \textbf{Model} & \textbf{Year} & \textbf{Params} \\
+    \hline
+    GPT-1 (Radford et al., 2018) & 2018 & 117M \\
+    GPT-2 (Radford et al., 2019) & 2019 & 1.5B \\
+    GPT-3 (Brown et al., 2020)   & 2020 & 175B \\
+    \hline
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{GPT-1}: introduced the Transformer into a language model; could be fine-tuned for simple tasks (e.g.\ text classification).
+    \item \textbf{GPT-2}: significant leap in model size; trained on \emph{WebText} (8M web pages); much better language understanding.
+    \item \textbf{GPT-3}: dramatic scale-up; trained on books + web; creative writing, QA, translation, $\ldots$
+\end{itemize}
+
+\subsection{Model Scaling}
+
+All GPT models up to GPT-3 share the \emph{same fundamental architecture}; the difference is scale:
+
+\begin{center}
+\begin{tabular}{lcc}
+    \hline
+    \textbf{Model} & \textbf{\# Transformer blocks} & \textbf{Embedding size} \\
+    \hline
+    GPT-1 & 12 & 768   \\
+    GPT-2 & 48 & 1600  \\
+    GPT-3 & 96 & 12288 \\
+    \hline
+\end{tabular}
+\end{center}
+
+\subsection{Emergent Behaviours}
+
+Despite the simple next-token objective, GPT models acquire abilities they were never explicitly trained for as they scale up: \textbf{emergent behaviours}.
+
+\begin{example}[Translation emerges at scale]
+Input: ``\emph{English: The dog is playing in the yard. Italian:}''. A sufficiently large GPT outputs ``\emph{Il cane sta giocando in giardino}''.
+\end{example}
+
+Emergent behaviours include arithmetic, code completion, summarisation, common-sense reasoning, translation, jokes, physics QA --- a consequence of scale + diversity of training data.
+
+\subsection{Model Architecture}
+
+A GPT model contains all the standard LLM components (Embedding Layer, Positional Encoding, $N$ Transformer Blocks, Output Layer). The only \emph{additional} elements are:
+\begin{itemize}
+    \item \textbf{Initial Dropout layer} (after token + positional embedding).
+    \item \textbf{Final LayerNorm layer} (before the output projection).
+\end{itemize}
+
+\subsection{Transformer Block}
+
+Each block has two sub-blocks, each with a residual connection.
+
+\paragraph{Attention sub-block.} Blends information from earlier tokens using Masked Self-Attention. A residual connection adds the input back to the output, preserving the original token identity after attention mixing.
+
+\paragraph{Feed-Forward sub-block.} Re-encodes each token \textbf{separately} (no cross-token mixing) to add depth and complexity. A residual connection preserves the signal from the attention block.
+
+Order inside one block:
+\[
+    \mathbf{x} \to \text{LayerNorm1} \to \text{MSA + Dropout} \to + \mathbf{x} \to \text{LayerNorm2} \to \text{FeedForward} \to + \text{(prev)}
+\]
+
+\subsection{Layer Normalization}
+
+\begin{itemize}
+    \item Deep networks can suffer from instabilities (\textbf{vanishing/exploding gradients}) as activations grow uncontrolled.
+    \item LayerNorm adjusts the activations of a layer to have \textbf{zero mean and unit variance}.
+    \item Normalisation is computed across the \emph{embedding dimension}: each token is normalised \emph{independently}.
+    \item Result: tighter, more centred distribution; more balanced gradients; more stable training.
+\end{itemize}
+
+\subsection{Dropout in GPT}
+
+\textbf{Dropout} (Srivastava et al., 2014) randomly ignores a fraction of units at each training step, preventing the model from over-relying on any specific subset.
+
+\paragraph{Two locations in GPT.}
+\begin{enumerate}
+    \item \textbf{Inside the attention mechanism}, after the softmax: a Dropout mask zeros out random attention weights. Prevents the attention from focusing too heavily on a single position; spreads attention more evenly.
+    \item \textbf{On the input embeddings}: forces the model to learn from a reduced set of features each step, encouraging robustness. Applied independently to every embedding element with a fixed probability.
+\end{enumerate}
+Dropout is used only during training and disabled at inference.
+
+\subsection{Feed-Forward Module}
+
+The FF module \textbf{expands} the embedding into a higher-dimensional space (typically $\times 4$) via a first linear layer, applies a \textbf{GELU} non-linearity, then \textbf{contracts back} to the original dimension via a second linear layer.
+
+\paragraph{Why expand-then-contract?} Temporary projection into a much higher-dimensional space lets the model capture more expressive transformations, then compress them back.
+
+\paragraph{GELU activation.} Combines ReLU and sigmoid ideas: rather than a hard cutoff at zero, weights inputs by their value \emph{and} by their probability of being positive under a Gaussian:
+\[
+    \mathrm{GELU}(x) \approx 0.5\, x \left(1 + \tanh\!\left[\sqrt{\frac{2}{\pi}}\bigl(x + 0.044715\, x^3\bigr)\right]\right).
+\]
+
+\subsection{GPT Training Summary}
+
+GPT is a stack of Transformer blocks trained \emph{autoregressively} with Next-Token Prediction. Training minimises the negative log-likelihood:
+\[
+    \mathcal{L}(\mathcal{U}) = -\sum_{i=1}^{N} \log P(u_i \mid u_{i-k}, \ldots, u_{i-1}, \Theta).
+\]
+All learnable components (token embeddings, positional encoding, Transformer-block weights, final LayerNorm, output projection) are updated via backpropagation.
+
+
+\section{CLIP: Contrastive Language-Image Pre-training}
+
+\subsection{Motivation}
+
+Standard supervised vision models need large \emph{annotated} datasets (e.g.\ ImageNet); annotation is expensive. \textbf{CLIP} (Radford et al., ICML 2021) sidesteps this: \textbf{image-text pairs are readily available on the Internet} --- captions, alt-text, Wikipedia $\Rightarrow$ vast supervision without manual labelling.
+
+\subsection{Idea}
+
+Train a vision-linguistic model over pairs of images and textual descriptions so that it can solve different tasks \textbf{without task-specific training or labelling}. CLIP learns visual concepts from image captions by training to identify which image-caption pairs are \emph{valid}. The matched pairs teach the model what visual features correspond to words (``dolphin'', ``night sky''); mismatched pairs prevent incorrect associations.
+
+\subsection{Architecture}
+
+Two encoders:
+\begin{itemize}
+    \item \textbf{Image encoder}: ResNet or ViT. Only the \emph{first token} (CLS) is retained to summarise visual information.
+    \item \textbf{Text encoder}: decoder-only Transformer. Only the \emph{last token} is retained to summarise the textual information.
+\end{itemize}
+
+\subsection{Measure of Similarity}
+
+To make image and text outputs directly comparable:
+\begin{enumerate}
+    \item \textbf{Project} both to a space of equal dimensions via separate Linear layers.
+    \item Apply \textbf{$L_2$ normalisation} to remove scale: vectors compared by direction, not magnitude.
+    \item Measure similarity with the \textbf{cosine}:
+    \[
+        \cos\theta = \frac{\mathbf{A}\cdot\mathbf{B}}{\|\mathbf{A}\|\,\|\mathbf{B}\|}.
+    \]
+    For unit vectors this is just their dot product.
+\end{enumerate}
+
+\subsection{Training Objective: Contrastive Loss}
+
+Maximise the cosine similarity of valid image-text pairs; minimise it for all other pairs in the batch. Two symmetric components:
+\begin{itemize}
+    \item \textbf{Image-to-text loss}: each image embedding compared against \emph{all} text embeddings in the batch; cross-entropy along the text dimension (column axis).
+    \item \textbf{Text-to-image loss}: each text embedding compared against all image embeddings; cross-entropy along the image dimension (row axis).
+\end{itemize}
+
+In a batch of $N$ pairs, the similarity matrix $I_i \cdot T_j$ has size $N \times N$; the \textbf{positive pairs are on the diagonal}. The ground-truth vector for the cross-entropy is simply $(0, 1, 2, \ldots, N-1)$.
+
+This encourages a joint embedding space where image and text encoders produce \emph{similar} embeddings for related image-caption pairs.
+
+\subsection{Zero-Shot Classification}
+
+CLIP is trained to predict whether an image and a caption are paired; this capability can be repurposed for \textbf{zero-shot classification}: classify images for tasks CLIP was never fine-tuned on.
+
+\paragraph{Procedure.} Given a set of candidate classes:
+\begin{enumerate}
+    \item Craft text prompts of the form ``\emph{a photo of a <class\_name>}''.
+    \item Embed each prompt with the CLIP text encoder.
+    \item Embed the image with the CLIP image encoder.
+    \item Predict the class whose prompt has the \textbf{highest cosine similarity} to the image embedding.
+\end{enumerate}
+
+
+\section{LLaVA: Large Language and Vision Assistant}
+
+\subsection{Overview}
+
+\textbf{LLaVA} (Liu et al., NeurIPS 2023) is a \textbf{Vision-Language Model} that works with both image and text modalities. It follows the \textbf{Unified Embedding-Decoder} paradigm and is built \emph{on top of a pre-trained LLM} (LLaMA, Vicuna) with a vision encoder (CLIP ViT).
+
+\paragraph{Use cases.} Image captioning, VQA, multimodal multi-turn conversation (multimodal chatbot).
+
+\subsection{Architecture}
+
+Three key components:
+\begin{enumerate}
+    \item \textbf{Vision Encoder} (frozen CLIP ViT): extracts visual features $Z_v$ from the image $X_v$.
+    \item \textbf{Multimodal Projector $W$}: maps visual features to the language model's token space, producing $H_v$. Implemented as a Linear layer (LLaVA 1.0) or an MLP (LLaVA 1.5+).
+    \item \textbf{Language Model $f_\phi$}: processes $H_v$ together with the tokenised instruction $H_q$, generating the language response $X_a$.
+\end{enumerate}
+
+The projector \textbf{re-encodes the visual embeddings} into a format the LLM can interpret as if they were text tokens, bridging the gap between image and text.
+
+\subsection{Autoregressive Modelling}
+
+LLaVA follows the autoregressive paradigm: each new token is generated conditioned on the visual input + question + previously generated tokens.
+
+\subsection{Training Procedure}
+
+LLaVA is trained with the standard Next-Token Prediction objective, conditioned on the image:
+\[
+    \mathcal{L}_{\text{LLaVA}} = -\sum_{i=1}^{L} \log P\bigl(u_i \mid \mathbf{X}_v,\, \mathbf{X}_{\text{instruct}},\, \mathbf{X}_{a,<i},\, \Theta\bigr)
+\]
+\begin{itemize}
+    \item $\mathbf{X}_v$ --- visual input,
+    \item $\mathbf{X}_{\text{instruct}}$ --- user's instruction,
+    \item $\mathbf{X}_{a,<i}$ --- assistant tokens already generated before position $i$.
+\end{itemize}
+
+Training is split into \textbf{two stages}.
+
+\subsubsection{Stage 1: Pre-training for Feature Alignment}
+
+\textbf{Goal}: align the vision encoder's output with the LLM's input embedding space. The two were pre-trained \emph{separately} and live in incompatible spaces.
+
+\begin{itemize}
+    \item \textbf{Only the projection layer} is trained ($\Theta$ for $W$); vision encoder and LLM stay frozen.
+    \item Dataset: diverse image-text pairs (e.g.\ CC3M, 3M image-caption pairs) for broad concept coverage.
+    \item Captions converted into \textbf{instruction-following data} as \emph{single-turn conversations}: ``User: what is depicted in the image? Assistant: <caption>''.
+\end{itemize}
+
+\subsubsection{Stage 2: Visual Instruction Tuning (Fine-tuning)}
+
+\textbf{Goal}: teach the model to act as an \emph{assistant} on complex multimodal reasoning tasks.
+
+\begin{itemize}
+    \item Updates both the LLM and the projection layer; vision encoder stays frozen.
+    \item Training data: \textbf{multi-turn conversations} (not just single-turn captioning).
+    \item Only after this stage does LLaVA \emph{behave like a chatbot} --- remembering context across turns and answering a series of questions conversationally.
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!5!white, colframe=orange!80!black, title={LLaVA training summary}]
+\begin{enumerate}
+    \item \textbf{Pre-training} (single-turn, CC3M): align visual features with LLM tokens. Only \emph{projector} trained.
+    \item \textbf{Visual Instruction Tuning} (multi-turn): teach assistant behaviour. \emph{Projector + LLM} trained.
+\end{enumerate}
+Vision encoder (CLIP ViT) is always \textbf{frozen}.
+\end{tcolorbox}
+
+
+\section{Gemini: A Family of Highly Capable Multimodal Models}
+
+\subsection{Overview}
+
+\textbf{Gemini} (Gemini Team, Google, 2023) is a family of multimodal AI models designed from the start to process \emph{multiple} modalities: audio, images, text, video.
+
+\paragraph{Key differentiator vs.\ GPT.} GPT accepts text-only prompts. Gemini supports \textbf{interleaved sequences of different modalities as inputs} and can produce \textbf{interleaved text + image outputs} --- handles a natural conversation-like flow with mixed modalities, both in and out.
+
+\subsection{Capabilities}
+
+\paragraph{Multimodal reasoning.} Given a handwritten student's physics solution + the problem statement, Gemini explains the student's error and produces the correct solution with LaTeX.
+
+\paragraph{Multilingual.} Trained on high-quality English plus 40+ other languages. Example: explain a Chinese family-tree chart with the correct Mandarin kinship terms.
+
+\subsection{Architecture (Hypothesis)}
+
+Gemini's full architecture is not disclosed, but the technical report gives two hints:
+\begin{itemize}
+    \item \emph{Gemini models are built on top of Transformer decoders.}
+    \item \emph{Gemini models are multimodal from the beginning.}
+\end{itemize}
+
+A reasonable architecture sketch:
+\begin{enumerate}
+    \item A \textbf{multimodal embedding model} transforms text / audio / image / video inputs into a unified representation.
+    \item A \textbf{multimodal Transformer} trained \emph{from scratch} (not bolted on top of a pre-trained text LLM) processes the unified sequence.
+    \item Separate output heads --- \textbf{image decoder} and \textbf{text decoder} --- specialise the Transformer outputs for the desired modality.
+\end{enumerate}
+
+\subsection{Mixture of Experts (MoE)}
+
+Gemini 1.5 introduces \textbf{Mixture of Experts (MoE)}: the network is divided into smaller ``expert'' sub-networks, and a \textbf{learned routing function} directs each input to one or a few experts.
+
+\begin{itemize}
+    \item Each expert specialises in different input patterns.
+    \item Only a \emph{subset} of the model is active at inference $\Rightarrow$ lower compute (FLOPs).
+    \item Allows the total parameter count to grow far beyond a dense model with the same per-token compute.
+\end{itemize}
+
+\subsubsection{Where in the Transformer?}
+
+MoE typically \textbf{replaces the Feed-Forward modules} inside Transformer blocks. Instead of a single FFN, a MoE block contains several parallel FFNs; the router picks the appropriate expert(s) for each token. During training the router learns to route in a way that encourages experts to specialise.
+
+\subsubsection{The Router}
+
+The router decides:
+\begin{itemize}
+    \item Which expert(s) handle each token.
+    \item How much weight to give each expert's output (in the top-$k$ setting).
+\end{itemize}
+
+\paragraph{Single-expert (top-1) implementation.}
+\begin{enumerate}
+    \item A \textbf{Linear layer} projects the embedding to a vector of dimension equal to the number of experts.
+    \item \textbf{Softmax} converts logits to a distribution over experts.
+    \item \textbf{Argmax} selects the expert with the highest probability.
+\end{enumerate}
+
+
+\section{Summary}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=orange!80!black,title=\textbf{Take-Home Messages}]
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Multimodal Foundation Models (MFMs)} are large-scale models processing multiple input modalities; canonical task is VQA. Two architectures: \emph{Unified Embedding Decoder} (LLaVA, MiniGPT-4, Qwen-VL) and \emph{Cross-Modality Attention} (Llama 3.2-V, Aria, NVLM-X).
+    \item \textbf{Self-attention} captures within-modality relations; \textbf{cross-attention} fuses across modalities ($Q$ from one, $K, V$ from another).
+    \item Vision-language MFM blocks: \emph{image encoder} (ViT + patch projection), \emph{tokenizer} + \emph{embedding layer} for text, \emph{GPT-like LLM} on the joined sequence.
+    \item \textbf{LLMs} are stacks of Transformer blocks with \textbf{Masked Self-Attention}, trained \emph{autoregressively} with Next-Token Prediction (a self-supervised task) and minimising the negative log-likelihood. Positional encoding (learnable, additive) injects order; output layer projects to vocabulary size and uses softmax + argmax.
+    \item \textbf{GPT-1/2/3} share an architecture and differ only in scale (blocks, embedding size). Scaling produces \emph{emergent behaviours} --- translation, arithmetic, reasoning the model was never explicitly trained on. Inside each block: LayerNorm, Masked Self-Attention with Dropout, residual, FeedForward (expand $\times 4$ with GELU, then contract).
+    \item \textbf{CLIP} learns a joint image-text space contrastively from web-scale image-caption pairs. Two encoders (image: ResNet/ViT; text: Transformer), $L_2$-normalised projections, cosine similarity, symmetric image-to-text + text-to-image cross-entropy. Enables \textbf{zero-shot classification} via prompt templates (``a photo of a <class>'').
+    \item \textbf{LLaVA} stacks a frozen CLIP-ViT vision encoder, a trainable multimodal projector (Linear or MLP), and a pre-trained LLM (Vicuna / LLaMA). Two stages: \emph{pre-training} (projector only, single-turn) for feature alignment, then \emph{visual instruction tuning} (projector + LLM, multi-turn) to act as a chatbot.
+    \item \textbf{Gemini} is multimodal from the ground up: handles interleaved sequences of audio/image/text/video as inputs and produces interleaved text + image outputs. Built on Transformer decoders trained from scratch on multimodal data. Gemini 1.5 uses \textbf{Mixture of Experts}: MoE blocks replace FFNs; a learned router (Linear $\to$ Softmax $\to$ Argmax) sends each token to one or a few experts, enabling much larger total parameter counts at fixed per-token compute.
+\end{itemize}
+\end{tcolorbox}
+
+
 \end{document}
 
 

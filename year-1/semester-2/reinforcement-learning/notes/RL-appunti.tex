@@ -3293,12 +3293,641 @@ ANNs have recently become the most popular approximation functions:
 \end{itemize}
 \end{tcolorbox}
 
+%=============================================================
+\part{On-Policy Control with Approximation and Deep Q-Networks}
+%=============================================================
+
+This part addresses the \textbf{control problem with function approximation}: instead of approximating the state-value function $v_\pi$, we approximate the \textbf{action-value function}
+\[
+    \hat{q}(s, a, \mathbf{w}) \;\approx\; q_*(s, a),
+\]
+where $\mathbf{w} \in \mathbb{R}^d$ is a finite-dimensional weight vector. Attention is first restricted to the \textbf{on-policy} and \textbf{episodic} case, where the natural extension of semi-gradient TD(0) for prediction becomes the \textbf{semi-gradient Sarsa} algorithm for control. The same machinery, combined with deep neural networks and Q-learning, leads to \textbf{Deep Q-Networks (DQN)}.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Goal of this Lecture}]
+Extend semi-gradient methods from \textbf{value prediction} to \textbf{control}:
+\begin{itemize}
+    \item move from state-value approximation $\hat{v}(s, \mathbf{w})$ to action-value approximation $\hat{q}(s, a, \mathbf{w})$;
+    \item move from \textbf{prediction} to \textbf{on-policy control} via $\varepsilon$-greedy improvement;
+    \item introduce \textbf{deep neural networks} as nonlinear approximators, yielding the \textbf{DQN} algorithm of Mnih et al.\ (2015).
+\end{itemize}
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Episodic Semi-Gradient Control}
+%-------------------------------------------------------------
+
+\subsection{From State-Value to Action-Value Approximation}
+
+The extension of state-value function approximators $\hat{v}(s, \mathbf{w})$ to \textbf{action-value function approximators} $\hat{q}(s, a, \mathbf{w})$ is \textbf{straightforward}. The only structural change is in the form of training examples:
+\begin{itemize}
+    \item \textbf{State-value functions:} training examples of the form $S_t \mapsto U_t$;
+    \item \textbf{Action-value functions:} training examples of the form $S_t, A_t \mapsto U_t$.
+\end{itemize}
+
+The \textbf{update target} $U_t$ can be any approximation of $q_\pi(S_t, A_t)$, including:
+\begin{itemize}
+    \item the \textbf{full Monte Carlo return} $G_t$;
+    \item the \textbf{Sarsa return} $R_{t+1} + \gamma\, \hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_t)$.
+\end{itemize}
+
+\subsection{The General Gradient-Descent Update}
+
+The \textbf{general gradient-descent update} for action-value prediction is
+\[
+    \boxed{\;\mathbf{w}_{t+1} \;\doteq\; \mathbf{w}_t + \alpha \bigl[U_t - \hat{q}(S_t, A_t, \mathbf{w}_t)\bigr] \nabla \hat{q}(S_t, A_t, \mathbf{w}_t)\;}
+\]
+For the \textbf{one-step Sarsa} method (bootstrapped target) it becomes
+\[
+    \boxed{\;\mathbf{w}_{t+1} \;\doteq\; \mathbf{w}_t + \alpha \bigl[R_{t+1} + \gamma\, \hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_t) - \hat{q}(S_t, A_t, \mathbf{w}_t)\bigr] \nabla \hat{q}(S_t, A_t, \mathbf{w}_t)\;}
+\]
+This method is called \textbf{episodic semi-gradient one-step Sarsa}.
+
+\subsection{Policy Improvement and Action Selection}
+
+\textbf{Control methods} need to couple two ingredients:
+\begin{itemize}
+    \item methods for \textbf{action-value prediction};
+    \item methods for \textbf{policy improvement and action selection}.
+\end{itemize}
+
+If the \textbf{action set is discrete and not too large}, the techniques from tabular methods carry over directly.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Idea: Greedy Action Selection with Approximation}]
+\begin{itemize}
+    \item For each action $a$ of the current state $S_t$, compute $\hat{q}(S_t, a, \mathbf{w}_t)$.
+    \item Find the \textbf{greedy action}
+    \[
+        A_t^* \;=\; \arg\max_{a} \hat{q}(S_t, a, \mathbf{w}_t).
+    \]
+    \item Perform \textbf{policy improvement} by changing the estimation policy to a \textbf{soft approximation} of the greedy policy (e.g., $\varepsilon$-greedy).
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Algorithm: Episodic Semi-Gradient Sarsa}
+
+\begin{algorithm}[H]
+\caption{Episodic Semi-Gradient Sarsa for Estimating $\hat{q} \approx q_*$}
+\begin{algorithmic}
+\STATE \textbf{Input:} a differentiable action-value function parameterization $\hat{q} : \mathcal{S} \times \mathcal{A} \times \mathbb{R}^d \to \mathbb{R}$
+\STATE \textbf{Algorithm parameters:} step size $\alpha > 0$, small $\varepsilon > 0$
+\STATE Initialize value-function weights $\mathbf{w} \in \mathbb{R}^d$ arbitrarily (e.g., $\mathbf{w} = \mathbf{0}$)
+\FOR{each episode}
+    \STATE $S, A \leftarrow$ initial state and action of episode (e.g., $\varepsilon$-greedy)
+    \FOR{each step of episode}
+        \STATE Take action $A$, observe $R$, $S'$
+        \IF{$S'$ is terminal}
+            \STATE $\mathbf{w} \leftarrow \mathbf{w} + \alpha \bigl[R - \hat{q}(S, A, \mathbf{w})\bigr] \nabla \hat{q}(S, A, \mathbf{w})$
+            \STATE Go to next episode
+        \ENDIF
+        \STATE Choose $A'$ as a function of $\hat{q}(S', \cdot, \mathbf{w})$ (e.g., $\varepsilon$-greedy)
+        \STATE $\mathbf{w} \leftarrow \mathbf{w} + \alpha \bigl[R + \gamma\, \hat{q}(S', A', \mathbf{w}) - \hat{q}(S, A, \mathbf{w})\bigr] \nabla \hat{q}(S, A, \mathbf{w})$
+        \STATE $S \leftarrow S'$, $A \leftarrow A'$
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Example: Mountain Car}
+
+A canonical benchmark for semi-gradient Sarsa with linear function approximation is the \textbf{Mountain Car} task.
+
+\textbf{Setting:}
+\begin{itemize}
+    \item \textbf{Actions:} full throttle forward ($+1$), full throttle reverse ($-1$), zero throttle ($0$);
+    \item \textbf{Reward:} $-1$ at each step until the car reaches the goal and the episode terminates.
+\end{itemize}
+
+\textbf{Simplified physics:}
+\begin{align*}
+    x_{t+1} \;&\doteq\; \mathrm{bound}\bigl[x_t + \dot{x}_{t+1}\bigr], \\
+    \dot{x}_{t+1} \;&\doteq\; \mathrm{bound}\bigl[\dot{x}_t + 0.001 A_t - 0.0025 \cos(3 x_t)\bigr],
+\end{align*}
+with bounds $-1.2 \leq x_{t+1} \leq 0.5$ and $-0.07 \leq \dot{x}_{t+1} \leq 0.07$. Episodes start in a random position $x_t \in [-0.6, -0.4)$ with zero velocity.
+
+\textbf{Feature representation.} The two continuous state variables are converted to \textbf{binary features} via \textbf{grid tiling}: $8$ tilings, each tile covering $1/8$-th of the bounded distance in each dimension, with asymmetric offsets (see Sec.\ 9.5.4 of Sutton \& Barto). The feature vectors are combined \textbf{linearly} to approximate the action-value function
+\[
+    \hat{q}(s, a, \mathbf{w}) \;\doteq\; \mathbf{w}^\top \mathbf{x}(s, a) \;=\; \sum_{i=1}^{d} w_i\, x_i(s, a)
+\]
+for each pair $(s, a)$.
+
+\textbf{Observations.} Starting from all-zero (optimistic) initial action values, the agent performs \textbf{extensive exploration} even under a null policy. The cost-to-go surface $\bigl(-\max_a \hat{q}(s, a, \mathbf{w})\bigr)$ shapes progressively over episodes. Learning curves for semi-gradient Sarsa with tile coding and $\varepsilon$-greedy action selection show \textbf{faster convergence for larger step sizes} (e.g., $\alpha = 0.5/8$ vs $\alpha = 0.1/8$), measured in steps per episode (log scale, averaged over $100$ runs).
+
+%-------------------------------------------------------------
+\section{Deep Q-Networks (DQN)}
+%-------------------------------------------------------------
+
+\subsection{ANNs for Value Function Approximation in RL}
+
+\textbf{Multi-layer ANNs} have been used for function approximation in RL since \textbf{1986}, when the \textbf{backpropagation} algorithm became popular as a method for learning internal representations (Rumelhart et al., 1986).
+
+\textbf{Striking results} were obtained by coupling RL with backpropagation in \textbf{TD-Gammon} and \textbf{Watson} (Tesauro et al., 1994; 2012).
+
+In \textbf{2013}, Mnih and colleagues (Google DeepMind) developed the first RL agent merging \textbf{Q-learning} with \textbf{deep convolutional ANNs}, called \textbf{Deep Q-Network (DQN)}, achieving \textbf{human-level performance} on \textbf{Atari} games. Like TD-Gammon, DQN uses a \textbf{semi-gradient} form of a TD algorithm with gradients computed by backpropagation, but it employs \textbf{Q-learning} instead of TD($\lambda$).
+
+\subsection{Architecture and Update Rule}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Basic Idea of DQN}]
+Use a \textbf{deep neural network} as a \textbf{non-linear function approximator} for the action-value function in a \textbf{semi-gradient form of Q-learning}.
+\end{tcolorbox}
+
+The approximate value function $\hat{q}(s, a, \mathbf{w}_t)$ is parametrized by a \textbf{deep convolutional neural network}, with $\mathbf{w}_t$ the weights at iteration $t$. The network is called the \textbf{Q-network}.
+\begin{itemize}
+    \item \textbf{Input of the Q-network:} raw sensor signals (current state). Deep NNs can perform \textbf{automatic feature construction}, generating meaningful hierarchical abstractions in their layers.
+    \item \textbf{Output of the Q-network:} estimated optimal action values for the input state, i.e.\ \textbf{one value per action}.
+\end{itemize}
+
+The \textbf{semi-gradient Q-learning update} used by DQN is
+\[
+    \boxed{\;\mathbf{w}_{t+1} \;=\; \mathbf{w}_t + \alpha \Bigl[\underbrace{R_{t+1} + \gamma \max_{a} \hat{q}(S_{t+1}, a, \mathbf{w}_t)}_{\text{target value}} \;-\; \underbrace{\hat{q}(S_t, A_t, \mathbf{w}_t)}_{\text{action value}}\Bigr] \nabla \hat{q}(S_t, A_t, \mathbf{w}_t)\;}
+\]
+where $\mathbf{w}_t$ is the vector of network weights, $A_t$ is the action selected at step $t$, and $S_t, S_{t+1}$ are the network inputs. The gradient $\nabla \hat{q}(S_t, A_t, \mathbf{w}_t)$ is computed via \textbf{backpropagation}.
+
+\subsection{Problems with Nonlinear Approximation}
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Instability of Nonlinear RL}]
+\textbf{Problem:} RL is \textbf{unstable} or even \textbf{diverges} with nonlinear function approximators (e.g.\ ANNs) of the action-value function (Mnih et al., 2015).
+\end{tcolorbox}
+
+\textbf{Causes of instability:}
+\begin{itemize}
+    \item \textbf{C1:} \textbf{correlations} in the sequences of observations (consecutive states/features are highly correlated);
+    \item \textbf{C2:} small updates to $\hat{q}$ may \textbf{significantly change the policy} and thus the data distribution;
+    \item \textbf{C3:} \textbf{correlation between action values} $\hat{q}(S_t, A_t, \mathbf{w}_t)$ and \textbf{target values} $R_{t+1} + \gamma \max_a \hat{q}(S_{t+1}, a, \mathbf{w}_t)$, since both depend on the same weights $\mathbf{w}_t$.
+\end{itemize}
+
+\textbf{Two key solutions} were proposed in (Mnih et al., 2015):
+\begin{enumerate}
+    \item A biologically inspired mechanism for \textbf{experience replay};
+    \item The usage of \textbf{two separate networks} to estimate action values and target values.
+\end{enumerate}
+
+\subsection{Experience Replay}
+
+\textbf{Idea.} Store agent experience in a \textbf{replay memory}, then use stored experience to perform weight updates. After each step a tuple $(S_t, A_t, R_{t+1}, S_{t+1})$ is added to the replay memory. Experience is accumulated across many episodes.
+
+At each step, \textbf{multiple Q-learning updates} (a \textbf{mini-batch}) are performed using experience \textbf{sampled uniformly at random} from the replay memory. Notice: since Q-learning is \textbf{off-policy}, it can be applied along unconnected trajectories.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Advantages of Experience Replay}]
+\begin{itemize}
+    \item \textbf{Reduced variance} of the weight updates (mitigates cause \textbf{C2});
+    \item The \textbf{correlation in the sequences of observations} is eliminated $\to$ one source of instability is removed (mitigates cause \textbf{C1}).
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Two Networks (Target Network)}
+
+\textbf{Two networks are used:} one for estimating \textbf{action values} (ANN~1, the Q-network), another for estimating \textbf{target values} (ANN~2, the target network with parameters $\tilde{\mathbf{w}}$). The update rule becomes
+\[
+    \mathbf{w}_{t+1} \;=\; \mathbf{w}_t + \alpha \Bigl[R_{t+1} + \gamma \max_{a} \tilde{q}(S_{t+1}, a, \tilde{\mathbf{w}}) \;-\; \hat{q}(S_t, A_t, \mathbf{w}_t)\Bigr] \nabla \hat{q}(S_t, A_t, \mathbf{w}_t).
+\]
+After every $C$ updates of the weights $\mathbf{w}$ of the action-value network (ANN~1), these weights are \textbf{copied} to the second network (ANN~2) used to compute the target values.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Advantage of the Target Network}]
+This decoupling \textbf{improves stability} by reducing the correlation between action values and target values (mitigates cause \textbf{C3}).
+\end{tcolorbox}
+
+\subsection{Experimental Setting (Mnih et al., 2015)}
+
+\textbf{Benchmark.} DQN was first evaluated on \textbf{49 Atari games} (Mnih et al., 2013; 2015).
+
+\textbf{Input pipeline:}
+\begin{itemize}
+    \item raw frames of $210 \times 160$ pixels, $128$ colors, $60$Hz;
+    \item \textbf{preprocessing:} images reduced to $84 \times 84$ arrays of luminance;
+    \item \textbf{stacked images:} the four most recent frames are provided at each step, so the actual input has dimension $84 \times 84 \times 4$.
+\end{itemize}
+
+\textbf{Network architecture:}
+\begin{itemize}
+    \item $3$ hidden \textbf{convolutional layers} with rectifier nonlinearities:
+    \begin{itemize}
+        \item $32$ feature maps of size $20 \times 20$,
+        \item $64$ feature maps of size $9 \times 9$,
+        \item $64$ feature maps of size $7 \times 7$;
+    \end{itemize}
+    \item $1$ fully connected hidden layer with $512$ neurons;
+    \item output layer with $18$ neurons (one per Atari action).
+\end{itemize}
+
+\textbf{Reward shaping:} $+1$ for increased game score, $-1$ for decreased score, $0$ otherwise.
+
+\textbf{Policy:} $\varepsilon$-greedy with $\varepsilon$ decreasing linearly over the first million frames, low value afterwards ($50$M frames in total, i.e.\ $\sim 38$ days of game time).
+
+\textbf{Hyperparameters:} input, output, ANN architecture, step size, discount factor, etc., were tuned on a small selection of games and then kept \textbf{fixed for all games} (a test of generalization). Learning was performed \textbf{independently for each game} (different weights per game).
+
+\subsection{Results}
+
+\textbf{Evaluations} were performed on $30$ sessions of each game, each lasting up to $5$ minutes and beginning in a random initial state. According to Mnih et al.\ (2015), DQN performed:
+\begin{itemize}
+    \item \textbf{better than the state-of-the-art} algorithm (linear function approximation with hand-crafted features, Bellemare et al., 2013) in \textbf{43 games};
+    \item at a level \textbf{comparable to professional human players} in \textbf{29 games}.
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!80!black, title={Take-Away}]
+DQN demonstrates that \textbf{deep nonlinear approximators} can be combined with semi-gradient \textbf{Q-learning} to produce a general-purpose RL agent operating directly on \textbf{raw pixel inputs}, provided that the two stabilization tricks — \textbf{experience replay} and a \textbf{target network} — are used. These two ideas address the instability causes \textbf{C1, C2, C3} listed above and form the backbone of modern value-based deep RL.
+\end{tcolorbox}
+
+%=============================================================
+\part{Policy Gradient Methods}
+%=============================================================
+
+All methods seen so far are \textbf{action-value methods}: they \textbf{estimate} action values, \textbf{select} actions based on these values, but \textbf{do not explicitly represent the policy function}. \textbf{Policy gradient methods} take a different route: they learn a \textbf{parametrized policy function} and select actions using this policy \emph{without consulting value functions}. A value function may still be learned, but only \textbf{to help update the policy parameters}.
+
+\textbf{Actor-critic methods} are policy gradient methods that \emph{also} learn an approximation of the value function:
+\begin{itemize}
+    \item \textbf{Actor:} the learned policy;
+    \item \textbf{Critic:} the learned value function (used for bootstrapping).
+\end{itemize}
+
+\subsection*{Notation}
+
+\begin{itemize}
+    \item $\boldsymbol{\theta} \in \mathbb{R}^{d'}$: \textbf{policy parameter vector};
+    \item $\pi(a \mid s, \boldsymbol{\theta}) \;=\; \Pr\{A_t = a \mid S_t = s, \boldsymbol{\theta}_t = \boldsymbol{\theta}\}$: probability of taking action $a$ at time $t$ in state $s$ under parameters $\boldsymbol{\theta}$;
+    \item $\hat{v}(s, \mathbf{w})$: learned value function, with parameters $\mathbf{w} \in \mathbb{R}^d$ (if required by the method);
+    \item $J(\boldsymbol{\theta})$: \textbf{performance measure} of the policy as a function of $\boldsymbol{\theta}$.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Goal of Policy Gradient Methods}]
+Learn parameters $\boldsymbol{\theta}$ that \textbf{maximize} $J(\boldsymbol{\theta})$, via approximate \textbf{gradient ascent}:
+\[
+    \boldsymbol{\theta}_{t+1} \;=\; \boldsymbol{\theta}_t + \alpha\, \widehat{\nabla J(\boldsymbol{\theta}_t)},
+\]
+where $\widehat{\nabla J(\boldsymbol{\theta}_t)} \in \mathbb{R}^{d'}$ is a \textbf{stochastic estimate} of the gradient of $J(\boldsymbol{\theta})$ w.r.t.\ $\boldsymbol{\theta}_t$.
+\end{tcolorbox}
+
+The performance measure has two standard forms:
+\begin{itemize}
+    \item \textbf{Episodic case:} $J(\boldsymbol{\theta}) \doteq v_{\pi_{\boldsymbol{\theta}}}(s_0)$, the value of the start state under the parametrized policy;
+    \item \textbf{Continuing case:} $J(\boldsymbol{\theta})$ is the \textbf{average reward rate}.
+\end{itemize}
+
+%-------------------------------------------------------------
+\section{Policy Approximation and its Advantages}
+%-------------------------------------------------------------
+
+\subsection{Parametrization Requirements}
+
+The policy can be \textbf{parametrized in any way}, provided $\pi(a \mid s, \boldsymbol{\theta})$ is \textbf{differentiable} w.r.t.\ its parameters. To ensure \textbf{exploration}, the policy must \textbf{never become deterministic}, i.e.\ $\pi(a \mid s, \boldsymbol{\theta}) \in (0, 1)$ for all $(s, a)$.
+
+\subsection{Soft-max in Action Preferences}
+
+For a \textbf{discrete (and not too large) action space}, a natural parametrization uses \textbf{numerical preferences} $h(s, a, \boldsymbol{\theta}) \in \mathbb{R}$ for each state-action pair. Probability is assigned to actions \textbf{proportionally to preferences} through an \textbf{exponential soft-max}:
+\[
+    \boxed{\;\pi(a \mid s, \boldsymbol{\theta}) \;\doteq\; \frac{e^{h(s, a, \boldsymbol{\theta})}}{\sum_b e^{h(s, b, \boldsymbol{\theta})}}\;}
+\]
+This is called \textbf{soft-max in action preferences}.
+
+The preferences themselves can be parametrized arbitrarily:
+\begin{itemize}
+    \item a \textbf{deep ANN} computing preferences (e.g.\ as in AlphaGo), where $\boldsymbol{\theta}$ is the vector of connection weights;
+    \item a \textbf{linear-in-features} preference $h(s, a, \boldsymbol{\theta}) = \boldsymbol{\theta}^\top \mathbf{x}(s, a)$, with $\mathbf{x}(s, a) \in \mathbb{R}^{d'}$ a feature vector of the policy.
+\end{itemize}
+
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!80!black, title={Preferences vs.\ Action Values}]
+Action values \emph{could} be used as preferences with a soft-max, but this would \textbf{not allow the policy to approach deterministic behaviour} (action values converge to specific scalars). Instead, \textbf{general action preferences} are not constrained to converge to any particular value: preferences of \textbf{optimal actions} can be driven \textbf{infinitely higher} than those of suboptimal ones, enabling deterministic limit policies.
+\end{tcolorbox}
+
+\subsection{Advantages of Policy Parametrization}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Why Parametrize the Policy?}]
+\begin{itemize}
+    \item The \textbf{policy} may be a \textbf{simpler} function to approximate than the value function;
+    \item Policy parametrization \textbf{allows to inject prior knowledge} — often the most important reason for using a policy-based method;
+    \item Action-value methods have \textbf{no natural way of finding stochastic policies}; policy gradient methods (e.g.\ with soft-max in action preferences) enable arbitrary action probabilities;
+    \item Policy-based methods can deal with \textbf{continuous action spaces}.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Example: Short Corridor with Switched Actions}
+
+Consider a \textbf{short corridor} with three internal states and one terminal goal, reward $-1$ per step, actions $\{\text{left}, \text{right}\}$, and the \textbf{middle state} secretly reversing the effect of actions. State features are
+\[
+    \mathbf{x}(s, \text{right}) = [1, 0]^\top, \qquad \mathbf{x}(s, \text{left}) = [0, 1]^\top \quad \text{for all states } s.
+\]
+Under \textbf{function approximation} all states look identical (model-free).
+
+\textbf{Action-value method ($\varepsilon$-greedy):} since all states share the same features, only two extreme policies are possible — pick \emph{right} with probability $(1-\varepsilon)/2 + \varepsilon/2$ or \emph{left} with that probability. Both perform badly ($J \approx -82$ for left-greedy, $J \approx -44$ for right-greedy).
+
+\textbf{Policy gradient method:} can converge to the \textbf{optimal stochastic policy}, with the \emph{best probability of right $\approx 0.59$} and performance $J \approx -11.6$.
+
+%-------------------------------------------------------------
+\section{The Policy Gradient Theorem}
+%-------------------------------------------------------------
+
+\subsection{Motivation}
+
+With continuous policy parametrization, the action probabilities \textbf{change smoothly} as a function of $\boldsymbol{\theta}$, instead of changing \textbf{dramatically} as in $\varepsilon$-greedy on small changes of action values. Because of this, \textbf{stronger convergence guarantees} are available for policy gradient methods.
+
+Performance depends on both \textbf{action selection} and the \textbf{distribution of states}, both affected by $\boldsymbol{\theta}$. Given a state, the effect of $\boldsymbol{\theta}$ on actions and rewards can be computed, but the effect of the policy on the \textbf{state distribution} is a function of the \textbf{unknown environment} (model-free setting).
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Central Question}]
+How can we estimate the \textbf{performance gradient} w.r.t.\ the policy parameters when the gradient depends on the \textbf{unknown effect of policy changes on the state distribution}?
+\end{tcolorbox}
+
+The \textbf{Policy Gradient Theorem} answers this question with an analytic expression for the gradient that \textbf{does not involve the derivative of the state distribution}.
+
+\subsection{Statement of the Theorem (Episodic Case)}
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Policy Gradient Theorem (episodic case)}]
+\[
+    \nabla J(\boldsymbol{\theta}) \;\propto\; \sum_s \mu(s) \sum_a q_\pi(s, a)\, \nabla \pi(a \mid s, \boldsymbol{\theta})
+\]
+where gradients are column vectors of partial derivatives w.r.t.\ components of $\boldsymbol{\theta}$, and $\mu(s)$ is the \textbf{on-policy state distribution} under $\pi$ (parametrized by $\boldsymbol{\theta}$).
+\end{tcolorbox}
+
+The \textbf{constant of proportionality} is the \textbf{average length of an episode} in the episodic case and \textbf{$1$} in the continuing case.
+
+\subsection{Proof Sketch}
+
+Starting from
+\[
+    \nabla v_\pi(s) \;=\; \nabla\!\left[\sum_a \pi(a \mid s)\, q_\pi(s, a)\right]
+\]
+and applying the product rule,
+\begin{align*}
+    \nabla v_\pi(s) \;&=\; \sum_a \Bigl[\nabla \pi(a \mid s)\, q_\pi(s, a) + \pi(a \mid s)\, \nabla q_\pi(s, a)\Bigr] \\
+                     &=\; \sum_a \Bigl[\nabla \pi(a \mid s)\, q_\pi(s, a) + \pi(a \mid s) \sum_{s'} p(s' \mid s, a)\, \nabla v_\pi(s')\Bigr].
+\end{align*}
+\textbf{Unrolling} recursively yields
+\[
+    \nabla v_\pi(s) \;=\; \sum_{x \in \mathcal{S}} \sum_{k=0}^{\infty} \Pr(s \to x, k, \pi) \sum_a \nabla \pi(a \mid x)\, q_\pi(x, a),
+\]
+where $\Pr(s \to x, k, \pi)$ is the probability of transitioning from $s$ to $x$ in $k$ steps under $\pi$. Setting $s = s_0$ and normalizing via $\mu(s) \propto \eta(s) = \sum_k \Pr(s_0 \to s, k, \pi)$ produces
+\[
+    \nabla J(\boldsymbol{\theta}) \;=\; \nabla v_\pi(s_0) \;\propto\; \sum_s \mu(s) \sum_a q_\pi(s, a)\, \nabla \pi(a \mid s, \boldsymbol{\theta}). \tag*{$\square$}
+\]
+(See Sutton \& Barto p.\ 325 for the full derivation.)
+
+%-------------------------------------------------------------
+\section{REINFORCE: Monte-Carlo Policy Gradient}
+%-------------------------------------------------------------
+
+\subsection{All-Actions Update}
+
+Stochastic gradient ascent requires \textbf{samples} whose expectation is proportional to $\nabla J(\boldsymbol{\theta}_t)$. The policy gradient theorem provides exactly that:
+\[
+    \nabla J(\boldsymbol{\theta}) \;\propto\; \sum_s \mu(s) \sum_a q_\pi(s, a)\, \nabla \pi(a \mid s, \boldsymbol{\theta}) \;=\; \mathbb{E}_\pi\!\left[\sum_a q_\pi(S_t, a)\, \nabla \pi(a \mid S_t, \boldsymbol{\theta})\right],
+\]
+since under $\pi$ states are encountered according to $\mu(s)$. A first algorithm — called \textbf{all-actions} because the update sums over all actions — is
+\[
+    \boldsymbol{\theta}_{t+1} \;\doteq\; \boldsymbol{\theta}_t + \alpha \sum_a \hat{q}(S_t, a, \mathbf{w})\, \nabla \pi(a \mid S_t, \boldsymbol{\theta}),
+\]
+with $\hat{q}$ a learned approximation of $q_\pi$.
+
+\subsection{Derivation of REINFORCE}
+
+Considering only the action $A_t$ actually taken at time $t$ yields the \textbf{REINFORCE algorithm}. Multiplying and dividing the summed terms by $\pi(a \mid S_t, \boldsymbol{\theta})$:
+\begin{align*}
+    \nabla J(\boldsymbol{\theta}) \;&=\; \mathbb{E}_\pi\!\left[\sum_a \pi(a \mid S_t, \boldsymbol{\theta})\, q_\pi(S_t, a)\, \frac{\nabla \pi(a \mid S_t, \boldsymbol{\theta})}{\pi(a \mid S_t, \boldsymbol{\theta})}\right] \\
+                                  &=\; \mathbb{E}_\pi\!\left[q_\pi(S_t, A_t)\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta})}{\pi(A_t \mid S_t, \boldsymbol{\theta})}\right] \quad \text{(replacing } a \text{ by sample } A_t \sim \pi\text{)} \\
+                                  &=\; \mathbb{E}_\pi\!\left[G_t\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta})}{\pi(A_t \mid S_t, \boldsymbol{\theta})}\right] \quad \text{(since } \mathbb{E}_\pi[G_t \mid S_t, A_t] = q_\pi(S_t, A_t)\text{)},
+\end{align*}
+where $G_t$ is the return. This is exactly what we need: \textbf{a quantity that can be sampled on each time step, whose expectation equals the gradient}.
+
+\subsection{REINFORCE Update Rule}
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={REINFORCE Update Rule}]
+\[
+    \boldsymbol{\theta}_{t+1} \;\doteq\; \boldsymbol{\theta}_t + \alpha\, G_t\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t)}{\pi(A_t \mid S_t, \boldsymbol{\theta}_t)}.
+\]
+\end{tcolorbox}
+
+\textbf{Interpretation:} each increment is the product of the return $G_t$ and the vector $\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t) / \pi(A_t \mid S_t, \boldsymbol{\theta}_t)$.
+\begin{itemize}
+    \item $\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t)$ is the \textbf{direction in parameter space} that most increases the probability of repeating $A_t$ on future visits to $S_t$;
+    \item the update moves $\boldsymbol{\theta}$ in this direction \textbf{proportionally to the return} (favouring directions yielding highest returns) and \textbf{inversely proportionally to the action probability} (removing the advantage of frequently-selected actions that may not be the best).
+\end{itemize}
+
+Using $\nabla \ln x = \nabla x / x$, the update is equivalently
+\[
+    \boldsymbol{\theta}_{t+1} \;\doteq\; \boldsymbol{\theta}_t + \alpha\, G_t\, \nabla \ln \pi(A_t \mid S_t, \boldsymbol{\theta}_t).
+\]
+
+\subsection{Algorithm (Williams, 1992)}
+
+\begin{algorithm}[H]
+\caption{REINFORCE: Monte-Carlo Policy-Gradient Control (episodic) for $\pi_*$}
+\begin{algorithmic}
+\STATE \textbf{Input:} a differentiable policy parameterization $\pi(a \mid s, \boldsymbol{\theta})$
+\STATE \textbf{Algorithm parameter:} step size $\alpha > 0$
+\STATE Initialize policy parameter $\boldsymbol{\theta} \in \mathbb{R}^{d'}$ (e.g.\ $\boldsymbol{\theta} = \mathbf{0}$)
+\FOR{each episode}
+    \STATE Generate an episode $S_0, A_0, R_1, \ldots, S_{T-1}, A_{T-1}, R_T$ following $\pi(\cdot \mid \cdot, \boldsymbol{\theta})$
+    \FOR{each step $t = 0, 1, \ldots, T-1$}
+        \STATE $G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k$ \quad ($= G_t$)
+        \STATE $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} + \alpha\, \gamma^t\, G\, \nabla \ln \pi(A_t \mid S_t, \boldsymbol{\theta})$
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Properties}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Theoretical Properties}]
+\begin{itemize}
+    \item REINFORCE uses the \textbf{complete return} $G_t$ from time $t$ (all rewards until the end of the episode), so it is a \textbf{Monte-Carlo algorithm}, well defined for the \textbf{episodic} case;
+    \item The \textbf{expected update over an episode} is in the same direction as the performance gradient;
+    \item This assures \textbf{improvement of expected performance} for sufficiently small $\alpha$ and \textbf{convergence to a local optimum} under standard stochastic-approximation conditions on decreasing $\alpha$;
+    \item As a Monte-Carlo method, REINFORCE may suffer from \textbf{high variance} and consequently \textbf{slow learning}.
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Empirically} on the short corridor task, REINFORCE converges close to the optimal stochastic policy value $v_*(s_0) \approx -11.6$ over $\sim 1000$ episodes, with the step size $\alpha$ governing speed and final accuracy (e.g.\ $\alpha = 2^{-13}$ converges fastest among the tested values).
+
+%-------------------------------------------------------------
+\section{REINFORCE with Baseline}
+%-------------------------------------------------------------
+
+\subsection{Generalized Policy Gradient Theorem}
+
+The policy gradient theorem can be \textbf{generalized} by subtracting an arbitrary \textbf{baseline} $b(s)$ from the action value:
+\[
+    \nabla J(\boldsymbol{\theta}) \;\propto\; \sum_s \mu(s) \sum_a \Bigl(q_\pi(s, a) - b(s)\Bigr)\, \nabla \pi(a \mid s, \boldsymbol{\theta}).
+\]
+The equation remains valid as long as $b(s)$ \textbf{does not depend on $a$}, because the subtracted term integrates to zero:
+\[
+    \sum_a b(s)\, \nabla \pi(a \mid s, \boldsymbol{\theta}) \;=\; b(s)\, \nabla \sum_a \pi(a \mid s, \boldsymbol{\theta}) \;=\; b(s)\, \nabla 1 \;=\; 0.
+\]
+
+\subsection{Update Rule with Baseline}
+
+\[
+    \boxed{\;\boldsymbol{\theta}_{t+1} \;\doteq\; \boldsymbol{\theta}_t + \alpha\, \bigl(G_t - b(S_t)\bigr)\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t)}{\pi(A_t \mid S_t, \boldsymbol{\theta}_t)}\;}
+\]
+
+The baseline:
+\begin{itemize}
+    \item \textbf{leaves the expected value of the update unchanged} (unbiased);
+    \item can have a \textbf{positive effect on variance};
+    \item \textbf{can vary with the state}: in states where all actions have high values, a high baseline helps differentiate good from bad actions; in low-value states, a low baseline is appropriate.
+\end{itemize}
+
+A \textbf{natural choice} is an estimate of the state value $\hat{v}(S_t, \mathbf{w})$, with $\mathbf{w}$ learned by value-based methods.
+
+\subsection{Algorithm}
+
+\begin{algorithm}[H]
+\caption{REINFORCE with Baseline (episodic), for estimating $\pi_{\boldsymbol{\theta}} \approx \pi_*$}
+\begin{algorithmic}
+\STATE \textbf{Input:} a differentiable policy parameterization $\pi(a \mid s, \boldsymbol{\theta})$
+\STATE \textbf{Input:} a differentiable state-value parameterization $\hat{v}(s, \mathbf{w})$
+\STATE \textbf{Algorithm parameters:} step sizes $\alpha^{\boldsymbol{\theta}} > 0$, $\alpha^{\mathbf{w}} > 0$
+\STATE Initialize $\boldsymbol{\theta} \in \mathbb{R}^{d'}$ and $\mathbf{w} \in \mathbb{R}^d$ (e.g.\ to $\mathbf{0}$)
+\FOR{each episode}
+    \STATE Generate $S_0, A_0, R_1, \ldots, S_{T-1}, A_{T-1}, R_T$ following $\pi(\cdot \mid \cdot, \boldsymbol{\theta})$
+    \FOR{each step $t = 0, 1, \ldots, T-1$}
+        \STATE $G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k$
+        \STATE $\delta \leftarrow G - \hat{v}(S_t, \mathbf{w})$
+        \STATE $\mathbf{w} \leftarrow \mathbf{w} + \alpha^{\mathbf{w}}\, \delta\, \nabla \hat{v}(S_t, \mathbf{w})$
+        \STATE $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} + \alpha^{\boldsymbol{\theta}}\, \gamma^t\, \delta\, \nabla \ln \pi(A_t \mid S_t, \boldsymbol{\theta})$
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+Empirically, REINFORCE with baseline \textbf{converges faster} and reaches a value closer to $v_*(s_0)$ than vanilla REINFORCE (e.g.\ on the short-corridor task, $\alpha^{\boldsymbol{\theta}} = 2^{-9}$, $\alpha^{\mathbf{w}} = 2^{-6}$ reach near-optimum within $\sim 200$ episodes).
+
+%-------------------------------------------------------------
+\section{Actor-Critic Methods}
+%-------------------------------------------------------------
+
+\subsection{Why Not Actor-Critic Already?}
+
+REINFORCE-with-baseline learns both \textbf{a policy} and \textbf{a state-value function}, but we do \textbf{not} consider it an actor-critic method, because the state-value function is \textbf{not used as a critic}: it is \textbf{not used for bootstrapping} (updating the value estimate of a state from estimates of subsequent states). It is used only as a baseline for the state whose estimate is being updated.
+
+\subsection{Bootstrapping Critic}
+
+\textbf{Bootstrapping bias} is often \textbf{beneficial}: it reduces variance and accelerates learning. REINFORCE with baseline is unbiased and converges to a local minimum, but \textbf{Monte-Carlo methods learn slowly} and are inconvenient online for continuing problems.
+
+\textbf{Temporal-Difference methods} eliminate these inconveniences. Combining TD with policy gradients yields \textbf{Actor-Critic methods with a bootstrapping critic} — a \textbf{TD version of policy gradient}.
+
+\subsection{One-Step Actor-Critic Update}
+
+One-step actor-critic methods replace the full return of REINFORCE with the \textbf{one-step return} $G_{t:t+1}$ and use a learned $\hat{v}$ as the baseline:
+\begin{align*}
+    \boldsymbol{\theta}_{t+1} \;&\doteq\; \boldsymbol{\theta}_t + \alpha\, \bigl(G_{t:t+1} - \hat{v}(S_t, \mathbf{w})\bigr)\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t)}{\pi(A_t \mid S_t, \boldsymbol{\theta}_t)} \\
+                                &=\; \boldsymbol{\theta}_t + \alpha\, \bigl(R_{t+1} + \gamma\, \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w})\bigr)\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t)}{\pi(A_t \mid S_t, \boldsymbol{\theta}_t)} \\
+                                &=\; \boldsymbol{\theta}_t + \alpha\, \delta_t\, \frac{\nabla \pi(A_t \mid S_t, \boldsymbol{\theta}_t)}{\pi(A_t \mid S_t, \boldsymbol{\theta}_t)}.
+\end{align*}
+Here $\hat{v}(S_{t+1}, \mathbf{w})$ is used for \textbf{bootstrapping} — this is what makes $\hat{v}$ the \textbf{critic}.
+
+The natural way to learn $\hat{v}$ in this context is \textbf{semi-gradient TD(0)}.
+
+\subsection{Roles: Actor, Critic, Advantage}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Components of Actor-Critic}]
+\begin{itemize}
+    \item $\pi(A_t \mid S_t, \boldsymbol{\theta}_t)$: \textbf{actor};
+    \item $\hat{v}(S_t, \mathbf{w})$: \textbf{critic};
+    \item $R_{t+1} + \gamma\, \hat{v}(S_{t+1}, \mathbf{w})$: \textbf{target};
+    \item $\delta_t = R_{t+1} + \gamma\, \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w})$: \textbf{advantage} (TD error).
+\end{itemize}
+\end{tcolorbox}
+
+The \textbf{advantage} tells us whether an action is better or worse than expected:
+\begin{itemize}
+    \item \textbf{Advantage $> 0$}: action is better than expected $\to$ encourage it;
+    \item \textbf{Advantage $< 0$}: action is worse than expected $\to$ discourage it (encourage the opposite).
+\end{itemize}
+
+\subsection{Algorithm: Advantage Actor-Critic (A2C)}
+
+\begin{algorithm}[H]
+\caption{One-step Actor-Critic (episodic), for estimating $\pi_{\boldsymbol{\theta}} \approx \pi_*$}
+\begin{algorithmic}
+\STATE \textbf{Input:} a differentiable policy parameterization $\pi(a \mid s, \boldsymbol{\theta})$
+\STATE \textbf{Input:} a differentiable state-value parameterization $\hat{v}(s, \mathbf{w})$
+\STATE \textbf{Parameters:} step sizes $\alpha^{\boldsymbol{\theta}} > 0$, $\alpha^{\mathbf{w}} > 0$
+\STATE Initialize $\boldsymbol{\theta} \in \mathbb{R}^{d'}$ and $\mathbf{w} \in \mathbb{R}^d$ (e.g.\ to $\mathbf{0}$)
+\FOR{each episode}
+    \STATE Initialize $S$ (first state of episode)
+    \STATE $I \leftarrow 1$
+    \WHILE{$S$ is not terminal}
+        \STATE $A \sim \pi(\cdot \mid S, \boldsymbol{\theta})$
+        \STATE Take action $A$, observe $S'$, $R$
+        \STATE $\delta \leftarrow R + \gamma\, \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})$ \quad (if $S'$ is terminal, $\hat{v}(S', \mathbf{w}) \doteq 0$)
+        \STATE $\mathbf{w} \leftarrow \mathbf{w} + \alpha^{\mathbf{w}}\, \delta\, \nabla \hat{v}(S, \mathbf{w})$
+        \STATE $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} + \alpha^{\boldsymbol{\theta}}\, I\, \delta\, \nabla \ln \pi(A \mid S, \boldsymbol{\theta})$
+        \STATE $I \leftarrow \gamma I$
+        \STATE $S \leftarrow S'$
+    \ENDWHILE
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+This is the \textbf{Advantage Actor-Critic (A2C)} algorithm in its one-step, online, episodic form. It is fully \textbf{online and incremental}, the policy-gradient analog of TD, Sarsa, Q-learning.
+
+%-------------------------------------------------------------
+\section{Policy Gradient for Continuing Problems}
+%-------------------------------------------------------------
+
+For \textbf{continuing problems} (no episode boundaries), performance is defined as the \textbf{average reward rate}:
+\begin{align*}
+    J(\boldsymbol{\theta}) \;\doteq\; r(\pi) \;&\doteq\; \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t \mid S_0, A_{0:t-1} \sim \pi] \\
+                                              &=\; \lim_{t \to \infty} \mathbb{E}[R_t \mid S_0, A_{0:t-1} \sim \pi] \\
+                                              &=\; \sum_s \mu(s) \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\, r,
+\end{align*}
+where $\mu(s) \doteq \lim_{t \to \infty} \Pr\{S_t = s \mid A_{0:t} \sim \pi\}$ is the \textbf{steady-state distribution} under $\pi$.
+
+\textbf{Differential return:} values are defined as
+\[
+    v_\pi(s) \doteq \mathbb{E}_\pi[G_t \mid S_t = s], \qquad q_\pi(s, a) \doteq \mathbb{E}_\pi[G_t \mid S_t = s, A_t = a]
+\]
+with
+\[
+    G_t \;\doteq\; R_{t+1} - r(\pi) + R_{t+2} - r(\pi) + R_{t+3} - r(\pi) + \cdots
+\]
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!60!black, title={Continuing Case}]
+With these definitions, the \textbf{policy gradient theorem remains true} (now with proportionality constant $1$) and \textbf{similar algorithms} (REINFORCE, actor-critic) can be used.
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{Policy Parametrization for Continuous Actions}
+%-------------------------------------------------------------
+
+\subsection{From Discrete to Continuous Action Spaces}
+
+Policy gradient methods can handle \textbf{large} and even \textbf{continuous action spaces}. Instead of producing a probability for each action, the policy outputs the \textbf{statistics of a probability distribution} over actions. A natural choice is the \textbf{normal (Gaussian) distribution}:
+\[
+    p(x) \;\doteq\; \frac{1}{\sigma \sqrt{2\pi}} \exp\!\left(-\frac{(x - \mu)^2}{2\sigma^2}\right).
+\]
+
+\subsection{Gaussian Policy Parametrization}
+
+The policy is defined as a normal density over a \textbf{real-valued scalar action}:
+\[
+    \boxed{\;\pi(a \mid s, \boldsymbol{\theta}) \;\doteq\; \frac{1}{\sigma(s, \boldsymbol{\theta}) \sqrt{2\pi}} \exp\!\left(-\frac{(a - \mu(s, \boldsymbol{\theta}))^2}{2\sigma(s, \boldsymbol{\theta})^2}\right)\;}
+\]
+where mean and standard deviation are \textbf{parametric function approximators} of the state,
+\[
+    \mu : \mathcal{S} \times \mathbb{R}^{d'} \to \mathbb{R}, \qquad \sigma : \mathcal{S} \times \mathbb{R}^{d'} \to \mathbb{R}^+.
+\]
+The policy parameters split as $\boldsymbol{\theta} = [\boldsymbol{\theta}_\mu, \boldsymbol{\theta}_\sigma]^\top$.
+
+\subsection{Linear Parametrization}
+
+The mean can be a \textbf{linear} function and the standard deviation the \textbf{exponential of a linear} function (must be positive):
+\[
+    \mu(s, \boldsymbol{\theta}) \;\doteq\; \boldsymbol{\theta}_\mu^\top \mathbf{x}_\mu(s), \qquad \sigma(s, \boldsymbol{\theta}) \;\doteq\; \exp\!\bigl(\boldsymbol{\theta}_\sigma^\top \mathbf{x}_\sigma(s)\bigr),
+\]
+with $\mathbf{x}_\mu(s)$ and $\mathbf{x}_\sigma(s)$ state feature vectors.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Take-Away}]
+With this Gaussian parametrization, \textbf{all the policy gradient algorithms} defined before (REINFORCE, REINFORCE with baseline, actor-critic) can be directly applied to learn to select \textbf{real-valued actions}.
+\end{tcolorbox}
+
 %-------------------------------------------------------------
 \section*{References}
 %-------------------------------------------------------------
 
 \begin{itemize}
-    \item R.\ S.\ Sutton, A.\ G.\ Barto. \emph{Reinforcement Learning: An Introduction}. Second edition. Chapter 9.
+    \item R.\ S.\ Sutton, A.\ G.\ Barto. \emph{Reinforcement Learning: An Introduction}. Second edition. Chapters 9, 10, 13, 16.5.
+    \item R.\ J.\ Williams (1992). \emph{Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning}. Machine Learning, 8:229--256. (REINFORCE)
+    \item V.\ Mnih, K.\ Kavukcuoglu, D.\ Silver, A.\ Graves, I.\ Antonoglou, D.\ Wierstra, M.\ Riedmiller (2013). \emph{Playing Atari with Deep Reinforcement Learning}. arXiv:1312.5602.
+    \item V.\ Mnih, K.\ Kavukcuoglu, D.\ Silver, A.\ A.\ Rusu, J.\ Veness, M.\ G.\ Bellemare, A.\ Graves, M.\ Riedmiller, A.\ K.\ Fidjeland, G.\ Ostrovski, S.\ Petersen, C.\ Beattie, A.\ Sadik, I.\ Antonoglou, H.\ King, D.\ Kumaran, D.\ Wierstra, S.\ Legg, D.\ Hassabis (2015). \emph{Human-level Control through Deep Reinforcement Learning}. Nature, 518(7540):529--533.
+    \item V.\ Mnih, A.\ Puigdom\`enech Badia, M.\ Mirza, A.\ Graves, T.\ P.\ Lillicrap, T.\ Harley, D.\ Silver, K.\ Kavukcuoglu (2016). \emph{Asynchronous Methods for Deep Reinforcement Learning}. arXiv:1602.01783. (A2C, A3C)
 \end{itemize}
 
 \end{document}
