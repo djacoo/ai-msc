@@ -1,0 +1,34 @@
+
+*************************************************
+*  Welcome to the third lesson of the RL-Lab!   *
+*            (Monte Carlo RL Methods)            *
+**************************************************
+
+Environment Render:
+[S] [ ] [ ] [ ] [ ] [ ] [X] 
+[ ] [W] [W] [W] [X] [ ] [X] 
+[ ] [ ] [W] [W] [X] [ ] [X] 
+[W] [ ] [W] [W] [X] [ ] [X] 
+[ ] [ ] [W] [W] [X] [ ] [X] 
+[ ] [W] [W] [W] [X] [ ] [X] 
+[ ] [ ] [ ] [ ] [ ] [ ] [G] 
+
+3) MC On-Policy (with exploring starts)
+ D   L   L   L   R   D  [X] 
+ D  [W] [W] [W] [X]  D  [X] 
+ R   D  [W] [W] [X]  D  [X] 
+[W]  D  [W] [W] [X]  D  [X] 
+ D   L  [W] [W] [X]  D  [X] 
+ D  [W] [W] [W] [X]  D  [X] 
+ R   R   R   R   R   R  [G] 
+	Expected reward following this policy: 3.19
+
+3) MC On-Policy (for epsilon-soft policies)
+ D   L   R   R   R   D  [X] 
+ D  [W] [W] [W] [X]  D  [X] 
+ R   D  [W] [W] [X]  D  [X] 
+[W]  D  [W] [W] [X]  D  [X] 
+ D   L  [W] [W] [X]  D  [X] 
+ D  [W] [W] [W] [X]  D  [X] 
+ R   R   R   R   R   R  [G] 
+	Expected reward following this policy: 3.12

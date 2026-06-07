@@ -1,0 +1,55 @@
+
+************************************************
+*  Welcome to the sixth lesson of the RL-Lab!  *
+*    (Tensorflow-PyTorch and Neural Networks)    *
+**************************************************
+
+A) The global minimum of the function: '2x^2 + 2xy + 2y^2 - 6x' using Keras is:
+	<x:2.0, y:-1.0> with value -6.0
+
+A) The global minimum of the function: '2x^2 + 2xy + 2y^2 - 6x' using PyTorch is:
+	<x:2.0, y:-1.0> with value -6.0
+
+
+B) Showing the deep neural networks structure:
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ dense (Dense)                   │ (None, 8)              │            16 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 8)              │            72 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_2 (Dense)                 │ (None, 8)              │            72 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_3 (Dense)                 │ (None, 1)              │             9 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 169 (676.00 B)
+ Trainable params: 169 (676.00 B)
+ Non-trainable params: 0 (0.00 B)
+TorchModel(
+  (fc1): Linear(in_features=1, out_features=8, bias=True)
+  (fc2): Linear(in_features=8, out_features=8, bias=True)
+  (fc3): Linear(in_features=8, out_features=8, bias=True)
+  (output): Linear(in_features=8, out_features=1, bias=True)
+)
+
+Pre-conversion forward propagation of the value -1.4
+Keras output:  0.112
+PyTorch output:  0.106
+Post-conversion forward propagation of the value -1.4
+Keras output:  0.112
+PyTorch output:  0.112
+
+C) Collect a dataset from the interaction with the environment
+
+D) Training a DNN to predict the reward of a state:
+Pre Training Reward Prediction Keras-PyTorch model: 
+	state 0 => reward: 0.0 
+	state 48 => reward: 22.009502410888672 
+Post Training Keras Reward Prediction:
+	state 0 => reward: -0.1886550486087799 
+	state 48 => reward: -0.06498602032661438 
+Post Training PyTorch Reward Prediction:
+	state 0 => reward: -0.18865367770195007 
+	state 48 => reward: -0.06487684696912766 

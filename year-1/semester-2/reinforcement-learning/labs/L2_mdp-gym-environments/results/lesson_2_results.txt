@@ -1,0 +1,32 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+
+************************************************
+*  Welcome to the first lesson of the RL-Lab!  *
+*             (MDP and Environments)           *
+************************************************
+
+A) Random Policy on Dangerous Grid World:
+[S] [ ] [ ] [ ] [ ] [ ] [X] 
+[ ] [W] [W] [W] [X] [ ] [X] 
+[ ] [ ] [W] [W] [X] [ ] [X] 
+[W] [ ] [W] [W] [X] [ ] [X] 
+[ ] [ ] [W] [W] [X] [ ] [X] 
+[ ] [W] [W] [W] [X] [ ] [X] 
+[ ] [ ] [ ] [ ] [ ] [ ] [G] 
+
+Random trajectory generated: [(0, 0), (0, 1), (1, 2), (1, 1), (2, 1), (3, 0), (2, 0), (1, 3), (1, 2), (1, 3), (1, 0)]
+
+B) Custom Environment: Recycling Robot
+	From state 'HIGH' selected action 'RECHARGE': 	 total reward: 0.0
+	From state 'HIGH' selected action 'RECHARGE': 	 total reward: 0.0
+	From state 'HIGH' selected action 'SEARCH': 	 total reward: 0.5
+	From state 'LOW' selected action 'SEARCH': 	 total reward: 1.0
+	From state 'LOW' selected action 'WAIT': 	 total reward: 1.2
+	From state 'LOW' selected action 'WAIT': 	 total reward: 1.4
+	From state 'LOW' selected action 'RECHARGE': 	 total reward: 1.4
+	From state 'HIGH' selected action 'WAIT': 	 total reward: 1.6
+	From state 'HIGH' selected action 'SEARCH': 	 total reward: 2.1
+	From state 'HIGH' selected action 'SEARCH': 	 total reward: 2.6

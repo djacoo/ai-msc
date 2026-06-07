@@ -1,0 +1,16 @@
+
+************************************************
+*   Welcome to the second lesson of the RL-Lab!  *
+*             (Multi-Armed Bandit)               *
+**************************************************
+
+10-armed testbed with 1000 training_steps
+
+	Last epsiodes reward (with eps=0   ): 0.7399081899098254
+	Last epsiodes reward (with eps=0.01): 0.973672380864641
+	Last epsiodes reward (with eps=0.1 ): 1.3928618921440992
+
+	The real optimal action is:  8
+	The optimal actions found are: 1 (eps=0), 8 (eps=0.01), and 8 (eps=0.1)
+
+	Plotting data...
