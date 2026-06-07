@@ -69,20 +69,118 @@
 \newcommand{\C}{\mathbb{C}}
 
 % ========================================
-% TABLE OF CONTENTS DEPTH
+% PROFESSIONAL DESIGN SYSTEM
 % ========================================
-\setcounter{tocdepth}{2} % Show only parts, sections, and subsections
+\usepackage{microtype}        % refined typography
+\usepackage{etoolbox}         % hooks (part page breaks)
+\usepackage{titlesec}         % heading restyling
+\usepackage{etoc}             % colored TOC + per-part mini-TOC
+\usepackage{tikz}
 
-% ========================================
-% HEADER AND FOOTER
-% ========================================
-\setlength{\headheight}{14pt}
+% ---- Semantic colour palette ----
+\definecolor{rlprimary}{HTML}{1F3864}  % deep navy  - structure / parts
+\definecolor{rlaccent}{HTML}{2E74B5}   % medium blue - accents / sections
+\definecolor{rldef}{HTML}{1F6FB2}      % definitions (blue family)
+\definecolor{rlthm}{HTML}{2E8B57}      % theorems / properties (green family)
+\definecolor{rlkey}{HTML}{C0392B}      % key ideas (red family)
+\definecolor{rlwarn}{HTML}{D68910}     % warnings (orange family)
+\definecolor{rlrule}{HTML}{2E74B5}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=rlprimary,
+    urlcolor=rlaccent,
+    citecolor=rlaccent,
+}
+
+% ---- Table of contents depth ----
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
+
+% ---- Heading styles: numbered + coloured rules ----
+\titleformat{\part}[display]
+  {\centering\normalfont}
+  {\fontsize{34}{38}\selectfont\bfseries\color{rlaccent}PART \thepart}
+  {10pt}
+  {\Huge\bfseries\color{rlprimary}}
+  [\vspace{6pt}{\color{rlrule}\titlerule[2pt]}]
+\titlespacing*{\part}{0pt}{0pt}{26pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{rlprimary}}
+  {\color{rlaccent}\thesection}{0.8em}{}
+  [\vspace{1pt}{\color{rlrule}\titlerule[1.1pt]}]
+\titlespacing*{\section}{0pt}{16pt}{7pt}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{rlaccent}}
+  {\color{rlaccent}\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{11pt}{4pt}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{rlaccent!85!black}}
+  {\color{rlaccent!85!black}\thesubsubsection}{0.5em}{}
+\titlespacing*{\subsubsection}{0pt}{9pt}{3pt}
+
+% Each part opens on a fresh page
+\pretocmd{\part}{\clearpage}{}{}
+
+% ---- Unified box geometry (titled bar boxes) ----
+\tcbset{
+  enhanced,
+  coltitle=white,
+  fonttitle=\bfseries,
+  boxrule=0.7pt,
+  arc=2.4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  toptitle=2pt, bottomtitle=2pt,
+  before skip=9pt, after skip=9pt,
+  drop fuzzy shadow=black!18,
+}
+
+% ---- Header and footer ----
+\setlength{\headheight}{16pt}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\leftmark}
-\rhead{PL \& RL}
-\cfoot{\thepage}
-\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\fancyhead[L]{\small\itshape\color{rlprimary}\leftmark}
+\fancyhead[R]{\small\bfseries\color{rlaccent}Planning \& RL}
+\fancyfoot[C]{\small\color{rlprimary}\thepage}
+\renewcommand{\headrule}{\color{rlrule}\hrule height 0.7pt}
+\renewcommand{\footrulewidth}{0pt}
+\renewcommand{\sectionmark}[1]{\markboth{\thesection\quad #1}{}}
+
+% ---- Coloured table of contents (etoc) ----
+\etocsetstyle{part}
+  {}{}
+  {\medskip\noindent{\large\bfseries\color{rlprimary}\etocnumber\enspace\etocname}\par\vspace{2pt}}
+  {}
+\etocsetstyle{section}
+  {}
+  {\noindent}
+  {\color{rlaccent}\bfseries\etocnumber\hspace{0.6em}%
+   \textnormal{\color{black}\etocname}%
+   \enspace\textcolor{rlaccent!45}{\dotfill}\enspace
+   {\color{rlaccent!85!black}\etocpage}\par\vspace{1pt}}
+  {}
+\etocsetstyle{subsection}
+  {}
+  {\noindent\hspace{1.6em}}
+  {\small\color{rlaccent!70!black}\etocnumber\hspace{0.5em}%
+   \textnormal{\color{black!82}\etocname}%
+   \enspace\textcolor{black!25}{\dotfill}\enspace
+   {\small\color{black!55}\etocpage}\par}
+  {}
+
+% Mini table of contents printed at the opening of every part
+\newcommand{\partmtoc}{%
+  \vspace{2pt}%
+  {\color{rlrule}\rule{\linewidth}{0.5pt}}\par\vspace{3pt}%
+  {\footnotesize\bfseries\color{rlaccent}IN THIS PART}\par\vspace{2pt}%
+  \begingroup
+  \etocsetnexttocdepth{subsection}%
+  \localtableofcontents
+  \endgroup
+  \vspace{2pt}{\color{rlrule}\rule{\linewidth}{0.5pt}}\par\vspace{10pt}}
 
 % ========================================
 % DOCUMENT INFORMATION
@@ -97,13 +195,41 @@
 % ========================================
 \begin{document}
 
-\maketitle
+% ---- Custom title page ----
+\begin{titlepage}
+\centering
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{tikzpicture}
+  \node[inner sep=0pt] (a) at (0,0) {};
+  \fill[rlprimary] (-8,0) rectangle (8,0.10);
+\end{tikzpicture}\\[0.9cm]
+{\fontsize{40}{46}\selectfont\bfseries\color{rlprimary} Planning \&{} Reinforcement Learning}\\[0.55cm]
+{\LARGE\color{rlaccent} Artificial Intelligence}\\[0.7cm]
+\begin{tikzpicture}
+  \fill[rlaccent] (-8,0) rectangle (8,0.10);
+\end{tikzpicture}\\[1.4cm]
+{\Large\itshape Jacopo Parretti}\\[0.5cm]
+{\large\color{rlprimary} II Semester 2025--2026}
+\vspace*{\fill}
+\end{titlepage}
+
+% ---- Table of contents ----
+\thispagestyle{empty}
+\begingroup
+\color{rlprimary}
+\begin{center}{\Huge\bfseries\color{rlprimary} Contents}\end{center}
+\vspace{0.4cm}
+\endgroup
+{\color{rlrule}\hrule height 1pt}\vspace{0.5cm}
+\etocsettocstyle{}{}
 \tableofcontents
-\newpage
+\clearpage
 
 
 % ========================================
 \part{Introduction to Reinforcement Learning}
+\partmtoc
 % ========================================
 
 \section{What is Reinforcement Learning}
@@ -128,7 +254,7 @@ We are aware of how our environment responds to what we do, and we seek to influ
 
 \subsection{Reinforcement Learning: Definition and Features}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Reinforcement Learning}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Reinforcement Learning}]
 Reinforcement Learning (RL) is a computational approach to \textbf{learning from interaction}. The agent learns to \textbf{map situations to actions} so as to \textbf{maximize} a numerical \textbf{reward signal}.
 \end{tcolorbox}
 
@@ -184,7 +310,7 @@ Supervised learning is \textbf{not adequate} for learning from interaction becau
 
 Discovering structure in an agent's experience may be useful, but it does not in itself address the problem of maximizing reward.
 
-\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black]
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black]
 \centering
 Reinforcement learning is a \textbf{third machine learning paradigm}, alongside supervised and unsupervised learning.
 \end{tcolorbox}
@@ -350,7 +476,7 @@ A more efficient approach uses a \textbf{value function} learned online:
 
 This is an instance of a \textbf{temporal-difference (TD) learning rule}.
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Convergence}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Convergence}]
 If $\alpha$ is reduced properly over time, the method converges to the true probabilities of winning from each state under optimal play, yielding an \textbf{optimal policy against the specific opponent}. If $\alpha$ is kept positive, the policy can also adapt to a slowly changing opponent. The Tic-Tac-Toe player is \textbf{model-free}.
 \end{tcolorbox}
 
@@ -379,6 +505,7 @@ RL methods are not limited to two-player games. They apply to:
 
 % ========================================
 \part{The $k$-Armed Bandit Problem}
+\partmtoc
 % ========================================
 
 \section{Evaluative vs Instructive Feedback}
@@ -398,7 +525,7 @@ Evaluative feedback requires \textbf{active exploration}: the agent must try act
 
 \subsection{Setup}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{$k$-Armed Bandit}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{$k$-Armed Bandit}]
 At each discrete time step $t$, the agent selects one of $k$ actions $a \in \mathcal{A} = \{1, \ldots, k\}$. After selection it receives a scalar reward $R_t$ drawn i.i.d.\ from a stationary distribution that depends only on the action chosen. The objective is to maximize the expected cumulative reward over a time horizon $T$.
 \end{tcolorbox}
 
@@ -439,7 +566,7 @@ No universally optimal balance exists without strong assumptions. Most practical
 \subsection{Sample-Average Estimator}
 
 The simplest estimator averages all rewards received for action $a$:
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Sample-Average Method}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Sample-Average Method}]
 \[
     Q_t(a) = \frac{\displaystyle\sum_{i=1}^{t-1} R_i \cdot \mathbf{1}_{A_i = a}}{\displaystyle\sum_{i=1}^{t-1} \mathbf{1}_{A_i = a}}.
 \]
@@ -494,7 +621,7 @@ Recomputing sample averages from scratch at each step costs $O(n)$ time and memo
     = Q_n + \frac{1}{n}\!\left[R_n - Q_n\right].
 \end{align*}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Incremental Update (General Form)}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Incremental Update (General Form)}]
 \[
     \text{NewEstimate} \;\leftarrow\; \text{OldEstimate} + \alpha\,\bigl[\text{Target} - \text{OldEstimate}\bigr],
 \]
@@ -533,7 +660,7 @@ In \textbf{nonstationary} environments, $q_*(a)$ drifts over time. Giving equal 
 \subsection{Exponentially Weighted Average}
 
 Unrolling the recurrence:
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Exponentially Weighted (Recency-Biased) Average}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Exponentially Weighted (Recency-Biased) Average}]
 \[
     Q_{n+1} = (1-\alpha)^n Q_1 + \sum_{i=1}^{n} \alpha(1-\alpha)^{n-i} R_i. % chktex 3
 \]
@@ -567,7 +694,7 @@ All action-value methods are biased by the initial estimates $Q_1(a)$. This bias
 
 \textbf{Optimistic initialization}: set $Q_1(a) \gg \mathbb{E}[R]$ for all $a$ (e.g., $Q_1(a) = 5$ when true values are near 0). Under greedy selection, any action selected yields a reward below the estimate, so the agent is disappointed and switches to a different action. This forces early exploration of all arms even without explicit randomization.
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Properties of Optimistic Initialization}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Properties of Optimistic Initialization}]
 \begin{itemize}
     \item Simple to implement; no extra hyperparameters beyond the initial value.
     \item Provides a natural way to encode prior knowledge about expected reward magnitude.
@@ -586,7 +713,7 @@ $\varepsilon$-greedy exploration selects non-greedy actions \emph{uniformly at r
 
 \subsection{UCB Formula}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{UCB Action Selection}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{UCB Action Selection}]
 \[
     A_t = \arg\max_a \left[Q_t(a) + c\sqrt{\frac{\ln t}{N_t(a)}}\right],
 \]
@@ -615,7 +742,7 @@ The term $c\sqrt{\ln t\,/\,N_t(a)}$ is an \textbf{upper confidence bound} on $q_
 
 Instead of estimating action values, gradient bandits learn a \textbf{numerical preference} $H_t(a) \in \mathbb{R}$ for each action. Preferences have no direct interpretation as expected rewards; only relative differences matter. Action probabilities follow a \textbf{softmax} (Gibbs/Boltzmann) distribution:
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Softmax Action Probabilities}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Softmax Action Probabilities}]
 \[
     \pi_t(a) = \Pr\{A_t = a\} = \frac{e^{H_t(a)}}{\displaystyle\sum_{b=1}^{k} e^{H_t(b)}}.
 \]
@@ -626,7 +753,7 @@ Initially $H_1(a) = 0$ for all $a$, so all actions are equiprobable.
 
 At step $t$, action $A_t$ is drawn from $\pi_t$, reward $R_t$ is observed, and preferences are updated by stochastic gradient ascent on $\mathbb{E}[R_t]$:
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Gradient Bandit Update}]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!black,title=\textbf{Gradient Bandit Update}]
 \begin{align*}
     H_{t+1}(A_t) &= H_t(A_t) + \alpha(R_t - \bar{R}_t)(1 - \pi_t(A_t)), \\
     H_{t+1}(a)   &= H_t(a)   - \alpha(R_t - \bar{R}_t)\,\pi_t(a), \quad \forall a \neq A_t,
@@ -676,6 +803,7 @@ Bandit problems are \textbf{non-associative}: a single, static situation. In gen
 
 %=============================================================
 \part{Markov Decision Processes}
+\partmtoc
 %=============================================================
 
 Markov Decision Processes (MDPs) provide the formal mathematical framework for sequential decision-making under uncertainty. Unlike the bandit setting, actions in an MDP affect not only the immediate reward but also the future state of the environment, introducing the problem of \textbf{delayed reward} and the need to trade off immediate versus long-term gains.
@@ -948,6 +1076,7 @@ The MDP framework introduced in this chapter is the foundation for all algorithm
 
 %=============================================================
 \part{Dynamic Programming}
+\partmtoc
 %=============================================================
 
 \textbf{Dynamic Programming (DP)} refers to a collection of algorithms that compute optimal policies given a perfect model of the environment (i.e., the full dynamics $p(s', r \mid s, a)$). DP methods are \textbf{model-based} and assume complete knowledge of the MDP. This is a strong requirement that limits their direct applicability, but DP is foundational: it provides the theoretical backbone on which model-free methods (Monte Carlo, TD learning) are built.
@@ -1215,6 +1344,7 @@ DP methods \textbf{update estimates} of the values of states \textbf{based on es
 
 %=============================================================
 \part{Monte Carlo Methods}
+\partmtoc
 %=============================================================
 
 Unlike in Dynamic Programming, Monte Carlo (MC) methods do \textbf{not assume complete knowledge of the environment} (i.e., they do not require a model of the dynamics $p(s', r \mid s, a)$). MC methods are \textbf{model-free RL methods}: they are the first learning methods for estimating value functions and discovering optimal policies without a model.
@@ -1508,6 +1638,7 @@ Two estimators:
 
 %=============================================================
 \part{Temporal-Difference Learning}
+\partmtoc
 %=============================================================
 
 Temporal Difference (TD) is the \textbf{most central and novel idea of RL}. TD is a combination of DP and MC ideas:
@@ -1848,6 +1979,7 @@ In this lecture we analyzed \textbf{one-step, tabular, model-free} TD methods. T
 
 %=============================================================
 \part{Planning and Learning with Tabular Methods}
+\partmtoc
 %=============================================================
 
 The goal of this part is to develop a \textbf{unified view} of:
@@ -2546,6 +2678,7 @@ The next lecture (\textbf{Temporal-Difference learning}) addresses the first two
 
 %=============================================================
 \part{Temporal-Difference Learning}
+\partmtoc
 %=============================================================
 
 \textbf{Temporal-Difference (TD) learning} is the central idea of modern reinforcement learning. It combines the best properties of Monte Carlo and Dynamic Programming:
@@ -2937,6 +3070,7 @@ TD learning is the backbone of most practical RL algorithms, including DQN (Deep
 
 %=============================================================
 \part{On-Policy Prediction with Approximation}
+\partmtoc
 %=============================================================
 
 This part opens the \textbf{second part of the course}, which addresses the question: \textbf{how can we extend tabular RL methods to apply them to problems with arbitrarily large state spaces?} For instance, the number of possible camera images already exceeds the number of atoms in the universe, so almost all states the agent encounters have never been seen before. The only way forward is \textbf{generalization} from previously encountered (similar) states, accepting that optimal policies must be replaced by good \emph{approximate} solutions.
@@ -3295,6 +3429,7 @@ ANNs have recently become the most popular approximation functions:
 
 %=============================================================
 \part{On-Policy Control with Approximation and Deep Q-Networks}
+\partmtoc
 %=============================================================
 
 This part addresses the \textbf{control problem with function approximation}: instead of approximating the state-value function $v_\pi$, we approximate the \textbf{action-value function}
@@ -3529,6 +3664,7 @@ DQN demonstrates that \textbf{deep nonlinear approximators} can be combined with
 
 %=============================================================
 \part{Policy Gradient Methods}
+\partmtoc
 %=============================================================
 
 All methods seen so far are \textbf{action-value methods}: they \textbf{estimate} action values, \textbf{select} actions based on these values, but \textbf{do not explicitly represent the policy function}. \textbf{Policy gradient methods} take a different route: they learn a \textbf{parametrized policy function} and select actions using this policy \emph{without consulting value functions}. A value function may still be learned, but only \textbf{to help update the policy parameters}.
@@ -3918,6 +4054,251 @@ with $\mathbf{x}_\mu(s)$ and $\mathbf{x}_\sigma(s)$ state feature vectors.
 With this Gaussian parametrization, \textbf{all the policy gradient algorithms} defined before (REINFORCE, REINFORCE with baseline, actor-critic) can be directly applied to learn to select \textbf{real-valued actions}.
 \end{tcolorbox}
 
+% ========================================
+\part{Advanced Reinforcement Learning Methods}
+\partmtoc
+% ========================================
+
+%-------------------------------------------------------------
+\section{A Taxonomy of RL Algorithms}
+%-------------------------------------------------------------
+
+RL algorithms can be organized along a few \textbf{branching points}. A (non-exhaustive) taxonomy of modern algorithms is the following:
+
+\begin{itemize}
+    \item \textbf{Model-Free RL}
+    \begin{itemize}
+        \item \textbf{Policy Optimization}: Policy Gradient, A2C/A3C, PPO, TRPO;
+        \item \textbf{Q-Learning}: DQN, C51, QR-DQN, HER;
+        \item \textbf{Interpolation} between the two families: DDPG, TD3, SAC.
+    \end{itemize}
+    \item \textbf{Model-Based RL}
+    \begin{itemize}
+        \item \textbf{Learn the Model}: World Models, I2A, MBMF, MBVE;
+        \item \textbf{Given the Model}: AlphaZero.
+    \end{itemize}
+\end{itemize}
+
+The two main branching points used to build this taxonomy are \textbf{(i)} whether the agent has access to (or learns) a \textbf{model of the environment} (model-free vs model-based) and \textbf{(ii)} \textbf{what} the algorithm \textbf{learns} (policies, action-value functions, value functions, environment models).
+
+%-------------------------------------------------------------
+\section{Model-Free vs Model-Based RL}
+%-------------------------------------------------------------
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Central Branching Point}]
+Does the agent have access to (or learn) a \textbf{model of the environment}?
+\end{tcolorbox}
+
+A \textbf{model of the environment} is a function that predicts \textbf{state transitions} and/or \textbf{rewards}.
+
+\subsection{Advantages and Downsides of Having a Model}
+
+\textbf{Advantage:} a model allows the agent to \textbf{plan by thinking ahead}, bridging \textbf{RL} and \textbf{planning}. The main consequence is a substantial \textbf{improvement in sample efficiency} over methods that do not have a model.
+
+\textbf{Downside:} a \textbf{ground-truth model} of the environment is usually \textbf{not available} to the agent, which must then \textbf{learn the model from experience}. This raises several challenges:
+\begin{itemize}
+    \item the \textbf{bias} in the model can be \textbf{exploited} by the agent: it may perform \textbf{well on the learned model} but \textbf{sub-optimally in the real environment};
+    \item \textbf{model-learning is fundamentally hard}: even intense effort (e.g.\ computation time) can fail to pay off.
+\end{itemize}
+
+\textbf{Model-free methods} forego the potential gains in sample efficiency coming from a model, \textbf{but} they tend to be \textbf{easier to implement and tune}. Currently, model-free methods are \textbf{more popular} and have been \textbf{more extensively developed and tested} than model-based methods.
+
+\subsection{Examples of Model-Based Algorithms}
+
+\begin{itemize}
+    \item \textbf{Dyna-Q} (S\&B Sec.\ 8.1--8.3);
+    \item \textbf{Monte Carlo Tree Search} (S\&B Sec.\ 8.10, 8.11);
+    \item \textbf{AlphaGo} and \textbf{AlphaZero} (S\&B Sec.\ 16.6).
+\end{itemize}
+
+%-------------------------------------------------------------
+\section{What to Learn}
+%-------------------------------------------------------------
+
+Another \textbf{critical branching point} in an RL algorithm is the question of \textbf{what to learn}. The four elements that can be learned are:
+\begin{itemize}
+    \item \textbf{Policies} (stochastic or deterministic);
+    \item \textbf{Action-value functions} (Q-functions);
+    \item \textbf{Value functions};
+    \item \textbf{Environment models}.
+\end{itemize}
+
+\subsection{What to Learn in Model-Free RL: Policy Optimization}
+
+Methods in the \textbf{policy optimization} family \textbf{explicitly represent the policy} $\pi_{\boldsymbol{\theta}}$ and learn its parameters in two ways:
+\begin{itemize}
+    \item \textbf{Directly}: gradient ascent on the policy performance objective $J(\pi_{\boldsymbol{\theta}})$;
+    \item \textbf{Indirectly}: by maximizing local approximations of $J(\pi_{\boldsymbol{\theta}})$.
+\end{itemize}
+The optimization is almost always performed \textbf{on-policy}. These methods usually also learn an approximation of the \textbf{value function} $V^\pi(s)$, used to figure out how to update the policy.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{Advantage Actor-Critic (A2C/A3C)}: performs \textbf{gradient ascent} to \textbf{directly} maximize performance;
+    \item \textbf{Proximal Policy Optimization (PPO)}: \textbf{indirectly} maximizes performance by maximizing a \textbf{surrogate objective function} which gives a conservative estimate for how much $J(\pi_{\boldsymbol{\theta}})$ changes as a result of the update.
+\end{itemize}
+
+\subsection{What to Learn in Model-Free RL: Q-Learning}
+
+Methods in this family \textbf{learn an approximation} $Q_{\boldsymbol{\theta}}(s, a)$ for the \textbf{optimal action-value function}. The \textbf{objective function} is typically based on the \textbf{Bellman equation}. The optimization is almost always performed \textbf{off-policy}, and the \textbf{policy} is obtained by selecting actions having maximum Q-value.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{Deep Q Networks (DQN)}: a classic which substantially launched the field of deep RL;
+    \item \textbf{C51}: a variant that learns a \textbf{distribution over the return} whose expectation is the optimal Q-value.
+\end{itemize}
+
+\subsection{Interpolation between Policy Optimization and Q-Learning}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Trade-off}]
+\begin{itemize}
+    \item \textbf{Policy optimization} methods are \textbf{stable} and \textbf{reliable};
+    \item \textbf{Q-learning} methods are \textbf{less stable} but more \textbf{sample efficient}, because they reuse data more effectively than policy optimization methods.
+\end{itemize}
+\end{tcolorbox}
+
+The two approaches are \textbf{not incompatible}: there exist algorithms that live \textbf{in between} the two extremes, trading off between the \textbf{strengths} and \textbf{weaknesses} of the two families.
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{Deep Deterministic Policy Gradient (DDPG)}: concurrently learns a \textbf{deterministic policy} and a \textbf{Q-function}, using each to improve the other;
+    \item \textbf{Soft Actor-Critic (SAC)}: a variant which uses \textbf{stochastic policies}, \textbf{entropy regularization}, and a few other tricks to \textbf{stabilize learning} and score higher than DDPG on standard benchmarks.
+\end{itemize}
+
+\subsection{What to Learn in Model-Based RL}
+
+Unlike model-free RL algorithms, it is \textbf{not simple to group} model-based RL algorithms, since there are \textbf{many orthogonal ways of using models}. Only a \textbf{few examples} are provided; the list is far from exhaustive.
+
+\paragraph{Pure Planning.} The most basic approach \textbf{never explicitly represents the policy}, but uses pure planning techniques like \textbf{Model-Predictive Control (MPC)} to select actions. In MPC, each time the agent observes the environment it computes a \textbf{plan} which is \textbf{optimal with respect to the model}: the plan describes all actions to take over some \textbf{fixed window of time} after the present. The agent then \textbf{executes the first action} of the plan and immediately \textbf{discards the rest}. An example is \textbf{MBMF} (Model-Based RL with Model-Free Fine-Tuning), which explores MPC with learned environment models on standard deep-RL benchmarks.
+
+\paragraph{Expert Iteration.} This approach uses and learns an \textbf{explicit representation of the policy}. Main steps:
+\begin{itemize}
+    \item the agent uses the \textbf{model} in a \textbf{planning algorithm} (like Monte Carlo Tree Search);
+    \item candidate \textbf{actions} for the plan are generated by sampling from the \textbf{current policy};
+    \item the planning algorithm produces an action \textbf{better} than what the policy alone would have produced (it is an ``expert'' relative to the policy);
+    \item the \textbf{policy} is afterwards \textbf{updated} to produce actions more like the planning algorithm's output.
+\end{itemize}
+\textbf{AlphaZero} uses this approach.
+
+\paragraph{Data Augmentation for Model-Free Methods.} Use a \textbf{model-free RL} algorithm to train a \textbf{policy} or \textbf{Q-function}, but either \textbf{augment real experiences with fictitious ones} when updating the agent, or \textbf{use only fictitious experience}. \textbf{MBVE} (Model-Based Value Estimation) is an example of augmenting real experiences with fictitious ones; \textbf{World Models} is an example of using purely fictitious experience, which its authors call ``training in the dream''.
+
+\paragraph{Embedding Planning Loops into Policies.} The idea is to \textbf{embed the planning procedure into a policy} as a subroutine (complete plans become side information for the policy), while the policy is trained with any standard \textbf{model-free} algorithm. The policy \textbf{learns to choose how and when to use the plans}, reducing the problem of \textbf{model bias}. \textbf{I2A} (Imagination-Augmented Agents) is an example of agents endowed with this style of imagination.
+
+%-------------------------------------------------------------
+\section{Monte Carlo Tree Search}
+%-------------------------------------------------------------
+
+\subsection{Rollout Algorithms}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={Rollout Algorithms}]
+\textbf{Decision-time} planning algorithms based on \textbf{Monte-Carlo} control.
+\end{tcolorbox}
+
+\textbf{Action values} are estimated by \textbf{averaging the returns of many simulated trajectories} that:
+\begin{itemize}
+    \item \textbf{start} with each possible action;
+    \item then follow a \textbf{rollout policy}.
+\end{itemize}
+When the action-value estimates are considered \textbf{accurate enough}, the action with \textbf{highest value} is executed, and the process is \textbf{repeated from the next state}.
+
+\textbf{Properties:}
+\begin{itemize}
+    \item rollout algorithms are \textbf{online}: they estimate action values \textbf{only for the current state}. This allows \textbf{scaling to problems with large state space without using approximate value functions};
+    \item they \textbf{improve upon the rollout policy} (according to the policy improvement theorem) but do \textbf{not find the optimal policy};
+    \item in practice they can be \textbf{very effective} and produce good performance \textbf{even if the rollout policy is completely random};
+    \item the \textbf{better} the rollout policy and the value estimate, the \textbf{better} the policy produced $\to$ \textbf{time/performance trade-off};
+    \item \textbf{parallelization} is possible since trajectories are independent;
+    \item \textbf{truncations} of the simulations and related value \textbf{corrections} can be performed as well.
+\end{itemize}
+
+\subsection{Monte Carlo Tree Search (MCTS)}
+
+MCTS is a \textbf{recent} and strikingly \textbf{successful} example of \textbf{decision-time planning}: it is a \textbf{rollout algorithm enhanced by a strategy to direct future simulations toward more highly rewarding trajectories}. MCTS is largely responsible for the improvement in computer Go from \textbf{weak amateur} (2005) to \textbf{grandmaster level} (2015), and has proved effective in a wide variety of competitive settings, including game playing and other domains with an \textbf{environment model simple enough for fast multistep simulations}. The application of MCTS to \textbf{real-world problems} is a current challenge of RL research.
+
+\begin{tcolorbox}[colback=red!5!white, colframe=red!70!black, title={Core Idea of MCTS}]
+Successively focus multiple simulations starting at the current state by \textbf{extending the initial portion of trajectories that have received high evaluations} from earlier simulations.
+\end{tcolorbox}
+
+For the most part, the actions in the simulated trajectories are generated using a simple \textbf{rollout policy}. If the rollout policy and the model do not require a lot of \textbf{computation}, many simulated trajectories can be generated. \textbf{State-action values} are estimated as the \textbf{average} of the simulated returns from that state-action. Value estimates are stored \textbf{only for the subset of state-action pairs most likely to be reached in a few steps}: this forms a \textbf{tree} rooted in the current state.
+
+\subsubsection{The Four Steps of MCTS}
+
+The algorithm repeats the following four steps \textbf{while time remains}:
+\begin{enumerate}
+    \item \textbf{Selection}: starting at the root, the \textbf{tree policy} traverses the tree to select a node;
+    \item \textbf{Expansion}: the tree is expanded by adding a child node;
+    \item \textbf{Simulation}: from the new node, a full trajectory is simulated following the \textbf{rollout policy};
+    \item \textbf{Backup}: the return of the simulation is backed up to update the values of the traversed tree nodes.
+\end{enumerate}
+
+MCTS \textbf{incrementally extends the tree} by adding new state-nodes that look \textbf{promising} based on the results of previous trajectories. \textbf{Outside the tree}, the \textbf{rollout policy} is used to select actions. \textbf{Inside the tree}, something \textbf{better} can be done using action-value estimates: actions are selected according to a \textbf{tree policy} that uses the \textbf{UCB selection rule}.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={UCB Tree-Policy Selection Rule}]
+\[
+    A_t \;\doteq\; \arg\max_a \left[ Q_t(a) + c\, \sqrt{\frac{\ln t}{N_t(a)}} \right]
+\]
+where:
+\begin{itemize}
+    \item $t$ is the \textbf{total number of action-selections} performed so far;
+    \item $N_t(a)$ is the \textbf{number of times action $a$ has been selected} prior to time $t$;
+    \item $c > 0$ controls the degree of \textbf{exploration}.
+\end{itemize}
+\end{tcolorbox}
+
+%-------------------------------------------------------------
+\section{AlphaGo}
+%-------------------------------------------------------------
+
+\subsection{APV-MCTS}
+
+AlphaGo uses an improved version of MCTS called \textbf{Asynchronous Policy and Value MCTS (APV-MCTS)}. The \textbf{main differences} with respect to standard MCTS are:
+\begin{itemize}
+    \item \textbf{Tree expansion}: instead of using stored action values to select \textbf{unexplored edges} from leaf nodes, APV-MCTS uses \textbf{probabilities} supplied by a \textbf{13-layer deep convolutional ANN} (the \textbf{SL-policy network});
+    \item \textbf{State node evaluation}: instead of using only the return of a rollout simulation performed by a \textbf{rollout policy}, APV-MCTS uses also a value function $v_{\boldsymbol{\theta}}$, another \textbf{13-layer deep convolutional ANN} (the \textbf{value network}) computed by evaluating a policy network (the \textbf{RL-policy network}) learned previously by reinforcement learning.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!60!black, title={State-Node Value in APV-MCTS}]
+\[
+    v(s) \;=\; (1 - \eta)\, v_{\boldsymbol{\theta}}(s) + \eta\, G
+\]
+where $G$ is the \textbf{return of the rollout} (produced by the \textbf{fast rollout policy}) and $v_{\boldsymbol{\theta}}(s)$ is the value supplied by the \textbf{high-performance RL-policy network}.
+\end{tcolorbox}
+
+\subsection{The AlphaGo Pipeline}
+
+AlphaGo is built from four networks trained in a pipeline:
+\begin{itemize}
+    \item a \textbf{Rollout policy} and an \textbf{SL policy network}, both trained by \textbf{supervised learning} from \textbf{human expert positions} (about 30 million human expert moves);
+    \item an \textbf{RL policy network}, obtained from the SL policy network and trained by \textbf{policy gradient} over \textbf{self-play} games;
+    \item a \textbf{Value network}, trained by \textbf{Monte-Carlo policy evaluation} on self-play positions.
+\end{itemize}
+
+\subsection{The Networks}
+
+\paragraph{1. SL and RL policy networks.}
+\begin{itemize}
+    \item Similar to the REINFORCE network but use \textbf{13 convolutional layers};
+    \item \textbf{Output}: a softmax unit for each point of the $19 \times 19$ board;
+    \item \textbf{Input}: a $19 \times 19 \times 48$ image stack in which each point of the Go board is represented by \textbf{48 binary/integer features} (e.g.\ occupied or not);
+    \item the \textbf{SL policy network} is trained by stochastic gradient ascent from human \textbf{expert data} (3 weeks on 50 processors, 57\% accuracy);
+    \item the \textbf{RL policy network} is \textbf{initialized} to the SL policy network and then trained by \textbf{policy gradient RL} over \textbf{simulated games} between the current RL policy network and earlier versions of the same network (to prevent overfitting). It \textbf{wins 80\%} of games against the SL policy and \textbf{85\%} against MCTS with 100\,000 simulations.
+\end{itemize}
+
+\paragraph{2. Value network.}
+\begin{itemize}
+    \item \textbf{Structure}: similar to the SL and RL policy networks;
+    \item \textbf{Output}: a \textbf{single output unit};
+    \item \textbf{Input}: equal to the input of the SL and RL policy networks with an additional binary feature giving the \textbf{current color to play};
+    \item \textbf{Training}: \textbf{MC policy evaluation} from data obtained from a large number of \textbf{self-play games} played using the RL policy (some weeks on 50 GPUs).
+\end{itemize}
+
+\paragraph{3. Rollout policy.}
+\begin{itemize}
+    \item \textbf{Structure}: a very simple \textbf{linear network} trained by \textbf{supervised learning} from a corpus of 8 million human moves;
+    \item \textbf{Performance}: provides reasonably accurate actions very \textbf{quickly}. The SL or RL policy networks are \textbf{not used for rollout} because they are \textbf{too slow} ($\sim 1000$ complete simulations per second on each processing thread);
+    \item \textbf{Features}: can be \textbf{computed more quickly} than those used by the SL/RL policy networks.
+\end{itemize}
+
 %-------------------------------------------------------------
 \section*{References}
 %-------------------------------------------------------------
@@ -3928,6 +4309,25 @@ With this Gaussian parametrization, \textbf{all the policy gradient algorithms} 
     \item V.\ Mnih, K.\ Kavukcuoglu, D.\ Silver, A.\ Graves, I.\ Antonoglou, D.\ Wierstra, M.\ Riedmiller (2013). \emph{Playing Atari with Deep Reinforcement Learning}. arXiv:1312.5602.
     \item V.\ Mnih, K.\ Kavukcuoglu, D.\ Silver, A.\ A.\ Rusu, J.\ Veness, M.\ G.\ Bellemare, A.\ Graves, M.\ Riedmiller, A.\ K.\ Fidjeland, G.\ Ostrovski, S.\ Petersen, C.\ Beattie, A.\ Sadik, I.\ Antonoglou, H.\ King, D.\ Kumaran, D.\ Wierstra, S.\ Legg, D.\ Hassabis (2015). \emph{Human-level Control through Deep Reinforcement Learning}. Nature, 518(7540):529--533.
     \item V.\ Mnih, A.\ Puigdom\`enech Badia, M.\ Mirza, A.\ Graves, T.\ P.\ Lillicrap, T.\ Harley, D.\ Silver, K.\ Kavukcuoglu (2016). \emph{Asynchronous Methods for Deep Reinforcement Learning}. arXiv:1602.01783. (A2C, A3C)
+    \item J.\ Schulman, F.\ Wolski, P.\ Dhariwal, A.\ Radford, O.\ Klimov (2017). \emph{Proximal Policy Optimization Algorithms}. arXiv:1707.06347. (PPO)
+    \item J.\ Schulman, S.\ Levine, P.\ Moritz, M.\ Jordan, P.\ Abbeel (2015). \emph{Trust Region Policy Optimization}. arXiv:1502.05477. (TRPO)
+    \item T.\ P.\ Lillicrap et al.\ (2015). \emph{Continuous Control with Deep Reinforcement Learning}. arXiv:1509.02971. (DDPG)
+    \item S.\ Fujimoto, H.\ van Hoof, D.\ Meger (2018). \emph{Addressing Function Approximation Error in Actor-Critic Methods}. (TD3)
+    \item T.\ Haarnoja, A.\ Zhou, P.\ Abbeel, S.\ Levine (2018). \emph{Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor}. ICML 2018. (SAC)
+    \item M.\ G.\ Bellemare, W.\ Dabney, R.\ Munos (2017). \emph{A Distributional Perspective on Reinforcement Learning}. arXiv:1707.06887. (C51)
+    \item W.\ Dabney, M.\ Rowland, M.\ G.\ Bellemare, R.\ Munos (2017). \emph{Distributional Reinforcement Learning with Quantile Regression}. (QR-DQN)
+    \item M.\ Andrychowicz et al.\ (2017). \emph{Hindsight Experience Replay}. (HER)
+    \item A.\ Nagabandi et al.\ (2017). \emph{Neural Network Dynamics for Model-Based Deep Reinforcement Learning with Model-Free Fine-Tuning}. arXiv:1708.02596. (MBMF)
+    \item V.\ Feinberg et al.\ (2018). \emph{Model-Based Value Estimation for Efficient Model-Free Reinforcement Learning}. (MBVE)
+    \item D.\ Ha, J.\ Schmidhuber (2018). \emph{Recurrent World Models Facilitate Policy Evolution}. NeurIPS 2018. (World Models)
+    \item T.\ Weber et al.\ (2017). \emph{Imagination-Augmented Agents for Deep Reinforcement Learning}. arXiv:1707.06203. (I2A)
+    \item G.\ Tesauro, G.\ R.\ Galperin (1997). \emph{On-line Policy Improvement using Monte-Carlo Search}. NIPS 9 (1996), pp.\ 1068--1074. MIT Press.
+    \item C.\ B.\ Browne et al.\ (2012). \emph{A Survey of Monte Carlo Tree Search Methods}. IEEE Transactions on Computational Intelligence and AI in Games, 4(1):1--43.
+    \item L.\ Kocsis, C.\ Szepesv\'ari (2006). \emph{Bandit Based Monte-Carlo Planning}. ECML 2006, LNCS 4212. Springer.
+    \item R.\ S.\ Sutton (1991). \emph{Dyna, an Integrated Architecture for Learning, Planning, and Reacting}. SIGART Bulletin, 2(4):160--163.
+    \item D.\ Silver et al.\ (2016). \emph{Mastering the Game of Go with Deep Neural Networks and Tree Search}. Nature, 529(7587):484--489. (AlphaGo)
+    \item D.\ Silver et al.\ (2017). \emph{Mastering the Game of Go without Human Knowledge}. Nature, 550(7676):354--359.
+    \item D.\ Silver et al.\ (2017). \emph{Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm}. arXiv:1712.01815. (AlphaZero)
 \end{itemize}
 
 \end{document}
