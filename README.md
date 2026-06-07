@@ -13,11 +13,7 @@
   </tr>
 </table>
 
-<!-- ── lo-fi now playing card ──────────────────────────────── -->
-<img src="https://img.shields.io/badge/▶_NOW_PLAYING-lofi_hip_hop_radio-9ccfd8?style=for-the-badge&labelColor=232136&logo=spotify&logoColor=eb6f92" alt="now playing" />
-<img src="https://img.shields.io/badge/⏮_⏯_⏭-●────────_1:24_/_3:47-c4a7e7?style=for-the-badge&labelColor=393552" alt="seek" />
-
-<br><br>
+<br>
 
 <!-- ── tech · for-the-badge ────────────────────────────────── -->
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
