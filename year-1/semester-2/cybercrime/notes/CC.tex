@@ -158,6 +158,92 @@
 \setcounter{secnumdepth}{3}
 
 % ============================================================
+%  PROFESSIONAL DESIGN SYSTEM
+% ============================================================
+\usepackage{etoc}  % coloured TOC + per-part mini-TOC
+
+% ---- Heading / structure colour palette ----
+\definecolor{rlprimary}{HTML}{1F3864}  % deep navy  - parts / chapters
+\definecolor{rlaccent}{HTML}{2E74B5}   % medium blue - section accents / rules
+\definecolor{rlrule}{HTML}{2E74B5}
+
+\hypersetup{linkcolor=rlprimary, urlcolor=rlaccent, citecolor=rlaccent}
+
+% ---- Heading styles (titlesec is loaded with [explicit]) ----
+\titleformat{\part}[display]
+  {\centering\normalfont}
+  {\fontsize{40}{44}\selectfont\bfseries\color{rlaccent}\MakeUppercase{\partname}~\thepart}
+  {12pt}
+  {\Huge\bfseries\color{rlprimary} #1}
+  [\vspace{8pt}{\color{rlrule}\titlerule[2pt]}]
+\titlespacing*{\part}{0pt}{0pt}{30pt}
+
+\titleformat{\chapter}[display]
+  {\normalfont}
+  {\filright\Large\bfseries\color{rlaccent}\MakeUppercase{\chaptertitlename}~\thechapter}
+  {10pt}
+  {\filright\Huge\bfseries\color{rlprimary} #1}
+  [\vspace{6pt}{\color{rlrule}\titlerule[1.5pt]}]
+\titlespacing*{\chapter}{0pt}{-10pt}{28pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{rlprimary}}
+  {\color{rlaccent}\thesection}{0.8em}{#1}
+  [\vspace{1pt}{\color{rlrule}\titlerule[1.1pt]}]
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{rlaccent}}
+  {\color{rlaccent}\thesubsection}{0.6em}{#1}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{rlaccent!85!black}}
+  {\color{rlaccent!85!black}\thesubsubsection}{0.5em}{#1}
+\titlespacing*{\subsubsection}{0pt}{8pt}{3pt}
+
+% ---- Unified callout-box geometry (titled bar boxes) ----
+\tcbset{
+  enhanced,
+  fonttitle=\bfseries,
+  coltitle=white,
+  arc=2.4pt,
+  boxrule=0.6pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  toptitle=2pt, bottomtitle=2pt,
+  drop fuzzy shadow=black!18,
+}
+
+% ---- Coloured header / footer ----
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\itshape\color{rlprimary}\nouppercase{\leftmark}}
+\fancyhead[R]{\small\bfseries\color{rlaccent}Cybercrime}
+\fancyfoot[C]{\small\color{rlprimary}\thepage}
+\renewcommand{\headrule}{\color{rlrule}\hrule height 0.6pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% ---- Coloured table of contents (etoc) ----
+\etocsetstyle{part}{}{}
+  {\medskip\noindent{\large\bfseries\color{rlprimary}\etocnumber\enspace\etocname}\par\vspace{2pt}}{}
+\etocsetstyle{chapter}{}{\noindent}
+  {{\bfseries\color{rlaccent}\etocnumber\hspace{0.6em}}\textnormal{\color{black}\etocname}%
+   \enspace\textcolor{rlaccent!45}{\dotfill}\enspace{\color{rlaccent!85!black}\etocpage}\par\vspace{1pt}}{}
+\etocsetstyle{section}{}{\noindent\hspace{1.6em}}
+  {{\small\color{rlaccent!70!black}\etocnumber\hspace{0.5em}}\textnormal{\color{black!82}\etocname}%
+   \enspace\textcolor{black!25}{\dotfill}\enspace{\small\color{black!55}\etocpage}\par}{}
+\etocsetstyle{subsection}{}{\noindent\hspace{3.4em}}
+  {{\footnotesize\color{black!50}\etocnumber\hspace{0.5em}}\textnormal{\footnotesize\color{black!70}\etocname}%
+   \enspace\textcolor{black!18}{\dotfill}\enspace{\footnotesize\color{black!50}\etocpage}\par}{}
+
+% ---- Per-part mini table of contents ----
+\newcommand{\partmtoc}{%
+  \vspace{2pt}{\color{rlrule}\rule{\linewidth}{0.5pt}}\par\vspace{3pt}%
+  {\footnotesize\bfseries\color{rlaccent}IN THIS PART}\par\vspace{2pt}%
+  \begingroup\etocsetnexttocdepth{section}\localtableofcontents\endgroup
+  \vspace{2pt}{\color{rlrule}\rule{\linewidth}{0.5pt}}\par\vspace{8pt}}
+
+% ============================================================
 %  DOCUMENT METADATA
 % ============================================================
 \title{%
@@ -174,11 +260,27 @@
 % ============================================================
 \begin{document}
 
-\maketitle
+% ---- Custom title page ----
+\begin{titlepage}
+\centering
 \thispagestyle{empty}
-\cleardoublepage
+\vspace*{\fill}
+\begin{tikzpicture}\fill[rlaccent] (-8,0) rectangle (8,0.10);\end{tikzpicture}\\[0.9cm]
+{\fontsize{46}{52}\selectfont\bfseries\color{rlprimary} Cybercrime}\\[0.5cm]
+{\LARGE\color{rlaccent} Lecture Notes \&{} Course Readings}\\[0.35cm]
+{\large\color{rlprimary} M.Sc.\ in Artificial Intelligence}\\[0.8cm]
+\begin{tikzpicture}\fill[rlaccent] (-8,0) rectangle (8,0.10);\end{tikzpicture}\\[1.3cm]
+{\Large\itshape Jacopo Parretti}\\[0.4cm]
+{\large\color{rlprimary} Spring Semester 2025--2026}
+\vspace*{\fill}
+\end{titlepage}
 
+% ---- Table of contents ----
+\thispagestyle{empty}
 \pagenumbering{roman}
+\begin{center}{\Huge\bfseries\color{rlprimary} Contents}\end{center}
+\vspace{0.3cm}{\color{rlrule}\hrule height 1pt}\vspace{0.5cm}
+\etocsettocstyle{}{}
 \tableofcontents
 \cleardoublepage
 \pagenumbering{arabic}
@@ -186,6 +288,7 @@
 
 % ========================================
 \part{Foundations of Cybercrime}
+\partmtoc
 % ========================================
 
 % ========================================
@@ -1602,6 +1705,7 @@ Repeat victimisation is a complex phenomenon affected by under-reporting, record
 
 % ========================================
 \part{Profiling, Victimisation, and Prevention}
+\partmtoc
 % ========================================
 
 % ========================================
@@ -2492,5 +2596,470 @@ The article's headline implications:
     \item In the absence of systematic effectiveness reviews, users need advice on choosing an app appropriate to their needs and a realistic appraisal of the \textbf{likely benefits and risks} (including privacy and data-security risks) of using them.
     \item Crime-prevention agencies should carry out \textbf{systematic user reviews} of apps and provide ``\textbf{curated}'' apps that offer useful prevention assistance without compromising users' safety or security.
 \end{itemize}
+
+% ========================================
+\part{Cybercriminal Law and Criminal Procedure}
+\partmtoc
+% ========================================
+
+% ========================================
+\chapter{The Cyber-Revolution's Challenges and the Main International Legal Sources}
+\label{chap:intl-sources}
+% ========================================
+
+\begin{sourcebox}{Reference}
+Rosa Maria Vadal\`a, \textit{The Law Cyber-Revolution's Challenges and the Main International Legal Sources}, lecture slides, ``Cybercrime'' course (Cybercriminal law and criminal procedure at the national and international level), M.Sc.\ in Data Science and Artificial Intelligence, University of Verona, A.Y.\ 2025/2026. Primary legal sources discussed: Council of Europe \textit{Convention on Cybercrime} (Budapest, 23 November 2001, ETS No.\ 185) and its Explanatory Report; \textit{Convention on the Protection of Children against Sexual Exploitation and Sexual Abuse} (Lanzarote, 25 October 2007); United Nations \textit{Convention against Cybercrime} (2024). Background reading: C.\ Murphy, \textit{Understanding Cybercrime}, EPRS Briefing PE 760.356, March 2024.
+\end{sourcebox}
+
+This part of the course shifts from criminology to \textbf{law}. The lecturer organises the Vadal\`a unit into four blocks: (1) the origin and evolution of international and European cybercriminal law (including the EU AI Act); (2) the criminal liability of Internet Service Providers in the light of the case law of the Court of Justice of the EU; (3) the most important cybercrime offences of Italian legislation; (4) cybercriminal procedure law and technological investigations. This chapter covers block (1) at the \textbf{international} level.
+
+\section{The Cyber-Revolution and Its Challenges to Law}
+
+Since the Internet was opened to the public (around \textbf{1994}), the ``cyber-revolution'' has transformed the conditions under which crime is committed, with two structural consequences for criminal law:
+\begin{itemize}
+    \item the appearance of \textbf{new varieties of criminal activity} (e.g.\ illegal access) \emph{and} an increase in the incidence of common crimes (terrorism, defamation, money laundering);
+    \item the \textbf{borderless, global dimension} of this new or increasing criminal activity.
+\end{itemize}
+
+Further effects identified in the lecture:
+\begin{itemize}
+    \item the central \textbf{role of ISPs} in the flow of information between users and recipients;
+    \item users can be \textbf{simultaneously victims and perpetrators} of abuses and offences;
+    \item the rise of \textbf{organised cybercriminals} and of \textbf{cybercrime-as-a-service};
+    \item a \textbf{crisis of dogmatic categories} (act, event) and of the criteria for attributing responsibility (causality and the culpability principle);
+    \item the double face of \textbf{Artificial Intelligence}, which generates new and common crimes but is also a tool to prevent and investigate them.
+\end{itemize}
+
+\begin{keypoint}
+The guiding principle of the whole field is: \textbf{``what is illegal offline cannot be legal online''}, even if it occurs in new ways and forms. From this follow three needs: (i) \textbf{amending or creating} substantive and procedural criminal-law norms; (ii) international and European \textbf{harmonisation} of those norms; and (iii) international and European \textbf{cooperation} between law-enforcement agencies.
+\end{keypoint}
+
+\subsection{Computer Crimes vs.\ Cybercrimes}
+
+A recurring terminological distinction frames the entire unit:
+\begin{itemize}
+    \item \textbf{Computer crimes / IT crimes}: crimes that include, among their \textbf{essential constituent elements}, an express reference to technical-IT elements without which they would not even be conceivable.
+    \item \textbf{Cybercrimes}: a broader, flexible category covering both crimes \emph{committed in cyberspace} and traditional crimes that \emph{can also} be perpetrated by and with computers or networks.
+\end{itemize}
+
+\subsection{The Evolution of Cyber Criminal Law}
+
+The lecture traces a chronological line of instruments:
+\begin{itemize}
+    \item \textbf{Council of Europe}: Recommendations of \textbf{1989}; the \textbf{Budapest Convention} on Cybercrime (2001); the \textbf{Lanzarote Convention} on the protection of children (2007).
+    \item \textbf{European Union directives}: e-commerce (2000); child pornography (2011); cyber-attacks (2013); NIS (2016); the Cybersecurity Act (2019); fraud and counterfeiting of non-cash means of payment (2017).
+    \item \textbf{The next step}: the \textbf{United Nations Convention against Cybercrime}.
+\end{itemize}
+
+\section{Council of Europe: Recommendation No.\ R (89) 9}
+
+The Council of Europe Recommendation \textbf{No.\ R (89) 9} on computer-related crime (with the final report of the European Committee on Crime Problems) proposed two lists of offences for national legislatures.
+
+\begin{sidebox}{The two lists of Recommendation R (89) 9}
+\textbf{Minimal list (8 offences):} (a) computer-related fraud; (b) computer forgery; (c) damage to computer data or programs; (d) computer sabotage; (e) unauthorised access; (f) unauthorised interception; (g) unauthorised reproduction of a protected computer program; (h) unauthorised reproduction of a topography.
+
+\textbf{Optional list (4 offences):} (a) alteration of computer data or programs; (b) computer espionage; (c) unauthorised use of a computer; (d) unauthorised use of a protected computer program.
+\end{sidebox}
+
+\section{The Budapest Convention on Cybercrime (2001)}
+
+The Council of Europe \textbf{Convention on Cybercrime} (Budapest, 23 November 2001) is the first binding international treaty on the subject. It is described as ``more than a legal document'': a \textbf{framework} that lets practitioners from the Parties share experience and cooperate in concrete cases, including emergencies, beyond its specific provisions.
+
+\subsection{Objectives and Structure}
+
+\begin{definition}[The three objectives of the Budapest Convention]
+\begin{enumerate}
+    \item \textbf{Harmonising} the domestic substantive criminal law of cybercrime offences and connected provisions;
+    \item providing for the domestic \textbf{procedural} powers needed to investigate and prosecute such offences (and any offence committed by means of a computer system, or whose evidence is in electronic form);
+    \item setting up a fast and effective regime of \textbf{international cooperation}.
+\end{enumerate}
+\end{definition}
+
+The Convention is divided into four chapters: (I) use of terms; (II) measures at domestic level (substantive and procedural law); (III) international cooperation; (IV) final clauses.
+
+\textbf{Article 1} defines the key terms used throughout the field: \emph{computer system} (any device or interconnected group of devices that, pursuant to a program, performs automatic data processing), \emph{computer data}, \emph{service provider}, and \emph{traffic data} (data on a communication's origin, destination, route, time, date, size, duration or type of service).
+
+\subsection{The Substantive Offences (Articles 2--13)}
+
+Section 1 of Chapter II organises substantive criminal law into \textbf{five titles} and nine offences:
+\begin{itemize}
+    \item \textbf{Title 1 --- CIA offences} (against the \textbf{confidentiality, integrity and availability} of computer data and systems), \textbf{Arts.\ 2--6};
+    \item \textbf{Title 2 --- computer-related offences} (the ``classic'' ones), \textbf{Arts.\ 7--8};
+    \item \textbf{Title 3 --- content-related offences} (child pornography), \textbf{Art.\ 9};
+    \item \textbf{Title 4 --- copyright} and related-rights infringements, \textbf{Art.\ 10};
+    \item \textbf{Title 5 --- ancillary liability and sanctions}, \textbf{Arts.\ 11--13}.
+\end{itemize}
+
+All offences must be committed \textbf{``intentionally and without right''}:
+\begin{itemize}
+    \item \textbf{Art.\ 2 --- Illegal access}: access to the whole or any part of a computer system.
+    \item \textbf{Art.\ 3 --- Illegal interception}: interception by technical means of non-public transmissions of computer data (including electromagnetic emissions).
+    \item \textbf{Art.\ 4 --- Data interference}: damaging, deletion, deterioration, alteration or suppression of computer data.
+    \item \textbf{Art.\ 5 --- System interference}: serious hindering of the functioning of a computer system.
+    \item \textbf{Art.\ 6 --- Misuse of devices}: production, sale, procurement, import, distribution or making available of a device (including a program) or of access codes/passwords designed for committing Arts.\ 2--5, and the \emph{possession} of such items with the relevant intent (a preparatory offence).
+    \item \textbf{Art.\ 7 --- Computer-related forgery}: input, alteration, deletion or suppression of data producing inauthentic data, with intent that it be acted upon as authentic.
+    \item \textbf{Art.\ 8 --- Computer-related fraud}: causing loss of property to another by data manipulation or system interference, with fraudulent or dishonest intent to procure an economic benefit.
+    \item \textbf{Art.\ 9 --- Child pornography}: producing, offering/making available, distributing/transmitting, procuring and possessing child pornography through a computer system (the definition covers a real minor, a person appearing to be a minor, and realistic images representing a minor).
+    \item \textbf{Art.\ 10 --- Copyright}: infringements committed wilfully, on a commercial scale and by computer system, defined by reference to the \textbf{Paris Act 1971} revising the \textbf{Berne Convention}, \textbf{TRIPS}, the \textbf{WIPO} treaties and the \textbf{Rome Convention}.
+\end{itemize}
+Title 5 adds \textbf{Art.\ 11} (attempt and aiding/abetting), \textbf{Art.\ 12} (corporate liability) and \textbf{Art.\ 13} (sanctions and measures).
+
+\subsection{Procedural Powers and International Cooperation}
+
+Section 2 of Chapter II provides procedural powers whose scope (\textbf{Art.\ 14(2)}) extends to: (a) the offences of Arts.\ 2--11; (b) any other offence committed by means of a computer system; and (c) the \textbf{collection of evidence in electronic form} of any criminal offence. The same wide scope governs international cooperation (\textbf{Art.\ 23}, opening Chapter III).
+
+\begin{sidebox}{Additional Protocols to the Budapest Convention}
+The Convention is supplemented by a \textbf{First Additional Protocol} on the criminalisation of acts of a \textbf{racist and xenophobic} nature committed through computer systems (\textbf{CETS 189}, 2003), and a \textbf{Second Additional Protocol} on enhanced cooperation and the disclosure of electronic evidence (EU Member States are authorised to ratify it under \textbf{Council Decision 2023/436}). Implementation is supported by the \textbf{C-PROC} (Cybercrime Programme Office) and the \textbf{T-CY} (Cybercrime Convention Committee).
+\end{sidebox}
+
+\section{The Lanzarote Convention (2007)}
+
+The Council of Europe \textbf{Convention on the Protection of Children against Sexual Exploitation and Sexual Abuse} (Lanzarote, 25 October 2007) has two objectives --- to \textbf{prevent and combat} the sexual exploitation and abuse of children, and to \textbf{protect} the rights of child victims --- pursued through a \textbf{``4 Ps'' approach}:
+\begin{itemize}
+    \item \textbf{Prevention} (Arts.\ 4--10);
+    \item \textbf{Protection} (Arts.\ 11--17);
+    \item \textbf{Prosecution} (Arts.\ 18--37);
+    \item \textbf{Promotion} of national and international cooperation (Arts.\ 38--44).
+\end{itemize}
+
+The substantive offences (Arts.\ 18--23) include \textbf{sexual abuse} (Art.\ 18), \textbf{child prostitution} (Art.\ 19), \textbf{child pornography} (Art.\ 20 --- whose six criminalised acts notably include \emph{knowingly obtaining access} through ICT), \textbf{participation of a child in pornographic performances} (Art.\ 21), \textbf{corruption of children} (Art.\ 22) and, most innovatively, the \textbf{solicitation of children for sexual purposes} (\textbf{Art.\ 23, ``child grooming''}): the intentional ICT-mediated proposal by an adult to meet a child for the purpose of committing abuse, \emph{where the proposal is followed by material acts leading to such a meeting}.
+
+\section{The United Nations Convention against Cybercrime}
+
+The \textbf{UN Convention against Cybercrime} (long title: \textit{Strengthening International Cooperation for Combating Certain Crimes Committed by Means of Information and Communications Technology Systems and for the Sharing of Evidence in Electronic Form of Serious Crimes}) is presented as the next, broader stage of international harmonisation.
+
+\subsection{A Broader Model}
+
+While the Budapest Convention focuses on \textbf{core cyber-dependent offences} (illegal access, data and system interference, computer fraud and forgery), the UN Convention keeps these but \textbf{expands} the field:
+\begin{itemize}
+    \item it modernises terminology --- \textbf{``ICT systems''} replaces ``computer systems'' and \textbf{``electronic data''} (Art.\ 2) replaces ``computer data'';
+    \item it introduces explicit definitions of \textbf{content data}, \textbf{personal data} and \textbf{serious crime} (an offence punishable by a maximum deprivation of liberty of \textbf{at least four years});
+    \item it adds financial/economic notions: \textbf{property} (including \emph{virtual assets}), \textbf{proceeds of crime}, \textbf{freezing/seizure}, \textbf{confiscation} and \textbf{predicate offence};
+    \item it criminalises \textbf{laundering} of proceeds linked to offences in Arts.\ 7--16 and the \textbf{non-consensual dissemination of intimate images} (\textbf{Art.\ 16}), while \textbf{omitting} the copyright-infringement offence found in Budapest;
+    \item it strengthens \textbf{prevention} and the protection of \textbf{critical information infrastructure} (\textbf{Art.\ 21} requires aggravating circumstances; examples: energy, financial networks, healthcare, government services), and adds confiscation of proceeds and witness/victim protection to procedural measures.
+\end{itemize}
+
+\begin{actionbox}
+\textbf{Criticisms and risks.} Safeguards depend heavily on \textbf{domestic law}, creating a risk of inconsistent human-rights protection. The \textbf{coexistence} with the Budapest Convention may impose overlapping obligations on States and raises the danger of \textbf{fragmentation} of cybercrime regulation; the effectiveness of both treaties depends on international cooperation, harmonised implementation and respect for human-rights standards.
+\end{actionbox}
+
+% ========================================
+\chapter{European Union Sources on Cybercrime and the AI Act}
+\label{chap:eu-sources}
+% ========================================
+
+\begin{sourcebox}{Reference}
+Rosa Maria Vadal\`a, \textit{The Most Important European Sources and the New Perspective to Regulate AI Systems}, lecture slides, ``Cybercrime'' course, M.Sc.\ in Data Science and Artificial Intelligence, University of Verona, A.Y.\ 2025/2026. Background readings: C.\ Murphy, \textit{Understanding Cybercrime}, EPRS Briefing PE 760.356, March 2024; Europol, \textit{ChatGPT --- The Impact of Large Language Models on Law Enforcement}, Tech Watch Flash, Europol Innovation Lab, March 2023.
+\end{sourcebox}
+
+\section{Legal Basis: Article 83 TFEU}
+
+EU competence to legislate in this field rests on the \textbf{Treaty on the Functioning of the European Union (TFEU)}.
+
+\begin{definition}[Article 83(1) TFEU]
+The European Parliament and the Council may, by \textbf{directives} adopted under the \textbf{ordinary legislative procedure}, establish \textbf{minimum rules concerning the definition of criminal offences and sanctions} in areas of \textbf{particularly serious crime with a cross-border dimension}. The listed areas are: terrorism; trafficking in human beings and sexual exploitation of women and children; illicit drug trafficking; illicit arms trafficking; money laundering; corruption; counterfeiting of means of payment; \textbf{computer crime}; and organised crime.
+\end{definition}
+
+Under \textbf{Article 83(2)}, where the approximation of criminal laws proves essential to ensure the effective implementation of a harmonised Union policy, directives may likewise establish minimum rules on offences and sanctions in the area concerned (the example given is the protection of the environment).
+
+\section{The EU Approach to Cybercrime}
+
+According to the European Commission, ``cybercrime consists of criminal acts committed online by using electronic communications networks and information systems.'' It is a \textbf{borderless} issue classified in three broad definitions:
+\begin{enumerate}
+    \item \textbf{Crimes specific to the Internet} --- e.g.\ attacks against information systems, phishing;
+    \item \textbf{Online fraud and forgery} --- large-scale fraud through identity theft, phishing, spam, malicious code;
+    \item \textbf{Illegal online content} --- child sexual abuse material, incitement to racial hatred or terrorism, racism and xenophobia.
+\end{enumerate}
+The EU response combines directives that \textbf{tackle large-scale cyber-attacks} (2013 attacks on information systems; 2019 non-cash payment fraud), directives that \textbf{address new online developments} (2011 child sexual exploitation), and a broader \textbf{cybersecurity} framework.
+
+\section{Directive 2011/93/EU --- Child Sexual Abuse and Exploitation}
+
+\textbf{Directive 2011/93/EU} (13 December 2011), replacing Framework Decision 2004/68/JHA, combats the sexual abuse and exploitation of children and child pornography.
+\begin{itemize}
+    \item \textbf{Definitions (Art.\ 2)}: a \textbf{``child''} is any person below \textbf{18}; the \emph{age of sexual consent} is set by national law. Child pornography covers material depicting a real child, a person \emph{appearing} to be a child, or \emph{realistic images}, in sexually explicit conduct.
+    \item \textbf{Offences (Art.\ 5)} with minimum maximum penalties: acquisition/possession and \emph{knowingly obtaining access} via ICT (\textbf{at least 1 year}); distribution/dissemination/transmission and offering/supplying/making available (\textbf{at least 2 years}); \textbf{production} (\textbf{at least 3 years}).
+    \item \textbf{Grooming (Art.\ 6)}: the ICT-mediated proposal by an adult to meet a child below the age of consent, \emph{followed by material acts} (at least 1 year); also covers attempts to solicit a child to provide self-produced material.
+    \item \textbf{Investigation (Art.\ 15)}: effective investigative tools (as for organised/serious crime) and victim identification, in particular by \emph{analysing} child-abuse material.
+    \item \textbf{Jurisdiction (Art.\ 17)}: territory or nationality of the offender, extended to offences committed via ICT \emph{accessed from} the Member State's territory.
+    \item \textbf{Art.\ 21} targets advertising of abuse opportunities and \emph{child sex tourism}; \textbf{Art.\ 25} requires the \textbf{prompt removal} of hosted child-abuse web pages and allows \textbf{blocking access} to such pages.
+\end{itemize}
+
+\section{Directive 2013/40/EU --- Attacks against Information Systems}
+
+\textbf{Directive 2013/40/EU} (12 August 2013), replacing Framework Decision 2005/222/JHA, is the principal EU instrument specifically on cybercrime.
+\begin{itemize}
+    \item \textbf{Definitions}: an \emph{information system} is a device (or group of devices) that automatically processes computer data, plus the data itself; \emph{without right} means conduct not authorised by the right-holder or not permitted under national law.
+    \item \textbf{Offences} are aligned with the Budapest Convention: \textbf{Art.\ 3} illegal access (by infringing a security measure; cf.\ Art.\ 2 Budapest); \textbf{Art.\ 4} illegal system interference (cf.\ Art.\ 5); \textbf{Art.\ 5} illegal data interference (cf.\ Art.\ 4); \textbf{Art.\ 6} illegal interception (cf.\ Art.\ 3); \textbf{Art.\ 7} tools for committing offences (cf.\ Art.\ 6). Notably, \textbf{mere possession is not criminalised}.
+    \item \textbf{Penalties}: the offences carry a maximum of \textbf{at least 2 years}; data/system interference reach \textbf{at least 3 years} where a significant number of systems is affected via a tool, and \textbf{at least 5 years} where committed within a \textbf{criminal organisation}, causing \textbf{serious damage}, or against a \textbf{critical infrastructure} information system.
+    \item \textbf{Jurisdiction (Art.\ 12)}: where the offender is physically present on the territory, or where the targeted system is on the territory.
+\end{itemize}
+Recital 16 clarifies that the ``tools'' offence targets malware (including software able to create \textbf{botnets}); a \textbf{direct intent} requirement avoids criminalising tools produced for legitimate purposes (e.g.\ security testing), as does Recital 17 for unauthorised-access situations lacking criminal intent.
+
+\section{The Cybersecurity Framework}
+
+A parallel strand protects networks and systems rather than punishing offenders:
+\begin{itemize}
+    \item \textbf{NIS Directive (Directive (EU) 2016/1148)}: national strategies, a \textbf{Cooperation Group}, a \textbf{CSIRTs network}, and security/notification obligations for \textbf{operators of essential services} and \textbf{digital service providers} (online marketplaces, search engines, cloud services). Italian implementation: \emph{d.lgs.}\ 65/2018, with administrative fines for omitted security measures or notifications.
+    \item \textbf{Cybersecurity Act (Regulation (EU) 2019/881)}: gives \textbf{ENISA} a permanent mandate and creates a framework for European \textbf{cybersecurity certification schemes} for ICT products, services and processes.
+    \item \textbf{NIS 2 Directive (Directive (EU) 2022/2555)}: expands the scope to new sectors and entities, improving resilience and incident-response capacities; it repeals the 2016 NIS Directive and points forward to the Cyber Resilience Act and the Cyber Solidarity Act.
+    \item \textbf{Italian national cybersecurity perimeter}: Decree-law 105/2019 (criminal offences for wilful non-compliance, imprisonment 1--3 years), PCM decrees 131/2020 and 81/2021, Decree-law 82/2021 (establishing the \textbf{National Cybersecurity Agency}), and Decree-law 21/2022 (extension to 5G and cloud).
+\end{itemize}
+
+\section{Data Protection Sources}
+
+Cybercrime law intersects with data-protection law:
+\begin{itemize}
+    \item \textbf{GDPR (Regulation (EU) 2016/679)} states the principles of lawful, fair and transparent processing; purpose limitation; data minimisation; storage limitation; \textbf{integrity and confidentiality} (appropriate security against unauthorised processing, loss or damage); and \textbf{accountability}.
+    \item the \textbf{Law Enforcement Directive (Directive (EU) 2016/680)} governs the processing of personal data by competent authorities for the prevention, investigation, detection or prosecution of offences, with parallel principles of lawfulness, purpose limitation, adequacy, accuracy, storage limitation and security.
+\end{itemize}
+
+\section{The Artificial Intelligence Act}
+
+The \textbf{Regulation laying down harmonised rules on Artificial Intelligence (AI Act)} adopts a \textbf{risk-based approach} that consciously mirrors the GDPR (risk assessment and mitigation, compliance-monitoring systems, supervisory authorities, liability and penalties).
+
+\begin{definition}[AI system (AI Act)]
+A \textbf{machine-based system} designed to operate with \textbf{varying levels of autonomy}, that may exhibit \textbf{adaptiveness} after deployment, and that, for explicit or implicit objectives, \textbf{infers}, from the input it receives, how to generate outputs such as \textbf{predictions, content, recommendations or decisions} that can influence physical or virtual environments.
+\end{definition}
+
+The Regulation lays down rules on market surveillance, \textbf{harmonised transparency} rules (for systems intended to interact with people, emotion-recognition and biometric-categorisation systems, and systems that generate or manipulate content), \textbf{specific requirements for high-risk systems}, and \textbf{prohibitions} of certain practices. \textbf{High-risk} systems (safety components or Annex III use-cases) must be capable of being \textbf{effectively overseen by natural persons} (human oversight). Transparency duties require that people be \textbf{informed} they are interacting with an AI system and that synthetic audio/image/video/text be \textbf{marked as artificially generated}.
+
+\begin{sidebox}{The AI Act and criminal law}
+\textbf{Direct relevance (Arts.\ 5--6 and Annex III).} Among the \textbf{prohibited} practices, with narrow law-enforcement exceptions, are: AI systems that \textbf{assess or predict the risk of a person committing an offence based solely on profiling or personality traits} (except to support a human assessment grounded in objective, verifiable facts); and \textbf{real-time remote biometric identification} in publicly accessible spaces for law-enforcement purposes (except for targeted searches of specific victims, prevention of specific threats including terrorism, or the search for suspects of specific offences).
+
+\textbf{Indirect relevance (Art.\ 9).} Criminal liability may arise for the \textbf{negligent use} of AI systems in otherwise lawful activities.
+
+The European Parliament's \textbf{resolution of 6 October 2021} had already called for a ban on AI \textbf{mass-scale scoring} of individuals and on the use of AI to \textbf{propose judicial decisions}, and warned about bias, discrimination and the need for human oversight.
+\end{sidebox}
+
+\subsection{AI as an Enabler of Crime}
+
+The criminogenic side of AI is illustrated by the Europol report on \textbf{ChatGPT and Large Language Models} (2023). Drawing on workshops of the \textbf{Europol Innovation Lab}, it warns that generative models already make it \textbf{easier than ever} for criminals with little technical knowledge to act --- e.g.\ to protect their identity online, to draft convincing fraudulent or phishing text, and to assist with malicious code. (The public version of the report is partly \textbf{redacted}; its concrete use-case examples are not disclosed.) Its three recommendations for law enforcement are to \textbf{understand} the technology, \textbf{raise awareness} of its dangers, and \textbf{engage with stakeholders} to ensure safe use. This complements the EPRS observation that AI lowers a classic phishing tell (poor spelling) and enables \textbf{deepfakes} used to fabricate ``evidence'' for scams.
+
+% ========================================
+\chapter{Internet Service Providers' Criminal Liability}
+\label{chap:isp}
+% ========================================
+
+\begin{sourcebox}{Reference}
+Rosa Maria Vadal\`a, \textit{The Internet Service Providers Criminal Liability}, lecture slides, ``Cybercrime'' course, M.Sc.\ in Data Science and Artificial Intelligence, University of Verona, A.Y.\ 2025/2026. Principal sources: Directive 2000/31/EC (e-Commerce); the Digital Services Act; and the case law of the Court of Justice of the EU (CJEU) and the European Court of Human Rights (ECtHR).
+\end{sourcebox}
+
+\section{Three Models of Liability for Third-Party Content}
+
+How far an intermediary is liable for content generated by its users varies across legal systems:
+\begin{itemize}
+    \item the \textbf{strict-liability model} (e.g.\ Thailand, China);
+    \item the \textbf{safe-harbour model} (European Union);
+    \item the \textbf{broad-immunity model} (United States).
+\end{itemize}
+
+\section{The EU Safe-Harbour Regime: Directive 2000/31/EC}
+
+The \textbf{e-Commerce Directive} (Directive 2000/31/EC, 8 June 2000) establishes three conditional exemptions for information-society service providers:
+\begin{itemize}
+    \item \textbf{Art.\ 12 --- ``Mere conduit''}: no liability for transmitted information provided the provider \emph{does not initiate} the transmission, \emph{does not select the receiver}, and \emph{does not select or modify} the information.
+    \item \textbf{Art.\ 13 --- ``Caching''}: no liability for automatic, intermediate and temporary storage that makes onward transmission more efficient, provided the provider does not modify the information, complies with access and updating conditions, does not interfere with lawful use of technology to obtain usage data, and \emph{acts expeditiously to remove} cached information once it learns the source has been removed or a court/authority has ordered removal.
+    \item \textbf{Art.\ 14 --- Hosting}: no liability for information stored at a recipient's request provided the provider has \emph{no actual knowledge} of illegal activity (nor awareness of facts making it apparent) or, \emph{upon obtaining such knowledge, acts expeditiously} to remove or disable access.
+\end{itemize}
+
+\begin{keypoint}
+\textbf{Art.\ 15 --- No general obligation to monitor.} Member States may \textbf{not} impose on providers a general duty to monitor the information they transmit or store, nor a general duty to actively seek facts indicating illegal activity. They \emph{may}, however, require providers to inform authorities of alleged illegal activities or to identify recipients with whom they have storage agreements.
+\end{keypoint}
+
+\section{The CJEU on ``Passive'' Hosting}
+
+The hosting exemption applies only to a \textbf{passive} host that has not played an active role giving it knowledge of, or control over, the stored data:
+\begin{itemize}
+    \item \textbf{L'Or\'eal v eBay} (C-324/09, Grand Chamber, 12 July 2011): an online-marketplace operator plays an \emph{active} role --- losing the Art.\ 14 exemption --- when it \textbf{optimises the presentation} of the offers for sale or \textbf{promotes} them; even a passive host cannot rely on the exemption if a \textbf{diligent economic operator} should have realised the offers were unlawful and it failed to act.
+    \item \textbf{Peterson v Google/YouTube and Elsevier v Cyando} (C-682/18 and C-683/18, Grand Chamber, 22 June 2021): video- and file-sharing platforms fall within Art.\ 14 provided they do not play an active role; to lose the exemption the operator must have \textbf{knowledge or awareness of specific illegal acts}. Such platforms do not themselves make a \textbf{``communication to the public''} of protected content \emph{unless} they go beyond merely providing the platform --- e.g.\ by having specific knowledge and failing to act, by not putting in place expected technological measures, or by selecting/providing tools for, or knowingly promoting, illegal sharing.
+\end{itemize}
+
+\section{Injunctions and Removal Powers}
+
+Despite the absence of a general monitoring duty, several instruments empower authorities to order removal or cooperation: Recital 45 and \textbf{Art.\ 18} of the e-Commerce Directive (interim measures to terminate an infringement), \textbf{Arts.\ 18--20} of the Budapest Convention (orders to submit subscriber information and to collect traffic data in real time), and \textbf{Art.\ 11} of Directive 2004/48/EC on the enforcement of IP rights (injunctions against intermediaries). The CJEU has drawn the boundary between permissible \emph{targeted} measures and prohibited \emph{general} ones:
+\begin{itemize}
+    \item \textbf{SABAM v Netlog} (C-360/10, 16 February 2012): a court may \textbf{not} order a hosting provider to install a filtering system applied \emph{indiscriminately} to all users, as a \emph{preventive} measure, \emph{at its own expense} and for an \emph{unlimited period}.
+    \item \textbf{McFadden v Sony Music} (C-484/14, 15 September 2016): an injunction requiring an access provider to prevent copyright infringement is \textbf{legitimate} where the provider may choose the technical measure --- even if limited to \textbf{password-protecting} the connection, provided users must reveal their identity.
+    \item \textbf{Glawischnig-Piesczek v Facebook Ireland} (C-18/18, 3 October 2019): Art.\ 15 does \textbf{not preclude} ordering a host to remove information \textbf{identical} (regardless of who stored it) or \textbf{equivalent} to content previously declared unlawful, provided the monitoring is limited to essentially unchanged messages requiring no independent assessment; removal may even be ordered \textbf{worldwide} within the framework of international law.
+\end{itemize}
+
+\section{ISP Cooperation and Data Retention}
+
+A major line of case law limits ISP-assisted surveillance by reference to the \textbf{Charter of Fundamental Rights} --- \textbf{Art.\ 7} (private life and communications), \textbf{Art.\ 8} (personal data, subject to control by an \emph{independent authority}) and \textbf{Art.\ 52} (limitations must be provided by law, respect the essence of rights, and be \emph{necessary} and \emph{proportionate}):
+\begin{itemize}
+    \item \textbf{Digital Rights Ireland} (C-293/12 and C-594/12, 8 April 2014): the Data Retention Directive 2006/24/EC is \textbf{invalid}; the fight against serious crime does not by itself justify general, undifferentiated retention, and the directive lacked clear, precise limits ``strictly necessary'' to circumscribe the interference.
+    \item \textbf{Tele2 Sverige} (C-203/15, C-698/15, 21 December 2016): access must be restricted to \emph{fighting serious crime}, subject to \emph{prior review} by a court or independent authority, with data retained within the EU. \textbf{Ministerio Fiscal} (C-207/16, 2 October 2018): access merely to identify the owners of SIM cards is \emph{not sufficiently serious} an interference to require a serious-crime limitation.
+    \item \textbf{La Quadrature du Net} (C-511/18, C-512/18, C-520/18, 6 October 2020): general retention is permitted only \emph{for national security}, against a \emph{genuine, present or foreseeable} serious threat, subject to effective review and limited in time.
+    \item \textbf{Prokuratuur} (C-746/18, 2 March 2021): access to traffic/location data allowing precise conclusions about private life must be \emph{confined to combating serious crime}, and cannot be authorised by the \textbf{public prosecutor's office} (which directs the investigation and is not a neutral party).
+\end{itemize}
+
+\section{Fundamental Rights: Search Engines and User Comments}
+
+\begin{itemize}
+    \item \textbf{Google Spain} (C-131/12, 13 May 2014): a search engine's indexing is \textbf{``processing'' of personal data} and its operator is the \textbf{``controller''}; the data subject may, as a rule, require that information \textbf{no longer be linked} to their name (the \textbf{``right to be forgotten''}), unless a preponderant public interest (e.g.\ the data subject's \emph{role in public life}) justifies access.
+    \item \textbf{ECtHR} case law on liability for user comments: \textbf{Delfi AS v.\ Estonia} (2015) upheld liability of a commercial news portal for extreme \emph{hate-speech} comments it failed to remove promptly; \textbf{MTE \& Index.hu v.\ Hungary} (2016) found a \textbf{violation of Art.\ 10} where domestic courts had not properly balanced freedom of expression; see also \textbf{Pihl v.\ Sweden} (2017) and \textbf{H\o iness v.\ Norway} (2019).
+\end{itemize}
+
+\section{The Digital Services Act}
+
+The \textbf{Digital Services Act (DSA)}, a Regulation amending Directive 2000/31/EC, preserves the conduit/caching/hosting structure (Arts.\ 4--6), the \textbf{no-general-monitoring} rule (Art.\ 8) and orders to act against illegal content or to provide information (Arts.\ 9--10), but adds substantial new duties:
+\begin{itemize}
+    \item dedicated \textbf{notice-and-action} mechanisms and notification duties for hosting providers (Arts.\ 16--18);
+    \item \textbf{safeguards} when user content is removed (statement of reasons, complaint mechanisms, out-of-court dispute resolution);
+    \item higher \textbf{transparency and accountability} on content moderation, advertising and algorithms;
+    \item additional obligations for \textbf{very large online platforms} to manage systemic risks (with independent audits), and an exclusion for micro/small enterprises.
+\end{itemize}
+Further measures include tracing of online sellers, a \textbf{crisis-response mechanism}, protection of minors, a \textbf{ban on targeted advertising by profiling children} or using special-category data, a ban on \textbf{``dark patterns''}, and data access for researchers. Oversight is centralised: the \textbf{European Commission} is the primary regulator for very large platforms and search engines (reaching 45 million users), supported by the \textbf{European Centre for Algorithmic Transparency}.
+
+% ========================================
+\chapter{Cybercrime Offences in Italian Criminal Legislation}
+\label{chap:italian-offences}
+% ========================================
+
+\begin{sourcebox}{Reference}
+L.\ Picotti, \textit{New Technologies as Tools for and Means Against Crime: Substantive Aspects} (report to the XX AIDP International Congress of Penal Law, Rome, 2019; published 2021); G.\ Ziccardi, \textit{Cyber Law in Italy}, 3rd ed., Part VII ``Computer-Related Crime'', chs.\ 1--2 (substantive offences). Italian statutes discussed: Law 547/1993 and Law 48/2008 (ratifying the Budapest Convention).
+\end{sourcebox}
+
+\section{The Substantive Framework (Picotti)}
+
+Before the specific offences, Picotti situates the field within the \textbf{cybernetic revolution}, defined by two characteristics:
+\begin{itemize}
+    \item \textbf{automation} --- processing by programs and algorithms increasingly ``capable of self-learning and correcting autonomously'';
+    \item \textbf{hyper-connectivity} --- the speed of accumulation, processing and exchange of data, producing \emph{big data}.
+\end{itemize}
+Both characteristics are now embedded in the legal definitions of \emph{computer system} and \emph{computer data} (Art.\ 1 Budapest Convention; Art.\ 2 Directive 2013/40/EU).
+
+\subsection{From Computer-Crime to Cybercrime}
+
+Picotti charts the conceptual transition from \textbf{computer-crime in the strict sense} (offences whose essential constituent elements expressly reference technical-IT elements) to the broader, \emph{flexible} category of \textbf{cybercrime} (any crime that can be committed \emph{in} cyberspace). The path runs from the CoE Recommendation R (89) 9 (1989) through the AIDP Rio Congress (1994, chaired by U.\ Sieber) to the Budapest Convention (2001) and its Additional Protocol on racism and xenophobia (ETS 189, 2003).
+
+\subsection{New Legal Interests}
+
+Two \textbf{new fundamental legal interests} emerge that criminal law must protect:
+\begin{itemize}
+    \item \textbf{IT confidentiality} --- the right to an \emph{exclusive information space} free from third-party intrusion, distinct from data protection (recognised in CoE Convention 108/1981, Art.\ 8 of the EU Charter, and the German Constitutional Court's ``right to the confidentiality and integrity of IT systems'', 27 February 2008; linked to the \emph{right to be forgotten}, \textit{Google Spain}, and Art.\ 17 GDPR);
+    \item \textbf{IT security / cybersecurity} --- a condition for criminalising illegal access (Art.\ 3 Directive 2013/40/EU; \textbf{Art.\ 615-ter} of the Italian Criminal Code) that has also become the object of \emph{obligations} (GDPR Arts.\ 25, 31, 35; Directive 2016/1148; Regulation 2019/881; the Italian national cyber-security perimeter), now a \textbf{non-alienable public interest}.
+\end{itemize}
+
+\begin{keypoint}
+Cybercrime strains the traditional \textbf{dogmatic categories} of criminal law: it affects \textbf{causality} and the imputation of \emph{actus reus}/\emph{mens rea} to multiple actors (creators, users, ISPs, AI). Picotti uses the distinction between the \textbf{formal perfection} of a crime (when its minimal constituent elements exist) and its \textbf{exhaustion} (when its harmful potential is fully expended) to analyse the protracted \textbf{``cybernetic event''} --- e.g.\ online defamation, hate speech or revenge porn, which keep spreading beyond the offender's control (cf.\ Cass.\ no.\ 54946/2016, \emph{Taverchio}). The recurring principle --- ``what is illegal offline cannot be legal online'' --- rejects the ``Code is Law'' idea (Lessig) as a substitute for democratically legitimate criminal law.
+\end{keypoint}
+
+\section{The Two Pillar Statutes}
+
+\begin{itemize}
+    \item \textbf{Law 547/1993} (``Amendments and Additions to the Criminal Code and the Code of Criminal Procedure on Cybercrime''), drafted by the \textbf{Vassalli Commission}, is the \textbf{cornerstone} of Italian computer-crime law. It both created new offences and amended existing ones, inserting in particular \textbf{Arts.\ 615-ter, 615-quater, 615-quinquies, 640-ter, 491-bis, 635-bis} and \textbf{Arts.\ 617-quater/quinquies/sexies}.
+    \item \textbf{Law 48/2008} ratified the \textbf{2001 Budapest Convention} (which Italy had signed ``among the first''). Comprising 14 articles in four chapters, it integrated the Criminal Code and Code of Criminal Procedure --- notably reorganising the \textbf{damage} offences into Arts.\ 635-bis to 635-quinquies and introducing \textbf{computer forensics} into procedural law.
+\end{itemize}
+
+\section{Offences against Confidentiality, Integrity and Availability}
+
+\subsection{The ``Computer Domicile'': Unauthorised Access (Art.\ 615-ter)}
+
+\textbf{Art.\ 615-ter} (unauthorised access to a computer or telecommunication system) is placed among the crimes against the \textbf{inviolability of domicile} --- a new ``\textbf{computer domicile}'' --- linked to Art.\ 14 of the Constitution. It punishes two conducts: \emph{abusively breaking into} a system protected by security measures, and \emph{remaining} in such a system against the express or tacit will of the entitled person.
+
+\begin{sidebox}{Key interpretive points (Art.\ 615-ter)}
+\begin{itemize}
+    \item \textbf{Security measures} need not be sophisticated: even a simple password or access code suffices, since what matters is that it \emph{expresses the holder's will to reserve access} --- the protection need not be effective.
+    \item \textbf{Access} is complete the moment the offender overcomes the protective barriers; \emph{effective knowledge} of the data is not required. An \textbf{attempt} is configurable where the offender tries but fails to bypass protections.
+    \item Penalty: \textbf{imprisonment 1 to 5 years}. The offence is prosecutable \emph{ex officio} (rather than on complaint) in aggravated forms: e.g.\ committed by a public officer or system operator abusing their role, with violence on persons/things, or causing destruction/damage to the system or its data.
+\end{itemize}
+\end{sidebox}
+
+\subsection{Related CIA Offences}
+
+\begin{itemize}
+    \item \textbf{Art.\ 615-quater} --- abusive possession and diffusion of \textbf{access codes}: a ``prodromal'' offence to Art.\ 615-ter, requiring the specific aim of profit or of causing harm; covers acquiring codes (including biometric credentials), communicating them, or supplying instructions to violate a protected system.
+    \item \textbf{Art.\ 615-quinquies} --- diffusion of programs/devices aimed at damaging or disrupting a system. Reshaped by Law 48/2008 (modelled on Art.\ 6 Budapest, ``misuse of devices''), it shifted from a \textbf{generic-intent} to a \textbf{specific-intent} crime: mere awareness of dissemination is no longer enough; the offender must know the harming characteristics of the item.
+    \item \textbf{Arts.\ 617-quater / 617-quinquies / 617-sexies} --- interception, prevention or interruption of computer/telematic communications, installation of interception devices, and falsification/alteration/suppression of their content. The conduct's defining feature is \textbf{fraudulence} (covert modality); the protected interest is the \textbf{security of the system} (genuineness + confidentiality).
+    \item \textbf{Art.\ 616} --- extended to electronic correspondence (e-mail, instant messaging), punishing acquaintance with, subtraction, or suppression of others' closed correspondence.
+    \item \textbf{Art.\ 491-bis} --- computer forgery: the rules on public/private documents apply to a public or private \textbf{computer record} (the original, support-bound definition of ``computer record'' was removed in 2016).
+\end{itemize}
+
+\section{Damage Offences (Arts.\ 635-bis to 635-quinquies)}
+
+Originally a single offence (Art.\ 635-bis), the damage regime was split by Law 48/2008 to mirror Arts.\ 4--5 Budapest (data interference vs.\ system interference):
+\begin{itemize}
+    \item \textbf{635-bis} --- damage to information, data and programs (now prosecutable \emph{on complaint}, except in aggravated forms);
+    \item \textbf{635-ter} --- damage to data used by the State, a public body or public utility (\emph{ex officio}, given data sensitivity);
+    \item \textbf{635-quater} --- damage to computer or telecommunication systems;
+    \item \textbf{635-quinquies} --- damage to \textbf{public-utility} systems.
+\end{itemize}
+Law 48/2008 added two aggravating circumstances to all damage offences: commission with \textbf{violence to the person or threat}, and \textbf{abuse of the role of system operator}. The latter targets those who exploit their \emph{specific} knowledge of the violated system (passwords, structure, data organisation) --- whether \emph{operator}, \emph{programmer}, \emph{systems analyst} or \emph{analyst}.
+
+\section{Computer Fraud (Art.\ 640-ter)}
+
+\textbf{Art.\ 640-ter} (computer fraud) punishes obtaining an unjust profit, to another's detriment, through the \textbf{manipulation of a computer system} (altering its functioning against the lawful holder's intentions) --- even without the artifices required by ordinary fraud (Art.\ 640), the ``objective deceptive adequateness'' lying in the manipulation itself. A reform of 2013 (Decree-law 93/2013, converted by Law 119/2013) added an aggravated hypothesis where the offence is committed \textbf{with theft or undue use of the digital identity} (imprisonment 2 to 6 years and a fine).
+
+\section{Offences against the Person and Content-Related Offences}
+
+\begin{itemize}
+    \item \textbf{Cyberstalking (Art.\ 612-bis)} --- stalking was introduced by Law 38/2009; Decree-law 93/2013 added the \textbf{aggravating circumstance} of the ``fact committed through computer or telematic tools''. Cyberstalking is not a stand-alone ``computer crime'' but a \emph{free-conduct} habitual offence against psychic freedom; the aggravation requires genuine \textbf{amplification} of the harmful message (e.g.\ massive, periodic or automated sending), not a single e-mail or message. The victim may seek a police \textbf{warning} (\emph{ammonimento}) and protective measures (prohibition of approaching, ban on communication).
+    \item \textbf{Cyberbullying (Law 71/2017)} --- the first Italian legislative definition (prompted by the \emph{Carolina Picchio} case) targets conduct meant to \textbf{isolate a minor}. A victim aged at least \textbf{14} (or their parents) may demand obscuring/removal/blocking of harmful data from the website operator within \textbf{48 hours}, failing which the \textbf{Data Protection Authority} intervenes within a further 48 hours; the \emph{ammonimento} procedure is extended to cyberbullying, keeping minors \emph{outside the penal circuit} where possible. Applicable crimes include insult (594), defamation (595) and threat (612).
+    \item \textbf{Identity theft} --- not a stand-alone offence; covered chiefly by \textbf{Art.\ 494} (substitution of person), in concurrence with the CIA offences (615-ter/quater/quinquies), fraud (640) and computer fraud (640-ter), plus the digital-identity aggravation of Art.\ 640-ter. The case law applies Art.\ 494 to creating false social-media or e-mail profiles using another's image or data.
+    \item \textbf{Grooming online (Art.\ 609-undecies)} --- introduced by \textbf{Law 172/2012} implementing the Lanzarote Convention. It punishes \emph{soliciting} a minor under \textbf{16} to commit listed sexual offences, ``solicitation'' being any act to gain the child's trust through \textbf{artifices, flattery or threats}, including via technology. Unlike Art.\ 23 Lanzarote, the Italian provision \textbf{lowers the punishment threshold}: it does not require a meeting proposal or material acts, punishing grooming already in the trust-building phase --- a \textbf{specific-intent} crime of indirect danger that demands rigorous judicial scrutiny of the offender's purpose under the principle of offensiveness.
+\end{itemize}
+
+% ========================================
+\chapter{Cybercriminal Procedure Law and Technological Investigations}
+\label{chap:procedure}
+% ========================================
+
+\begin{sourcebox}{Reference}
+G.\ Ziccardi, \textit{Cyber Law in Italy}, 3rd ed., Part VII ``Computer-Related Crime'', ch.\ 3 ``Application of Criminal Procedure Law in the Area of ICT'' (P.\ Perri; \S 7 on hacking tools by G.\ Ziccardi). Sources discussed: Italian Code of Criminal Procedure (\emph{c.p.p.}) as amended by Law 547/1993 and Law 48/2008; the Budapest Convention; Law 269/1998; the Orlando Reform (Law 103/2017) and Legislative Decree 216/2017.
+\end{sourcebox}
+
+The fourth block of the Vadal\`a unit turns from \emph{what} is punished to \emph{how} cybercrime is investigated and proven. Italian procedural law has been adapted incrementally, often by stretching traditional institutions rather than creating new ones, around three themes: \textbf{interception} of telematic communications, the correct acquisition of \textbf{digital evidence} (computer forensics), and \textbf{covert online operations}.
+
+\section{Adapting the Code of Criminal Procedure}
+
+\begin{itemize}
+    \item \textbf{Law 547/1993} (Arts.\ 11--13) inserted \textbf{Art.\ 266-bis c.p.p.} (``interception of computer and telematic communications'') and amended Art.\ 268 on the execution of interceptions.
+    \item \textbf{Law 48/2008}, implementing the Budapest Convention, brought \textbf{computer forensics} into the Code by amending \textbf{Arts.\ 244, 247, 352 and 354 c.p.p.}: inspections, searches and seizures of computer systems (even protected ones) must now adopt \textbf{technical measures ensuring the preservation of the original data and preventing its alteration}, and provide, where possible, a \textbf{bit-stream image copy} of the data.
+\end{itemize}
+
+\section{Interception of Telematic Communications}
+
+\textbf{Art.\ 266-bis c.p.p.} allows interception of the flow of communications between computer/telecommunication systems in proceedings concerning crimes committed via such technologies (and the crimes for which ordinary interception under Art.\ 266 is admitted --- e.g.\ serious offences against the Public Administration, drugs, weapons, child pornography under Art.\ 600-ter).
+
+\begin{sidebox}{Procedure for interception (Art.\ 266 regime)}
+The public prosecutor requests authorisation from the \textbf{judge for preliminary investigations (GIP)}; in urgent cases the prosecutor may order interception by motivated decree, to be \textbf{validated within 48 hours}. Interception may last \textbf{up to 15 days}, renewable by the judge for further 15-day periods.
+\end{sidebox}
+
+\section{Computer Forensics and Digital Evidence}
+
+\begin{definition}[Computer forensics]
+The discipline that combines law and computer science to \textbf{collect and analyse data} from computer systems, networks, wireless communications and storage devices in a way that is \textbf{admissible as evidence} in court. ``Digital evidence'' is information stored or transmitted in digital form that has probative value.
+\end{definition}
+
+Developed in the United States from the 1980s (the FBI's \textbf{CART}, Computer Analysis and Response Team), the discipline is organised into \textbf{network}, \textbf{computer} (single device), \textbf{electronic} and \textbf{mobile} forensics, and is performed \emph{post mortem} (after a ``computer accident''). Its central guarantee is the \textbf{chain of custody}: procedures ensuring the integrity and authenticity of the evidence from identification, through collection and analysis, to production in court. The four canonical steps are \textbf{identification}, \textbf{storage}, \textbf{analysis} and \textbf{exhibition}; a result obtained outside a scientifically acceptable, Code-compliant procedure risks \textbf{inadmissibility}.
+
+\begin{keypoint}
+The technical guarantee of integrity is the \textbf{bit-stream copy} --- a bit-by-bit copy of the support (including hidden, deleted or overwritten data) --- verified through a \textbf{hash algorithm} (\textbf{MD5}, now considered vulnerable, and \textbf{SHA-1}), which produces a \emph{digest} that must be identical for the original and the copy. \textbf{Write blockers} inhibit any write operation on the original. Forensic analysis should prefer \textbf{open-source tools} (e.g.\ The Sleuth Kit, Autopsy, alongside EnCase and the police-developed \emph{POLCAT}) for \textbf{transparency} and the right of defence; where modification is unavoidable, the procedure of \textbf{Art.\ 360 c.p.p.} (guarantees for unrepeatable technical ascertainments) applies.
+\end{keypoint}
+
+Acquisition technique depends on whether the system is on or off and on urgency, giving \textbf{four modalities} --- from laboratory acquisition of a powered-off, non-urgent system, through the \textbf{``cold boot''} of an urgent powered-off system (booting from a trusted external device after recording BIOS time/date), to the careful, ordered capture of \textbf{volatile data} from a running system that must first be isolated (``freezing''), where full \emph{repeatability} may not be attainable.
+
+\section{Contrasting Online Child Sexual Exploitation}
+
+\textbf{Article 14 of Law 269/1998} authorises special covert operations to investigate child-exploitation offences (Arts.\ 600-bis, 600-ter, 600-quinquies c.p.):
+\begin{itemize}
+    \item criminal-police officers (not ordinary agents), within operations ordered by senior officials and authorised by the judiciary, may carry out \textbf{simulated purchases} of pornographic material and related intermediation;
+    \item the \textbf{Postal and Communications Police}, on reasoned request of the judiciary, may use \textbf{cover identities}, activate \textbf{decoy sites} (``honeypots'') and create/manage areas of communication or exchange to trace offenders.
+\end{itemize}
+These operations raise the controversial figure of the \textbf{``provoker agent''} (a form of instigation): the majority view excludes liability (justified by duty, Art.\ 51 c.p.), but the Court of Cassation has held (judgment 39706/2003) that this special regime cannot be applied by analogy beyond the cases of Art.\ 14. A 2006 reform added Arts.\ 14-bis to 14-quinquies of Law 269/1998: a \textbf{National Centre} against online child pornography, \textbf{reporting and data-retention duties} for providers (at least 45 days), \textbf{filtering} obligations for connectivity providers, and \textbf{financial measures} (reporting/contract rescission by banks and intermediaries).
+
+\section{Trojan Horses (``Captatori Informatici'')}
+
+The most contested investigative tool is the \textbf{trojan horse} (\emph{captatore informatico}): malware covertly installed on a connected device that can capture all data traffic, remotely activate the microphone and camera, search the disk and copy it, and log keystrokes.
+
+\begin{itemize}
+    \item The debate crystallised in \textbf{2016--2017} around the Court of Cassation, United Sections, \textbf{``Scurato'' decision (no.\ 26889/2016)} and the \textbf{Orlando Reform (Law 103/2017)}, implemented by \textbf{Legislative Decree 216/2017}; \textbf{Law 3/2019} later extended the tool to \textbf{corruption} cases.
+    \item For the most serious crimes (Art.\ 51, paras.\ 3-bis and 3-quater c.p.) the device may always be activated; otherwise, in private dwellings (Art.\ 614 c.p.) only where there is a well-founded reason to believe a crime is taking place.
+\end{itemize}
+
+\begin{actionbox}
+\textbf{Safeguards and unresolved tensions.} The reform requires that microphone activation occur only by a \textbf{specific remote command} within the judge's authorisation; that the \textbf{GIP} give heightened reasons for the necessity of the method; that recordings be transferred only to the \textbf{prosecutor's server} to guarantee integrity; and that the trojan be \textbf{deactivated and made permanently unusable} at the end. Results are usable only for the authorised crimes (and, elsewhere, only if indispensable for offences under Art.\ 380 c.p.p.). The core criticism remains that the sensor is ``genetically'' designed to intercept \emph{any} information about \emph{anyone} near the device --- a structural threat to the privacy of unrelated third parties --- and that its use in private places, even absent proof of an ongoing crime, stretches the architecture of the Code.
+\end{actionbox}
 
 \end{document}
