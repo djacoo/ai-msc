@@ -6,7 +6,7 @@
 <!-- ── banner · crt monitor frame ──────────────────────────── -->
 <table>
   <tr>
-    <td align="center"><code>◉ ◉ ◉&nbsp;&nbsp;&nbsp;~/ai-msc — lofi-study.crt</code></td>
+    <td align="center"><code>◉ ◉ ◉&nbsp;&nbsp;&nbsp;┌──(kali㉿ai-msc)-[~]</code></td>
   </tr>
   <tr>
     <td><img src="https://user-images.githubusercontent.com/74038190/212750155-3ceddfbd-19d3-40a3-87af-8d329c8323c4.gif" width="700"></td>
