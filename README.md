@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- ── title · animated typing svg ─────────────────────────── -->
-<img src="https://readme-typing-svg.demolab.com?font=VT323&weight=400&size=42&duration=3500&pause=800&color=F6C177&center=true&vCenter=true&width=900&height=90&lines=Artificial+Intelligence+MSc;lofi+beats+to+study+to+%E2%99%AB;UniVR+%C2%B7+2025%E2%80%942027" alt="Artificial Intelligence MSc — UniVR" />
+<img src="https://readme-typing-svg.demolab.com?font=VT323&weight=400&size=42&duration=3500&pause=800&color=F6C177&center=true&vCenter=true&width=900&height=90&lines=Artificial+Intelligence+MSc;UniVR+%C2%B7+2025%E2%80%942027" alt="Artificial Intelligence MSc — UniVR" />
 
 <!-- ── banner · crt monitor frame ──────────────────────────── -->
 <table>
