@@ -75,3 +75,10 @@ node_modules/
 
 # Datasets
 flowers102/
+
+# over GitHub's size limit, kept local only
+year-1/semester-2/deep-learning/labs/DL-labs/Lab_02_CNN/Lab 02.zip
+year-1/semester-2/deep-learning/labs/DL-labs/Lab_03_LSTM/Lab 03.zip
+
+# OMC runtime state
+.omc/
