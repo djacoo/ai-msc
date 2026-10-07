@@ -40,6 +40,6 @@
 
 University of Verona — A.Y. 2025/2027
 
-&copy; 2025 [@djacoo]. All rights reserved. Course materials, slides and readings belong to their respective authors.
+&copy; 2025–2027 [@djacoo](https://github.com/djacoo). Notes under [CC BY-SA 4.0](LICENSE-NOTES), code under [MIT](LICENSE-CODE). Course materials, slides and readings belong to their respective authors.
 
 </div>
