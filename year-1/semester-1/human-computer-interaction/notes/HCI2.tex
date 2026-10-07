@@ -90,7 +90,7 @@
 % ========================================
 \title{\textbf{HCI - MultiModal Systems - Theory 2}\\
 \large Artificial Intelligence}
-\author{Jacopo Parretti}
+\author{Jacopo Parretti \\ Cesare Fraccaroli}
 \date{I Semester 2025-2026}
 
 % ========================================
@@ -157,7 +157,7 @@
         \vspace{2cm}
         
         % Author
-        {\LARGE\textsc{Jacopo Parretti}}
+        {\LARGE\textsc{Jacopo Parretti}\\[0.3cm]Cesare Fraccaroli}
         
         \vspace{1.5cm}
         
@@ -1891,7 +1891,7 @@ This is coherent with the principle of Depth-Speed ambiguity.
 "It is not possible to distinguish between a slower object moving closer
 to the camera and a faster object moving away from the camera".
 
-\subsection{Essential Matrix}
+\subsection{Essential Matrix}\label{subsec:essential_matrix}
 
 Given:
 \begin{itemize}
@@ -1990,7 +1990,7 @@ This matrix depends on 3 parameters for $\mathbf{R}$ and 2 parameters for $\math
     \Longrightarrow \quad \text{This equation is homogeneous with respect to } \mathbf{t}, \text{ this reflects the \emph{depth-speed ambiguity}.}
 \]
 
-\subsection{Factorization of the Essential Matrix}
+\subsection{Factorization of the Essential Matrix}\label{subsec:factorization_essential}
 
 We introduce a theorem that gives a characterization of the essential matrix.
 From this characterization we can factorize the matrix into rotation and translation components.
@@ -2114,7 +2114,7 @@ This ambiguity reflects the fact that the essential matrix can be decomposed in 
 A flip in the sign of $\mathbf{S}$ changes the right camera to the left camera and vice versa.
 The choice of $\mathbf{R}$ defines a rotation of 180 degrees around the axis of the camera around the baseline.
 
-\subsection{Estimation of the Essential Matrix}
+\subsection{Estimation of the Essential Matrix}\label{subsec:estimation_essential}
 Given a set of corresponding points in normalized coordinates, we can estimate the essential matrix
 $\mathbf{E}$ such that:
 \begin{equation} \label{eq:epipolar_constraint_points}
@@ -2160,7 +2160,7 @@ where $\hat{\mathbf{D}} = \text{diag}\left(\frac{r+s}{2}, \frac{r+s}{2}, 0\right
 It is possible to show that $\hat{\mathbf{E}}$ is the closest matrix to $\mathbf{E}$ (in Frobenius norm) that satisfies the essential matrix theorem.
 This method is called the \textbf{normalized 8-point algorithm}.
 
-\subsection{Structure from Motion Algorithm}
+\subsection{Structure from Motion Algorithm}\label{subsec:structure_from_motion}
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Structure from Motion Algorithm]
 Given a set of corresponding points in normalized coordinates and the intrinsic parameters of the cameras, the goal is to estimate:
@@ -2186,7 +2186,7 @@ The algorithm proceeds through the following steps:
     \item \textbf{Estimate the 3D points} $\mathbf{M}_i$ by triangulation using the projection matrices $\mathbf{P}_1$ and $\mathbf{P}_2$ and the corresponding image points.
 \end{enumerate}
 
-\section{Absolute Pose Orientation}
+\section{Absolute Pose Orientation}\label{sec:absolute_pose_orientation}
 
 The problem of \textbf{absolute pose orientation} consists in determining the transformation that aligns two sets of corresponding points in 3D space. Specifically, given:
 
@@ -2216,14 +2216,14 @@ Our objective is to solve the following optimization problem:
 
 To solve this problem, we employ the \textbf{Procrustes method}, which provides an analytical solution by decomposing the problem into simpler subproblems.
 
-\subsection{Procrustes Method}
+\subsection{Procrustes Method}\label{subsec:procrustes_method}
 
 The Procrustes method proceeds by systematically isolating the unknown variables. We start from the fundamental equation:
 \begin{equation} \nonumber
     X_i = s (R y_i + t)
 \end{equation}
 
-\subsubsection{Isolating the Translation}
+\subsubsection{Isolating the Translation}\label{subsubsec:isolating_translation}
 
 To isolate the translation vector $\mathbf{t}$, we first compute the mean of both sides of the equation:
 \begin{equation} \nonumber
@@ -2257,7 +2257,7 @@ By grouping terms and introducing centered coordinates, we obtain:
 
 where $\bar{X}$ and $\bar{y}$ denote the centroids of the respective point sets.
 
-\subsubsection{Centered Coordinates}
+\subsubsection{Centered Coordinates}\label{subsubsec:centered_coordinates}
 
 Defining the centered coordinates as:
 \begin{align}
@@ -2274,7 +2274,7 @@ we obtain the simplified equation:
 By centering both point sets at their respective centroids, we eliminate the translation component from the problem. This reduces the original problem to finding only the rotation matrix $\mathbf{R}$ and scale factor $s$, which significantly simplifies the optimization.
 \end{tcolorbox}
 
-\subsubsection{Estimating the Scale Factor}
+\subsubsection{Estimating the Scale Factor}\label{subsubsec:estimating_scale}
 
 To isolate the scale factor $s$, we exploit the algebraic properties of the equation. Since an orthogonal matrix preserves vector lengths, we can write:
 \begin{equation} \nonumber
@@ -2301,7 +2301,7 @@ In practice, to obtain a more robust estimate, we typically compute the scale fa
     s = \frac{\sum_{i=1}^{n} ||\hat{X}_i||}{\sum_{i=1}^{n} ||\hat{y}_i||}
 \end{equation}
 
-\subsubsection{Estimating the Rotation Matrix}
+\subsubsection{Estimating the Rotation Matrix}\label{subsubsec:estimating_rotation}
 
 Now we need to estimate the rotation matrix $\mathbf{R}$. To do this efficiently, we adopt a matrix notation by stacking all centered coordinates into matrices:
 \begin{equation} \nonumber
@@ -2338,7 +2338,7 @@ Since we have already estimated the scale factor $s$, we can normalize the probl
 
 This formulation corresponds to a well-known problem in linear algebra: the \textbf{orthogonal Procrustes problem}.
 
-\subsection{Orthogonal Procrustes Problem}
+\subsection{Orthogonal Procrustes Problem}\label{subsec:orthogonal_procrustes}
 
 \begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Orthogonal Procrustes Problem}]
 Given two matrices $\mathbf{A}$ and $\mathbf{B}$ of the same dimensions, we want to find the orthogonal matrix $\mathbf{W}$ that minimizes the Frobenius norm of the difference between $\mathbf{A}$ and $\mathbf{W} \mathbf{B}$:
@@ -2358,7 +2358,7 @@ then the optimal orthogonal matrix is given by:
     \mathbf{W} = \mathbf{V} \mathbf{U}^T
 \end{equation}
 
-\subsubsection{Ensuring Proper Rotation}
+\subsubsection{Ensuring Proper Rotation}\label{subsubsec:ensuring_rotation}
 
 In our specific case, $\mathbf{R}$ is not just an orthogonal matrix, but it must be a \textbf{rotation matrix}, which requires that $\det(\mathbf{R}) = 1$ (i.e., it preserves orientation). The solution $\mathbf{V} \mathbf{U}^T$ obtained from the SVD may have determinant $-1$, which would correspond to a reflection rather than a rotation.
 
@@ -2376,7 +2376,7 @@ where the SVD is computed as:
 The modification ensures that the determinant of $\mathbf{R}$ is exactly $1$, guaranteeing that the transformation represents a proper rotation rather than a reflection. This is crucial for applications where orientation must be preserved.
 \end{tcolorbox}
 
-\subsubsection{Final Solution}
+\subsubsection{Final Solution}\label{subsubsec:final_solution}
 
 Once we have computed the rotation matrix $\mathbf{R}$ and the scale factor $s$, we can substitute them back into the equation for the translation vector $\mathbf{t}$:
 \begin{equation} \nonumber
@@ -2386,5 +2386,208 @@ Once we have computed the rotation matrix $\mathbf{R}$ and the scale factor $s$,
 where $\bar{\mathbf{X}}$ and $\bar{\mathbf{y}}$ are the centroids of the respective point sets.
 
 This completes the solution to the absolute pose orientation problem, providing estimates for all three unknown parameters: rotation $\mathbf{R}$, translation $\mathbf{t}$, and scale $s$.
+
+
+
+
+\section{Exterior Orientation}\label{sec:exterior_orientation}
+
+The \textbf{exterior orientation} problem aims at estimating the camera pose (position and orientation) from a set of 3D points and their corresponding 2D projections in the image. This is a fundamental problem in computer vision, particularly important for applications such as augmented reality, robotics, and 3D reconstruction.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Problem Statement}]
+Given:
+\begin{itemize}
+    \item The internal parameters of the camera (intrinsic matrix $\mathbf{K}$) are known
+    \item A set of $n$ 3D-to-2D correspondences: $\mathbf{M}_i \leftrightarrow \mathbf{m}_i$ for $i = 1, \ldots, n$
+    \item The 3D points $\mathbf{M}_i$ are expressed in a global reference system
+    \item The 2D points $\mathbf{m}_i$ are the corresponding image projections
+\end{itemize}
+Goal: Estimate the camera pose, i.e., the rotation matrix $\mathbf{R}$ and translation vector $\mathbf{t}$.
+\end{tcolorbox}
+
+To solve this problem, we employ \textbf{Fiore's method}, which provides an elegant solution by decomposing the problem into two stages: first estimating scale factors, then solving for the pose parameters.
+
+\subsection{Fiore's Method}\label{subsec:fiore_method}
+
+\subsubsection{Normalized Coordinates}
+
+We begin by moving into normalized coordinates. This eliminates the intrinsic parameters from the equations, simplifying the problem. The normalized coordinates are obtained as:
+\begin{equation} \nonumber
+\mathbf{p}_i = \mathbf{K}^{-1} \mathbf{m}_i = \begin{pmatrix} u_i \\ v_i \\ 1 \end{pmatrix}
+\end{equation}
+
+where $\mathbf{p}_i$ represents the normalized coordinate of the image point $\mathbf{m}_i$.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=\textbf{Normalized Coordinates}]
+By working in normalized coordinates, we eliminate the intrinsic parameters from the projection equations. This is equivalent to what we would obtain using camera calibration (see Section~\ref{sec:camera_pose_estimation}), but here we achieve it directly through the inverse intrinsic matrix.
+\end{tcolorbox}
+
+The projection equation in normalized coordinates becomes:
+\begin{equation} \nonumber
+\mathbf{p}_i \simeq \mathbf{[R|t]^{3 \times 4}} \mathbf{M}_i
+\end{equation}
+
+\subsubsection{Introducing Scale Factors}
+
+To handle the projective ambiguity, we introduce scale factors $\xi_i$ for each correspondence. The projection equation becomes:
+\begin{equation} \nonumber
+\xi_i \mathbf{K}^{-1} \mathbf{m}_i = \mathbf{[R|t]} \mathbf{M}_i
+\end{equation}
+
+Expanding the right-hand side, we obtain:
+\begin{equation} \nonumber
+\xi_i \mathbf{K}^{-1} \mathbf{m}_i = \mathbf{R} \tilde{\mathbf{M}}_i + \mathbf{t}
+\end{equation}
+
+where $\tilde{\mathbf{M}}_i$ denotes the homogeneous representation of $\mathbf{M}_i$.
+
+\begin{tcolorbox}[colback=purple!5!white,colframe=purple!75!black,title=\textbf{Key Insight}]
+If we are able to estimate the scale factors $\xi_i$, the problem reduces to an \textbf{absolute pose orientation problem} (see Section~\ref{sec:absolute_pose_orientation}), for which we already have a solution using the Procrustes method.
+\end{tcolorbox}
+
+\subsubsection{Matrix Formulation}
+
+The problem is now reduced to estimating the scale factors $\xi_i$. We have one scale factor $\xi_i$ for each point correspondence. Let us rewrite the equations in matrix form.
+
+We define the matrix $\mathbf{W}$ containing the scaled image points:
+\begin{equation} \nonumber
+\mathbf{W}^{3 \times n} = [\xi_1 \mathbf{m}_1, \xi_2 \mathbf{m}_2, \ldots, \xi_n \mathbf{m}_n]
+\end{equation}
+
+and the matrix $\mathbf{M}$ containing the homogeneous 3D points:
+\begin{equation} \nonumber
+\mathbf{M}^{4 \times n} = [\tilde{\mathbf{M}}_1, \tilde{\mathbf{M}}_2, \ldots, \tilde{\mathbf{M}}_n]
+\end{equation}
+
+The projection equation can then be written as:
+\begin{equation} \nonumber
+\mathbf{K}^{-1} \mathbf{W} = \mathbf{[R|t]} \mathbf{M}
+\end{equation}
+
+\subsubsection{Eliminating Rotation and Translation}
+
+To eliminate the rotation and translation from the equation, we exploit the properties of the Singular Value Decomposition (SVD). Let $r = \text{rank}(\mathbf{M})$. We compute the SVD of $\mathbf{M}$:
+\begin{equation} \nonumber
+\mathbf{M} = \mathbf{U} \mathbf{D} \mathbf{V}^T
+\end{equation}
+
+Let $\mathbf{V}_r$ be the matrix composed of the last $n-r$ columns of $\mathbf{V}$. By definition, $\mathbf{V}_r$ spans the null space (kernel) of $\mathbf{M}$, meaning:
+\begin{equation} \nonumber
+\mathbf{M} \mathbf{V}_r = \mathbf{0}
+\end{equation}
+
+Multiplying both sides of the projection equation by $\mathbf{V}_r$, we obtain:
+\begin{equation} \nonumber
+\mathbf{K}^{-1} \mathbf{W} \mathbf{V}_r = \mathbf{[R|t]} \mathbf{M} \mathbf{V}_r = \bar{\mathbf{0}}
+\end{equation}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange!75!black,title=\textbf{Elimination of Pose Parameters}]
+By multiplying with $\mathbf{V}_r$, we have successfully eliminated the rotation and translation parameters from the equation. This is a crucial step that allows us to solve for the scale factors independently.
+\end{tcolorbox}
+
+\subsubsection{Vectorization and Kronecker Product}
+
+We now apply the \textbf{vec-trick} (vectorization) to transform the matrix equation into a linear system. Using the identity from Equation~\eqref{eq:vec_trick}:
+\begin{equation} \nonumber
+\text{vec}(\mathbf{K}^{-1} \mathbf{W} \mathbf{V}_r) = \text{vec}(\bar{\mathbf{0}})
+\end{equation}
+
+Applying the Kronecker product property, we obtain:
+\begin{equation} \nonumber
+(\mathbf{V}_r^T \otimes \mathbf{K}^{-1}) \text{vec}(\mathbf{W}) = \bar{\mathbf{0}}
+\end{equation}
+
+where $\otimes$ denotes the Kronecker product.
+
+\subsubsection{Separating Known and Unknown Parts}
+
+We now need to separate the known and unknown parts of the equation. The vectorization of $\mathbf{W}$ is:
+\begin{equation} \nonumber
+\text{vec}(\mathbf{W}) = \begin{bmatrix} \xi_1 \mathbf{m}_1 \\ \xi_2 \mathbf{m}_2 \\ \vdots \\ \xi_n \mathbf{m}_n \end{bmatrix}
+\end{equation}
+
+Since each $\mathbf{m}_i = [u_i, v_i, w_i]^T$, we can rewrite $\text{vec}(\mathbf{W})$ as a matrix-vector product:
+\begin{equation} \nonumber
+\begin{bmatrix} \xi_1 \mathbf{m}_1 \\ \xi_2 \mathbf{m}_2 \\ \vdots \\ \xi_n \mathbf{m}_n \end{bmatrix} = 
+\underbrace{\begin{bmatrix} 
+    u_1 & 0 & \cdots & 0 \\
+    v_1 & 0 & \cdots & 0 \\
+    w_1 & 0 & \cdots & 0 \\
+    0 & u_2 & \cdots & 0 \\
+    0 & v_2 & \cdots & 0 \\
+    0 & w_2 & \cdots & 0 \\
+    \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & \cdots & u_n \\
+    0 & 0 & \cdots & v_n \\
+    0 & 0 & \cdots & w_n
+\end{bmatrix}}_{\mathbf{D}} \begin{bmatrix} \xi_1 \\ \xi_2 \\ \vdots \\ \xi_n \end{bmatrix}
+\end{equation}
+
+Let us denote this block-diagonal matrix as $\mathbf{D}$. The equation becomes:
+\begin{equation} \nonumber
+(\mathbf{V}_r^T \otimes \mathbf{K}^{-1}) \mathbf{D} \boldsymbol{\xi} = \bar{\mathbf{0}}
+\end{equation}
+
+where $\boldsymbol{\xi} = [\xi_1, \xi_2, \ldots, \xi_n]^T$ is the vector of scale factors.
+
+\subsubsection{Linear System Formulation}
+
+This is now a homogeneous linear system of equations:
+\begin{equation} \nonumber
+\underbrace{(\mathbf{V}_r^T \otimes \mathbf{K}^{-1}) \mathbf{D}}_{\mathbf{A}} \underbrace{\boldsymbol{\xi}}_{\mathbf{x}} = \bar{\mathbf{0}}
+\end{equation}
+
+The dimensions of the matrices are:
+\begin{equation} \nonumber
+\underbrace{(\mathbf{V}_r^T \otimes \mathbf{K}^{-1}) \mathbf{D}}_{\mathbf{A} \in \mathbb{R}^{3(n-r) \times 3n}} \underbrace{\boldsymbol{\xi}}_{\mathbf{x} \in \mathbb{R}^{3n}} = \bar{\mathbf{0}} \in \mathbb{R}^{3(n-r)}
+\end{equation}
+
+\begin{tcolorbox}[colback=cyan!5!white,colframe=cyan!75!black,title=\textbf{Degeneracy Cases}]
+The number of equations $3(n-r)$ depends on the rank $r$ of matrix $\mathbf{M}$, which in turn depends on the geometric configuration of the 3D points:
+\begin{itemize}
+    \item \textbf{General configuration}: $r = 4$ (points span 3D space) $\Rightarrow$ $n-r = n-4$ equations
+    \item \textbf{Coplanar points}: $r = 3$ (points lie on a plane) $\Rightarrow$ $n-r = n-3$ equations
+    \item \textbf{Collinear points}: $r = 2$ (points lie on a line) $\Rightarrow$ $n-r = n-2$ equations
+\end{itemize}
+For a well-posed problem with general 3D points, we need at least 6 points ($n \geq 6$) to have enough equations.
+\end{tcolorbox}
+
+\subsubsection{Recovering the Pose}
+
+Once we have estimated the scale factors $\xi_i$ by solving the linear system, we can recover the camera pose. We return to the original equation:
+\begin{equation} \nonumber
+\xi_i \mathbf{K}^{-1} \mathbf{m}_i = \mathbf{R} \tilde{\mathbf{M}}_i + \mathbf{t}
+\end{equation}
+
+\begin{tcolorbox}[colback=teal!5!white,colframe=teal!75!black,title=\textbf{Final Step}]
+At this stage:
+\begin{itemize}
+    \item \textbf{Known quantities}: $\xi_i$, $\mathbf{m}_i$, $\mathbf{M}_i$, $\mathbf{K}^{-1}$
+    \item \textbf{Unknown quantities}: $\mathbf{R}$, $\mathbf{t}$
+\end{itemize}
+This is exactly the absolute pose orientation problem, which can be solved using the Procrustes method described in Section~\ref{sec:absolute_pose_orientation}.
+\end{tcolorbox}   
+
+
+\section{Camera Pose Estimation for mixed reality}\label{sec:camera_pose_estimation_mixed_reality}
+We have a synthetic object and a real scene.  
+We want to estimate the pose of the synthetic object with respect to the real scene in order
+to simulate the interaction between the two.
+We have :
+\begin{itemize}
+    \item Scene with real objects
+    \item Synthetic Objects
+    \item Real camera
+    \item Synthetic camera
+\end{itemize}
+Both cameras have extrinsic and intrinsic parameters.
+We need to match this parameters to simulate the interaction between the two.
+Information on camera are often stored in the header file(or can be extracted
+from camera calibration).
+Extrinsic must be computed with Exterior Orientation.\ref{sec:exterior_orientation}
+
+We can use a parser to extract the camera parameters from the header file.
+Principal point is approximated by the center of the image.
+
 
 \end{document}  
